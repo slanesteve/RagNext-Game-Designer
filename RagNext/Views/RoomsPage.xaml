@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RagNext.Views.RoomsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:RagsCore.Models;assembly=RagsCore"
+    Title="Rooms">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add" Command="{Binding AddRoomCommand}" />
+        <ToolbarItem Text="Save" Clicked="OnSaveClicked" Priority="1" Order="Primary" />
+    </ContentPage.ToolbarItems>
+
+    <CollectionView
+        ItemsSource="{Binding Rooms}"
+        SelectionMode="Single"
+        SelectionChanged="OnRoomSelected"
+        Margin="8">
+        <CollectionView.ItemTemplate>
+            <DataTemplate x:DataType="models:Room">
+                <Grid Padding="10" ColumnDefinitions="*,Auto">
+                    <StackLayout Grid.Column="0" Spacing="2">
+                        <Label Text="{Binding Name}" FontAttributes="Bold" />
+                        <Label Text="{Binding Description}" LineBreakMode="TailTruncation" />
+                    </StackLayout>
+                    <Button
+                        Grid.Column="1"
+                        Text="Edit"
+                        Clicked="OnEditClicked"
+                        CommandParameter="{Binding .}"
+                        VerticalOptions="Center" />
+                </Grid>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+
+        <CollectionView.EmptyView>
+            <Label Text="No rooms. Use Add to create one."
+                   HorizontalOptions="Center"
+                   VerticalOptions="CenterAndExpand" />
+        </CollectionView.EmptyView>
+    </CollectionView>
+</ContentPage>

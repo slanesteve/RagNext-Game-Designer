@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RagNext.Views.PlayerEditPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:RagNext.Views.Controls"
+    Title="Edit Player">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Save" Clicked="OnSaveClicked" />
+        <ToolbarItem Text="Cancel" Clicked="OnCancelClicked" Priority="1" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="12" Spacing="10">
+            <Label Text="Name" />
+            <Entry Text="{Binding Name}" Placeholder="Player name" />
+
+            <Label Text="Health" />
+            <Entry Text="{Binding Health}" Keyboard="Numeric" />
+
+            <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
+
+            <Label Text="Actions" FontAttributes="Bold" />
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="Add Action" Clicked="OnAddActionClicked" />
+                <Button Text="Remove Selected" Clicked="OnRemoveActionClicked" />
+            </HorizontalStackLayout>
+
+            <CollectionView x:Name="ActionsList"
+                            SelectionMode="Single"
+                            ItemsSource="{Binding Actions}"
+                            SelectionChanged="OnActionSelectionChanged">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="6" ColumnDefinitions="*,Auto">
+                            <Label Text="{Binding Name}" />
+                            <Label Grid.Column="1" Text="{Binding Commands.Count, StringFormat='({0} cmds)'}" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <Label Text="No actions yet." />
+                </CollectionView.EmptyView>
+            </CollectionView>
+
+            <controls:ActionEditorView x:Name="ActionEditor" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

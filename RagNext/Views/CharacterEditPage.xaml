@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RagNext.Views.CharacterEditPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:RagsCore.Models;assembly=RagsCore"
+    x:DataType="models:Character"
+    Title="Edit Character">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Save" Clicked="OnSaveClicked" />
+        <ToolbarItem Text="Cancel" Clicked="OnCancelClicked" Priority="1" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="12" Spacing="10">
+            <Label Text="Name" />
+            <Entry Text="{Binding Name}" Placeholder="Character name" />
+
+            <Label Text="Description" />
+            <Editor Text="{Binding Description}" HeightRequest="120" />
+
+            <Label Text="Health" />
+            <Entry Text="{Binding Health}" Keyboard="Numeric" />
+
+            <StackLayout Orientation="Horizontal" Spacing="12">
+                <Label Text="Hostile" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding IsHostile}" />
+            </StackLayout>
+
+            <StackLayout Orientation="Horizontal" Spacing="12">
+                <Label Text="Collectible" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding IsCollectible}" />
+            </StackLayout>
+
+            <Label Text="Dialogue" />
+            <Editor Text="{Binding Dialogue}" HeightRequest="100" />
+
+            <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

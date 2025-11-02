@@ -1,0 +1,612 @@
+{
+  "commands": [
+    {
+      "name": "Action: Add Custom Choice",
+      "category": "Action",
+      "inputs": [
+        {
+          "label": "Choice Text",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Target Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        }
+      ]
+    },
+    {
+      "name": "Action: Clear Custom Choice",
+      "category": "Action",
+      "inputs": []
+    },
+    {
+      "name": "Action: Remove Custom Choice",
+      "category": "Action",
+      "inputs": []
+    },
+
+    {
+      "name": "Character: Display Description",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        }
+      ]
+    },
+    {
+      "name": "Character: Display Portrait",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
+          "label": "Portrait Media",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+    {
+      "name": "Character: Move To Room",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
+          "label": "Destination Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        }
+      ]
+    },
+    {
+      "name": "Character: Move Inventory To Player",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        }
+      ]
+    },
+    {
+      "name": "Character: Move To Object",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
+          "label": "Object",
+          "controlType": "ComboBox",
+          "dataType": "GameObject"
+        }
+      ]
+    },
+    {
+      "name": "Character: Set Portrait Media",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
+          "label": "Media",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+    {
+      "name": "Character: Set Action To Active/Inactive",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Action Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Active",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+    {
+      "name": "Character: Set Custom Property",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Property Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Character: Set Custom Property (JavaScript)",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Script",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Character: Set Description",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Description",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Character: Set Gender",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Gender",
+          "controlType": "ComboBox",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Character: Set Display Name",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Name",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+
+    {
+      "name": "Add A Comment",
+      "category": "General",
+      "inputs": [
+        {
+          "label": "Comment Text",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Debug Text",
+      "category": "General",
+      "inputs": [
+        {
+          "label": "Message",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Set RAGS Data With JavaScript",
+      "category": "General",
+      "inputs": [
+        {
+          "label": "Script",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Display Text",
+      "category": "General",
+      "inputs": [
+        {
+          "label": "Text",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+
+    {
+      "name": "Media: Display Layered Picture",
+      "category": "Media",
+      "inputs": [
+        {
+          "label": "Picture File",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+    {
+      "name": "Media: Display Multimedia",
+      "category": "Media",
+      "inputs": [
+        {
+          "label": "Media File",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+    {
+      "name": "Media: Set Background Music",
+      "category": "Media",
+      "inputs": [
+        {
+          "label": "Music File",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+    {
+      "name": "Media: Stop Background Music",
+      "category": "Media",
+      "inputs": []
+    },
+    {
+      "name": "Media: Play Sound Effect",
+      "category": "Media",
+      "inputs": [
+        {
+          "label": "Sound File",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        },
+        {
+          "label": "Volume",
+          "controlType": "Number",
+          "dataType": "Number"
+        }
+      ]
+    },
+    {
+      "name": "Media: Set Main Compass Picture",
+      "category": "Media",
+      "inputs": []
+    },
+    {
+      "name": "Media: Set Up/Down Compass Picture",
+      "category": "Media",
+      "inputs": []
+    },
+
+    {
+      "name": "Image: Add Layered Image",
+      "category": "Image",
+      "inputs": [
+        {
+          "label": "Image File",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+    {
+      "name": "Image: Clear Layered Images",
+      "category": "Image",
+      "inputs": []
+    },
+    {
+      "name": "Image: Remove Layered Image",
+      "category": "Image",
+      "inputs": []
+    },
+    {
+      "name": "Image: Replace Layered Image",
+      "category": "Image",
+      "inputs": []
+    },
+
+    {
+      "name": "Item: Display Description",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        }
+      ]
+    },
+    {
+      "name": "Item: Layered Remove",
+      "category": "Item",
+      "inputs": []
+    },
+    {
+      "name": "Item: Layered Wear",
+      "category": "Item",
+      "inputs": []
+    },
+    {
+      "name": "Item: Move To Character",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        }
+      ]
+    },
+    {
+      "name": "Item: Move To Inventory",
+      "category": "Item",
+      "inputs": []
+    },
+    {
+      "name": "Item: Move Inside Object",
+      "category": "Item",
+      "inputs": []
+    },
+    {
+      "name": "Item: Move To Room",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        }
+      ]
+    },
+
+    {
+      "name": "Player: Display Description",
+      "category": "Player",
+      "inputs": []
+    },
+    {
+      "name": "Player: Set Layered Portrait",
+      "category": "Player",
+      "inputs": []
+    },
+    {
+      "name": "Player: Move Inventory To Character",
+      "category": "Player",
+      "inputs": []
+    },
+    {
+      "name": "Player: Move Inventory To Room",
+      "category": "Player",
+      "inputs": []
+    },
+    {
+      "name": "Player: Move To Room",
+      "category": "Player",
+      "inputs": []
+    },
+    {
+      "name": "Player: Move To Character",
+      "category": "Player",
+      "inputs": []
+    },
+    {
+      "name": "Player: Move To Object",
+      "category": "Player",
+      "inputs": []
+    },
+    {
+      "name": "Player: Set Custom Property",
+      "category": "Player",
+      "inputs": [
+        {
+          "label": "Property",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Player: Set Description",
+      "category": "Player",
+      "inputs": [
+        {
+          "label": "Description",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Player: Set Name",
+      "category": "Player",
+      "inputs": [
+        {
+          "label": "Name",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Player: Set Gender",
+      "category": "Player",
+      "inputs": [
+        {
+          "label": "Gender",
+          "controlType": "ComboBox",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Player: Set Portrait Media",
+      "category": "Player",
+      "inputs": [
+        {
+          "label": "Media File",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+
+    {
+      "name": "Room: Display Description",
+      "category": "Room",
+      "inputs": []
+    },
+    {
+      "name": "Room: Display Picture",
+      "category": "Room",
+      "inputs": []
+    },
+    {
+      "name": "Room: Move Items To Player",
+      "category": "Room",
+      "inputs": []
+    },
+    {
+      "name": "Room: Set Description",
+      "category": "Room",
+      "inputs": [
+        {
+          "label": "Description",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Room: Set Picture",
+      "category": "Room",
+      "inputs": [
+        {
+          "label": "Picture",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+
+    {
+      "name": "StatusBar: Set Visible/Invisible",
+      "category": "UI",
+      "inputs": [
+        {
+          "label": "Visible",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+
+    {
+      "name": "Timer: Execute Timer",
+      "category": "Timer",
+      "inputs": []
+    },
+    {
+      "name": "Timer: Reset Timer",
+      "category": "Timer",
+      "inputs": []
+    },
+    {
+      "name": "Timer: Set Custom Property",
+      "category": "Timer",
+      "inputs": []
+    },
+    {
+      "name": "Timer: Set Timer To Active/Inactive",
+      "category": "Timer",
+      "inputs": [
+        {
+          "label": "Active",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+
+    {
+      "name": "Variable: Display Data",
+      "category": "Variable",
+      "inputs": []
+    },
+    {
+      "name": "Variable: Set",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Variable: Set By User Input",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Prompt",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Variable: Set Numeric Randomly",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Minimum",
+          "controlType": "Number",
+          "dataType": "Number"
+        },
+        {
+          "label": "Maximum",
+          "controlType": "Number",
+          "dataType": "Number"
+        }
+      ]
+    },
+
+    {
+      "name": "End The Game",
+      "category": "System",
+      "inputs": []
+    }
+  ]
+}

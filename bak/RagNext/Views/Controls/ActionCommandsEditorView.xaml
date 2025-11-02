@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:actions="clr-namespace:RagsCore.Actions;assembly=RagsCore"
+             xmlns:converters="clr-namespace:RagNext.Converters"
+             x:Class="RagNext.Views.Controls.ActionCommandsEditorView"
+             x:Name="Root">
+    <ContentView.Resources>
+        <converters:TypeMatchConverter x:Key="TypeMatchConverter" />
+        <converters:RoomSelectorConverter x:Key="RoomSelectorConverter" />
+        <converters:ObjectSelectorConverter x:Key="ObjectSelectorConverter" />
+    </ContentView.Resources>
+
+    <VerticalStackLayout Spacing="8">
+        <HorizontalStackLayout Spacing="8">
+            <Picker Title="Add command"
+                    ItemsSource="{Binding AvailableCommandKeys, Source={x:Reference Root}}"
+                    SelectedItem="{Binding SelectedCommandKey, Source={x:Reference Root}}" />
+            <Button Text="Add" Clicked="OnAddCommandClicked" />
+        </HorizontalStackLayout>
+
+        <CollectionView ItemsSource="{Binding Commands, Source={x:Reference Root}}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Padding="8" Margin="0,6" BorderColor="{DynamicResource Gray600}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{Binding TypeName}" FontAttributes="Bold"/>
+
+                            <!-- SetVariableCommand -->
+                            <VerticalStackLayout Spacing="4">
+                                <VerticalStackLayout.IsVisible>
+                                    <MultiBinding Converter="{StaticResource TypeMatchConverter}">
+                                        <Binding Path="." />
+                                        <Binding Source="{x:Type actions:SetVariableCommand}" />
+                                    </MultiBinding>
+                                </VerticalStackLayout.IsVisible>
+                                <Entry Placeholder="Variable Name" Text="{Binding Name}" />
+                                <Entry Placeholder="Value" Text="{Binding Value}" />
+                            </VerticalStackLayout>
+
+                            <!-- MovePlayerToRoomCommand -->
+                            <VerticalStackLayout Spacing="4">
+                                <VerticalStackLayout.IsVisible>
+                                    <MultiBinding Converter="{StaticResource TypeMatchConverter}">
+                                        <Binding Path="." />
+                                        <Binding Source="{x:Type actions:MovePlayerToRoomCommand}" />
+                                    </MultiBinding>
+                                </VerticalStackLayout.IsVisible>
+
+                                <Picker Title="Room"
+                                        ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.Game.Rooms}"
+                                        ItemDisplayBinding="{Binding Name}">
+                                    <Picker.SelectedItem>
+                                        <MultiBinding Converter="{StaticResource RoomSelectorConverter}" Mode="TwoWay">
+                                            <Binding Path="RoomId" Mode="TwoWay" />
+                                            <Binding Source="{RelativeSource AncestorType={x:Type ContentView}}" Path="BindingContext.Game.Rooms" />
+                                        </MultiBinding>
+                                    </Picker.SelectedItem>
+                                </Picker>
+                            </VerticalStackLayout>
+
+                            <!-- AddObjectToRoomCommand -->
+                            <VerticalStackLayout Spacing="4">
+                                <VerticalStackLayout.IsVisible>
+                                    <MultiBinding Converter="{StaticResource TypeMatchConverter}">
+                                        <Binding Path="." />
+                                        <Binding Source="{x:Type actions:AddObjectToRoomCommand}" />
+                                    </MultiBinding>
+                                </VerticalStackLayout.IsVisible>
+
+                                <Picker Title="Room"
+                                        ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.Game.Rooms}"
+                                        ItemDisplayBinding="{Binding Name}">
+                                    <Picker.SelectedItem>
+                                        <MultiBinding Converter="{StaticResource RoomSelectorConverter}" Mode="TwoWay">
+                                            <Binding Path="RoomId" Mode="TwoWay" />
+                                            <Binding Source="{RelativeSource AncestorType={x:Type ContentView}}" Path="BindingContext.Game.Rooms" />
+                                        </MultiBinding>
+                                    </Picker.SelectedItem>
+                                </Picker>
+
+                                <Picker Title="Object"
+                                        ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.Game.Objects}"
+                                        ItemDisplayBinding="{Binding Name}">
+                                    <Picker.SelectedItem>
+                                        <MultiBinding Converter="{StaticResource ObjectSelectorConverter}" Mode="TwoWay">
+                                            <Binding Path="ObjectId" Mode="TwoWay" />
+                                            <Binding Source="{RelativeSource AncestorType={x:Type ContentView}}" Path="BindingContext.Game.Objects" />
+                                        </MultiBinding>
+                                    </Picker.SelectedItem>
+                                </Picker>
+                            </VerticalStackLayout>
+
+                            <!-- RemoveObjectFromRoomCommand -->
+                            <VerticalStackLayout Spacing="4">
+                                <VerticalStackLayout.IsVisible>
+                                    <MultiBinding Converter="{StaticResource TypeMatchConverter}">
+                                        <Binding Path="." />
+                                        <Binding Source="{x:Type actions:RemoveObjectFromRoomCommand}" />
+                                    </MultiBinding>
+                                </VerticalStackLayout.IsVisible>
+
+                                <Picker Title="Room"
+                                        ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.Game.Rooms}"
+                                        ItemDisplayBinding="{Binding Name}">
+                                    <Picker.SelectedItem>
+                                        <MultiBinding Converter="{StaticResource RoomSelectorConverter}" Mode="TwoWay">
+                                            <Binding Path="RoomId" Mode="TwoWay" />
+                                            <Binding Source="{RelativeSource AncestorType={x:Type ContentView}}" Path="BindingContext.Game.Rooms" />
+                                        </MultiBinding>
+                                    </Picker.SelectedItem>
+                                </Picker>
+
+                                <Picker Title="Object"
+                                        ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.Game.Objects}"
+                                        ItemDisplayBinding="{Binding Name}">
+                                    <Picker.SelectedItem>
+                                        <MultiBinding Converter="{StaticResource ObjectSelectorConverter}" Mode="TwoWay">
+                                            <Binding Path="ObjectId" Mode="TwoWay" />
+                                            <Binding Source="{RelativeSource AncestorType={x:Type ContentView}}" Path="BindingContext.Game.Objects" />
+                                        </MultiBinding>
+                                    </Picker.SelectedItem>
+                                </Picker>
+                            </VerticalStackLayout>
+
+                            <Button Text="Remove" Clicked="OnRemoveCommandClicked" CommandParameter="{Binding}" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentView>

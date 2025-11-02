@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" 
+             xmlns:controls="clr-namespace:RagNext.Views.Controls" 
+             x:Class="RagNext.Views.Controls.ActionTreeView" 
+             x:Name="Root">
+    <VerticalStackLayout Spacing="6" Padding="6">
+        <!-- Root/default action node -->
+        <Grid x:Name="DefaultHeader" Padding="6" BackgroundColor="{DynamicResource Gray400}">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnSelectDefaultTapped" />
+            </Grid.GestureRecognizers>
+            <FlyoutBase.ContextFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem Text="Add Command" Clicked="OnAddDefaultCommandClicked" />
+                    <MenuFlyoutItem Text="Add Action" Clicked="OnAddTopLevelBranchClicked" />
+                </MenuFlyout>
+            </FlyoutBase.ContextFlyout>
+            <HorizontalStackLayout Spacing="8">
+                <Label Text="Default Action (always runs)" FontAttributes="Bold" />
+                <Label Text="{Binding Tree.DefaultCommands.Count, Source={x:Reference Root}, StringFormat='({0} cmds)'}" />
+            </HorizontalStackLayout>
+        </Grid>
+        <!-- Top-level actions -->
+        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Tree.Branches, Source={x:Reference Root}}" Spacing="4">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <controls:ActionBranchNodeView />
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+</ContentView>

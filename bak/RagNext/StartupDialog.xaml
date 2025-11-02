@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RagNext.StartupDialog"
+             BackgroundColor="#80000000"
+             Padding="24"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid VerticalOptions="Center" HorizontalOptions="Center">
+        <Frame Padding="20" CornerRadius="12" BackgroundColor="White" HasShadow="True">
+            <VerticalStackLayout Spacing="12" WidthRequest="320">
+                <Label Text="Welcome" FontSize="20" HorizontalOptions="Center" />
+                <Label Text="Would you like to create a new game or load an existing one?" LineBreakMode="WordWrap" />
+                <Button x:Name="CreateBtn" Text="Create New Game" />
+                <Button x:Name="LoadBtn" Text="Load Saved Game" />
+                <Button x:Name="CancelBtn" Text="Cancel" />
+            </VerticalStackLayout>
+        </Frame>
+    </Grid>
+</ContentPage>

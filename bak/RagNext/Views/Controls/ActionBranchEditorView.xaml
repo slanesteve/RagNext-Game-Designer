@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:actions="clr-namespace:RagsCore.Actions;assembly=RagsCore"
+             xmlns:converters="clr-namespace:RagNext.Converters"
+             xmlns:views="clr-namespace:RagNext.Views.Controls"
+             xmlns:controls="clr-namespace:RagNext.Views.Controls"
+             x:Class="RagNext.Views.Controls.ActionBranchEditorView"
+             x:Name="Root">
+    <ContentView.Resources>
+        <converters:TypeMatchConverter x:Key="TypeMatchConverter" />
+        <converters:RoomSelectorConverter x:Key="RoomSelectorConverter" />
+        <converters:ObjectSelectorConverter x:Key="ObjectSelectorConverter" />
+    </ContentView.Resources>
+
+    <VerticalStackLayout Spacing="10" Padding="6">
+        <Label Text="{Binding DisplayName}" FontAttributes="Bold" />
+
+        <!-- Condition selector (Default == null) -->
+        <HorizontalStackLayout Spacing="8">
+            <Picker Title="Condition"
+                    ItemsSource="{Binding AvailableConditionKeys, Source={x:Reference Root}}"
+                    SelectedItem="{Binding SelectedConditionKey, Source={x:Reference Root}}" />
+            <Button Text="Clear (Default)" Clicked="OnClearConditionClicked" />
+        </HorizontalStackLayout>
+
+        <!-- VariableEqualsCondition -->
+        <VerticalStackLayout Spacing="4">
+            <VerticalStackLayout.IsVisible>
+                <MultiBinding Converter="{StaticResource TypeMatchConverter}">
+                    <Binding Path="Condition" />
+                    <Binding Source="{x:Type actions:VariableEqualsCondition}" />
+                </MultiBinding>
+            </VerticalStackLayout.IsVisible>
+            <Entry Placeholder="Variable Name" Text="{Binding Condition.Name}" />
+            <Entry Placeholder="Value" Text="{Binding Condition.Value}" />
+            <HorizontalStackLayout>
+                <Label Text="Case Insensitive" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding Condition.CaseInsensitive}" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- PlayerInRoomCondition -->
+        <VerticalStackLayout Spacing="4">
+            <VerticalStackLayout.IsVisible>
+                <MultiBinding Converter="{StaticResource TypeMatchConverter}">
+                    <Binding Path="Condition" />
+                    <Binding Source="{x:Type actions:PlayerInRoomCondition}" />
+                </MultiBinding>
+            </VerticalStackLayout.IsVisible>
+
+            <Picker Title="Room"
+                    ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type views:ActionTreeEditorView}}, Path=Game.Rooms}"
+                    ItemDisplayBinding="{Binding Name}">
+                <Picker.SelectedItem>
+                    <MultiBinding Converter="{StaticResource RoomSelectorConverter}" Mode="TwoWay">
+                        <Binding Path="Condition.RoomId" Mode="TwoWay" />
+                        <Binding Source="{RelativeSource AncestorType={x:Type views:ActionTreeEditorView}}" Path="Game.Rooms" />
+                    </MultiBinding>
+                </Picker.SelectedItem>
+            </Picker>
+        </VerticalStackLayout>
+
+        <!-- RoomHasObjectCondition -->
+        <VerticalStackLayout Spacing="4">
+            <VerticalStackLayout.IsVisible>
+                <MultiBinding Converter="{StaticResource TypeMatchConverter}">
+                    <Binding Path="Condition" />
+                    <Binding Source="{x:Type actions:RoomHasObjectCondition}" />
+                </MultiBinding>
+            </VerticalStackLayout.IsVisible>
+
+            <Picker Title="Room"
+                    ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type views:ActionTreeEditorView}}, Path=Game.Rooms}"
+                    ItemDisplayBinding="{Binding Name}">
+                <Picker.SelectedItem>
+                    <MultiBinding Converter="{StaticResource RoomSelectorConverter}" Mode="TwoWay">
+                        <Binding Path="Condition.RoomId" Mode="TwoWay" />
+                        <Binding Source="{RelativeSource AncestorType={x:Type views:ActionTreeEditorView}}" Path="Game.Rooms" />
+                    </MultiBinding>
+                </Picker.SelectedItem>
+            </Picker>
+
+            <Picker Title="Object"
+                    ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type views:ActionTreeEditorView}}, Path=Game.Objects}"
+                    ItemDisplayBinding="{Binding Name}">
+                <Picker.SelectedItem>
+                    <MultiBinding Converter="{StaticResource ObjectSelectorConverter}" Mode="TwoWay">
+                        <Binding Path="Condition.ObjectId" Mode="TwoWay" />
+                        <Binding Source="{RelativeSource AncestorType={x:Type views:ActionTreeEditorView}}" Path="Game.Objects" />
+                    </MultiBinding>
+                </Picker.SelectedItem>
+            </Picker>
+        </VerticalStackLayout>
+
+        <!-- Commands for this branch -->
+        <controls:ActionCommandsEditorView
+            Game="{Binding Source={RelativeSource AncestorType={x:Type views:ActionTreeEditorView}}, Path=Game}"
+            Commands="{Binding Commands, Mode=TwoWay}" />
+
+        <!-- Children (nested branches) -->
+        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Children}" Spacing="8">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <views:ActionBranchEditorView />
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+
+        <Button Text="Add Child Condition" Clicked="OnAddChildClicked" />
+    </VerticalStackLayout>
+</ContentView>
