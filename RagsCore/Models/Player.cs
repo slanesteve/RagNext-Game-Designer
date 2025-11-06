@@ -11,6 +11,8 @@ namespace RagsCore.Models
         private List<string> _genders = new()
         {"Male", "Female","Non-binary", "Other"};
         public List<string> Genders {get => _genders; set => SetProperty(ref _genders, value); }
+
+
         public Guid Id { get; init; } = Guid.NewGuid();
 
         private string _name = "Player";

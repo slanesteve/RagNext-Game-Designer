@@ -222,6 +222,16 @@ namespace RagNext
         {
             await DisplayAlert("Edit", "Redo not implemented.", "OK");
         }
+        private async void OnSettingsGeneral(object? sender, EventArgs e)
+        {
+            await DisplayAlert("Settings", "General not implemented.", "OK");
+        }
+        private async void OnSettingsAI(object? sender, EventArgs e)
+        {
+            // Show as modal to keep behavior consistent with other dialogs
+            var page = new Views.AISettingsPage();
+            await Navigation.PushModalAsync(page);
+        }
 
         private async void OnHelpAbout(object? sender, EventArgs e)
         {
@@ -274,6 +284,27 @@ namespace RagNext
                 
             }
         }
+        private async void OnSettingsMenuClicked(object sender, EventArgs e)
+        {
+            // Show a platform-friendly action sheet instead of constructing a MenuFlyout
+            // (avoids APIs like MenuFlyout.Items and ShowAt which aren't available هنا)
+            var options = new[] { "General", "AI" };
+            var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
+
+            if (string.IsNullOrEmpty(choice) || choice == "Cancel")
+                return;
+
+            switch (choice)
+            {
+                case "General":
+                    OnSettingsGeneral(this, EventArgs.Empty);
+                    break;
+                case "AI":
+                    OnSettingsAI(this, EventArgs.Empty);
+                    break;
+
+            }
+        }
 
         private async void OnHelpMenuClicked(object sender, EventArgs e)
         {
@@ -310,6 +341,11 @@ namespace RagNext
         private async void EditRoom(Guid roomId)
         {
             await Shell.Current.GoToAsync($"RoomEdit?roomId={roomId}");
+        }
+
+        private void ToolbarItem_Clicked(object sender, EventArgs e)
+        {
+
         }
     }
 }

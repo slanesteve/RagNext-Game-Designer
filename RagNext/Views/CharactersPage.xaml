@@ -18,7 +18,7 @@
             <DataTemplate>
                 <Grid Padding="8" RowDefinitions="Auto,Auto">
                     <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" />
-                    <Label Grid.Row="1" Text="{Binding Description}" />
+                    <Label Grid.Row="1" Text="{Binding Description}" LineBreakMode="TailTruncation" MaxLines="1" />
                 </Grid>
             </DataTemplate>
         </CollectionView.ItemTemplate>

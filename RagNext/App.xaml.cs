@@ -3,6 +3,7 @@ using RagsCore.Models;
 using System;
 using Microsoft.Maui.ApplicationModel;
 using RagNext.Services;
+using RagNext.Models;
 
 namespace RagNext
 {
@@ -54,6 +55,8 @@ namespace RagNext
             }
         }
 
+        public static AISettings? CurrentAISettings { get; set; }
+
         public App()
         {
             InitializeComponent();
@@ -63,6 +66,9 @@ namespace RagNext
             _ = ConditionCatalogLoader.InitializeAsync();
 
             MainPage = new SplashPage();
+            var aiService = MauiProgram.Services.GetService(typeof(IAISettingsService)) as IAISettingsService;
+            if (aiService is not null)
+                CurrentAISettings = aiService.Load();
         }
     }
 }

@@ -13,10 +13,18 @@
     <ScrollView>
         <VerticalStackLayout Padding="12" Spacing="10">
             <Label Text="Name" />
-            <Entry Text="{Binding Name}" Placeholder="Object name" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Entry x:Name="NameEntry" Text="{Binding Name}" Placeholder="Object name" Grid.Column="0" />
+                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference NameEntry}" />
+            </Grid>
 
             <Label Text="Description" />
-            <Editor Text="{Binding Description}" HeightRequest="150" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Editor x:Name="DescriptionEditor" Text="{Binding Description}" HeightRequest="150" Grid.Column="0" />
+                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference DescriptionEditor}" />
+            </Grid>
 
             <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
         </VerticalStackLayout>

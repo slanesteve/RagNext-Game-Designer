@@ -9,6 +9,7 @@
 
     <TabBar>
         <ShellContent Title="Main" Route="main" ContentTemplate="{DataTemplate local:MainPage}" />
+        <ShellContent Title="Player" Route="player" ContentTemplate="{DataTemplate views:PlayerEditPage}" />
         <ShellContent Title="Rooms" Route="rooms" ContentTemplate="{DataTemplate views:RoomsPage}" />
         <ShellContent Title="Objects" Route="gameobjects" ContentTemplate="{DataTemplate views:GameObjectsPage}" />
         <ShellContent Title="Characters" Route="characters" ContentTemplate="{DataTemplate views:CharactersPage}" />

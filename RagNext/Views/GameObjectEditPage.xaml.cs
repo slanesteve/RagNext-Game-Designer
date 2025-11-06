@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Linq;
+using System.Threading;
 using Microsoft.Maui.Controls;
 using RagsCore.Models;
 using RagNext.Services;
-
 
 namespace RagNext.Views
 {
@@ -12,9 +12,12 @@ namespace RagNext.Views
     {
         public string? ObjectId { set { _ = SetObjectAsync(value); } }
 
+        private readonly IAIChatService? _ai;
+
         public GameObjectEditPage()
         {
             InitializeComponent();
+            _ai = MauiProgram.Services.GetService(typeof(IAIChatService)) as IAIChatService;
         }
 
         private async System.Threading.Tasks.Task SetObjectAsync(string? value)
@@ -57,6 +60,41 @@ namespace RagNext.Views
         private async void OnCancelClicked(object sender, EventArgs e)
         {
             await Navigation.PopAsync();
+        }
+
+        private sealed class DisposeAction : IDisposable
+        {
+            private readonly Action _a;
+            public DisposeAction(Action a) => _a = a;
+            public void Dispose() => _a();
+        }
+
+        private IDisposable StartSpinner(Button btn)
+        {
+            var originalText = btn.Text;
+            btn.IsEnabled = false;
+            btn.Text = "⟳";
+            var anim = new Animation(v => btn.Rotation = v, 0, 360);
+            anim.Commit(btn, "spin", length: 700, easing: Easing.Linear, repeat: () => true);
+            return new DisposeAction(() =>
+            {
+                btn.AbortAnimation("spin");
+                btn.Rotation = 0;
+                btn.Text = originalText;
+                btn.IsEnabled = true;
+            });
+        }
+
+        private async void OnAskAIClicked(object? sender, EventArgs e)
+        {
+            if (_ai is null)
+            {
+                await DisplayAlert("AI", "AI service unavailable.", "OK");
+                return;
+            }
+            if (sender is not Button btn) return;
+
+            await AIAssistHelper.HandleAskAIAsync(this, btn, btn.CommandParameter, _ai);
         }
     }
 }

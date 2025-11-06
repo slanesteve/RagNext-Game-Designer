@@ -21,7 +21,7 @@
                 <Grid Padding="10" ColumnDefinitions="*,Auto">
                     <StackLayout Grid.Column="0" Spacing="2">
                         <Label Text="{Binding Name}" FontAttributes="Bold" />
-                        <Label Text="{Binding Description}" LineBreakMode="TailTruncation" />
+                        <Label Text="{Binding Description}" LineBreakMode="TailTruncation" MaxLines="1" />
                     </StackLayout>
                     <Button
                         Grid.Column="1"

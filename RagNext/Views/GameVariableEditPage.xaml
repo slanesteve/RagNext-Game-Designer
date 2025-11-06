@@ -15,13 +15,25 @@
     <ScrollView>
         <VerticalStackLayout Padding="12" Spacing="10">
             <Label Text="Name" />
-            <Entry Text="{Binding Name}" Placeholder="Variable name" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Entry x:Name="NameEntry" Text="{Binding Name}" Placeholder="Variable name" Grid.Column="0" />
+                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference NameEntry}" />
+            </Grid>
 
             <Label Text="Type" />
-            <Entry Text="{Binding Type}" Placeholder="string | int | bool" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Entry x:Name="TypeEntry" Text="{Binding Type}" Placeholder="string | int | bool" Grid.Column="0" />
+                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference TypeEntry}" />
+            </Grid>
 
             <Label Text="Value" />
-            <Entry Text="{Binding Value}" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Entry x:Name="ValueEntry" Text="{Binding Value}" Grid.Column="0" />
+                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference ValueEntry}" />
+            </Grid>
 
             <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
         </VerticalStackLayout>

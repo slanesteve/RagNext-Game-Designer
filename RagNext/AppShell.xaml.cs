@@ -18,6 +18,7 @@ namespace RagNext
             Routing.RegisterRoute("GameVariableEdit", typeof(RagNext.Views.GameVariableEditPage));
             Routing.RegisterRoute("CharacterEdit", typeof(RagNext.Views.CharacterEditPage));
             Routing.RegisterRoute("PlayerEdit", typeof(RagNext.Views.PlayerEditPage));
+            Routing.RegisterRoute(nameof(AISettingsPage), typeof(AISettingsPage));
         }
     }
 }

@@ -8,6 +8,7 @@
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="File" Clicked="OnFileMenuClicked" />
         <ToolbarItem Text="Edit" Clicked="OnEditMenuClicked" />
+        <ToolbarItem Text="Settings" Clicked="OnSettingsMenuClicked" />
         <ToolbarItem Text="Help" Clicked="OnHelpMenuClicked" />
     </ContentPage.ToolbarItems>
 
@@ -38,8 +39,7 @@
                     <Label Text="Version" />
                     <Entry Text="{Binding Version, Mode=TwoWay}" Placeholder="e.g. 1.0.0" />
 
-                    <Label Text="Player Name" />
-                    <Entry Text="{Binding Player.Name, Mode=TwoWay}" Placeholder="Player name" />
+                   
 
                 </VerticalStackLayout>
             </Border>

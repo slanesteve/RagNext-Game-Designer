@@ -43,6 +43,8 @@ namespace RagNext
             builder.Services.AddSingleton<RagsCore.Services.IGameStorage, GameStorageAdapter>();
             builder.Services.AddSingleton<RagsCore.Services.IMediaPathProvider, RagNext.Services.MauiMediaPathProvider>();
             builder.Services.AddSingleton<RagsCore.Services.IMediaLibrary, RagsCore.Services.MediaLibrary>();
+            builder.Services.AddSingleton<IAISettingsService, AISettingsService>();
+            builder.Services.AddSingleton<IAIChatService, AIChatService>(); // <-- add AI chat service
 
 #if DEBUG
             builder.Logging.AddDebug();

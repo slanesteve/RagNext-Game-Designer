@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup
+    x:Class="RagNext.Views.Popups.AIPromptPopup"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    CanBeDismissedByTappingOutsideOfPopup="False">
+    <Border Stroke="{DynamicResource Gray300}" StrokeThickness="1" BackgroundColor="{DynamicResource PageBackgroundColor}">
+        <VerticalStackLayout Padding="16" Spacing="12" WidthRequest="440" MaximumWidthRequest="600">
+            <Label x:Name="TitleLabel" FontAttributes="Bold" FontSize="Medium" />
+            <Editor x:Name="PromptEditor"
+                    AutoSize="TextChanges"
+                    Placeholder="Type your prompt..."
+                    HeightRequest="180" />
+            <HorizontalStackLayout HorizontalOptions="End" Spacing="12">
+                <Button Text="Cancel" Clicked="OnCancelClicked" />
+                <Button Text="OK" Clicked="OnOkClicked" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</toolkit:Popup>
