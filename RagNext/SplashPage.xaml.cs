@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.ApplicationModel; // MainThread
 
 namespace RagNext
 {
@@ -13,11 +14,20 @@ namespace RagNext
 
         async Task StartAsync()
         {
-            // Short delay to show splash; adjust as desired
             await Task.Delay(1500);
 
-            // Use the AppShell as the application's MainPage so Shell.Current is not null
-            Application.Current!.MainPage = new AppShell();
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Application.Current!.MainPage = new AppShell();
+                });
+            }
+            catch (Exception ex)
+            {
+                // Show the actual startup error instead of a pink screen
+                await DisplayAlert("Startup error", ex.ToString(), "OK");
+            }
         }
     }
 }

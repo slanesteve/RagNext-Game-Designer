@@ -27,20 +27,22 @@
                 FontSize="20"
                 HorizontalOptions="Center" />
 
-            <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" Background="#FFF" Padding="12" Shadow="True">
-                <VerticalStackLayout Spacing="12">
+            <!-- Changed: replace Shadow="True" with a real Shadow object -->
+            <Border StrokeShape="RoundRectangle 8"
+                    StrokeThickness="0"
+                    Background="#FFF"
+                    Padding="12">
+                <Border.Shadow>
+                    <Shadow Radius="8" Opacity="0.35" Brush="Black" Offset="0,4" />
+                </Border.Shadow>
 
+                <VerticalStackLayout Spacing="12">
                     <Label Text="Title" />
                     <Entry Text="{Binding Title, Mode=TwoWay}" Placeholder="Enter game title" />
-
                     <Label Text="Author" />
                     <Entry Text="{Binding Author, Mode=TwoWay}" Placeholder="Enter author name" />
-
                     <Label Text="Version" />
                     <Entry Text="{Binding Version, Mode=TwoWay}" Placeholder="e.g. 1.0.0" />
-
-                   
-
                 </VerticalStackLayout>
             </Border>
 

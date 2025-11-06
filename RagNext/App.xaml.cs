@@ -4,6 +4,8 @@ using System;
 using Microsoft.Maui.ApplicationModel;
 using RagNext.Services;
 using RagNext.Models;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace RagNext
 {
@@ -61,11 +63,26 @@ namespace RagNext
         {
             InitializeComponent();
 
-            // Initialize packaged catalogs
+            // Global diagnostics to catch “pink screen” root causes in Release
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            {
+                Trace.WriteLine($"[FATAL] {e.ExceptionObject}");
+                MainThread.BeginInvokeOnMainThread(async () =>
+                    await Current?.MainPage?.DisplayAlert("UnhandledException", e.ExceptionObject?.ToString() ?? "Unknown", "OK"));
+            };
+
+            TaskScheduler.UnobservedTaskException += (_, e) =>
+            {
+                e.SetObserved();
+                Trace.WriteLine($"[TASK] {e.Exception}");
+            };
+
+            // Initialize packaged catalogs (fire-and-forget)
             _ = CommandCatalogLoader.InitializeAsync();
             _ = ConditionCatalogLoader.InitializeAsync();
 
             MainPage = new SplashPage();
+
             var aiService = MauiProgram.Services.GetService(typeof(IAISettingsService)) as IAISettingsService;
             if (aiService is not null)
                 CurrentAISettings = aiService.Load();
