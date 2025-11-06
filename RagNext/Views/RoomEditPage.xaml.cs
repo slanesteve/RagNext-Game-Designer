@@ -98,6 +98,7 @@ namespace RagNext.Views
             if (sender is not Button btn) return;
 
             await AIAssistHelper.HandleAskAIAsync(this, btn, btn.CommandParameter, _ai);
+            //test commits
         }
     }
 }
