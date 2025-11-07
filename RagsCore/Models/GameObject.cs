@@ -12,6 +12,7 @@ namespace RagsCore.Models
         // Example: add to any game element (e.g., Player/Room/GameObject)
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
         public ObservableCollection<MediaReference> Media { get; set; } = new(); // reference by AssetId
+        public ObservableCollection<Action> Actions { get; set; } = new(); // added
 
         public Guid Id { get; init; } = Guid.NewGuid();
 

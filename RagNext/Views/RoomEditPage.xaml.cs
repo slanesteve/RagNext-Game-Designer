@@ -67,8 +67,8 @@ namespace RagNext.Views
 
         private sealed class DisposeAction : IDisposable
         {
-            private readonly Action _a;
-            public DisposeAction(Action a) => _a = a;
+            private readonly System.Action _a;
+            public DisposeAction(System.Action a) => _a = a;
             public void Dispose() => _a();
         }
 

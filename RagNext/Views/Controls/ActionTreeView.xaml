@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView x:Name="ActionTreeRoot"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RagNext.Views.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+                 x:Class="RagNext.Views.Controls.ActionTreeView">
+    <ContentView.Resources>
+        <DataTemplate x:Key="InputTemplate">
+            <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                        <Setter Property="BackgroundColor" Value="#D6F5D6" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <HorizontalStackLayout Spacing="6">
+                    <Label Text="{Binding Icon}" />
+                    <Label Text="{Binding Name}" />
+                </HorizontalStackLayout>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
+                                          CommandParameter="{Binding}" />
+                </Border.GestureRecognizers>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="StepTemplate">
+            <toolkit:Expander x:Name="StepExpander" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+                <toolkit:Expander.Header>
+                    <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="BackgroundColor" Value="#D6F5D6" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <HorizontalStackLayout Spacing="6">
+                            <Label Text="▶">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding Source={x:Reference StepExpander}, Path=IsExpanded}"
+                                                 Value="True">
+                                        <Setter Property="Text" Value="▼" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                            <Label Text="{Binding Icon}" />
+                            <Label Text="{Binding Name}" />
+                        </HorizontalStackLayout>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
+                                                  CommandParameter="{Binding}" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="0"
+                                     BindableLayout.ItemsSource="{Binding Children}"
+                                     BindableLayout.ItemTemplateSelector="{StaticResource ActionNodeTemplateSelector}" />
+            </toolkit:Expander>
+        </DataTemplate>
+
+        <DataTemplate x:Key="NodeTemplate">
+            <toolkit:Expander x:Name="InnerNodeExpander" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+                <toolkit:Expander.Header>
+                    <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="BackgroundColor" Value="#D6F5D6" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <HorizontalStackLayout Spacing="6">
+                            <Label Text="▶">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding Source={x:Reference InnerNodeExpander}, Path=IsExpanded}"
+                                                 Value="True">
+                                        <Setter Property="Text" Value="▼" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                            <Label Text="{Binding Icon}" />
+                            <Label Text="{Binding Name}" />
+                        </HorizontalStackLayout>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
+                                                  CommandParameter="{Binding}" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="0"
+                                     BindableLayout.ItemsSource="{Binding Children}"
+                                     BindableLayout.ItemTemplateSelector="{StaticResource ActionNodeTemplateSelector}" />
+            </toolkit:Expander>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ActionTemplate">
+            <toolkit:Expander x:Name="ActionExpander" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+                <toolkit:Expander.Header>
+                    <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="BackgroundColor" Value="#D6F5D6" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <HorizontalStackLayout Spacing="6">
+                            <Label Text="▼">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding Source={x:Reference ActionExpander}, Path=IsExpanded}"
+                                                 Value="False">
+                                        <Setter Property="Text" Value="▶" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                            <Label Text="{Binding Icon}" />
+                            <Label Text="{Binding Name}" FontAttributes="Bold" />
+                        </HorizontalStackLayout>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
+                                                  CommandParameter="{Binding}" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="0"
+                                     BindableLayout.ItemsSource="{Binding Children}"
+                                     BindableLayout.ItemTemplateSelector="{StaticResource ActionNodeTemplateSelector}" />
+            </toolkit:Expander>
+        </DataTemplate>
+
+        <controls:ActionNodeTemplateSelector x:Key="ActionNodeTemplateSelector"
+                                             ActionTemplate="{StaticResource ActionTemplate}"
+                                             NodeTemplate="{StaticResource NodeTemplate}"
+                                             StepTemplate="{StaticResource StepTemplate}"
+                                             InputTemplate="{StaticResource InputTemplate}" />
+    </ContentView.Resources>
+
+    <Grid RowDefinitions="Auto,*" Padding="8,6">
+        <HorizontalStackLayout Spacing="8">
+            <Button Text="+ Action" Command="{Binding AddActionCommand}" />
+            <Button Text="+ Condition" Command="{Binding AddConditionCommand}" />
+            <Button Text="+ Command" Command="{Binding AddCommandCommand}" />
+            <Button Text="Delete" Command="{Binding DeleteCommand}" />
+        </HorizontalStackLayout>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="0"
+                             BindableLayout.ItemsSource="{Binding Roots}"
+                             BindableLayout.ItemTemplateSelector="{StaticResource ActionNodeTemplateSelector}" />
+    </Grid>
+</ContentView>

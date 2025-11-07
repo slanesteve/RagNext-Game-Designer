@@ -24,7 +24,6 @@ namespace RagNext
                 _currentGame = value;
                 GameChanged?.Invoke(_currentGame);
 
-                // Reset each tab to its root page (RoomsPage, GameObjectsPage, etc.)
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
                     var shell = Shell.Current;
@@ -82,10 +81,46 @@ namespace RagNext
             _ = ConditionCatalogLoader.InitializeAsync();
 
             MainPage = new SplashPage();
-
             var aiService = MauiProgram.Services.GetService(typeof(IAISettingsService)) as IAISettingsService;
             if (aiService is not null)
                 CurrentAISettings = aiService.Load();
+        }
+
+        protected override Window CreateWindow(IActivationState? activationState)
+        {
+            var window = new Window(MainPage ?? new SplashPage())
+            {
+                Width = 1280,
+                Height = 800,
+                MinimumWidth = 1024,
+                MinimumHeight = 700,
+                Title = "RagNext Designer"
+            };
+
+#if WINDOWS
+            window.Created += (s, e) =>
+            {
+                try
+                {
+                    var native = window.Handler.PlatformView as Microsoft.UI.Xaml.Window;
+                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(native);
+                    var id = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+                    var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(id);
+                    var area = Microsoft.UI.Windowing.DisplayArea
+                        .GetFromWindowId(id, Microsoft.UI.Windowing.DisplayAreaFallback.Nearest)
+                        .WorkArea;
+
+                    var w = (int)window.Width;
+                    var h = (int)window.Height;
+                    var x = area.X + (area.Width - w) / 2;
+                    var y = area.Y + (area.Height - h) / 2;
+
+                    appWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, w, h));
+                }
+                catch { /* ignore centering errors */ }
+            };
+#endif
+            return window;
         }
     }
 }

@@ -1,11 +1,12 @@
+using System.Collections.Generic;
+
 namespace RagsCore.Actions
 {
-    // Marker for items that can live in an action's step list.
+    // Public so UI can read it.
     public class ActionNode
     {
-        // Short, user-facing label for UI lists.
-        string Title { get; set; }
+        // User-facing label.
+        public string Title { get; set; } = string.Empty;
         public List<StepDefinitionBase> Steps { get; set; } = new();
-
     }
 }

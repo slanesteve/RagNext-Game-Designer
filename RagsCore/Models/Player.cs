@@ -23,18 +23,13 @@ namespace RagsCore.Models
         private bool _bPromptForName = false;
         public bool bPromptForName { get => _bPromptForName; set => SetProperty(ref _bPromptForName, value); }
         private string _gender = "Male";
+        public string Gender { get => _gender; set => SetProperty(ref _gender, value); }
 
         private Room? _startingRoom = null;
         public Room? StartingRoom { get => _startingRoom; set => SetProperty(ref _startingRoom, value); }
-        public string Gender { get => _gender; set => SetProperty(ref _gender, value); }
 
         public ObservableCollection<GameObject> Inventory { get; set; } = new();
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
-        internal ObservableCollection<Action> Actions { get; set; } = new();
-
-       
-
-        
-       
+        public ObservableCollection<Action> Actions { get; set; } = new(); // was internal
     }
 }

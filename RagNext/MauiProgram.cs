@@ -44,13 +44,20 @@ namespace RagNext
             builder.Services.AddSingleton<RagsCore.Services.IMediaPathProvider, RagNext.Services.MauiMediaPathProvider>();
             builder.Services.AddSingleton<RagsCore.Services.IMediaLibrary, RagsCore.Services.MediaLibrary>();
             builder.Services.AddSingleton<IAISettingsService, AISettingsService>();
-            builder.Services.AddSingleton<IAIChatService, AIChatService>(); // <-- add AI chat service
+            builder.Services.AddSingleton<IAIChatService, AIChatService>();
+
+            // NEW: media tree persistence + VM
+            builder.Services.AddSingleton<IMediaTreeStore, MediaTreeStore>();
+            builder.Services.AddSingleton<MediaLibraryViewModel>();
 
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
 
             var app = builder.Build();
+            var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("RagNext.Services.GameStorage");
+            RagNext.Services.GameStorage.ConfigureLogger(logger);
             Services = app.Services;
             return app;
         }

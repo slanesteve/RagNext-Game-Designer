@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using RagsCore.Models;
 using Microsoft.Maui.Storage;
+using Microsoft.Extensions.Logging;
 
 namespace RagNext.Services
 {
@@ -19,6 +20,10 @@ namespace RagNext.Services
             PropertyNameCaseInsensitive = true
         };
 
+        // Optional: configured from MauiProgram
+        private static ILogger? _logger;
+        public static void ConfigureLogger(ILogger logger) => _logger = logger;
+
         private static void EnsureDirectory()
         {
             if (!Directory.Exists(SavesDirectory))
@@ -32,7 +37,6 @@ namespace RagNext.Services
             return string.IsNullOrEmpty(sanitized) ? "save" : sanitized;
         }
 
-        // Backwards-compatible: original single-file save/load (keeps behavior if no saves folder)
         private static string LegacyFilePath =>
             Path.Combine(FileSystem.Current.AppDataDirectory, "game.json");
 
@@ -65,22 +69,34 @@ namespace RagNext.Services
         // Load the most-recent save (keeps original behavior)
         public static async Task<Game?> LoadAsync()
         {
-            // Prefer most recent file in saves folder
-            EnsureDirectory();
-            var files = Directory.GetFiles(SavesDirectory, "*.json");
-            if (files.Length > 0)
+            string? attemptedPath = null;
+            try
             {
-                var latest = files.OrderByDescending(f => File.GetLastWriteTimeUtc(f)).First();
-                var json = await File.ReadAllTextAsync(latest).ConfigureAwait(false);
-                return JsonSerializer.Deserialize<Game>(json, Options);
+                // Prefer most recent file in saves folder
+                EnsureDirectory();
+                var files = Directory.GetFiles(SavesDirectory, "*.json");
+                if (files.Length > 0)
+                {
+                    var latest = files.OrderByDescending(f => File.GetLastWriteTimeUtc(f)).First();
+                    attemptedPath = latest;
+                    var json = await File.ReadAllTextAsync(latest).ConfigureAwait(false);
+                    return JsonSerializer.Deserialize<Game>(json, Options);
+                }
+
+                // Fallback to legacy single-file behavior
+                if (!File.Exists(LegacyFilePath))
+                    return null;
+
+                attemptedPath = LegacyFilePath;
+                var legacyJson = await File.ReadAllTextAsync(LegacyFilePath).ConfigureAwait(false);
+                return JsonSerializer.Deserialize<Game>(legacyJson, Options);
             }
-
-            // Fallback to legacy single-file behavior
-            if (!File.Exists(LegacyFilePath))
+            catch (Exception err)
+            {
+                _logger?.LogError(err, "Failed to load game. Path: {Path}", attemptedPath ?? "(unknown)");
+                System.Diagnostics.Trace.TraceError($"Failed to load game. Path: {attemptedPath ?? "(unknown)"}; {err}");
                 return null;
-
-            var legacyJson = await File.ReadAllTextAsync(LegacyFilePath).ConfigureAwait(false);
-            return JsonSerializer.Deserialize<Game>(legacyJson, Options);
+            }
         }
 
         // Load a specific named save (name without extension)

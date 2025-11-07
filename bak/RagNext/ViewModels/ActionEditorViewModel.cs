@@ -1,4 +1,4 @@
-using System;
+    using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
@@ -26,6 +26,14 @@ namespace RagNext.ViewModels
         private string? _selectedCommandKey;
         public string? SelectedCommandKey { get => _selectedCommandKey; set => SetProperty(ref _selectedCommandKey, value); }
 
+        // Add this new property so the UI can bind the currently selected command.
+        private GameCommand? _selectedCommand;
+        public GameCommand? SelectedCommand
+        {
+            get => _selectedCommand;
+            set => SetProperty(ref _selectedCommand, value);
+        }
+
         public ICommand AddConditionCommand { get; }
         public ICommand AddCommandCommand { get; }
         public ICommand RemoveConditionCommand { get; }
@@ -46,10 +54,28 @@ namespace RagNext.ViewModels
                 SelectedConditionKey = null;
             });
 
+            // (Optional) if you later unify conditions + commands into one ordered list,
+            // you'd introduce a single ObservableCollection<object> Steps and insert both there.
+
+            // Replace the existing AddCommandCommand initialization with this:
             AddCommandCommand = new Command(() =>
             {
                 if (string.IsNullOrWhiteSpace(SelectedCommandKey)) return;
-                Action.Commands.Add(CreateCommand(SelectedCommandKey));
+                var newCmd = CreateCommand(SelectedCommandKey);
+
+                if (SelectedCommand is not null)
+                {
+                    var idx = Action.Commands.IndexOf(SelectedCommand);
+                    if (idx >= 0)
+                        Action.Commands.Insert(idx + 1, newCmd); // insert as peer after selection
+                    else
+                        Action.Commands.Add(newCmd);
+                }
+                else
+                {
+                    Action.Commands.Add(newCmd); // fallback to append
+                }
+
                 SelectedCommandKey = null;
             });
 

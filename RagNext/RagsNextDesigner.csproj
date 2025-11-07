@@ -97,6 +97,15 @@
 	  <MauiXaml Update="Views\CharactersPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\Controls\ActionTreeView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Controls\MediaTreeView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Controls\RightPaneLayout.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\GameObjectEditPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
@@ -130,22 +139,16 @@
 	  <MauiXaml Remove="Views\Controls\ActionCommandsEditorView.xaml" />
 	  <MauiXaml Remove="Views\Controls\ActionEditorView.xaml" />
 	  <MauiXaml Remove="Views\Controls\ActionTreeEditorView.xaml" />
-	  <MauiXaml Remove="Views\Controls\ActionTreeView.xaml" />
 
 	  <Compile Remove="Views\Controls\ActionBranchEditorView.xaml.cs" />
 	  <Compile Remove="Views\Controls\ActionBranchNodeView.xaml.cs" />
 	  <Compile Remove="Views\Controls\ActionCommandsEditorView.xaml.cs" />
 	  <Compile Remove="Views\Controls\ActionEditorView.xaml.cs" />
 	  <Compile Remove="Views\Controls\ActionTreeEditorView.xaml.cs" />
-	  <Compile Remove="Views\Controls\ActionTreeView.xaml.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <None Remove="Resources\Raw\Commands.json" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Views\Controls\" />
 	</ItemGroup>
 
 	<ItemGroup>

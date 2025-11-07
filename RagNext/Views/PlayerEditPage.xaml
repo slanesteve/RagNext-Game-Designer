@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:rag="clr-namespace:RagNext"
+    xmlns:controls="clr-namespace:RagNext.Views.Controls"
     Title="Edit Player">
 
     <ContentPage.ToolbarItems>
@@ -116,6 +117,10 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
+            <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
+
+            <Label Text="Actions" FontAttributes="Bold" />
+            <controls:ActionTreeView Player="{Binding .}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
