@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:models="clr-namespace:RagsCore.Models;assembly=RagsCore"
     xmlns:controls="clr-namespace:RagNext.Views.Controls"
+    xmlns:behaviors="clr-namespace:RagNext.Behaviors"
     x:DataType="models:Character"
     Title="Edit Character">
 
@@ -13,50 +14,73 @@
         <ToolbarItem Text="Cancel" Clicked="OnCancelClicked" Priority="1" />
     </ContentPage.ToolbarItems>
 
-    <ScrollView>
-        <VerticalStackLayout Padding="12" Spacing="10">
-            <Label Text="Name" />
-            <Grid ColumnDefinitions="*,Auto">
-                <Entry x:Name="NameEntry" Text="{Binding Name}" Placeholder="Character name" Grid.Column="0" />
-                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
-                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference NameEntry}" />
-            </Grid>
+    <Grid>
+        <ScrollView VerticalScrollBarVisibility="Always">
+            <ScrollView.Behaviors>
+                <behaviors:ScrollAwareBehavior x:Name="ScrollAwareCharacter"/>
+            </ScrollView.Behaviors>
+            <VerticalStackLayout Padding="12" Spacing="10">
+                <Label Text="Name" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <Entry x:Name="NameEntry" Text="{Binding Name}" Placeholder="Character name" Grid.Column="0" />
+                    <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                            Clicked="OnAskAIClicked" CommandParameter="{x:Reference NameEntry}" />
+                </Grid>
 
-            <Label Text="Description" />
-            <Grid ColumnDefinitions="*,Auto">
-                <Editor x:Name="DescriptionEditor" Text="{Binding Description}" HeightRequest="120" Grid.Column="0" />
-                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
-                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference DescriptionEditor}" />
-            </Grid>
+                <Label Text="Description" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <Editor x:Name="DescriptionEditor" Text="{Binding Description}" HeightRequest="120" Grid.Column="0" />
+                    <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                            Clicked="OnAskAIClicked" CommandParameter="{x:Reference DescriptionEditor}" />
+                </Grid>
 
-            <Label Text="Health" />
-            <Grid ColumnDefinitions="*,Auto">
-                <Entry x:Name="HealthEntry" Text="{Binding Health}" Keyboard="Numeric" Grid.Column="0" />
-                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
-                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference HealthEntry}" />
-            </Grid>
+                <Label Text="Health" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <Entry x:Name="HealthEntry" Text="{Binding Health}" Keyboard="Numeric" Grid.Column="0" />
+                    <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                            Clicked="OnAskAIClicked" CommandParameter="{x:Reference HealthEntry}" />
+                </Grid>
 
-            <StackLayout Orientation="Horizontal" Spacing="12">
-                <Label Text="Hostile" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding IsHostile}" />
-            </StackLayout>
+                <StackLayout Orientation="Horizontal" Spacing="12">
+                    <Label Text="Hostile" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding IsHostile}" />
+                </StackLayout>
 
-            <StackLayout Orientation="Horizontal" Spacing="12">
-                <Label Text="Collectible" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding IsCollectible}" />
-            </StackLayout>
+                <StackLayout Orientation="Horizontal" Spacing="12">
+                    <Label Text="Collectible" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding IsCollectible}" />
+                </StackLayout>
 
-            <Label Text="Dialogue" />
-            <Grid ColumnDefinitions="*,Auto">
-                <Editor x:Name="DialogueEditor" Text="{Binding Dialogue}" HeightRequest="100" Grid.Column="0" />
-                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
-                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference DialogueEditor}" />
-            </Grid>
+                <Label Text="Dialogue" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <Editor x:Name="DialogueEditor" Text="{Binding Dialogue}" HeightRequest="100" Grid.Column="0" />
+                    <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                            Clicked="OnAskAIClicked" CommandParameter="{x:Reference DialogueEditor}" />
+                </Grid>
 
-            <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
+                <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
 
-            <!-- Actions -->
-            <controls:ActionTreeView GameObject="{Binding .}" />
-        </VerticalStackLayout>
-    </ScrollView>
+                <!-- Actions -->
+                <controls:ActionTreeView GameObject="{Binding .}" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border InputTransparent="True"
+                IsVisible="{Binding Source={x:Reference ScrollAwareCharacter}, Path=HasMoreAbove}"
+                Background="{AppThemeBinding Light={StaticResource TopFadeLight}, Dark={StaticResource TopFadeDark}}"
+                HeightRequest="32"
+                HorizontalOptions="Fill"
+                VerticalOptions="Start">
+            <Label Text="▲" HorizontalOptions="Center" VerticalOptions="Center" FontSize="12" Opacity="0.6"/>
+        </Border>
+
+        <Border InputTransparent="True"
+                IsVisible="{Binding Source={x:Reference ScrollAwareCharacter}, Path=HasMoreBelow}"
+                Background="{AppThemeBinding Light={StaticResource BottomFadeLight}, Dark={StaticResource BottomFadeDark}}"
+                HeightRequest="40"
+                HorizontalOptions="Fill"
+                VerticalOptions="End">
+            <Label Text="Scroll for more ▼" HorizontalOptions="Center" VerticalOptions="Center" FontSize="12" Opacity="0.7"/>
+        </Border>
+    </Grid>
 </ContentPage>

@@ -1,41 +1,75 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:behaviors="clr-namespace:RagNext.Behaviors"
              x:Class="RagNext.Views.EditStepPage"
-             Title="Edit Step">
-    <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="12">
-            <Label Text="Select Type" FontAttributes="Bold"/>
-            <Picker x:Name="DefinitionPicker"
-                    ItemsSource="{Binding Definitions}"
-                    ItemDisplayBinding="{Binding Name}"
-                    SelectedItem="{Binding SelectedDefinition}" />
+             Title="{Binding SelectedDefinition.Name, StringFormat='Edit Step - {0}'}">
+    <Grid>
+        <ScrollView VerticalScrollBarVisibility="Always">
+            <ScrollView.Behaviors>
+                <behaviors:ScrollAwareBehavior x:Name="ScrollAware"/>
+            </ScrollView.Behaviors>
+            <VerticalStackLayout Padding="16" Spacing="12">
+                <Label Text="Select Type" FontAttributes="Bold"/>
+                <Picker x:Name="DefinitionPicker"
+                        ItemsSource="{Binding Definitions}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedDefinition}" />
 
-            <Label Text="Inputs" FontAttributes="Bold" />
-            <CollectionView ItemsSource="{Binding EditableInputs}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <VerticalStackLayout Spacing="4">
-                            <Label Text="{Binding Label}" />
-                            <Entry Text="{Binding Value, Mode=TwoWay}"
-                                   IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}" />
-                            <Editor Text="{Binding Value, Mode=TwoWay}" 
-                                    IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}" />
-                            <Picker ItemsSource="{Binding PickerSource}"
-                                    ItemDisplayBinding="{Binding Name}"
-                                    SelectedItem="{Binding Value, Mode=TwoWay}"
-                                    IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}" />
-                            <CheckBox IsChecked="{Binding Value, Mode=TwoWay}"
-                                      IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}" />
-                        </VerticalStackLayout>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                <Label Text="Inputs" FontAttributes="Bold" />
+                <CollectionView ItemsSource="{Binding EditableInputs}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding Label}" />
+                                <Entry Text="{Binding Value, Mode=TwoWay}"
+                                       IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}" />
+                                <Editor Text="{Binding Value, Mode=TwoWay}" 
+                                        IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}" />
+                                <Picker ItemsSource="{Binding PickerSource}"
+                                        ItemDisplayBinding="{Binding Name}"
+                                        SelectedItem="{Binding Value, Mode=TwoWay}"
+                                        IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}" />
+                                <CheckBox IsChecked="{Binding Value, Mode=TwoWay}"
+                                          IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}" />
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
 
-            <HorizontalStackLayout Spacing="12">
-                <Button Text="Save" Command="{Binding SaveCommand}" />
-                <Button Text="Cancel" Command="{Binding CancelCommand}" />
-            </HorizontalStackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
+                <HorizontalStackLayout Spacing="12">
+                    <Button Text="Save" Command="{Binding SaveCommand}" />
+                    <Button Text="Cancel" Command="{Binding CancelCommand}" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Top fade -->
+        <Border InputTransparent="True"
+                IsVisible="{Binding Source={x:Reference ScrollAware}, Path=HasMoreAbove}"
+                Background="{AppThemeBinding Light={StaticResource TopFadeLight}, Dark={StaticResource TopFadeDark}}"
+                HeightRequest="32"
+                HorizontalOptions="Fill"
+                VerticalOptions="Start">
+            <Label Text="▲"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   FontSize="12"
+                   Opacity="0.6"/>
+        </Border>
+
+        <!-- Bottom fade -->
+        <Border InputTransparent="True"
+                IsVisible="{Binding Source={x:Reference ScrollAware}, Path=HasMoreBelow}"
+                Background="{AppThemeBinding Light={StaticResource BottomFadeLight}, Dark={StaticResource BottomFadeDark}}"
+                HeightRequest="40"
+                HorizontalOptions="Fill"
+                VerticalOptions="End">
+            <Label Text="Scroll for more ▼"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   FontSize="12"
+                   Opacity="0.7"/>
+        </Border>
+    </Grid>
 </ContentPage>

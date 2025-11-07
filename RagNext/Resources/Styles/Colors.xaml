@@ -42,4 +42,22 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+
+    <!-- Add gradient brushes for fades -->
+    <LinearGradientBrush x:Key="TopFadeLight" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFFFFFF" Offset="0"/>
+        <GradientStop Color="#00FFFFFF" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BottomFadeLight" StartPoint="0,1" EndPoint="0,0">
+        <GradientStop Color="#FFFFFFFF" Offset="0"/>
+        <GradientStop Color="#00FFFFFF" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="TopFadeDark" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF282C34" Offset="0"/>
+        <GradientStop Color="#00282C34" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BottomFadeDark" StartPoint="0,1" EndPoint="0,0">
+        <GradientStop Color="#FF282C34" Offset="0"/>
+        <GradientStop Color="#00282C34" Offset="1"/>
+    </LinearGradientBrush>
 </ResourceDictionary>

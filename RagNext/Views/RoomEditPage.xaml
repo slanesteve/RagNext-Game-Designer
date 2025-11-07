@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:RagNext.Views.Controls"
+    xmlns:behaviors="clr-namespace:RagNext.Behaviors"
     Title="Edit Room">
 
     <ContentPage.ToolbarItems>
@@ -11,26 +12,49 @@
         <ToolbarItem Text="Cancel" Clicked="OnCancelClicked" Priority="1" />
     </ContentPage.ToolbarItems>
 
-    <ScrollView>
-        <VerticalStackLayout Padding="12" Spacing="10">
-            <Label Text="Name" />
-            <Grid ColumnDefinitions="*,Auto">
-                <Entry x:Name="NameEntry" Text="{Binding Name}" Placeholder="Room name" Grid.Column="0" />
-                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
-                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference NameEntry}" />
-            </Grid>
+    <Grid>
+        <ScrollView VerticalScrollBarVisibility="Always">
+            <ScrollView.Behaviors>
+                <behaviors:ScrollAwareBehavior x:Name="ScrollAwareRoom"/>
+            </ScrollView.Behaviors>
+            <VerticalStackLayout Padding="12" Spacing="10">
+                <Label Text="Name" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <Entry x:Name="NameEntry" Text="{Binding Name}" Placeholder="Room name" Grid.Column="0" />
+                    <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                            Clicked="OnAskAIClicked" CommandParameter="{x:Reference NameEntry}" />
+                </Grid>
 
-            <Label Text="Description" />
-            <Grid ColumnDefinitions="*,Auto">
-                <Editor x:Name="DescriptionEditor" Text="{Binding Description}" HeightRequest="150" Grid.Column="0" />
-                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
-                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference DescriptionEditor}" />
-            </Grid>
+                <Label Text="Description" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <Editor x:Name="DescriptionEditor" Text="{Binding Description}" HeightRequest="150" Grid.Column="0" />
+                    <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
+                            Clicked="OnAskAIClicked" CommandParameter="{x:Reference DescriptionEditor}" />
+                </Grid>
 
-            <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
+                <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
 
-            <!-- Actions -->
-            <controls:ActionTreeView Room="{Binding .}" />
-        </VerticalStackLayout>
-    </ScrollView>
+                <!-- Actions -->
+                <controls:ActionTreeView Room="{Binding .}" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border InputTransparent="True"
+                IsVisible="{Binding Source={x:Reference ScrollAwareRoom}, Path=HasMoreAbove}"
+                Background="{AppThemeBinding Light={StaticResource TopFadeLight}, Dark={StaticResource TopFadeDark}}"
+                HeightRequest="32"
+                HorizontalOptions="Fill"
+                VerticalOptions="Start">
+            <Label Text="▲" HorizontalOptions="Center" VerticalOptions="Center" FontSize="12" Opacity="0.6"/>
+        </Border>
+
+        <Border InputTransparent="True"
+                IsVisible="{Binding Source={x:Reference ScrollAwareRoom}, Path=HasMoreBelow}"
+                Background="{AppThemeBinding Light={StaticResource BottomFadeLight}, Dark={StaticResource BottomFadeDark}}"
+                HeightRequest="40"
+                HorizontalOptions="Fill"
+                VerticalOptions="End">
+            <Label Text="Scroll for more ▼" HorizontalOptions="Center" VerticalOptions="Center" FontSize="12" Opacity="0.7"/>
+        </Border>
+    </Grid>
 </ContentPage>

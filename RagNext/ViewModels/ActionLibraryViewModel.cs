@@ -409,6 +409,15 @@ namespace RagNext.ViewModels
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
                 var page = new EditStepPage(step);
+
+                void OnClosed(object? s, EventArgs e)
+                {
+                    page.Disappearing -= OnClosed;
+                    Rebuild(); // Refresh names in the tree after edit page closes
+                }
+
+                page.Disappearing += OnClosed;
+
                 await (Application.Current.MainPage?.Navigation ?? Shell.Current.Navigation)
                     .PushModalAsync(page);
             });
