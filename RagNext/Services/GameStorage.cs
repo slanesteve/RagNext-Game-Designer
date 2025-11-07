@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using RagsCore.Models;
 using Microsoft.Maui.Storage;
 using Microsoft.Extensions.Logging;
+using RagsCore.Actions;
 
 namespace RagNext.Services
 {
@@ -14,11 +15,20 @@ namespace RagNext.Services
         private static string SavesDirectory =>
             Path.Combine(FileSystem.Current.AppDataDirectory, "saves");
 
-        private static JsonSerializerOptions Options => new(JsonSerializerDefaults.Web)
+        private static JsonSerializerOptions Options
         {
-            WriteIndented = true,
-            PropertyNameCaseInsensitive = true
-        };
+            get
+            {
+                var opts = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                {
+                    WriteIndented = true,
+                    PropertyNameCaseInsensitive = true
+                };
+                // Ensure polymorphic deserialization for steps
+                opts.Converters.Add(new StepDefinitionBaseJsonConverter());
+                return opts;
+            }
+        }
 
         // Optional: configured from MauiProgram
         private static ILogger? _logger;

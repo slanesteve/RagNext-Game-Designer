@@ -3,6 +3,7 @@
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:RagsCore.Models;assembly=RagsCore"
+             xmlns:controls="clr-namespace:RagNext.Views.Controls"
              x:DataType="models:GameObject"
              Title="Edit Object">
     <ContentPage.ToolbarItems>
@@ -27,6 +28,9 @@
             </Grid>
 
             <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
+
+            <!-- Actions -->
+            <controls:ActionTreeView GameObject="{Binding .}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

@@ -17,8 +17,11 @@ namespace RagsCore.Models
         // Optional simple dialogue or flavor text
         private string? _dialogue;
         public string? Dialogue { get => _dialogue; set => SetProperty(ref _dialogue, value); }
+
         public ObservableCollection<GameObject> Inventory { get; set; } = new();
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
-        internal ObservableCollection<Action> Actions { get; set; } = new();
+
+        // Make Actions public so the action tree can bind.
+        public new ObservableCollection<Action> Actions { get; set; } = new();
     }
 }

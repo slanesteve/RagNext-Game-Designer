@@ -4,7 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:RagNext.Views.Controls"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-                 x:Class="RagNext.Views.Controls.ActionTreeView">
+             x:Class="RagNext.Views.Controls.ActionTreeView">
     <ContentView.Resources>
         <DataTemplate x:Key="InputTemplate">
             <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
@@ -18,7 +18,11 @@
                     <Label Text="{Binding Name}" />
                 </HorizontalStackLayout>
                 <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
+                    <TapGestureRecognizer NumberOfTapsRequired="2"
+                                          Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.EditNodeCommand}"
+                                          CommandParameter="{Binding}" />
+                    <TapGestureRecognizer NumberOfTapsRequired="1"
+                                          Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                           CommandParameter="{Binding}" />
                 </Border.GestureRecognizers>
             </Border>
@@ -47,7 +51,11 @@
                             <Label Text="{Binding Name}" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
+                            <TapGestureRecognizer NumberOfTapsRequired="2"
+                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.EditNodeCommand}"
+                                                  CommandParameter="{Binding}" />
+                            <TapGestureRecognizer NumberOfTapsRequired="1"
+                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
                         </Border.GestureRecognizers>
                     </Border>
@@ -81,7 +89,11 @@
                             <Label Text="{Binding Name}" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
+                            <TapGestureRecognizer NumberOfTapsRequired="2"
+                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.EditNodeCommand}"
+                                                  CommandParameter="{Binding}" />
+                            <TapGestureRecognizer NumberOfTapsRequired="1"
+                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
                         </Border.GestureRecognizers>
                     </Border>
@@ -115,7 +127,11 @@
                             <Label Text="{Binding Name}" FontAttributes="Bold" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
+                            <TapGestureRecognizer NumberOfTapsRequired="2"
+                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.EditNodeCommand}"
+                                                  CommandParameter="{Binding}" />
+                            <TapGestureRecognizer NumberOfTapsRequired="1"
+                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
                         </Border.GestureRecognizers>
                     </Border>

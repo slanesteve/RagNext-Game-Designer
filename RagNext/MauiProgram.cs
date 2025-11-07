@@ -7,6 +7,7 @@ using System;
 using RagNext.Services;
 using Microsoft.Maui;
 using Microsoft.Maui.Hosting;
+using RagNext.Models;
 
 namespace RagNext
 {
@@ -32,6 +33,8 @@ namespace RagNext
             builder.Services.AddSingleton<GameObjectsPage>();
             builder.Services.AddTransient<GameObjectEditPage>();
             builder.Services.AddTransient<PlayerEditPage>();
+            // Settings pages
+            builder.Services.AddTransient<GeneralSettingsPage>();
 
             builder.Services.AddSingleton<MainViewModel>();
             builder.Services.AddSingleton<RoomsViewModel>();
@@ -45,8 +48,9 @@ namespace RagNext
             builder.Services.AddSingleton<RagsCore.Services.IMediaLibrary, RagsCore.Services.MediaLibrary>();
             builder.Services.AddSingleton<IAISettingsService, AISettingsService>();
             builder.Services.AddSingleton<IAIChatService, AIChatService>();
+            // General settings service
+            builder.Services.AddSingleton<IGeneralSettingsService, GeneralSettingsService>();
 
-            // NEW: media tree persistence + VM
             builder.Services.AddSingleton<IMediaTreeStore, MediaTreeStore>();
             builder.Services.AddSingleton<MediaLibraryViewModel>();
 
@@ -55,6 +59,30 @@ namespace RagNext
 #endif
 
             var app = builder.Build();
+
+            // Apply saved Designer Theme at startup
+            var general = app.Services.GetService<IGeneralSettingsService>();
+            if (general != null)
+            {
+                var s = general.Load();
+                var theme = s is null ? AppTheme.Unspecified : s.DesignerTheme switch
+                {
+                    DesignerTheme.Light => AppTheme.Light,
+                    DesignerTheme.Dark  => AppTheme.Dark,
+                    _                   => AppTheme.Unspecified
+                };
+
+                // Avoid null ref if Application.Current isn't set yet
+                if (Application.Current is Application currentApp)
+                {
+                    currentApp.UserAppTheme = theme;
+                }
+            }
+
+            // Example: apply a custom palette on top of light/dark
+            // Theme options you add: "Nord", "Dracula", "SolarizedDark", etc.
+            RagNext.Services.ThemeService.ApplyThemeDictionary("Nord");
+
             var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("RagNext.Services.GameStorage");
             RagNext.Services.GameStorage.ConfigureLogger(logger);

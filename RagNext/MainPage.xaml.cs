@@ -224,7 +224,8 @@ namespace RagNext
         }
         private async void OnSettingsGeneral(object? sender, EventArgs e)
         {
-            await DisplayAlert("Settings", "General not implemented.", "OK");
+            var page = new Views.GeneralSettingsPage();
+            await Navigation.PushModalAsync(page);
         }
         private async void OnSettingsAI(object? sender, EventArgs e)
         {
@@ -242,7 +243,7 @@ namespace RagNext
         {
             // Show a platform-friendly action sheet instead of constructing a MenuFlyout
             // (avoids APIs like MenuFlyout.Items and ShowAt which aren't available here)
-            var options = new[] { "Save", "Load", "Exit"};
+            var options = new[] {"New", "Save", "Load", "Exit"};
             var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
 
             if (string.IsNullOrEmpty(choice) || choice == "Cancel")
@@ -250,6 +251,9 @@ namespace RagNext
 
             switch (choice)
             {
+                case "New":
+                    await CreateNewGameFlowAsync();
+                    break;
                 case "Save":
                     OnSaveClicked(this, EventArgs.Empty);
                     break;

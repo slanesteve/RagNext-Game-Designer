@@ -6,12 +6,9 @@ using System.Threading.Tasks;
 
 namespace RagsCore.Actions
 {
+    // Remove duplicate (shadowing) properties; inherit Name/Category/Inputs from base
     public class CommandDefinition : StepDefinitionBase
     {
         public CommandDefinition() : base(StepKind.Command) { }
-        public string Name { get; set; }
-        public string Category { get; set; }
-        // Matches JSON: "inputs": [ { label, controlType, dataType } ]
-        public List<InputDefinition> Inputs { get; set; } = new();
     }
 }

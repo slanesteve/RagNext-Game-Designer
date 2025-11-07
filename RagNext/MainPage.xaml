@@ -36,7 +36,7 @@
                     </Border>
 
                     <HorizontalStackLayout Spacing="12" HorizontalOptions="Fill">
-                        <Button x:Name="CounterBtn" Text="Click me" Clicked="OnCounterClicked" HorizontalOptions="StartAndExpand" />
+                        <Button x:Name="CounterBtn" Text="Current Game: None"  HorizontalOptions="StartAndExpand" />
                         <Button x:Name="Savebtn" Text="Save Game" Clicked="OnSaveClicked"
                                 SemanticProperties.Hint="Saves the game" HorizontalOptions="End" />
                     </HorizontalStackLayout>

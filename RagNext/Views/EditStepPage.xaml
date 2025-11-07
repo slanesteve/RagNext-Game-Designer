@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RagNext.Views.EditStepPage"
+             Title="Edit Step">
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Label Text="Select Type" FontAttributes="Bold"/>
+            <Picker x:Name="DefinitionPicker"
+                    ItemsSource="{Binding Definitions}"
+                    ItemDisplayBinding="{Binding Name}"
+                    SelectedItem="{Binding SelectedDefinition}" />
+
+            <Label Text="Inputs" FontAttributes="Bold" />
+            <CollectionView ItemsSource="{Binding EditableInputs}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding Label}" />
+                            <Entry Text="{Binding Value, Mode=TwoWay}"
+                                   IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}" />
+                            <Editor Text="{Binding Value, Mode=TwoWay}" 
+                                    IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}" />
+                            <Picker ItemsSource="{Binding PickerSource}"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    SelectedItem="{Binding Value, Mode=TwoWay}"
+                                    IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}" />
+                            <CheckBox IsChecked="{Binding Value, Mode=TwoWay}"
+                                      IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}" />
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="Save" Command="{Binding SaveCommand}" />
+                <Button Text="Cancel" Command="{Binding CancelCommand}" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

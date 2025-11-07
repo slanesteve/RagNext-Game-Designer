@@ -6,6 +6,9 @@ using RagsCore.Models;
 using RagsCore.Actions;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Microsoft.Maui.Storage;
+using System.Threading.Tasks;
+using RagNext.Views;
 
 namespace RagNext.ViewModels
 {
@@ -70,6 +73,7 @@ namespace RagNext.ViewModels
         public Command AddConditionCommand { get; }
         public Command AddCommandCommand { get; }
         public Command DeleteCommand { get; }
+        public Command EditNodeCommand { get; }
 
         private readonly ObservableCollection<RagsCore.Models.Action> _actions;
 
@@ -82,6 +86,12 @@ namespace RagNext.ViewModels
             AddConditionCommand = new Command(AddCondition);
             AddCommandCommand = new Command(AddCommand);
             DeleteCommand = new Command(DeleteSelected);
+            EditNodeCommand = new Command<object?>(o =>
+            {
+                if (o is Node n) _ = EditNodeAsync(n);
+            });
+
+            _ = InitializeCatalogsAsync();
             Rebuild();
         }
 
@@ -94,11 +104,32 @@ namespace RagNext.ViewModels
             AddConditionCommand = new Command(AddCondition);
             AddCommandCommand = new Command(AddCommand);
             DeleteCommand = new Command(DeleteSelected);
+            EditNodeCommand = new Command<object?>(o =>
+            {
+                if (o is Node n) _ = EditNodeAsync(n);
+            });
+
+            _ = InitializeCatalogsAsync();
             Rebuild();
         }
 
         public ActionLibraryViewModel(Room room) : this(room.Actions) { }
         public ActionLibraryViewModel(GameObject obj) : this(obj.Actions) { }
+
+        private static async Task InitializeCatalogsAsync()
+        {
+            try
+            {
+                await Task.WhenAll(
+                    Game.EnsureAvailableCommandsAsync(() => FileSystem.OpenAppPackageFileAsync("Commands.json")),
+                    Game.EnsureAvailableConditionsAsync(() => FileSystem.OpenAppPackageFileAsync("Conditions.json"))
+                ).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Catalog init failed: {ex}");
+            }
+        }
 
         private void Rebuild()
         {
@@ -365,6 +396,22 @@ namespace RagNext.ViewModels
                 if (act.Nodes.Any(b => b.Steps.Contains(step)))
                     return act;
             return null;
+        }
+
+        private async Task EditNodeAsync(Node node)
+        {
+            if (node.Model is not StepDefinitionBase step) return;
+
+            // Ensure catalogs loaded
+            await InitializeCatalogsAsync();
+
+            // Navigate on UI thread
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                var page = new EditStepPage(step);
+                await (Application.Current.MainPage?.Navigation ?? Shell.Current.Navigation)
+                    .PushModalAsync(page);
+            });
         }
     }
 }

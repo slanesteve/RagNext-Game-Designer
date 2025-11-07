@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RagNext.Views.GeneralSettingsPage"
+             Title="General Settings">
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+
+            <Label Text="Theme &amp; Color Palette" />
+            <Picker x:Name="CombinedThemePicker" Title="Choose theme/palette">
+                <Picker.Items>
+                    <x:String>System (Default)</x:String>        <!-- 0 -->
+                    <x:String>Light (Default)</x:String>         <!-- 1 -->
+                    <x:String>Dark (Default)</x:String>          <!-- 2 -->
+                    <x:String>Nord</x:String>                    <!-- 3 -->
+                    <x:String>Dracula</x:String>                 <!-- 4 -->
+                    <x:String>Solarized Dark</x:String>          <!-- 5 -->
+                    <x:String>Solarized Light</x:String>         <!-- 6 -->
+                    <x:String>One Dark</x:String>                <!-- 7 -->
+                    <x:String>Monokai</x:String>                 <!-- 8 -->
+                    <x:String>Gruvbox Dark</x:String>            <!-- 9 -->
+                    <x:String>Gruvbox Light</x:String>           <!-- 10 -->
+                    <x:String>True Black</x:String>              <!-- 11 -->
+                    <x:String>High Contrast</x:String>           <!-- 12 -->
+                    <x:String>Sepia</x:String>                   <!-- 13 -->
+                </Picker.Items>
+            </Picker>
+
+            <Button Text="Save" Clicked="OnSaveClicked" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
