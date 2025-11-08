@@ -15,6 +15,8 @@ namespace RagsCore.Models
 
         private string _name = string.Empty;
         public string Name { get => _name; set => SetProperty(ref _name, value); }
+        private bool _initiallyactive = true;
+        public bool InitallyActive { get => _initiallyactive; set => SetProperty(ref _initiallyactive, value); }
 
         private string _type = "string";
         /// <summary>Friendly type name, e.g. "int", "bool", "string".</summary>

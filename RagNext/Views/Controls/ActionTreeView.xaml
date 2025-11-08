@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:RagNext.Views.Controls"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:converter="clr-namespace:RagNext.Converters"
              x:Class="RagNext.Views.Controls.ActionTreeView">
     <ContentView.Resources>
         <DataTemplate x:Key="InputTemplate">
@@ -18,7 +19,6 @@
                     <Label Text="{Binding Name}" />
                 </HorizontalStackLayout>
                 <Border.GestureRecognizers>
-                    <!-- Remove double-click modal editing: keep single-click select only -->
                     <TapGestureRecognizer NumberOfTapsRequired="1"
                                           Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                           CommandParameter="{Binding}" />
@@ -49,7 +49,6 @@
                             <Label Text="{Binding Name}" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <!-- Remove double-click modal editing: keep single-click select only -->
                             <TapGestureRecognizer NumberOfTapsRequired="1"
                                                   Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
@@ -85,7 +84,6 @@
                             <Label Text="{Binding Name}" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <!-- Remove double-click modal editing: keep single-click select only -->
                             <TapGestureRecognizer NumberOfTapsRequired="1"
                                                   Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
@@ -121,7 +119,6 @@
                             <Label Text="{Binding Name}" FontAttributes="Bold" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <!-- Remove double-click modal editing: keep single-click select only -->
                             <TapGestureRecognizer NumberOfTapsRequired="1"
                                                   Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
@@ -139,6 +136,7 @@
                                              NodeTemplate="{StaticResource NodeTemplate}"
                                              StepTemplate="{StaticResource StepTemplate}"
                                              InputTemplate="{StaticResource InputTemplate}" />
+        <converter:NullToBoolConverter x:Key="NullToBoolConverter" />
     </ContentView.Resources>
 
     <Grid RowDefinitions="Auto,*"
@@ -162,8 +160,36 @@
                              BindableLayout.ItemTemplateSelector="{StaticResource ActionNodeTemplateSelector}" />
 
         <!-- Right: Editor for selected step -->
-        <controls:EditStepView Grid.Row="1"
-                               Grid.Column="1"
-                               BindingContext="{Binding Editor}" />
+        <Grid RowDefinitions="Auto,*"
+              ColumnDefinitions="340,*"
+              Padding="8,6"
+              Grid.Row="1"
+              Grid.Column="1">
+            <VerticalStackLayout Grid.Row="1"
+                                 Grid.Column="1"
+                                 Spacing="12">
+                <!-- Step editor (commands / conditions) -->
+                <!-- FIX: bind IsVisible to parent VM using x:Reference so it hides when an action is selected -->
+                <controls:EditStepView BindingContext="{Binding Editor}"
+                                       IsVisible="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.Editor, Converter={StaticResource NullToBoolConverter}}" />
+
+                <!-- Action editor with Initially Active checkbox -->
+                <Border Padding="8"
+                        StrokeShape="RoundRectangle 8"
+                        BackgroundColor="#F3F3F3"
+                        IsVisible="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.ActionEditor, Converter={StaticResource NullToBoolConverter}}">
+                    <VerticalStackLayout BindingContext="{Binding ActionEditor}" Spacing="8">
+                        <Label Text="Edit Action" FontAttributes="Bold" />
+                        <Entry Text="{Binding Name, Mode=TwoWay}" Placeholder="Action name" />
+                        <HorizontalStackLayout Spacing="8">
+                            <Label Text="Initially Active" VerticalTextAlignment="Center" />
+                            <CheckBox IsChecked="{Binding InitiallyActive, Mode=TwoWay}" />
+                        </HorizontalStackLayout>
+                        <Button Text="Apply"
+                                Command="{Binding RenameCommand}" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </Grid>
     </Grid>
 </ContentView>

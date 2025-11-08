@@ -9,12 +9,12 @@ using System.Runtime.CompilerServices;
 using Microsoft.Maui.Storage;
 using System.Threading.Tasks;
 using RagNext.Views;
+using System.Windows.Input;
 
 namespace RagNext.ViewModels
 {
     public sealed class ActionLibraryViewModel : BindableObject
     {
-        // Renamed Node -> Condition, Step -> Command
         public enum NodeKind { Action, Condition, Command, Input }
 
         private sealed class ReferenceEqualityComparer : IEqualityComparer<object>
@@ -43,10 +43,8 @@ namespace RagNext.ViewModels
             public int Level { get; init; }
             private bool _isSelected;
             public bool IsSelected { get => _isSelected; set { if (_isSelected == value) return; _isSelected = value; OnPropertyChanged(); } }
-
             private bool _isExpanded;
             public bool IsExpanded { get => _isExpanded; set { if (_isExpanded == value) return; _isExpanded = value; OnPropertyChanged(); } }
-
             public Thickness Indent => new(Level * 16, 0, 0, 0);
             public string Icon => Kind switch
             {
@@ -56,8 +54,6 @@ namespace RagNext.ViewModels
                 NodeKind.Input => "🔧",
                 _ => "❓"
             };
-
-            // Add this property
             public Node? Parent { get; set; }
         }
 
@@ -89,16 +85,28 @@ namespace RagNext.ViewModels
             }
         }
 
-        // Update right-panel editor, do NOT open modal windows on selection
+        private EditActionViewModel? _actionEditor;
+        public EditActionViewModel? ActionEditor
+        {
+            get => _actionEditor;
+            private set
+            {
+                if (_actionEditor == value) return;
+                _actionEditor = value;
+                OnPropertyChanged();
+            }
+        }
+
         private void SetEditorForSelected(Node? node)
         {
+            Editor = null;
+            ActionEditor = null;
+
             if (node?.Model is StepDefinitionBase step)
             {
                 Editor = new EditStepViewModel(step, async () =>
                 {
-                    // Update existing Node instance instead of rebuilding whole tree (prevents duplicates).
                     node.Name = step.Name;
-                    // Refresh inputs: clear and re-add input child nodes.
                     node.Children.Where(c => c.Kind == NodeKind.Input).ToList().ForEach(c => node.Children.Remove(c));
                     foreach (var input in step.Inputs)
                     {
@@ -112,25 +120,32 @@ namespace RagNext.ViewModels
                         };
                         node.Children.Add(inputNode);
                     }
-                    // Notify property changes.
                     node.GetType().GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-    ?.Invoke(node, new object[] { nameof(Node.Name) });
+                        ?.Invoke(node, new object[] { nameof(Node.Name) });
                     node.GetType().GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-    ?.Invoke(node, new object[] { nameof(Node.Children) });
+                        ?.Invoke(node, new object[] { nameof(Node.Children) });
                     OnPropertyChanged(nameof(Editor));
                 });
+                return;
             }
-            else
+
+            if (node?.Kind == NodeKind.Action && node.Model is RagsCore.Models.Action act)
             {
-                Editor = null;
+                var vm = new EditActionViewModel(act);
+                vm.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(EditActionViewModel.Name))
+                    {
+                        node.Name = vm.Name;
+                        node.GetType().GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                            ?.Invoke(node, new object[] { nameof(Node.Name) });
+                    }
+                };
+                ActionEditor = vm;
             }
         }
 
-        // Helper used by EditStepViewModel instead of a "close" callback that recreates editors.
-        private async Task RebuildAsync()
-        {
-            await MainThread.InvokeOnMainThreadAsync(Rebuild);
-        }
+        private async Task RebuildAsync() => await MainThread.InvokeOnMainThreadAsync(Rebuild);
 
         public ObservableCollection<Node> Roots { get; } = new();
 
@@ -152,11 +167,7 @@ namespace RagNext.ViewModels
             AddConditionCommand = new Command(AddCondition);
             AddCommandCommand = new Command(AddCommand);
             DeleteCommand = new Command(DeleteSelected);
-            EditNodeCommand = new Command<object?>(o =>
-            {
-                if (o is Node n) _ = EditNodeAsync(n);
-            });
-
+            EditNodeCommand = new Command<object?>(o => { if (o is Node n) _ = EditNodeAsync(n); });
             _ = InitializeCatalogsAsync();
             Rebuild();
         }
@@ -170,11 +181,7 @@ namespace RagNext.ViewModels
             AddConditionCommand = new Command(AddCondition);
             AddCommandCommand = new Command(AddCommand);
             DeleteCommand = new Command(DeleteSelected);
-            EditNodeCommand = new Command<object?>(o =>
-            {
-                if (o is Node n) _ = EditNodeAsync(n);
-            });
-
+            EditNodeCommand = new Command<object?>(o => { if (o is Node n) _ = EditNodeAsync(n); });
             _ = InitializeCatalogsAsync();
             Rebuild();
         }
@@ -217,7 +224,7 @@ namespace RagNext.ViewModels
                     foreach (var step in block.Steps)
                     {
                         var childNode = BuildStepNode(step, 1);
-                        childNode.Parent = actionNode; // Set parent
+                        childNode.Parent = actionNode;
                         actionNode.Children.Add(childNode);
                     }
                 }
@@ -255,13 +262,13 @@ namespace RagNext.ViewModels
 
             foreach (var input in step.Inputs)
             {
-                    var inputNode = new Node
+                var inputNode = new Node
                 {
                     Kind = NodeKind.Input,
                     Name = string.IsNullOrWhiteSpace(input.Label) ? "Input" : input.Label,
                     Model = input,
                     Level = level + 1,
-                    Parent = node // Set parent
+                    Parent = node
                 };
                 node.Children.Add(inputNode);
             }
@@ -271,7 +278,7 @@ namespace RagNext.ViewModels
                 foreach (var nested in cond.Steps)
                 {
                     var childNode = BuildStepNode(nested, level + 1);
-                    childNode.Parent = node; // Set parent
+                    childNode.Parent = node;
                     node.Children.Add(childNode);
                 }
             }
@@ -294,14 +301,12 @@ namespace RagNext.ViewModels
                 return (lastBlock, lastBlock.Steps.Count);
             }
 
-            // Find containing block
             foreach (var b in act.Nodes)
             {
                 var idx = b.Steps.IndexOf(afterStep);
                 if (idx >= 0)
                     return (b, idx + 1);
             }
-            // Fallback to end
             var fallback = act.Nodes.Last();
             return (fallback, fallback.Steps.Count);
         }
@@ -317,7 +322,6 @@ namespace RagNext.ViewModels
         {
             if (Selected is null) return;
 
-            // If a condition is selected, add as a child
             if (Selected.Model is ConditionDefinition condDef)
             {
                 condDef.Steps.Add(new ConditionDefinition
@@ -329,7 +333,6 @@ namespace RagNext.ViewModels
                 return;
             }
 
-            // If an action is selected, add at the top level
             if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action actFromAction)
             {
                 var (block, idx) = LocateInsertion(actFromAction, null);
@@ -338,10 +341,8 @@ namespace RagNext.ViewModels
                 return;
             }
 
-            // If a step is selected, add as a peer
             if (Selected.Model is StepDefinitionBase selectedStep)
             {
-                // Peer inside a parent condition
                 if (Selected.Parent?.Model is ConditionDefinition parentCond)
                 {
                     var idxInParent = parentCond.Steps.IndexOf(selectedStep);
@@ -355,7 +356,6 @@ namespace RagNext.ViewModels
                     return;
                 }
 
-                // Otherwise peer at top level within the action
                 if (FindParentAction(selectedStep) is RagsCore.Models.Action act)
                 {
                     var (block, idx) = LocateInsertion(act, selectedStep);
@@ -370,7 +370,6 @@ namespace RagNext.ViewModels
         {
             if (Selected is null) return;
 
-            // If a condition is selected, add as a child
             if (Selected.Model is ConditionDefinition condDef)
             {
                 condDef.Steps.Add(new CommandDefinition
@@ -382,7 +381,6 @@ namespace RagNext.ViewModels
                 return;
             }
 
-            // If an action is selected, add at the top level
             if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action actFromAction)
             {
                 var (block, idx) = LocateInsertion(actFromAction, null);
@@ -391,10 +389,8 @@ namespace RagNext.ViewModels
                 return;
             }
 
-            // If a step is selected, add as a peer
             if (Selected.Model is StepDefinitionBase selectedStep)
             {
-                // Peer inside a parent condition
                 if (Selected.Parent?.Model is ConditionDefinition parentCond)
                 {
                     var idxInParent = parentCond.Steps.IndexOf(selectedStep);
@@ -408,7 +404,6 @@ namespace RagNext.ViewModels
                     return;
                 }
 
-                // Otherwise peer at top level within the action
                 if (FindParentAction(selectedStep) is RagsCore.Models.Action act)
                 {
                     var (block, idx) = LocateInsertion(act, selectedStep);
@@ -464,31 +459,69 @@ namespace RagNext.ViewModels
             return null;
         }
 
-     
-
         private async Task EditNodeAsync(Node node)
         {
             if (node.Model is not StepDefinitionBase step) return;
-
-            // Ensure catalogs loaded
             await InitializeCatalogsAsync();
-
-            // Navigate on UI thread
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
                 var page = new EditStepPage(step);
-
                 void OnClosed(object? s, EventArgs e)
                 {
                     page.Disappearing -= OnClosed;
-                    Rebuild(); // Refresh names in the tree after edit page closes
+                    Rebuild();
                 }
-
                 page.Disappearing += OnClosed;
-
                 await (Application.Current.MainPage?.Navigation ?? Shell.Current.Navigation)
                     .PushModalAsync(page);
             });
+        }
+
+        public sealed class EditActionViewModel : BindableObject
+        {
+            private readonly RagsCore.Models.Action _action;
+            private string _name;
+            private bool _initiallyActive;
+
+            public string Name
+            {
+                get => _name;
+                set
+                {
+                    if (_name == value) return;
+                    _name = value;
+                    _action.Name = _name;
+                    OnPropertyChanged();
+                }
+            }
+
+            public bool InitiallyActive
+            {
+                get => _initiallyActive;
+                set
+                {
+                    if (_initiallyActive == value) return;
+                    _initiallyActive = value;
+                    _action.InitallyActive = _initiallyActive; // note: model property spelled InitallyActive
+                    OnPropertyChanged();
+                }
+            }
+
+            public ICommand RenameCommand { get; }
+
+            public EditActionViewModel(RagsCore.Models.Action action)
+            {
+                _action = action;
+                _name = action.Name;
+                _initiallyActive = action.InitallyActive;
+                RenameCommand = new Command(() =>
+                {
+                    _action.Name = _name;
+                    _action.InitallyActive = _initiallyActive;
+                    OnPropertyChanged(nameof(Name));
+                    OnPropertyChanged(nameof(InitiallyActive));
+                });
+            }
         }
     }
 }

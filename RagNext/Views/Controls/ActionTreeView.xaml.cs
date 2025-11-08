@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using RagNext.ViewModels;
 using RagsCore.Models;
+using RagNext.Converters;
 
 namespace RagNext.Views.Controls
 {
