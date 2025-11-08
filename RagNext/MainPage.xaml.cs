@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using RagsCore.Models;
 using RagNext.Services;
+using CommunityToolkit.Maui.Extensions;
 
 namespace RagNext
 {
@@ -135,19 +136,18 @@ namespace RagNext
                         await CreateNewGameFlowAsync();
                         return;
                     }
-
-                    // leave default/new game
                     _game = Game.CreateNew("New Game", "Unknown");
                 }
                 else
                 {
-                    // Let the user choose which save to load
-                    var choice = await DisplayActionSheet("Choose saved game", "Cancel", null, saves);
-                    if (string.IsNullOrEmpty(choice) || choice == "Cancel")
-                    {
-                        // user cancelled - do nothing
+                    var popup = new Views.SavedGamesPopup(saves);
+
+                    // Show the popup and await the popup's own ResultTask for the selected save
+                    await this.ShowPopupAsync(popup);
+                    var choice = await popup.ResultTask;
+
+                    if (string.IsNullOrEmpty(choice))
                         return;
-                    }
 
                     var loaded = await GameStorage.LoadAsync(choice);
                     if (loaded is null)
@@ -155,7 +155,6 @@ namespace RagNext
                         await DisplayAlert("Load error", "Failed to load the selected save.", "OK");
                         return;
                     }
-
                     _game = loaded;
                 }
             }

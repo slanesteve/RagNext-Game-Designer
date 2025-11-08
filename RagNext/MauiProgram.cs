@@ -25,6 +25,7 @@ namespace RagNext
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    fonts.AddFont("SegoeFluentIcons.ttf", "SegoeFluentIcons"); // Add the Fluent icon font file to Resources/Fonts
                 });
 
             builder.Services.AddSingleton<MainPage>();

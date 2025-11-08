@@ -136,5 +136,18 @@ namespace RagNext.Services
                 .ToArray();
             return Task.FromResult(names);
         }
+
+        // Delete a specific named save
+        public static Task DeleteAsync(string name)
+        {
+            EnsureDirectory();
+            var sanitized = SanitizeFileName(name);
+            var fullPath = Path.Combine(SavesDirectory, $"{sanitized}.json");
+            if (File.Exists(fullPath))
+            {
+                File.Delete(fullPath);
+            }
+            return Task.CompletedTask;
+        }
     }
 }

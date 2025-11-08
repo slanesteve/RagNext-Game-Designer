@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RagNext.Views.SavedGamesPage"
+             Title="Saved Games">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Cancel" Clicked="OnCancelClicked" />
+    </ContentPage.ToolbarItems>
+    <VerticalStackLayout Padding="16" Spacing="12">
+        <Label Text="Tap a save to load it. Tap the trashcan to delete." />
+        <CollectionView x:Name="SavesView" SelectionMode="None" ItemsSource="{Binding Saves}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="*,Auto" Padding="4">
+                        <Label Text="{Binding .}" VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnItemTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                        <ImageButton Grid.Column="1"
+                                     WidthRequest="32"
+                                     HeightRequest="32"
+                                     Padding="4"
+                                     VerticalOptions="Center"
+                                     HorizontalOptions="Center"
+                                     BackgroundColor="Transparent"
+                                     Clicked="OnDeleteClicked">
+                            <ImageButton.Source>
+                                <FontImageSource Glyph="🗑️" />
+                            </ImageButton.Source>
+                        </ImageButton>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentPage>

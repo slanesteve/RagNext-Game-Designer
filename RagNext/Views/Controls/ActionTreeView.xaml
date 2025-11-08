@@ -18,9 +18,7 @@
                     <Label Text="{Binding Name}" />
                 </HorizontalStackLayout>
                 <Border.GestureRecognizers>
-                    <TapGestureRecognizer NumberOfTapsRequired="2"
-                                          Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.EditNodeCommand}"
-                                          CommandParameter="{Binding}" />
+                    <!-- Remove double-click modal editing: keep single-click select only -->
                     <TapGestureRecognizer NumberOfTapsRequired="1"
                                           Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                           CommandParameter="{Binding}" />
@@ -51,9 +49,7 @@
                             <Label Text="{Binding Name}" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer NumberOfTapsRequired="2"
-                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.EditNodeCommand}"
-                                                  CommandParameter="{Binding}" />
+                            <!-- Remove double-click modal editing: keep single-click select only -->
                             <TapGestureRecognizer NumberOfTapsRequired="1"
                                                   Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
@@ -89,9 +85,7 @@
                             <Label Text="{Binding Name}" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer NumberOfTapsRequired="2"
-                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.EditNodeCommand}"
-                                                  CommandParameter="{Binding}" />
+                            <!-- Remove double-click modal editing: keep single-click select only -->
                             <TapGestureRecognizer NumberOfTapsRequired="1"
                                                   Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
@@ -127,9 +121,7 @@
                             <Label Text="{Binding Name}" FontAttributes="Bold" />
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer NumberOfTapsRequired="2"
-                                                  Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.EditNodeCommand}"
-                                                  CommandParameter="{Binding}" />
+                            <!-- Remove double-click modal editing: keep single-click select only -->
                             <TapGestureRecognizer NumberOfTapsRequired="1"
                                                   Command="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                                   CommandParameter="{Binding}" />
@@ -149,16 +141,29 @@
                                              InputTemplate="{StaticResource InputTemplate}" />
     </ContentView.Resources>
 
-    <Grid RowDefinitions="Auto,*" Padding="8,6">
-        <HorizontalStackLayout Spacing="8">
+    <Grid RowDefinitions="Auto,*"
+          ColumnDefinitions="340,*"
+          Padding="8,6">
+        <HorizontalStackLayout Spacing="8"
+                               Grid.Row="0"
+                               Grid.Column="0"
+                               Grid.ColumnSpan="2">
             <Button Text="+ Action" Command="{Binding AddActionCommand}" />
             <Button Text="+ Condition" Command="{Binding AddConditionCommand}" />
             <Button Text="+ Command" Command="{Binding AddCommandCommand}" />
             <Button Text="Delete" Command="{Binding DeleteCommand}" />
         </HorizontalStackLayout>
 
-        <VerticalStackLayout Grid.Row="1" Spacing="0"
+        <!-- Left: Tree -->
+        <VerticalStackLayout Grid.Row="1"
+                             Grid.Column="0"
+                             Spacing="0"
                              BindableLayout.ItemsSource="{Binding Roots}"
                              BindableLayout.ItemTemplateSelector="{StaticResource ActionNodeTemplateSelector}" />
+
+        <!-- Right: Editor for selected step -->
+        <controls:EditStepView Grid.Row="1"
+                               Grid.Column="1"
+                               BindingContext="{Binding Editor}" />
     </Grid>
 </ContentView>

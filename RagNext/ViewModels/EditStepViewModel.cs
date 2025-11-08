@@ -10,10 +10,12 @@ using RagNext;         // to access App.CurrentGame
 
 namespace RagNext.ViewModels
 {
+    // Add a flag to prevent duplicate saves and stop triggering full tree rebuilds that recreate nodes.
     public sealed class EditStepViewModel : BindableObject
     {
         private readonly StepDefinitionBase _target;
-        private readonly Func<Task> _close;
+        private readonly Func<Task> _afterMutate;
+        private bool _isSaving; // NEW
 
         public ObservableCollection<StepDefinitionBase> Definitions { get; } = new();
         public ObservableCollection<InputDefinition> EditableInputs { get; } = new();
@@ -34,10 +36,10 @@ namespace RagNext.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
 
-        public EditStepViewModel(StepDefinitionBase target, Func<Task> close)
+        public EditStepViewModel(StepDefinitionBase target, Func<Task> afterMutate)
         {
             _target = target;
-            _close = close;
+            _afterMutate = afterMutate;
 
             if (_target.Kind == StepKind.Command && Game.AvailableCommands != null)
                 foreach (var c in Game.AvailableCommands) Definitions.Add(CloneDefinition(c));
@@ -53,9 +55,11 @@ namespace RagNext.ViewModels
                 EditableInputs.Add(clone);
             }
 
-            SaveCommand = new Command(Save);
-            CancelCommand = new Command(async () => await _close());
+            SaveCommand = new Command(async () => await SaveAsync());
+            CancelCommand = new Command(async () => await CancelAsync());
         }
+
+        private async Task CancelAsync() => await _afterMutate();
 
         private void LoadInputsFromDefinition(StepDefinitionBase def)
         {
@@ -99,17 +103,30 @@ namespace RagNext.ViewModels
             };
         }
 
-        private async void Save()
+        private async Task SaveAsync()
         {
-            if (SelectedDefinition != null)
+            if (_isSaving) return;           // PREVENT DOUBLE EXECUTION
+            _isSaving = true;
+            try
             {
-                _target.Name = SelectedDefinition.Name;
-                _target.Category = SelectedDefinition.Category;
-                _target.Inputs.Clear();
-                foreach (var i in EditableInputs)
-                    _target.Inputs.Add(CloneInput(i));
+                if (SelectedDefinition != null)
+                {
+                    _target.Name = SelectedDefinition.Name;
+                    _target.Category = SelectedDefinition.Category;
+
+                    // Replace inputs in-place (do not append).
+                    _target.Inputs.Clear();
+                    foreach (var i in EditableInputs)
+                        _target.Inputs.Add(CloneInput(i));
+                }
+
+                // Just notify parent to refresh names, NOT to rebuild/append steps.
+                await _afterMutate();
             }
-            await _close();
+            finally
+            {
+                _isSaving = false;
+            }
         }
     }
 }

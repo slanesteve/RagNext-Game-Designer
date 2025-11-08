@@ -27,7 +27,17 @@ namespace RagNext.ViewModels
         public sealed class Node : BindableObject
         {
             public NodeKind Kind { get; init; }
-            public string Name { get; init; } = string.Empty;
+            public string Name
+            {
+                get => _name;
+                set
+                {
+                    if (_name == value) return;
+                    _name = value;
+                    OnPropertyChanged();
+                }
+            }
+            private string _name = string.Empty;
             public object? Model { get; init; }
             public ObservableCollection<Node> Children { get; } = new();
             public int Level { get; init; }
@@ -63,7 +73,63 @@ namespace RagNext.ViewModels
                 _selected = value;
                 if (_selected != null) _selected.IsSelected = true;
                 OnPropertyChanged();
+                SetEditorForSelected(_selected);
             }
+        }
+
+        private EditStepViewModel? _editor;
+        public EditStepViewModel? Editor
+        {
+            get => _editor;
+            private set
+            {
+                if (_editor == value) return;
+                _editor = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Update right-panel editor, do NOT open modal windows on selection
+        private void SetEditorForSelected(Node? node)
+        {
+            if (node?.Model is StepDefinitionBase step)
+            {
+                Editor = new EditStepViewModel(step, async () =>
+                {
+                    // Update existing Node instance instead of rebuilding whole tree (prevents duplicates).
+                    node.Name = step.Name;
+                    // Refresh inputs: clear and re-add input child nodes.
+                    node.Children.Where(c => c.Kind == NodeKind.Input).ToList().ForEach(c => node.Children.Remove(c));
+                    foreach (var input in step.Inputs)
+                    {
+                        var inputNode = new Node
+                        {
+                            Kind = NodeKind.Input,
+                            Name = string.IsNullOrWhiteSpace(input.Label) ? "Input" : input.Label,
+                            Model = input,
+                            Level = node.Level + 1,
+                            Parent = node
+                        };
+                        node.Children.Add(inputNode);
+                    }
+                    // Notify property changes.
+                    node.GetType().GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+    ?.Invoke(node, new object[] { nameof(Node.Name) });
+                    node.GetType().GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+    ?.Invoke(node, new object[] { nameof(Node.Children) });
+                    OnPropertyChanged(nameof(Editor));
+                });
+            }
+            else
+            {
+                Editor = null;
+            }
+        }
+
+        // Helper used by EditStepViewModel instead of a "close" callback that recreates editors.
+        private async Task RebuildAsync()
+        {
+            await MainThread.InvokeOnMainThreadAsync(Rebuild);
         }
 
         public ObservableCollection<Node> Roots { get; } = new();
@@ -397,6 +463,8 @@ namespace RagNext.ViewModels
                     return act;
             return null;
         }
+
+     
 
         private async Task EditNodeAsync(Node node)
         {
