@@ -430,13 +430,8 @@ namespace RagNext.ViewModels
                 var action = FindParentAction(step);
                 if (action != null)
                 {
-                    foreach (var block in action.Nodes.ToList())
-                    {
-                        if (block.Steps.Remove(step) && block.Steps.Count == 0 && action.Nodes.Count > 1)
-                        {
-                            action.Nodes.Remove(block);
-                        }
-                    }
+                    // Remove from nested structures (conditions or top-level blocks)
+                    RemoveStepFrom(action, step);
                 }
                 Rebuild();
                 return;
@@ -449,15 +444,62 @@ namespace RagNext.ViewModels
             }
         }
 
-        private int CountAllSteps(RagsCore.Models.Action act) => act.Nodes.Sum(n => n.Steps.Count);
-
         private RagsCore.Models.Action? FindParentAction(StepDefinitionBase step)
         {
             foreach (var act in _actions)
-                if (act.Nodes.Any(b => b.Steps.Contains(step)))
-                    return act;
+            {
+                foreach (var block in act.Nodes)
+                {
+                    if (ContainsStep(block.Steps, step))
+                        return act;
+                }
+            }
             return null;
         }
+
+        // Recursively checks if a step (possibly nested) exists in a list
+        private static bool ContainsStep(IEnumerable<StepDefinitionBase> steps, StepDefinitionBase target)
+        {
+            foreach (var s in steps)
+            {
+                if (ReferenceEquals(s, target)) return true;
+                if (s is ConditionDefinition cond && ContainsStep(cond.Steps, target)) return true;
+            }
+            return false;
+        }
+
+        // Recursively removes a step from an action's blocks and nested conditions
+        private static bool RemoveStepFrom(RagsCore.Models.Action act, StepDefinitionBase target)
+        {
+            foreach (var block in act.Nodes.ToList())
+            {
+                if (RemoveFromList(block.Steps, target))
+                {
+                    if (block.Steps.Count == 0 && act.Nodes.Count > 1)
+                        act.Nodes.Remove(block);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool RemoveFromList(List<StepDefinitionBase> list, StepDefinitionBase target)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (ReferenceEquals(s, target))
+                {
+                    list.RemoveAt(i);
+                    return true;
+                }
+                if (s is ConditionDefinition cond && RemoveFromList(cond.Steps, target))
+                    return true;
+            }
+            return false;
+        }
+
+        private int CountAllSteps(RagsCore.Models.Action act) => act.Nodes.Sum(n => n.Steps.Count);
 
         private async Task EditNodeAsync(Node node)
         {

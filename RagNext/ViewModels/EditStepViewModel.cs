@@ -6,7 +6,8 @@ using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using RagsCore.Actions;
 using RagsCore.Models; // for Game collections
-using RagNext;         // to access App.CurrentGame
+using RagNext;
+using System.Runtime.CompilerServices;         // to access App.CurrentGame
 
 namespace RagNext.ViewModels
 {
@@ -47,11 +48,22 @@ namespace RagNext.ViewModels
                 foreach (var c in Game.AvailableConditions) Definitions.Add(CloneDefinition(c));
 
             SelectedDefinition = Definitions.FirstOrDefault(d => d.Name == _target.Name) ?? Definitions.FirstOrDefault();
-
+            if (EditableInputs.Count > 0) EditableInputs.Clear();
             foreach (var i in _target.Inputs)
             {
                 var clone = CloneInput(i);
                 PreparePickerSource(clone);
+
+                // Ensure current value is the same instance as an item in PickerSource (so Picker can select it)
+                if (clone.PickerSource != null)
+                {
+                    var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
+                        ReferenceEquals(v, i.Value) ||
+                        Equals(v, i.Value) ||
+                        string.Equals(v?.ToString(), i.Value?.ToString(), StringComparison.Ordinal));
+                    if (selected != null) clone.Value = selected;
+                }
+
                 EditableInputs.Add(clone);
             }
 
@@ -68,6 +80,16 @@ namespace RagNext.ViewModels
             {
                 var clone = CloneInput(i);
                 PreparePickerSource(clone);
+
+                if (clone.PickerSource != null)
+                {
+                    var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
+                        ReferenceEquals(v, i.Value) ||
+                        Equals(v, i.Value) ||
+                        string.Equals(v?.ToString(), i.Value?.ToString(), StringComparison.Ordinal));
+                    if (selected != null) clone.Value = selected;
+                }
+
                 EditableInputs.Add(clone);
             }
         }
