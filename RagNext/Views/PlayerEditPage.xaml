@@ -125,7 +125,7 @@
                 <BoxView HeightRequest="1" BackgroundColor="{DynamicResource Gray400}" />
 
                 <Label Text="Actions" FontAttributes="Bold" />
-                <controls:ActionTreeView Player="{Binding .}" />
+                <controls:ActionTreeView x:Name="PlayerActionsView" Player="{Binding .}" />
             </VerticalStackLayout>
         </ScrollView>
 

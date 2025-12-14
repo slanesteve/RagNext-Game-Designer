@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using Microsoft.Maui.Controls;
+using RagNext.ViewModels;
 using RagsCore.Models;
 using RagNext.Services;
 
@@ -19,17 +20,29 @@ namespace RagNext.Views
         {
             InitializeComponent();
             _ai = MauiProgram.Services.GetService(typeof(IAIChatService)) as IAIChatService;
+            AssignPlayerActions();
+            App.GameChanged += (game) => OnGameLoaded(this, game); // ensure repopulate after load
         }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            AssignPlayerActions(); // refresh when page appears
+        }
 
+        private void OnGameLoaded(object? sender, Game e)
+        {
+            // called when a new game is loaded
+            MainThread.BeginInvokeOnMainThread(AssignPlayerActions);
+        }
+
+        private void AssignPlayerActions()
+        {
             var game = App.CurrentGame;
             var player = game?.Player;
-            if (game is null || player is null) return;
+            var actions = player?.Actions;
 
-            BindingContext = player;
+            PlayerActionsView.Player = player;
         }
 
         private async void OnSaveClicked(object sender, EventArgs e)

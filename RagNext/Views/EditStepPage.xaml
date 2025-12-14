@@ -29,7 +29,7 @@
                                 <Picker ItemsSource="{Binding PickerSource}"
                                         ItemDisplayBinding="{Binding Name}"
                                         SelectedItem="{Binding Value, Mode=TwoWay}"
-                                        IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}" />
+                                        Loaded="OnInputPickerLoaded" />
                                 <CheckBox IsChecked="{Binding Value, Mode=TwoWay}"
                                           IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}" />
                             </VerticalStackLayout>

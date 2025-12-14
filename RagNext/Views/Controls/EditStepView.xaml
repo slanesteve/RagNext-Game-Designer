@@ -18,16 +18,36 @@
                 <DataTemplate>
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{Binding Label}" />
-                        <Entry Text="{Binding Value, Mode=TwoWay}"
-                               IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}" />
-                        <Editor Text="{Binding Value, Mode=TwoWay}" 
-                                IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}" />
+                        <Entry IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}">
+                            <Entry.Triggers>
+                                <DataTrigger TargetType="Entry" Binding="{Binding ControlType}" Value="Text">
+                                    <Setter Property="Text" Value="{Binding Value, Mode=TwoWay}" />
+                                </DataTrigger>
+                            </Entry.Triggers>
+                        </Entry>
+                        <Editor IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}">
+                            <Editor.Triggers>
+                                <DataTrigger TargetType="Editor" Binding="{Binding ControlType}" Value="TextArea">
+                                    <Setter Property="Text" Value="{Binding Value, Mode=TwoWay}" />
+                                </DataTrigger>
+                            </Editor.Triggers>
+                        </Editor>
                         <Picker ItemsSource="{Binding PickerSource}"
                                 ItemDisplayBinding="{Binding Name}"
-                                SelectedItem="{Binding Value, Mode=TwoWay}"
-                                IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}" />
-                        <CheckBox IsChecked="{Binding Value, Mode=TwoWay}"
-                                  IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}" />
+                                Loaded="OnInputPickerLoaded"
+                                xmlns:behaviors="clr-namespace:RagNext.Behaviors"
+                                IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}">
+                            <Picker.Behaviors>
+                                <behaviors:SyncPickerSelectionBehavior />
+                            </Picker.Behaviors>
+                        </Picker>
+                        <CheckBox IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}">
+                            <CheckBox.Triggers>
+                                <DataTrigger TargetType="CheckBox" Binding="{Binding ControlType}" Value="Checkbox">
+                                    <Setter Property="IsChecked" Value="{Binding Value, Mode=TwoWay}" />
+                                </DataTrigger>
+                            </CheckBox.Triggers>
+                        </CheckBox>
                     </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

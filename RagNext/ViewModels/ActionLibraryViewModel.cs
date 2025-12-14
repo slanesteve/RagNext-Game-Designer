@@ -113,7 +113,7 @@ namespace RagNext.ViewModels
                         var inputNode = new Node
                         {
                             Kind = NodeKind.Input,
-                            Name = string.IsNullOrWhiteSpace(input.Label) ? "Input" : input.Label,
+                            Name = GetInputNodeName(input),
                             Model = input,
                             Level = node.Level + 1,
                             Parent = node
@@ -265,7 +265,7 @@ namespace RagNext.ViewModels
                 var inputNode = new Node
                 {
                     Kind = NodeKind.Input,
-                    Name = string.IsNullOrWhiteSpace(input.Label) ? "Input" : input.Label,
+                    Name = GetInputNodeName(input),
                     Model = input,
                     Level = level + 1,
                     Parent = node
@@ -564,6 +564,55 @@ namespace RagNext.ViewModels
                     OnPropertyChanged(nameof(InitiallyActive));
                 });
             }
+        }
+
+        // Add inside ActionLibraryViewModel class (private helpers)
+        private static string GetInputNodeName(InputDefinition input)
+        {
+            var label = string.IsNullOrWhiteSpace(input.Label) ? "Input" : input.Label;
+            var selectedName = TryExtractName(input.Value);
+            return string.IsNullOrWhiteSpace(selectedName) ? label : $"{label}: {selectedName}";
+        }
+
+        private static string? TryExtractName(object? value)
+        {
+            if (value is null) return null;
+
+            // Common simple cases
+            if (value is string s) return s;
+            if (value is Enum e) return e.ToString();
+
+            // Handle JsonElement values (e.g., serialized picker item)
+            if (value is System.Text.Json.JsonElement el)
+            {
+                if (el.ValueKind == System.Text.Json.JsonValueKind.String)
+                    return el.GetString();
+
+                if (el.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    if (el.TryGetProperty("name", out var lower)) return lower.GetString();
+                    if (el.TryGetProperty("Name", out var upper)) return upper.GetString();
+                }
+
+                // Fallback textual form
+                return el.ToString();
+            }
+
+            // Handle dictionary-like values
+            if (value is System.Collections.IDictionary dict)
+            {
+                if (dict.Contains("name")) return dict["name"]?.ToString();
+                if (dict.Contains("Name")) return dict["Name"]?.ToString();
+            }
+
+            // Reflection fallback: Name (case-insensitive)
+            var type = value.GetType();
+            var nameProp = type.GetProperty("Name", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+            if (nameProp?.GetValue(value) is string pn && !string.IsNullOrWhiteSpace(pn))
+                return pn;
+
+            // Last resort
+            return value.ToString();
         }
     }
 }

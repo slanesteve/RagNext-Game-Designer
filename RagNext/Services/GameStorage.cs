@@ -22,6 +22,8 @@ namespace RagNext.Services
                 var opts = new JsonSerializerOptions(JsonSerializerDefaults.Web)
                 {
                     WriteIndented = true,
+                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve,
+                    MaxDepth = 128,
                     PropertyNameCaseInsensitive = true
                 };
                 // Ensure polymorphic deserialization for steps

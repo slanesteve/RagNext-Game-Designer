@@ -49,6 +49,7 @@ namespace RagNext.ViewModels
 
             SelectedDefinition = Definitions.FirstOrDefault(d => d.Name == _target.Name) ?? Definitions.FirstOrDefault();
             if (EditableInputs.Count > 0) EditableInputs.Clear();
+            int counter = 0;
             foreach (var i in _target.Inputs)
             {
                 var clone = CloneInput(i);
@@ -57,14 +58,17 @@ namespace RagNext.ViewModels
                 // Ensure current value is the same instance as an item in PickerSource (so Picker can select it)
                 if (clone.PickerSource != null)
                 {
+                    var savedName = TryGetName(_target.Inputs[counter].Value);
                     var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
                         ReferenceEquals(v, i.Value) ||
                         Equals(v, i.Value) ||
+                        string.Equals(TryGetName(v), savedName, StringComparison.Ordinal) ||
                         string.Equals(v?.ToString(), i.Value?.ToString(), StringComparison.Ordinal));
                     if (selected != null) clone.Value = selected;
                 }
 
                 EditableInputs.Add(clone);
+                counter++;
             }
 
             SaveCommand = new Command(async () => await SaveAsync());
@@ -76,21 +80,24 @@ namespace RagNext.ViewModels
         private void LoadInputsFromDefinition(StepDefinitionBase def)
         {
             EditableInputs.Clear();
+            int count = 0;
             foreach (var i in def.Inputs)
             {
                 var clone = CloneInput(i);
                 PreparePickerSource(clone);
-
                 if (clone.PickerSource != null)
                 {
+                    var savedName = TryGetName(_target.Inputs[count].Value);//i.Value);
                     var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
                         ReferenceEquals(v, i.Value) ||
                         Equals(v, i.Value) ||
+                        string.Equals(TryGetName(v), savedName, StringComparison.Ordinal) ||
                         string.Equals(v?.ToString(), i.Value?.ToString(), StringComparison.Ordinal));
                     if (selected != null) clone.Value = selected;
                 }
 
                 EditableInputs.Add(clone);
+                count++;
             }
         }
 
@@ -123,6 +130,18 @@ namespace RagNext.ViewModels
                 InputDataType.Variable => game.Variables.Cast<object>().ToList(),
                 _ => null
             };
+
+            // Normalize Value to the actual object instance from PickerSource when possible
+            if (input.PickerSource is not null && input.Value is not null)
+            {
+                var savedName = TryGetName(input.Value);
+                var match = input.PickerSource.Cast<object?>().FirstOrDefault(v =>
+                    ReferenceEquals(v, input.Value) ||
+                    Equals(v, input.Value) ||
+                    (!string.IsNullOrWhiteSpace(savedName) && string.Equals(TryGetName(v), savedName, StringComparison.Ordinal)));
+                if (match is not null)
+                    input.Value = match;
+            }
         }
 
         private async Task SaveAsync()
@@ -149,6 +168,35 @@ namespace RagNext.ViewModels
             {
                 _isSaving = false;
             }
+        }
+
+        private static string? TryGetName(object? value)
+        {
+            if (value is null) return null;
+            if (value is string s) return s;
+            if (value is Enum e) return e.ToString();
+
+            if (value is System.Text.Json.JsonElement el)
+            {
+                if (el.ValueKind == System.Text.Json.JsonValueKind.String) return el.GetString();
+                if (el.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    if (el.TryGetProperty("name", out var lower)) return lower.GetString();
+                    if (el.TryGetProperty("Name", out var upper)) return upper.GetString();
+                }
+                return el.ToString();
+            }
+
+            if (value is System.Collections.IDictionary dict)
+            {
+                if (dict.Contains("name")) return dict["name"]?.ToString();
+                if (dict.Contains("Name")) return dict["Name"]?.ToString();
+            }
+
+            var prop = value.GetType().GetProperty("Name", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+            if (prop?.GetValue(value) is string pn && !string.IsNullOrWhiteSpace(pn)) return pn;
+
+            return value.ToString();
         }
     }
 }
