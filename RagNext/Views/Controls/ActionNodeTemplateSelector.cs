@@ -18,10 +18,11 @@ namespace RagNext.Views.Controls
                     ActionLibraryViewModel.NodeKind.Action => ActionTemplate!,
                     ActionLibraryViewModel.NodeKind.Condition => NodeTemplate!,
                     ActionLibraryViewModel.NodeKind.Command => StepTemplate!,
-                    ActionLibraryViewModel.NodeKind.Input => InputTemplate!,
-                    _ => InputTemplate!
+                    // Hide inputs in the ActionTreeView by returning an empty template
+                    ActionLibraryViewModel.NodeKind.Input => new DataTemplate(() => new ContentView()),
+                    _ => new DataTemplate(() => new ContentView())
                 };
-            return InputTemplate ?? new DataTemplate();
+            return new DataTemplate(() => new ContentView());
         }
     }
 }

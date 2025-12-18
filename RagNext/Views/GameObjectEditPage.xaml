@@ -13,9 +13,10 @@
     </ContentPage.ToolbarItems>
 
     <Grid>
-        <ScrollView VerticalScrollBarVisibility="Always">
+        <ScrollView x:Name="MainScroll"
+                    VerticalScrollBarVisibility="Always">
             <ScrollView.Behaviors>
-                <behaviors:ScrollAwareBehavior x:Name="ScrollAwareObject"/>
+                <behaviors:SuppressJumpScrollBehavior />
             </ScrollView.Behaviors>
             <VerticalStackLayout Padding="12" Spacing="10">
                 <Label Text="Name" />

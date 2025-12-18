@@ -7,6 +7,16 @@ namespace RagNext.Views.Controls
 {
     public partial class EditStepView : ContentView
     {
+
+        // Call SaveAsync whenever a user changes an input.
+        private RagNext.ViewModels.EditStepViewModel? Vm => BindingContext as RagNext.ViewModels.EditStepViewModel;
+        private async Task SaveNowAsync() { if (Vm != null) await Vm.SaveAsync(); }
+
+        private void OnDefinitionChanged(object? sender, EventArgs e) => SaveNowAsync();
+        private void OnEntryUnfocused(object? sender, FocusEventArgs e) => SaveNowAsync();
+        private void OnEditorUnfocused(object? sender, FocusEventArgs e) => SaveNowAsync();
+        private void OnCheckChanged(object? sender, CheckedChangedEventArgs e) => SaveNowAsync();
+
         public EditStepView()
         {
             InitializeComponent();
@@ -73,11 +83,17 @@ namespace RagNext.Views.Controls
             }
 
             // Keep Value in sync if the user changes selection.
-            picker.SelectedIndexChanged += (s, _) =>
+            //picker.SelectedIndexChanged += (s, _) =>
+            //{
+            //    // Avoid pushing null into Value; only update when selection exists.
+            //    if (picker.SelectedItem is not null)
+            //        input.Value = picker.SelectedItem;
+            //};
+
+            picker.SelectedIndexChanged += async (s, _) =>
             {
-                // Avoid pushing null into Value; only update when selection exists.
-                if (picker.SelectedItem is not null)
-                    input.Value = picker.SelectedItem;
+                if (picker.SelectedItem is not null) input.Value = picker.SelectedItem;
+                await SaveNowAsync();
             };
 
             // If needed, you can access the view model and its EditableInputs like this:

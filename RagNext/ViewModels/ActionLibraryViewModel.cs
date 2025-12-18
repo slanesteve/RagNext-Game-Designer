@@ -270,7 +270,7 @@ namespace RagNext.ViewModels
                     Level = level + 1,
                     Parent = node
                 };
-                node.Children.Add(inputNode);
+                //node.Children.Add(inputNode);
             }
 
             if (step is ConditionDefinition cond)

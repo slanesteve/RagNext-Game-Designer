@@ -60,10 +60,13 @@ namespace RagNext.ViewModels
                 {
                     var savedName = TryGetName(_target.Inputs[counter].Value);
                     var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
-                        ReferenceEquals(v, i.Value) ||
-                        Equals(v, i.Value) ||
-                        string.Equals(TryGetName(v), savedName, StringComparison.Ordinal) ||
-                        string.Equals(v?.ToString(), i.Value?.ToString(), StringComparison.Ordinal));
+                        string.Equals(TryGetName(v), savedName, StringComparison.Ordinal));
+
+                    //var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
+                    //   //ReferenceEquals(v, i.Value) ||
+                    //   //Equals(v, i.Value) ||
+                    //   string.Equals(TryGetName(v), savedName, StringComparison.Ordinal) ||
+                    //   string.Equals(v?.ToString(), i.Value?.ToString(), StringComparison.Ordinal));
                     if (selected != null) clone.Value = selected;
                 }
 
@@ -85,7 +88,7 @@ namespace RagNext.ViewModels
             {
                 var clone = CloneInput(i);
                 PreparePickerSource(clone);
-                if (clone.PickerSource != null)
+                if (clone.PickerSource != null  && _target.Inputs.Count>0)
                 {
                     var savedName = TryGetName(_target.Inputs[count].Value);//i.Value);
                     var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
@@ -144,9 +147,9 @@ namespace RagNext.ViewModels
             }
         }
 
-        private async Task SaveAsync()
+        public async Task SaveAsync()
         {
-            if (_isSaving) return;           // PREVENT DOUBLE EXECUTION
+            if (_isSaving) return;
             _isSaving = true;
             try
             {
@@ -155,13 +158,31 @@ namespace RagNext.ViewModels
                     _target.Name = SelectedDefinition.Name;
                     _target.Category = SelectedDefinition.Category;
 
-                    // Replace inputs in-place (do not append).
-                    _target.Inputs.Clear();
-                    foreach (var i in EditableInputs)
-                        _target.Inputs.Add(CloneInput(i));
+                    // Update values in-place to preserve existing input instances and bindings.
+                    var count = Math.Min(_target.Inputs.Count, EditableInputs.Count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        var dst = _target.Inputs[i];
+                        var src = EditableInputs[i];
+                        dst.Label = src.Label;
+                        dst.ControlType = src.ControlType;
+                        dst.DataType = src.DataType;
+                        dst.Value = src.Value; // keep the selected instance from PickerSource
+                    }
+
+                    // If definition changed size, adjust list safely.
+                    if (_target.Inputs.Count < EditableInputs.Count)
+                    {
+                        for (int i = _target.Inputs.Count; i < EditableInputs.Count; i++)
+                            _target.Inputs.Add(CloneInput(EditableInputs[i]));
+                    }
+                    else if (_target.Inputs.Count > EditableInputs.Count)
+                    {
+                        for (int i = _target.Inputs.Count - 1; i >= EditableInputs.Count; i--)
+                            _target.Inputs.RemoveAt(i);
+                    }
                 }
 
-                // Just notify parent to refresh names, NOT to rebuild/append steps.
                 await _afterMutate();
             }
             finally

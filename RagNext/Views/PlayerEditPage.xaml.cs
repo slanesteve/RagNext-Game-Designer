@@ -16,6 +16,10 @@ namespace RagNext.Views
 
         private readonly IAIChatService? _ai;
 
+        private double _lastY;
+        private string _lastUiEvent = "startup";
+        private bool _suppressScroll;
+
         public PlayerEditPage()
         {
             InitializeComponent();
@@ -27,7 +31,53 @@ namespace RagNext.Views
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            AssignPlayerActions(); // refresh when page appears
+
+            // Track ActionTreeView selection to correlate with jumps
+            if (PlayerActionsView?.BindingContext is RagNext.ViewModels.ActionLibraryViewModel vm)
+                HookActionTree(vm);
+
+            PlayerActionsView.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(PlayerActionsView.BindingContext) &&
+                    PlayerActionsView.BindingContext is RagNext.ViewModels.ActionLibraryViewModel vm2)
+                    HookActionTree(vm2);
+            };
+        }
+
+        private void HookActionTree(RagNext.ViewModels.ActionLibraryViewModel vm)
+        {
+            vm.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(vm.Selected))
+                    _lastUiEvent = "ActionTreeView.Selected changed";
+                if (e.PropertyName == nameof(vm.Editor))
+                    _lastUiEvent = "Editor swapped (layout change)";
+            };
+        }
+
+        private async void OnMainScrollScrolled(object? sender, ScrolledEventArgs e)
+        {
+            if (!_suppressScroll && e.ScrollY == 42 && _lastY > 42)
+            {
+                try
+                {
+                    _suppressScroll = true; // prevent recursion
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                        await MainScroll.ScrollToAsync(0, _lastY, animated: false));
+                }
+                finally
+                {
+                    _suppressScroll = false;
+                }
+                return;
+            }
+
+            if (Math.Abs(e.ScrollY - _lastY) > 0.5)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[Scroll] Y: {e.ScrollY:0.0} Δ:{e.ScrollY - _lastY:0.0} cause:{_lastUiEvent} @ {DateTime.Now:HH:mm:ss.fff}");
+                _lastY = e.ScrollY;
+            }
         }
 
         private void OnGameLoaded(object? sender, Game e)

@@ -53,9 +53,9 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <HorizontalStackLayout Spacing="12">
+        <!--<HorizontalStackLayout Spacing="12">
             <Button Text="Save" Command="{Binding SaveCommand}" />
             <Button Text="Cancel" Command="{Binding CancelCommand}" />
-        </HorizontalStackLayout>
+        </HorizontalStackLayout>-->
     </VerticalStackLayout>
 </ContentView>

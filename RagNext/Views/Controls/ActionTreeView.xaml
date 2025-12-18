@@ -55,9 +55,7 @@
                         </Border.GestureRecognizers>
                     </Border>
                 </toolkit:Expander.Header>
-                <VerticalStackLayout Spacing="0"
-                                     BindableLayout.ItemsSource="{Binding Children}"
-                                     BindableLayout.ItemTemplateSelector="{StaticResource ActionNodeTemplateSelector}" />
+                <!-- removed children list -->
             </toolkit:Expander>
         </DataTemplate>
 
