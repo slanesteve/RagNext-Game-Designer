@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using RagsCore.Models;
+using System.Collections.ObjectModel; // Added for ObservableCollection
 
 namespace RagsCore.Actions
 {
@@ -27,6 +28,11 @@ namespace RagsCore.Actions
     public abstract class Condition : ActionStep
     {
         public override ActionStepKind Kind => ActionStepKind.Condition;
+        
+        // These fields allow Conditions to hold nested Commands or other Conditions
+        public ObservableCollection<ActionStep> TrueBranch { get; set; } = new();
+        public ObservableCollection<ActionStep> FalseBranch { get; set; } = new();
+
         public abstract bool Evaluate(ActionContext ctx);
     }
 

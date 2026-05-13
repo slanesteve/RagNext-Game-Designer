@@ -13,7 +13,9 @@
         <ToolbarItem Text="Cancel" Clicked="OnCancelClicked" Priority="1" />
     </ContentPage.ToolbarItems>
 
-    <Grid>
+    <controls:RightPaneLayout>
+        <controls:RightPaneLayout.Main>
+            <Grid>
         <ScrollView x:Name="MainScroll"
                     VerticalScrollBarVisibility="Always">
             <ScrollView.Behaviors>
@@ -47,6 +49,27 @@
                             Padding="0"
                             Clicked="OnAskAIClicked"
                             CommandParameter="{x:Reference DescriptionEditor}" />
+                </Grid>
+                <Label Text="Portrait" />
+                <Grid ColumnDefinitions="150,*" ColumnSpacing="8" VerticalOptions="Center">
+                    <Border Grid.Column="0" StrokeShape="RoundRectangle 8" BackgroundColor="#EEE" Padding="4">
+                        <Image x:Name="PortraitImage"
+                               Aspect="AspectFill"
+                               WidthRequest="140"
+                               HeightRequest="140">
+                            <Image.GestureRecognizers>
+                                <DropGestureRecognizer AllowDrop="True"
+                                                      Drop="OnPortraitDrop"
+                                                      DragOver="OnPortraitDragOver" />
+                            </Image.GestureRecognizers>
+                        </Image>
+                    </Border>
+                    <!-- Temporary debug area to show current Image.Source -->
+                    <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Start">
+                        <Label Text="Debug: Image.Source" FontSize="12" TextColor="DarkGray"/>
+                        <Label x:Name="PortraitDebugLabel" FontSize="12" LineBreakMode="TailTruncation"/>
+                    </VerticalStackLayout>
+                    
                 </Grid>
 
                 <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
@@ -148,5 +171,7 @@
                 VerticalOptions="End">
             <Label Text="Scroll for more ▼" HorizontalOptions="Center" VerticalOptions="Center" FontSize="12" Opacity="0.7"/>
         </Border>
-    </Grid>
+            </Grid>
+        </controls:RightPaneLayout.Main>
+    </controls:RightPaneLayout>
 </ContentPage>

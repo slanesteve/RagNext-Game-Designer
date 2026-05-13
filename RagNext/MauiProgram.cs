@@ -55,6 +55,9 @@ namespace RagNext
             builder.Services.AddSingleton<IMediaTreeStore, MediaTreeStore>();
             builder.Services.AddSingleton<MediaLibraryViewModel>();
 
+            // Register image AI service so retrieval doesn't return null
+            builder.Services.AddSingleton<IAIImageService, ImageAIService>();
+
 #if DEBUG
             builder.Logging.AddDebug();
 #endif

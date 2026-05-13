@@ -1,28 +1,33 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using RagsCore.Actions;
-using RagsCore.Models; // for Game collections
+using RagsCore.Models;
 using RagNext;
-using System.Runtime.CompilerServices;         // to access App.CurrentGame
 
 namespace RagNext.ViewModels
 {
-    // Add a flag to prevent duplicate saves and stop triggering full tree rebuilds that recreate nodes.
+    public class StepTypeWrapper
+    {
+        public string Name { get; set; } = string.Empty;
+        public Type Type { get; set; } = default!;
+    }
+
     public sealed class EditStepViewModel : BindableObject
     {
-        private readonly StepDefinitionBase _target;
-        private readonly Func<Task> _afterMutate;
-        private bool _isSaving; // NEW
+        private ActionStep _target;
+        private readonly Func<ActionStep, Task> _afterMutate;
+        private bool _isSaving;
 
-        public ObservableCollection<StepDefinitionBase> Definitions { get; } = new();
+        public ObservableCollection<StepTypeWrapper> Definitions { get; } = new();
         public ObservableCollection<InputDefinition> EditableInputs { get; } = new();
 
-        private StepDefinitionBase? _selectedDefinition;
-        public StepDefinitionBase? SelectedDefinition
+        private StepTypeWrapper? _selectedDefinition;
+        public StepTypeWrapper? SelectedDefinition
         {
             get => _selectedDefinition;
             set
@@ -30,100 +35,92 @@ namespace RagNext.ViewModels
                 if (_selectedDefinition == value) return;
                 _selectedDefinition = value;
                 OnPropertyChanged();
-                if (value != null) LoadInputsFromDefinition(value);
+                
+                if (value != null && _target.GetType() != value.Type)
+                {
+                    var newTarget = (ActionStep)Activator.CreateInstance(value.Type)!;
+                    newTarget.Label = _target.Label;
+                    if (newTarget is RagsCore.Actions.Condition newCond && _target is RagsCore.Actions.Condition oldCond)
+                    {
+                        newCond.TrueBranch = oldCond.TrueBranch;
+                        newCond.FalseBranch = oldCond.FalseBranch;
+                    }
+                    _target = newTarget;
+                    BuildInputsFromTarget();
+                }
             }
         }
 
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
 
-        public EditStepViewModel(StepDefinitionBase target, Func<Task> afterMutate)
+        public EditStepViewModel(ActionStep target, Func<ActionStep, Task> afterMutate)
         {
             _target = target;
             _afterMutate = afterMutate;
 
-            if (_target.Kind == StepKind.Command && Game.AvailableCommands != null)
-                foreach (var c in Game.AvailableCommands) Definitions.Add(CloneDefinition(c));
-            else if (_target.Kind == StepKind.Condition && Game.AvailableConditions != null)
-                foreach (var c in Game.AvailableConditions) Definitions.Add(CloneDefinition(c));
+            var baseType = _target.Kind == ActionStepKind.Command ? typeof(GameCommand) : typeof(RagsCore.Actions.Condition);
+            var types = Assembly.GetAssembly(typeof(ActionStep))!.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(baseType));
 
-            SelectedDefinition = Definitions.FirstOrDefault(d => d.Name == _target.Name) ?? Definitions.FirstOrDefault();
-            if (EditableInputs.Count > 0) EditableInputs.Clear();
-            int counter = 0;
-            foreach (var i in _target.Inputs)
+            foreach (var t in types)
             {
-                var clone = CloneInput(i);
-                PreparePickerSource(clone);
-
-                // Ensure current value is the same instance as an item in PickerSource (so Picker can select it)
-                if (clone.PickerSource != null)
-                {
-                    var savedName = TryGetName(_target.Inputs[counter].Value);
-                    var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
-                        string.Equals(TryGetName(v), savedName, StringComparison.Ordinal));
-
-                    //var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
-                    //   //ReferenceEquals(v, i.Value) ||
-                    //   //Equals(v, i.Value) ||
-                    //   string.Equals(TryGetName(v), savedName, StringComparison.Ordinal) ||
-                    //   string.Equals(v?.ToString(), i.Value?.ToString(), StringComparison.Ordinal));
-                    if (selected != null) clone.Value = selected;
-                }
-
-                EditableInputs.Add(clone);
-                counter++;
+                var instance = (ActionStep)Activator.CreateInstance(t)!;
+                Definitions.Add(new StepTypeWrapper { Name = instance.TypeName, Type = t });
             }
+
+            _selectedDefinition = Definitions.FirstOrDefault(d => d.Type == _target.GetType());
+            OnPropertyChanged(nameof(SelectedDefinition));
+
+            BuildInputsFromTarget();
 
             SaveCommand = new Command(async () => await SaveAsync());
-            CancelCommand = new Command(async () => await CancelAsync());
+            CancelCommand = new Command(() => _afterMutate(null));
         }
 
-        private async Task CancelAsync() => await _afterMutate();
-
-        private void LoadInputsFromDefinition(StepDefinitionBase def)
+        private void BuildInputsFromTarget()
         {
             EditableInputs.Clear();
-            int count = 0;
-            foreach (var i in def.Inputs)
-            {
-                var clone = CloneInput(i);
-                PreparePickerSource(clone);
-                if (clone.PickerSource != null  && _target.Inputs.Count>0)
-                {
-                    var savedName = TryGetName(_target.Inputs[count].Value);//i.Value);
-                    var selected = clone.PickerSource.Cast<object?>().FirstOrDefault(v =>
-                        ReferenceEquals(v, i.Value) ||
-                        Equals(v, i.Value) ||
-                        string.Equals(TryGetName(v), savedName, StringComparison.Ordinal) ||
-                        string.Equals(v?.ToString(), i.Value?.ToString(), StringComparison.Ordinal));
-                    if (selected != null) clone.Value = selected;
-                }
+            var props = _target.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanWrite && p.Name != "Label" && p.Name != "TrueBranch" && p.Name != "FalseBranch");
 
-                EditableInputs.Add(clone);
-                count++;
+            foreach (var p in props)
+            {
+                var input = new InputDefinition
+                {
+                    Label = p.Name,
+                    Value = p.GetValue(_target),
+                    ControlType = GetControlType(p),
+                    DataType = GetDataType(p)
+                };
+                PreparePickerSource(input);
+                EditableInputs.Add(input);
             }
         }
 
-        private static StepDefinitionBase CloneDefinition(StepDefinitionBase d) =>
-            d.Kind == StepKind.Command
-                ? new CommandDefinition { Name = d.Name, Category = d.Category, Inputs = d.Inputs.Select(CloneInput).ToList() }
-                : new ConditionDefinition { Name = d.Name, Category = d.Category, Inputs = d.Inputs.Select(CloneInput).ToList() };
-
-        private static InputDefinition CloneInput(InputDefinition i) => new()
+        private InputControlType GetControlType(PropertyInfo p)
         {
-            Label = i.Label,
-            ControlType = i.ControlType,
-            DataType = i.DataType,
-            Value = i.Value
-        };
+            if (p.PropertyType == typeof(bool)) return InputControlType.Checkbox;
+            if (p.PropertyType == typeof(int) || p.PropertyType == typeof(double) || p.PropertyType == typeof(float)) return InputControlType.Number;
+            if (p.PropertyType == typeof(Guid) || p.Name.Contains("Id")) return InputControlType.ComboBox;
+            if (p.Name == "Name" && typeof(GameCommand).IsAssignableFrom(p.DeclaringType!)) return InputControlType.ComboBox; 
+            if (p.Name == "Name" && typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType!)) return InputControlType.ComboBox; 
+            return InputControlType.Text;
+        }
+
+        private InputDataType GetDataType(PropertyInfo p)
+        {
+            if (p.Name.Equals("RoomId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Room;
+            if (p.Name.Equals("ObjectId", StringComparison.OrdinalIgnoreCase)) return InputDataType.GameObject;
+            if (p.Name.Equals("CharacterId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Character;
+            if (p.Name == "Name") return InputDataType.Variable;
+            return InputDataType.String;
+        }
 
         private void PreparePickerSource(InputDefinition input)
         {
             var game = App.CurrentGame;
-            if (game is null) return;
-
-            if (input.ControlType != InputControlType.ComboBox)
-                return;
+            if (game is null || input.ControlType != InputControlType.ComboBox) return;
 
             input.PickerSource = input.DataType switch
             {
@@ -134,16 +131,25 @@ namespace RagNext.ViewModels
                 _ => null
             };
 
-            // Normalize Value to the actual object instance from PickerSource when possible
-            if (input.PickerSource is not null && input.Value is not null)
+            if (input.PickerSource is not null && input.Value != null)
             {
-                var savedName = TryGetName(input.Value);
-                var match = input.PickerSource.Cast<object?>().FirstOrDefault(v =>
-                    ReferenceEquals(v, input.Value) ||
-                    Equals(v, input.Value) ||
-                    (!string.IsNullOrWhiteSpace(savedName) && string.Equals(TryGetName(v), savedName, StringComparison.Ordinal)));
-                if (match is not null)
-                    input.Value = match;
+                if (input.DataType == InputDataType.Variable && input.Value is string varName)
+                {
+                     var match = input.PickerSource.Cast<GameVariable>().FirstOrDefault(v => v.Name == varName);
+                     if (match != null) input.Value = match;
+                }
+                else if (input.Value is Guid selectedId)
+                {
+                    var typeWithId = input.PickerSource.Cast<object>().FirstOrDefault();
+                    if (typeWithId != null)
+                    {
+                        var prop = typeWithId.GetType().GetProperty("Id");
+                        var match = input.PickerSource.Cast<object>().FirstOrDefault(m => 
+                            prop != null && (Guid)prop.GetValue(m)! == selectedId);
+                        if (match is not null)
+                            input.Value = match;
+                    }
+                }
             }
         }
 
@@ -153,71 +159,38 @@ namespace RagNext.ViewModels
             _isSaving = true;
             try
             {
-                if (SelectedDefinition != null)
+                foreach (var src in EditableInputs)
                 {
-                    _target.Name = SelectedDefinition.Name;
-                    _target.Category = SelectedDefinition.Category;
+                    var p = _target.GetType().GetProperty(src.Label);
+                    if (p != null && p.CanWrite)
+                    {
+                        object? valToSet = src.Value;
+                        
+                        if (src.ControlType == InputControlType.ComboBox && valToSet != null)
+                        {
+                            if (valToSet is GameVariable gv) { valToSet = gv.Name; }
+                            else { 
+                                var idProp = valToSet.GetType().GetProperty("Id");
+                                if (idProp != null) valToSet = idProp.GetValue(valToSet);
+                            }
+                        }
 
-                    // Update values in-place to preserve existing input instances and bindings.
-                    var count = Math.Min(_target.Inputs.Count, EditableInputs.Count);
-                    for (int i = 0; i < count; i++)
-                    {
-                        var dst = _target.Inputs[i];
-                        var src = EditableInputs[i];
-                        dst.Label = src.Label;
-                        dst.ControlType = src.ControlType;
-                        dst.DataType = src.DataType;
-                        dst.Value = src.Value; // keep the selected instance from PickerSource
-                    }
+                        if (valToSet != null && p.PropertyType != valToSet.GetType())
+                        {
+                            try { valToSet = Convert.ChangeType(valToSet, p.PropertyType); } catch { }
+                        }
 
-                    // If definition changed size, adjust list safely.
-                    if (_target.Inputs.Count < EditableInputs.Count)
-                    {
-                        for (int i = _target.Inputs.Count; i < EditableInputs.Count; i++)
-                            _target.Inputs.Add(CloneInput(EditableInputs[i]));
-                    }
-                    else if (_target.Inputs.Count > EditableInputs.Count)
-                    {
-                        for (int i = _target.Inputs.Count - 1; i >= EditableInputs.Count; i--)
-                            _target.Inputs.RemoveAt(i);
+                        p.SetValue(_target, valToSet);
                     }
                 }
 
-                await _afterMutate();
+                await _afterMutate(_target);
             }
             finally
             {
                 _isSaving = false;
             }
-        }
-
-        private static string? TryGetName(object? value)
-        {
-            if (value is null) return null;
-            if (value is string s) return s;
-            if (value is Enum e) return e.ToString();
-
-            if (value is System.Text.Json.JsonElement el)
-            {
-                if (el.ValueKind == System.Text.Json.JsonValueKind.String) return el.GetString();
-                if (el.ValueKind == System.Text.Json.JsonValueKind.Object)
-                {
-                    if (el.TryGetProperty("name", out var lower)) return lower.GetString();
-                    if (el.TryGetProperty("Name", out var upper)) return upper.GetString();
-                }
-                return el.ToString();
-            }
-
-            if (value is System.Collections.IDictionary dict)
-            {
-                if (dict.Contains("name")) return dict["name"]?.ToString();
-                if (dict.Contains("Name")) return dict["Name"]?.ToString();
-            }
-
-            var prop = value.GetType().GetProperty("Name", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-            if (prop?.GetValue(value) is string pn && !string.IsNullOrWhiteSpace(pn)) return pn;
-
-            return value.ToString();
+            await Task.CompletedTask;
         }
     }
 }

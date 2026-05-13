@@ -28,5 +28,19 @@ namespace RagNext.Models
         public string? SystemPrompt { get; set; }
 
         public Uri BaseUri => new($"{Host.TrimEnd('/')}" + (Port > 0 ? $":{Port}" : ""));
+
+        // Image AI settings
+        public AIProviderKind ImageProvider { get; set; } = AIProviderKind.OpenAICompatible;
+        public string? ImageApiKey { get; set; }
+        public string? ImageModel { get; set; } = "dall-e-3";
+        public string? ImageHost { get; set; } = "https://api.openai.com";
+        public int ImagePort { get; set; } = 0;
+        public Uri ImageBaseUri => new($"{(ImageHost ?? "https://api.openai.com").TrimEnd('/')}" + (ImagePort > 0 ? $":{ImagePort}" : ""));
+
+        // ComfyUI-specific settings
+        public string? ComfyWorkflowPath { get; set; }
+        public string? ComfyPositivePromptNode { get; set; }
+        public string? ComfyNegativePromptNode { get; set; }
+        public string? ComfySizeNode { get; set; }
     }
 }

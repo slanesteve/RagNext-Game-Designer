@@ -22,7 +22,7 @@ namespace RagsCore.Models
         /// <summary>Friendly type name, e.g. "int", "bool", "string".</summary>
         public string Type { get => _type; set => SetProperty(ref _type, value); }
 
-        // Steps can be any IActionNode (commands, conditions, or condition blocks).
-        public ObservableCollection<ActionNode> Nodes { get; set; } = new();
+        // Steps can be any ActionStep (commands, or conditions that hold other ActionSteps).
+        public ObservableCollection<ActionStep> Nodes { get; set; } = new();
     }
 }

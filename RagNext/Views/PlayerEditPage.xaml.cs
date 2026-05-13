@@ -1,10 +1,12 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using Microsoft.Maui.Controls;
 using RagNext.ViewModels;
 using RagsCore.Models;
 using RagNext.Services;
+using System.Globalization;
+using Microsoft.Maui.Graphics.Converters;
 
 namespace RagNext.Views
 {
@@ -32,6 +34,25 @@ namespace RagNext.Views
         {
             base.OnAppearing();
 
+            var player = App.CurrentGame?.Player;
+            BindingContext = player;
+
+            // Set image exclusively in code-behind to avoid binding race
+            UpdatePortraitImage(player?.PortraitImagePath);
+
+            if (player is not null)
+            {
+                player.PropertyChanged += (_, e) =>
+                {
+                    if (e.PropertyName == nameof(Player.PortraitImagePath))
+                        UpdatePortraitImage(player.PortraitImagePath);
+                };
+            }
+
+            // Ensure the page BindingContext is the Player
+            if (BindingContext is not Player && App.CurrentGame?.Player is Player p)
+                BindingContext = p;
+
             // Track ActionTreeView selection to correlate with jumps
             if (PlayerActionsView?.BindingContext is RagNext.ViewModels.ActionLibraryViewModel vm)
                 HookActionTree(vm);
@@ -50,8 +71,8 @@ namespace RagNext.Views
             {
                 if (e.PropertyName == nameof(vm.Selected))
                     _lastUiEvent = "ActionTreeView.Selected changed";
-                if (e.PropertyName == nameof(vm.Editor))
-                    _lastUiEvent = "Editor swapped (layout change)";
+                // if (e.PropertyName == nameof(vm.Editor))
+                    // _lastUiEvent = "Editor swapped (layout change)";
             };
         }
 
@@ -226,5 +247,146 @@ namespace RagNext.Views
 
             await AIAssistHelper.HandleAskAIAsync(this, btn, btn.CommandParameter, _ai);
         }
+
+        private async void OnGeneratePortraitClicked(object? sender, EventArgs e)
+        {
+            var player = BindingContext as Player ?? App.CurrentGame?.Player;
+            if (player is null)
+            {
+                await DisplayAlert("Portrait", "No player bound.", "OK");
+                return;
+            }
+
+            var prompt = await DisplayPromptAsync("Generate Portrait", "Enter a prompt for the image:", "Generate", "Cancel", placeholder: "heroic adventurer portrait");
+            if (string.IsNullOrWhiteSpace(prompt)) return;
+
+            // Choose size
+            // Wrap the action sheet on the UI thread and ensure you're calling it from an active page
+            var sizeChoice = await MainThread.InvokeOnMainThreadAsync(async () =>
+                await DisplayActionSheet("Image Size", "Cancel", null, "480 x 480", "720 x 720", "1024 x 1024"));
+            if (string.IsNullOrWhiteSpace(sizeChoice) || sizeChoice == "Cancel") return;
+            int? size = sizeChoice.StartsWith("480") ? 480 : sizeChoice.StartsWith("720") ? 720 : 1024;
+
+            var imageService = MauiProgram.Services.GetService(typeof(IAIImageService)) as IAIImageService;
+            if (imageService is null)
+            {
+                await DisplayAlert("Image AI", "Image AI service is not configured.", "OK");
+                return;
+            }
+
+            using var spinner = StartSpinner(sender as Button ?? new Button { Text = "Generating..." });
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                var path = await imageService.GenerateImageAsync(prompt.Trim(), size, cts.Token);
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    await DisplayAlert("Image AI", "No image was generated.", "OK");
+                    return;
+                }
+
+                player.PortraitImagePath = path;
+            }
+            catch (TaskCanceledException)
+            {
+                await DisplayAlert("Image AI", "Timed out generating image.", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Image AI", ex.Message, "OK");
+            }
+        }
+
+        private void OnPortraitDragOver(object sender, DragEventArgs e)
+        {
+            // No equivalent to AcceptedOperation on DropEventArgs in .NET MAUI
+            // You may set e.AcceptedOperation if you want to mark the event as handled
+            e.AcceptedOperation = DataPackageOperation.Copy;
+        }
+
+        private async void OnPortraitDrop(object sender, DropEventArgs e)
+        {
+            var player = BindingContext as Player ?? App.CurrentGame?.Player;
+            if (player is null) return;
+
+            // Retrieve the item set during drag start
+            if (e.Data.Properties.TryGetValue("DraggedItem", out var item))
+            {
+                // Try common path properties
+                var pathProp = item.GetType().GetProperty("Path")
+                             ?? item.GetType().GetProperty("FullPath")
+                             ?? item.GetType().GetProperty("FilePath");
+
+                if (pathProp?.GetValue(item) is string path && !string.IsNullOrWhiteSpace(path))
+                {
+                    player.PortraitImagePath = path;
+                    UpdatePortraitImage(path);
+                    return;
+                }
+
+                // If a media asset was dragged from the media tree, resolve to a local file path
+                var assetProp = item.GetType().GetProperty("Asset");
+                var game = App.CurrentGame;
+                if (game is not null && assetProp?.GetValue(item) is RagsCore.Models.MediaAsset asset)
+                {
+                    var lib = MauiProgram.Services.GetService(typeof(RagsCore.Services.IMediaLibrary)) as RagsCore.Services.IMediaLibrary;
+                    if (lib is not null)
+                    {
+                        var localPath = lib.GetLocalPath(game, asset);
+                        if (!string.IsNullOrWhiteSpace(localPath))
+                        {
+                            player.PortraitImagePath = localPath;
+                            UpdatePortraitImage(localPath);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Fallback: if text was provided during drag start
+            var text = await e.Data.GetTextAsync();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                player.PortraitImagePath = text;
+                UpdatePortraitImage(text);
+            }
+        }
+
+        private void UpdatePortraitImage(string? path)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                PortraitImage.ClearValue(Image.SourceProperty);
+                PortraitImage.Source = string.IsNullOrWhiteSpace(path) ? null : ImageSource.FromFile(path);
+            });
+        }
+
+        private static async Task SetPortraitImageAsync(Image image, string path)
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                image.ClearValue(Image.SourceProperty); // prevent binding from overwriting
+                image.Source = ImageSource.FromFile(path);
+            });
+        }
+
+        private Task SetPortraitImageAsync(string path) => SetPortraitImageAsync(PortraitImage, path);
     }
+
+    // Option 1: keep absolute path (Windows only):
+    //<Image Source="{Binding PortraitImagePath}" />
+
+    // Option 2: use a converter to turn absolute paths into ImageSource:
+    public class FilePathToImageSourceConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => value is string s && !string.IsNullOrWhiteSpace(s)
+                ? ImageSource.FromFile(s)
+                : null;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => null!;
+    }
+
+    // XAML usage:
+    //<Image Source="{Binding PortraitImagePath, Converter={StaticResource FilePathToImageSourceConverter}}" />
 }

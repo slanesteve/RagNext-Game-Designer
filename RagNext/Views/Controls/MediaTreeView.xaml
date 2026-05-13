@@ -21,6 +21,7 @@
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding Source={x:Reference MediaTreeRoot}, Path=BindingContext.SelectNodeCommand}"
                                           CommandParameter="{Binding}" />
+                    <DragGestureRecognizer DragStarting="OnMediaDragStarting" />
                 </Border.GestureRecognizers>
             </Border>
         </DataTemplate>

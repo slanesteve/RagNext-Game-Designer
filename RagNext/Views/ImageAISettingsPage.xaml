@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RagNext.Views.ImageAISettingsPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Image AI Settings">
+  <Grid Padding="12">
+    <VerticalStackLayout Spacing="10">
+      <Label Text="Provider" />
+      <Picker x:Name="ProviderPicker"
+              Title="Select provider"
+              SelectedIndexChanged="OnProviderChanged">
+        <Picker.Items>
+          <x:String>ChatGPT (OpenAI Images)</x:String>
+          <x:String>Azure OpenAI Images</x:String>
+          <x:String>Google Gemini (Vertex AI)</x:String>
+          <x:String>Local Stable Diffusion (Automatic1111)</x:String>
+          <x:String>Local ComfyUI</x:String>
+          <x:String>Other</x:String>
+        </Picker.Items>
+      </Picker>
+
+      <Label Text="Host" />
+      <Entry x:Name="HostEntry" />
+
+      <Label Text="Port" />
+      <Entry x:Name="PortEntry" Keyboard="Numeric" />
+
+      <Label Text="Model" />
+      <Entry x:Name="ModelEntry" />
+
+      <Label x:Name="ApiKeyLabel" Text="API Key" />
+      <Entry x:Name="ApiKeyEntry" IsPassword="True" />
+
+      <!-- ComfyUI workflow settings -->
+      <Label x:Name="ComfyWorkflowLabel" Text="ComfyUI Workflow JSON Path" />
+      <Entry x:Name="ComfyWorkflowEntry" Placeholder="C:\\ComfyUI\\workflows\\my_workflow.json" />
+
+      <Label x:Name="ComfyPositiveLabel" Text="ComfyUI Positive Prompt Node Name" />
+      <Entry x:Name="ComfyPositiveNodeEntry" Placeholder="positive_prompt" />
+
+      <Label x:Name="ComfyNegativeLabel" Text="ComfyUI Negative Prompt Node Name" />
+      <Entry x:Name="ComfyNegativeNodeEntry" Placeholder="negative_prompt" />
+
+      <Label x:Name="ComfySizeLabel" Text="ComfyUI Size Node Name (optional)" />
+      <Entry x:Name="ComfySizeNodeEntry" Placeholder="EmptyLatentImage" />
+
+      <HorizontalStackLayout Spacing="8">
+        <Button Text="Save" Clicked="OnSaveClicked" />
+        <Button Text="Cancel" Clicked="OnCancelClicked" />
+      </HorizontalStackLayout>
+    </VerticalStackLayout>
+  </Grid>
+</ContentPage>

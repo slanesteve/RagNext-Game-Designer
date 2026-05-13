@@ -97,35 +97,33 @@ namespace RagNext.ViewModels
             }
         }
 
+        public sealed class EditActionViewModel : BindableObject
+        {
+            private readonly RagsCore.Models.Action _action;
+            public EditActionViewModel(RagsCore.Models.Action action)
+            {
+                _action = action;
+            }
+
+            public string Name
+            {
+                get => _action.Name;
+                set
+                {
+                    if (_action.Name == value) return;
+                    _action.Name = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private void SetEditorForSelected(Node? node)
         {
             Editor = null;
             ActionEditor = null;
 
-            if (node?.Model is StepDefinitionBase step)
+            if (node?.Model is ActionStep actionStep)
             {
-                Editor = new EditStepViewModel(step, async () =>
-                {
-                    node.Name = step.Name;
-                    node.Children.Where(c => c.Kind == NodeKind.Input).ToList().ForEach(c => node.Children.Remove(c));
-                    foreach (var input in step.Inputs)
-                    {
-                        var inputNode = new Node
-                        {
-                            Kind = NodeKind.Input,
-                            Name = GetInputNodeName(input),
-                            Model = input,
-                            Level = node.Level + 1,
-                            Parent = node
-                        };
-                        node.Children.Add(inputNode);
-                    }
-                    node.GetType().GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-                        ?.Invoke(node, new object[] { nameof(Node.Name) });
-                    node.GetType().GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-                        ?.Invoke(node, new object[] { nameof(Node.Children) });
-                    OnPropertyChanged(nameof(Editor));
-                });
                 return;
             }
 
@@ -207,8 +205,6 @@ namespace RagNext.ViewModels
         private void Rebuild()
         {
             var prevSelectedModel = Selected?.Model;
-            var prevSelectedName = Selected?.Name;
-
             var prevExpanded = new HashSet<object>(ReferenceEqualityComparer.Instance);
             foreach (var n in Roots.SelectMany(r => Flatten(r)))
                 if (n.IsExpanded && n.Model is not null)
@@ -219,14 +215,11 @@ namespace RagNext.ViewModels
             foreach (var action in _actions)
             {
                 var actionNode = new Node { Kind = NodeKind.Action, Name = action.Name, Model = action, Level = 0, IsExpanded = true };
-                foreach (var block in action.Nodes)
+                foreach (var step in action.Nodes)
                 {
-                    foreach (var step in block.Steps)
-                    {
-                        var childNode = BuildStepNode(step, 1);
-                        childNode.Parent = actionNode;
-                        actionNode.Children.Add(childNode);
-                    }
+                    var childNode = BuildStepNode(step, 1);
+                    childNode.Parent = actionNode;
+                    actionNode.Children.Add(childNode);
                 }
                 Roots.Add(actionNode);
             }
@@ -235,384 +228,88 @@ namespace RagNext.ViewModels
                 if (n.Model is not null && prevExpanded.Contains(n.Model))
                     n.IsExpanded = true;
 
-            Selected = Roots
-                .SelectMany(r => Flatten(r))
-                .FirstOrDefault(n => (prevSelectedModel is not null && ReferenceEquals(n.Model, prevSelectedModel)) ||
-                                     (!string.IsNullOrEmpty(prevSelectedName) && n.Name == prevSelectedName));
+            Selected = Roots.SelectMany(r => Flatten(r)).FirstOrDefault(n => prevSelectedModel is not null && ReferenceEquals(n.Model, prevSelectedModel));
 
-            static IEnumerable<Node> Flatten(Node n)
-            {
-                yield return n;
-                foreach (var c in n.Children)
-                    foreach (var d in Flatten(c))
-                        yield return d;
-            }
+            static IEnumerable<Node> Flatten(Node n) { yield return n; foreach (var c in n.Children) foreach (var d in Flatten(c)) yield return d; }
         }
 
-        private Node BuildStepNode(StepDefinitionBase step, int level)
+        private Node BuildStepNode(ActionStep step, int level)
         {
-            var kind = step.Kind == StepKind.Command ? NodeKind.Command : NodeKind.Condition;
-            var node = new Node
-            {
-                Kind = kind,
-                Name = string.IsNullOrWhiteSpace(step.Name) ? (kind == NodeKind.Command ? "Command" : "Condition") : step.Name,
-                Model = step,
-                Level = level
-            };
+            var kind = step is RagsCore.Actions.Condition ? NodeKind.Condition : NodeKind.Command;
+            var node = new Node { Kind = kind, Name = step.TypeName, Model = step, Level = level, IsExpanded = true };
 
-            foreach (var input in step.Inputs)
+            if (step is RagsCore.Actions.Condition cond)
             {
-                var inputNode = new Node
-                {
-                    Kind = NodeKind.Input,
-                    Name = GetInputNodeName(input),
-                    Model = input,
-                    Level = level + 1,
-                    Parent = node
-                };
-                //node.Children.Add(inputNode);
+                var trueNode = new Node { Kind = NodeKind.Condition, Name = "True Branch", Model = cond.TrueBranch, Level = level + 1, Parent = node, IsExpanded = true };
+                foreach (var nested in cond.TrueBranch) { var childNode = BuildStepNode(nested, level + 2); childNode.Parent = trueNode; trueNode.Children.Add(childNode); }
+                node.Children.Add(trueNode);
+                
+                var falseNode = new Node { Kind = NodeKind.Condition, Name = "False Branch", Model = cond.FalseBranch, Level = level + 1, Parent = node, IsExpanded = true };
+                foreach (var nested in cond.FalseBranch) { var childNode = BuildStepNode(nested, level + 2); childNode.Parent = falseNode; falseNode.Children.Add(childNode); }
+                node.Children.Add(falseNode);
             }
-
-            if (step is ConditionDefinition cond)
-            {
-                foreach (var nested in cond.Steps)
-                {
-                    var childNode = BuildStepNode(nested, level + 1);
-                    childNode.Parent = node;
-                    node.Children.Add(childNode);
-                }
-            }
-
             return node;
         }
 
-        private void EnsureStepContainer(RagsCore.Models.Action act)
+        private void AddAction() { _actions.Add(new RagsCore.Models.Action { Name = $"Action {_actions.Count + 1}" }); Rebuild(); }
+        private void AddCondition() { InsertStep(new VariableEqualsCondition()); }
+        private void AddCommand() { InsertStep(new SetVariableCommand()); }
+        
+        private void InsertStep(ActionStep step)
         {
-            if (act.Nodes.Count == 0)
-                act.Nodes.Add(new ActionNode { Title = "Steps" });
-        }
-
-        private (ActionNode block, int insertIndex) LocateInsertion(RagsCore.Models.Action act, StepDefinitionBase? afterStep)
-        {
-            EnsureStepContainer(act);
-            if (afterStep is null)
-            {
-                var lastBlock = act.Nodes.Last();
-                return (lastBlock, lastBlock.Steps.Count);
-            }
-
-            foreach (var b in act.Nodes)
-            {
-                var idx = b.Steps.IndexOf(afterStep);
-                if (idx >= 0)
-                    return (b, idx + 1);
-            }
-            var fallback = act.Nodes.Last();
-            return (fallback, fallback.Steps.Count);
-        }
-
-        private void AddAction()
-        {
-            var a = new RagsCore.Models.Action { Name = $"Action {_actions.Count + 1}" };
-            _actions.Add(a);
+            if (Selected?.Kind == NodeKind.Action && Selected?.Model is RagsCore.Models.Action act) act.Nodes.Add(step);
+            else if (Selected?.Model is ObservableCollection<ActionStep> collection) collection.Add(step);
+            else if (Selected?.Model is ActionStep selectedStep && Selected?.Parent?.Model is ObservableCollection<ActionStep> parentCollection) parentCollection.Insert(parentCollection.IndexOf(selectedStep) + 1, step);
+            else if (Selected?.Model is ActionStep selectedStepAct && Selected?.Parent?.Model is RagsCore.Models.Action parentAct) parentAct.Nodes.Insert(parentAct.Nodes.IndexOf(selectedStepAct) + 1, step);
             Rebuild();
-        }
-
-        private void AddCondition()
-        {
-            if (Selected is null) return;
-
-            if (Selected.Model is ConditionDefinition condDef)
-            {
-                condDef.Steps.Add(new ConditionDefinition
-                {
-                    Name = $"Condition {condDef.Steps.Count + 1}",
-                    Category = "Logic"
-                });
-                Rebuild();
-                return;
-            }
-
-            if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action actFromAction)
-            {
-                var (block, idx) = LocateInsertion(actFromAction, null);
-                block.Steps.Insert(idx, new ConditionDefinition { Name = $"Condition {CountAllSteps(actFromAction) + 1}", Category = "Logic" });
-                Rebuild();
-                return;
-            }
-
-            if (Selected.Model is StepDefinitionBase selectedStep)
-            {
-                if (Selected.Parent?.Model is ConditionDefinition parentCond)
-                {
-                    var idxInParent = parentCond.Steps.IndexOf(selectedStep);
-                    if (idxInParent < 0) idxInParent = parentCond.Steps.Count - 1;
-                    parentCond.Steps.Insert(idxInParent + 1, new ConditionDefinition
-                    {
-                        Name = $"Condition {parentCond.Steps.Count + 1}",
-                        Category = "Logic"
-                    });
-                    Rebuild();
-                    return;
-                }
-
-                if (FindParentAction(selectedStep) is RagsCore.Models.Action act)
-                {
-                    var (block, idx) = LocateInsertion(act, selectedStep);
-                    block.Steps.Insert(idx, new ConditionDefinition { Name = $"Condition {CountAllSteps(act) + 1}", Category = "Logic" });
-                    Rebuild();
-                    return;
-                }
-            }
-        }
-
-        private void AddCommand()
-        {
-            if (Selected is null) return;
-
-            if (Selected.Model is ConditionDefinition condDef)
-            {
-                condDef.Steps.Add(new CommandDefinition
-                {
-                    Name = $"Command {condDef.Steps.Count + 1}",
-                    Category = "General"
-                });
-                Rebuild();
-                return;
-            }
-
-            if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action actFromAction)
-            {
-                var (block, idx) = LocateInsertion(actFromAction, null);
-                block.Steps.Insert(idx, new CommandDefinition { Name = $"Command {CountAllSteps(actFromAction) + 1}", Category = "General" });
-                Rebuild();
-                return;
-            }
-
-            if (Selected.Model is StepDefinitionBase selectedStep)
-            {
-                if (Selected.Parent?.Model is ConditionDefinition parentCond)
-                {
-                    var idxInParent = parentCond.Steps.IndexOf(selectedStep);
-                    if (idxInParent < 0) idxInParent = parentCond.Steps.Count - 1;
-                    parentCond.Steps.Insert(idxInParent + 1, new CommandDefinition
-                    {
-                        Name = $"Command {parentCond.Steps.Count + 1}",
-                        Category = "General"
-                    });
-                    Rebuild();
-                    return;
-                }
-
-                if (FindParentAction(selectedStep) is RagsCore.Models.Action act)
-                {
-                    var (block, idx) = LocateInsertion(act, selectedStep);
-                    block.Steps.Insert(idx, new CommandDefinition { Name = $"Command {CountAllSteps(act) + 1}", Category = "General" });
-                    Rebuild();
-                    return;
-                }
-            }
         }
 
         private void DeleteSelected()
         {
             if (Selected is null) return;
-
-            if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action a)
+            if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action a) { _actions.Remove(a); Rebuild(); return; }
+            if (Selected.Model is ActionStep step)
             {
-                _actions.Remove(a);
-                Rebuild();
-                return;
-            }
-
-            if (Selected.Model is StepDefinitionBase step)
-            {
-                var action = FindParentAction(step);
-                if (action != null)
-                {
-                    // Remove from nested structures (conditions or top-level blocks)
-                    RemoveStepFrom(action, step);
-                }
-                Rebuild();
-                return;
-            }
-
-            if (Selected.Model is InputDefinition input && Selected.Parent?.Model is ConditionDefinition parentCond)
-            {
-                parentCond.Inputs.Remove(input);
-                Rebuild();
+                if (Selected.Parent?.Model is ObservableCollection<ActionStep> parentCollection) parentCollection.Remove(step);
+                else if (Selected.Parent?.Model is RagsCore.Models.Action parentAct) parentAct.Nodes.Remove(step);
+                Rebuild(); return;
             }
         }
-
-        private RagsCore.Models.Action? FindParentAction(StepDefinitionBase step)
-        {
-            foreach (var act in _actions)
-            {
-                foreach (var block in act.Nodes)
-                {
-                    if (ContainsStep(block.Steps, step))
-                        return act;
-                }
-            }
-            return null;
-        }
-
-        // Recursively checks if a step (possibly nested) exists in a list
-        private static bool ContainsStep(IEnumerable<StepDefinitionBase> steps, StepDefinitionBase target)
-        {
-            foreach (var s in steps)
-            {
-                if (ReferenceEquals(s, target)) return true;
-                if (s is ConditionDefinition cond && ContainsStep(cond.Steps, target)) return true;
-            }
-            return false;
-        }
-
-        // Recursively removes a step from an action's blocks and nested conditions
-        private static bool RemoveStepFrom(RagsCore.Models.Action act, StepDefinitionBase target)
-        {
-            foreach (var block in act.Nodes.ToList())
-            {
-                if (RemoveFromList(block.Steps, target))
-                {
-                    if (block.Steps.Count == 0 && act.Nodes.Count > 1)
-                        act.Nodes.Remove(block);
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private static bool RemoveFromList(List<StepDefinitionBase> list, StepDefinitionBase target)
-        {
-            for (int i = 0; i < list.Count; i++)
-            {
-                var s = list[i];
-                if (ReferenceEquals(s, target))
-                {
-                    list.RemoveAt(i);
-                    return true;
-                }
-                if (s is ConditionDefinition cond && RemoveFromList(cond.Steps, target))
-                    return true;
-            }
-            return false;
-        }
-
-        private int CountAllSteps(RagsCore.Models.Action act) => act.Nodes.Sum(n => n.Steps.Count);
-
+        
         private async Task EditNodeAsync(Node node)
         {
-            if (node.Model is not StepDefinitionBase step) return;
-            await InitializeCatalogsAsync();
+            if (node.Model is not ActionStep step) return;
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
                 var page = new EditStepPage(step);
                 void OnClosed(object? s, EventArgs e)
                 {
                     page.Disappearing -= OnClosed;
+                    
+                    if (page.BindingContext is EditStepViewModel vm && vm.SelectedDefinition != null && vm.SelectedDefinition.Type != step.GetType())
+                    {
+                          if (node.Parent?.Model is ObservableCollection<ActionStep> collection) {
+                              var ix = collection.IndexOf(step);
+                              if (ix>=0) {
+                                  collection.RemoveAt(ix);
+                                  var fiProp = vm.GetType().GetField("_target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                                  if (fiProp?.GetValue(vm) is ActionStep newTarget) collection.Insert(ix, newTarget);
+                              }
+                          }
+                          else if (node.Parent?.Model is RagsCore.Models.Action parAct) {
+                              var ix = parAct.Nodes.IndexOf(step);
+                              if (ix>=0) {
+                                  parAct.Nodes.RemoveAt(ix);
+                                  var fiProp = vm.GetType().GetField("_target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                                  if (fiProp?.GetValue(vm) is ActionStep newTarget) parAct.Nodes.Insert(ix, newTarget);
+                              }
+                          }
+                    }
                     Rebuild();
                 }
                 page.Disappearing += OnClosed;
-                await (Application.Current.MainPage?.Navigation ?? Shell.Current.Navigation)
-                    .PushModalAsync(page);
+                await (Application.Current.MainPage?.Navigation ?? Shell.Current.Navigation).PushModalAsync(page);
             });
-        }
-
-        public sealed class EditActionViewModel : BindableObject
-        {
-            private readonly RagsCore.Models.Action _action;
-            private string _name;
-            private bool _initiallyActive;
-
-            public string Name
-            {
-                get => _name;
-                set
-                {
-                    if (_name == value) return;
-                    _name = value;
-                    _action.Name = _name;
-                    OnPropertyChanged();
-                }
-            }
-
-            public bool InitiallyActive
-            {
-                get => _initiallyActive;
-                set
-                {
-                    if (_initiallyActive == value) return;
-                    _initiallyActive = value;
-                    _action.InitallyActive = _initiallyActive; // note: model property spelled InitallyActive
-                    OnPropertyChanged();
-                }
-            }
-
-            public ICommand RenameCommand { get; }
-
-            public EditActionViewModel(RagsCore.Models.Action action)
-            {
-                _action = action;
-                _name = action.Name;
-                _initiallyActive = action.InitallyActive;
-                RenameCommand = new Command(() =>
-                {
-                    _action.Name = _name;
-                    _action.InitallyActive = _initiallyActive;
-                    OnPropertyChanged(nameof(Name));
-                    OnPropertyChanged(nameof(InitiallyActive));
-                });
-            }
-        }
-
-        // Add inside ActionLibraryViewModel class (private helpers)
-        private static string GetInputNodeName(InputDefinition input)
-        {
-            var label = string.IsNullOrWhiteSpace(input.Label) ? "Input" : input.Label;
-            var selectedName = TryExtractName(input.Value);
-            return string.IsNullOrWhiteSpace(selectedName) ? label : $"{label}: {selectedName}";
-        }
-
-        private static string? TryExtractName(object? value)
-        {
-            if (value is null) return null;
-
-            // Common simple cases
-            if (value is string s) return s;
-            if (value is Enum e) return e.ToString();
-
-            // Handle JsonElement values (e.g., serialized picker item)
-            if (value is System.Text.Json.JsonElement el)
-            {
-                if (el.ValueKind == System.Text.Json.JsonValueKind.String)
-                    return el.GetString();
-
-                if (el.ValueKind == System.Text.Json.JsonValueKind.Object)
-                {
-                    if (el.TryGetProperty("name", out var lower)) return lower.GetString();
-                    if (el.TryGetProperty("Name", out var upper)) return upper.GetString();
-                }
-
-                // Fallback textual form
-                return el.ToString();
-            }
-
-            // Handle dictionary-like values
-            if (value is System.Collections.IDictionary dict)
-            {
-                if (dict.Contains("name")) return dict["name"]?.ToString();
-                if (dict.Contains("Name")) return dict["Name"]?.ToString();
-            }
-
-            // Reflection fallback: Name (case-insensitive)
-            var type = value.GetType();
-            var nameProp = type.GetProperty("Name", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-            if (nameProp?.GetValue(value) is string pn && !string.IsNullOrWhiteSpace(pn))
-                return pn;
-
-            // Last resort
-            return value.ToString();
         }
     }
 }

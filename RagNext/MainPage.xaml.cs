@@ -291,7 +291,8 @@ namespace RagNext
         {
             // Show a platform-friendly action sheet instead of constructing a MenuFlyout
             // (avoids APIs like MenuFlyout.Items and ShowAt which aren't available هنا)
-            var options = new[] { "General", "AI" };
+            //var options = new[] { "General", "Text AI", "Image AI" };
+            var options = new[] { "General", "Text AI" };
             var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
 
             if (string.IsNullOrEmpty(choice) || choice == "Cancel")
@@ -302,9 +303,13 @@ namespace RagNext
                 case "General":
                     OnSettingsGeneral(this, EventArgs.Empty);
                     break;
-                case "AI":
+                case "Text AI":
                     OnSettingsAI(this, EventArgs.Empty);
                     break;
+                    case "Image AI":
+                        var page = new Views.ImageAISettingsPage();
+                        await Navigation.PushModalAsync(page);
+                        break;
 
             }
         }

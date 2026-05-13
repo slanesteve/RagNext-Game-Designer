@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace RagsCore.Models
 {
     /// <summary>
     /// Player model. Holds inventory and a reference to current room by Id to avoid circular object graphs.
     /// </summary>
-    public class Player : BaseModel
+    public class Player : BaseModel, INotifyPropertyChanged
     {
         private List<string> _genders = new()
         {"Male", "Female","Non-binary", "Other"};
-        public List<string> Genders {get => _genders; set => SetProperty(ref _genders, value); }
+        public List<string> Genders { get => _genders; set => SetProperty(ref _genders, value); }
 
 
         public Guid Id { get; init; } = Guid.NewGuid();
@@ -30,6 +31,30 @@ namespace RagsCore.Models
 
         public ObservableCollection<GameObject> Inventory { get; set; } = new();
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
-        public ObservableCollection<Action> Actions { get; set; } = new(); // was internal
+        public ObservableCollection<Action> Actions { get; set; } = new();
+
+        // Optional portrait image path/URI for binding in editor pages
+        private string? _portraitImagePath;
+        public string? PortraitImagePath
+        {
+            get => _portraitImagePath;
+            set
+            {
+                if (SetProperty(ref _portraitImagePath, value))
+                {
+                    // Also notify file name derived property
+                    OnPropertyChanged(nameof(PortraitImageFileName));
+                }
+            }
+        }
+
+        public string PortraitImageFileName => System.IO.Path.GetFileName(_portraitImagePath ?? string.Empty);
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
     }
 }
