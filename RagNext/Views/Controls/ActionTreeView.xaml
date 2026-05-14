@@ -183,8 +183,6 @@
                             <Label Text="Initially Active" VerticalTextAlignment="Center" />
                             <CheckBox IsChecked="{Binding InitiallyActive, Mode=TwoWay}" />
                         </HorizontalStackLayout>
-                        <Button Text="Apply"
-                                Command="{Binding RenameCommand}" />
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>

@@ -115,6 +115,17 @@ namespace RagNext.ViewModels
                     OnPropertyChanged();
                 }
             }
+
+            public bool InitiallyActive
+            {
+                get => _action.InitallyActive;
+                set
+                {
+                    if (_action.InitallyActive == value) return;
+                    _action.InitallyActive = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         private void SetEditorForSelected(Node? node)
@@ -124,6 +135,32 @@ namespace RagNext.ViewModels
 
             if (node?.Model is ActionStep actionStep)
             {
+                Editor = new EditStepViewModel(actionStep, async (newTarget) => 
+                {
+                    if (newTarget != null && newTarget != actionStep)
+                    {
+                        if (node.Parent?.Model is ObservableCollection<ActionStep> collection)
+                        {
+                            var ix = collection.IndexOf(actionStep);
+                            if (ix >= 0)
+                            {
+                                collection.RemoveAt(ix);
+                                collection.Insert(ix, newTarget);
+                            }
+                        }
+                        else if (node.Parent?.Model is RagsCore.Models.Action parAct)
+                        {
+                            var ix = parAct.Nodes.IndexOf(actionStep);
+                            if (ix >= 0)
+                            {
+                                parAct.Nodes.RemoveAt(ix);
+                                parAct.Nodes.Insert(ix, newTarget);
+                            }
+                        }
+
+                        await RebuildAsync();
+                    }
+                });
                 return;
             }
 
