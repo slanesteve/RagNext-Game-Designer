@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentView x:Name="ActionTreeRoot"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -138,7 +138,7 @@
     </ContentView.Resources>
 
     <Grid RowDefinitions="Auto,*"
-          ColumnDefinitions="340,*"
+          ColumnDefinitions="450,*"
           Padding="8,6">
         <HorizontalStackLayout Spacing="8"
                                Grid.Row="0"
@@ -158,34 +158,29 @@
                              BindableLayout.ItemTemplateSelector="{StaticResource ActionNodeTemplateSelector}" />
 
         <!-- Right: Editor for selected step -->
-        <Grid RowDefinitions="Auto,*"
-              ColumnDefinitions="340,*"
-              Padding="8,6"
-              Grid.Row="1"
-              Grid.Column="1">
-            <VerticalStackLayout Grid.Row="1"
-                                 Grid.Column="1"
-                                 Spacing="12">
-                <!-- Step editor (commands / conditions) -->
-                <!-- FIX: bind IsVisible to parent VM using x:Reference so it hides when an action is selected -->
-                <controls:EditStepView BindingContext="{Binding Editor}"
-                                       IsVisible="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.Editor, Converter={StaticResource NullToBoolConverter}}" />
+        <VerticalStackLayout Grid.Row="1"
+                             Grid.Column="1"
+                             Spacing="12"
+                             Padding="8,6">
+            <!-- Step editor (commands / conditions) -->
+            <!-- FIX: bind IsVisible to parent VM using x:Reference so it hides when an action is selected -->
+            <controls:EditStepView BindingContext="{Binding Editor}"
+                                   IsVisible="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.Editor, Converter={StaticResource NullToBoolConverter}}" />
 
-                <!-- Action editor with Initially Active checkbox -->
-                <Border Padding="8"
-                        StrokeShape="RoundRectangle 8"
-                        BackgroundColor="#F3F3F3"
-                        IsVisible="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.ActionEditor, Converter={StaticResource NullToBoolConverter}}">
-                    <VerticalStackLayout BindingContext="{Binding ActionEditor}" Spacing="8">
-                        <Label Text="Edit Action" FontAttributes="Bold" />
-                        <Entry Text="{Binding Name, Mode=TwoWay}" Placeholder="Action name" />
-                        <HorizontalStackLayout Spacing="8">
-                            <Label Text="Initially Active" VerticalTextAlignment="Center" />
-                            <CheckBox IsChecked="{Binding InitiallyActive, Mode=TwoWay}" />
-                        </HorizontalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
-            </VerticalStackLayout>
-        </Grid>
+            <!-- Action editor with Initially Active checkbox -->
+            <Border Padding="8"
+                    StrokeShape="RoundRectangle 8"
+                    BackgroundColor="#F3F3F3"
+                    IsVisible="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.ActionEditor, Converter={StaticResource NullToBoolConverter}}">
+                <VerticalStackLayout BindingContext="{Binding ActionEditor}" Spacing="8">
+                    <Label Text="Edit Action" FontAttributes="Bold" />
+                    <Entry Text="{Binding Name, Mode=TwoWay}" Placeholder="Action name" />
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="Initially Active" VerticalTextAlignment="Center" />
+                        <CheckBox IsChecked="{Binding InitiallyActive, Mode=TwoWay}" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
     </Grid>
 </ContentView>

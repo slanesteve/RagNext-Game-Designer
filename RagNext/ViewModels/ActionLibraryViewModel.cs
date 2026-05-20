@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.Maui.Controls;
@@ -158,7 +158,7 @@ namespace RagNext.ViewModels
                             }
                         }
 
-                        await RebuildAsync();
+                        await RebuildAsync(newTarget);
                     }
                 });
                 return;
@@ -180,7 +180,7 @@ namespace RagNext.ViewModels
             }
         }
 
-        private async Task RebuildAsync() => await MainThread.InvokeOnMainThreadAsync(Rebuild);
+        private async Task RebuildAsync(object? selectModelOverride = null) => await MainThread.InvokeOnMainThreadAsync(() => Rebuild(selectModelOverride));
 
         public ObservableCollection<Node> Roots { get; } = new();
 
@@ -239,9 +239,9 @@ namespace RagNext.ViewModels
             }
         }
 
-        private void Rebuild()
+        private void Rebuild(object? selectModelOverride = null)
         {
-            var prevSelectedModel = Selected?.Model;
+            var prevSelectedModel = selectModelOverride ?? Selected?.Model;
             var prevExpanded = new HashSet<object>(ReferenceEqualityComparer.Instance);
             foreach (var n in Roots.SelectMany(r => Flatten(r)))
                 if (n.IsExpanded && n.Model is not null)
@@ -323,6 +323,7 @@ namespace RagNext.ViewModels
                 {
                     page.Disappearing -= OnClosed;
                     
+                    object? newTarget = null;
                     if (page.BindingContext is EditStepViewModel vm && vm.SelectedDefinition != null && vm.SelectedDefinition.Type != step.GetType())
                     {
                           if (node.Parent?.Model is ObservableCollection<ActionStep> collection) {
@@ -330,7 +331,8 @@ namespace RagNext.ViewModels
                               if (ix>=0) {
                                   collection.RemoveAt(ix);
                                   var fiProp = vm.GetType().GetField("_target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                                  if (fiProp?.GetValue(vm) is ActionStep newTarget) collection.Insert(ix, newTarget);
+                                  newTarget = fiProp?.GetValue(vm) as ActionStep;
+                                  if (newTarget is ActionStep nt) collection.Insert(ix, nt);
                               }
                           }
                           else if (node.Parent?.Model is RagsCore.Models.Action parAct) {
@@ -338,11 +340,12 @@ namespace RagNext.ViewModels
                               if (ix>=0) {
                                   parAct.Nodes.RemoveAt(ix);
                                   var fiProp = vm.GetType().GetField("_target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                                  if (fiProp?.GetValue(vm) is ActionStep newTarget) parAct.Nodes.Insert(ix, newTarget);
+                                  newTarget = fiProp?.GetValue(vm) as ActionStep;
+                                  if (newTarget is ActionStep nt) parAct.Nodes.Insert(ix, nt);
                               }
                           }
                     }
-                    Rebuild();
+                    Rebuild(newTarget);
                 }
                 page.Disappearing += OnClosed;
                 await (Application.Current.MainPage?.Navigation ?? Shell.Current.Navigation).PushModalAsync(page);

@@ -136,10 +136,7 @@ namespace RagNext.Views
             }
         }
 
-        private async void OnCancelClicked(object sender, EventArgs e)
-        {
-            await Navigation.PopAsync();
-        }
+
 
         private async void OnAddInventoryClicked(object? sender, EventArgs e)
         {

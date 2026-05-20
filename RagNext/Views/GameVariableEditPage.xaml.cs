@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using Microsoft.Maui.Controls;
@@ -57,10 +57,7 @@ namespace RagNext.Views
             }
         }
 
-        private async void OnCancelClicked(object sender, EventArgs e)
-        {
-            await Navigation.PopAsync();
-        }
+
 
         private sealed class DisposeAction : IDisposable
         {

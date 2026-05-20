@@ -5,7 +5,7 @@ namespace RagsCore.Services
 {
     public interface IGameStorage
     {
-        Task SaveAsync(Game game, string? fileName = null);
+        Task SaveAsync(Game game, string? fileName = null, bool isExplicitUserSave = false);
         Task<Game?> LoadAsync();                 // most recent
         Task<Game?> LoadAsync(string fileName);  // named save
         Task<string[]> ListSavesAsync();

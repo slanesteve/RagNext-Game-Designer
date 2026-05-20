@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using RagsCore.Models;
 using RagNext.Services;
-using CommunityToolkit.Maui.Extensions;
+using RagNext.ViewModels;
 
 namespace RagNext
 {
@@ -12,64 +12,141 @@ namespace RagNext
         private Game _game = Game.CreateNew("New Game", "Unknown");
         private bool _hasRunStartupFlow;
 
+        private MainViewModel? ViewModel => BindingContext as MainViewModel;
+
         public MainPage()
         {
             InitializeComponent();
+            BindingContext = new MainViewModel();
+            this.Loaded += MainPage_Loaded;
         }
 
-        protected override async void OnAppearing()
+        private async void MainPage_Loaded(object? sender, EventArgs e)
         {
-            base.OnAppearing();
+            this.Loaded -= MainPage_Loaded;
 
             if (_hasRunStartupFlow)
                 return;
 
             _hasRunStartupFlow = true;
 
-            // give the UI a moment to attach, then show our reliable modal dialog
-            await Task.Yield();
+            // Give the desktop layout engine a moment to completely finish processing composition rules
+            await Task.Delay(100);
 
+            // Safely initialize default application context variables now that UI handles are verified
+            if (App.CurrentGame == null)
+            {
+                App.CurrentGame = _game;
+                if (ViewModel != null)
+                {
+                    ViewModel.CurrentGame = _game;
+                }
+            }
+            else
+            {
+                _game = App.CurrentGame;
+                SyncGameDataToUI();
+            }
+
+            // Toggle visibility of the internal layout overlay safely.
+            StartupOverlayView.IsVisible = true;
+        }
+
+        private void CloseStartupOverlay()
+        {
+            StartupOverlayView.IsVisible = false;
+        }
+
+        private async void OnOverlayCreateClicked(object sender, EventArgs e)
+        {
+            CloseStartupOverlay();
+            await CreateNewGameFlowAsync();
+        }
+
+        private async void OnOverlayLoadClicked(object sender, EventArgs e)
+        {
             try
             {
-                var dialog = new StartupDialog();
-
-                // ensure navigation is available; push modal and await the result
-                await Navigation.PushModalAsync(dialog);
-                var choice = await dialog.ResultTask.ConfigureAwait(false);
-
-                // restore to UI thread to update UI/bindings
-                await MainThread.InvokeOnMainThreadAsync(async () =>
+                var saves = await GameStorage.ListSavesAsync();
+                if (saves == null || saves.Length == 0)
                 {
-                    if (choice == "Create New Game")
+                    bool create = await DisplayAlert("No saved game", "No saved game found. Would you like to create a new one?", "Yes", "No");
+                    if (create)
                     {
+                        CloseStartupOverlay();
                         await CreateNewGameFlowAsync();
                     }
-                    else if (choice == "Load Saved Game")
-                    {
-                        await LoadGameFlowAsync();
-                    }
-                    else
-                    {
-                        var loaded = await GameStorage.LoadAsync();
-                        if (loaded is not null)
-                            _game = loaded;
-                        EnsurePlayer();
-                        BindingContext = _game;
-                        App.CurrentGame = _game;
-                    }
-                }).ConfigureAwait(false);
+                    return;
+                }
+
+                WelcomeOptionsView.IsVisible = false;
+                InlineSavePickerView.IsVisible = true;
+                SavesCollectionView.ItemsSource = saves;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Startup dialog error: {ex}");
-                await DisplayAlert("Error", $"Failed during startup: {ex.Message}", "OK");
-                var loaded = await GameStorage.LoadAsync();
-                if (loaded is not null)
-                    _game = loaded;
-                EnsurePlayer();
-                BindingContext = _game;
-                App.CurrentGame = _game;
+                await DisplayAlert("Load error", $"Failed to scan local file directories: {ex.Message}", "OK");
             }
+        }
+
+        private async void OnSaveSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection.Count == 0)
+                return;
+
+            string? selectedSave = e.CurrentSelection[0] as string;
+
+            ((CollectionView)sender).SelectedItem = null;
+
+            if (string.IsNullOrEmpty(selectedSave))
+                return;
+
+            try
+            {
+                var loaded = await GameStorage.LoadAsync(selectedSave);
+                if (loaded is null)
+                {
+                    await DisplayAlert("Load error", "Failed to parse the selected workspace profile save file.", "OK");
+                    return;
+                }
+
+                _game = loaded;
+                SyncGameDataToUI();
+                CloseStartupOverlay();
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Load error", $"Failed to load project: {ex.Message}", "OK");
+            }
+        }
+
+        private void OnCloseSavePickerClicked(object sender, EventArgs e)
+        {
+            InlineSavePickerView.IsVisible = false;
+            WelcomeOptionsView.IsVisible = true;
+        }
+
+        private async void OnOverlayDefaultClicked(object sender, EventArgs e)
+        {
+            CloseStartupOverlay();
+            var loaded = await GameStorage.LoadAsync();
+            if (loaded is not null)
+                _game = loaded;
+
+            SyncGameDataToUI();
+        }
+
+        private void SyncGameDataToUI()
+        {
+            EnsurePlayer();
+            App.CurrentGame = _game;
+
+            if (ViewModel != null)
+            {
+                ViewModel.CurrentGame = _game;
+            }
+
+            CounterBtn.Text = string.IsNullOrWhiteSpace(_game.Title) ? "Click me" : $"Game: {_game.Title}";
         }
 
         private void EnsurePlayer()
@@ -85,11 +162,10 @@ namespace RagNext
                 string? name = await DisplayPromptAsync("New Game", "Enter the game name", "OK", "Cancel", placeholder: "My Game");
                 if (name is null)
                 {
-                    // user canceled - fall back to load or default
                     var loaded = await GameStorage.LoadAsync();
                     if (loaded is not null)
                         _game = loaded;
-                    App.CurrentGame = _game;
+                    SyncGameDataToUI();
                     break;
                 }
 
@@ -102,11 +178,9 @@ namespace RagNext
 
                 _game = Game.CreateNew(name, Environment.UserName ?? "Unknown");
                 _game.Player = new Player { Name = "Player" };
-                EnsurePlayer();
-                BindingContext = _game;
-                App.CurrentGame = _game;
 
-                // Optionally save immediately - name the file with the game title
+                SyncGameDataToUI();
+
                 try
                 {
                     await GameStorage.SaveAsync(_game, name);
@@ -118,9 +192,6 @@ namespace RagNext
 
                 break;
             }
-
-            // Update UI summary button if present
-            CounterBtn.Text = string.IsNullOrWhiteSpace(_game.Title) ? "Click me" : $"Game: {_game.Title}";
         }
 
         private async Task LoadGameFlowAsync()
@@ -137,43 +208,20 @@ namespace RagNext
                         return;
                     }
                     _game = Game.CreateNew("New Game", "Unknown");
+                    SyncGameDataToUI();
                 }
                 else
                 {
-                    var popup = new Views.SavedGamesPopup(saves);
-
-                    // Show the popup and await the popup's own ResultTask for the selected save
-                    await this.ShowPopupAsync(popup);
-                    var choice = await popup.ResultTask;
-
-                    if (string.IsNullOrEmpty(choice))
-                        return;
-
-                    var loaded = await GameStorage.LoadAsync(choice);
-                    if (loaded is null)
-                    {
-                        await DisplayAlert("Load error", "Failed to load the selected save.", "OK");
-                        return;
-                    }
-                    _game = loaded;
+                    WelcomeOptionsView.IsVisible = false;
+                    InlineSavePickerView.IsVisible = true;
+                    StartupOverlayView.IsVisible = true;
+                    SavesCollectionView.ItemsSource = saves;
                 }
             }
             catch (Exception ex)
             {
                 await DisplayAlert("Load error", $"Failed to load saved game: {ex.Message}", "OK");
             }
-
-            EnsurePlayer();
-            BindingContext = _game;
-            App.CurrentGame = _game;
-            CounterBtn.Text = string.IsNullOrWhiteSpace(_game.Title) ? "Click me" : $"Game: {_game.Title}";
-        }
-
-        private void OnCounterClicked(object? sender, EventArgs e)
-        {
-            // existing counter logic remains
-            // (you can keep the code you already had)
-            SemanticScreenReader.Announce(CounterBtn.Text);
         }
 
         private async void OnSaveClicked(object sender, EventArgs e)
@@ -181,17 +229,20 @@ namespace RagNext
             try
             {
                 EnsurePlayer();
-
-                // ask for a name when saving (optional): use Title as default suggestion
-                var defaultName = string.IsNullOrWhiteSpace(_game.Title) ? "save" : _game.Title;
+                var defaultName = string.IsNullOrWhiteSpace(_game.FileName) ? (string.IsNullOrWhiteSpace(_game.Title) ? "save" : _game.Title) : _game.FileName;
                 var name = await DisplayPromptAsync("Save Game", "Enter save name", "OK", "Cancel", placeholder: defaultName, initialValue: defaultName);
                 if (name is null)
-                {
-                    // user cancelled save
                     return;
+
+                string cleanName = name.Trim();
+                if (string.IsNullOrWhiteSpace(_game.Title))
+                {
+                    _game.Title = cleanName;
                 }
 
-                await GameStorage.SaveAsync(_game, name.Trim());
+                SyncGameDataToUI();
+
+                await GameStorage.SaveAsync(_game, cleanName, isExplicitUserSave: true);
                 await DisplayAlert("Saved", "Game saved successfully.", "OK");
             }
             catch (Exception ex)
@@ -200,7 +251,11 @@ namespace RagNext
             }
         }
 
-        // Menu handlers
+        private void OnCounterClicked(object? sender, EventArgs e)
+        {
+            SemanticScreenReader.Announce(CounterBtn.Text);
+        }
+
         private async void OnLoadMenuClicked(object? sender, EventArgs e)
         {
             await LoadGameFlowAsync();
@@ -208,7 +263,6 @@ namespace RagNext
 
         private void OnExitMenuClicked(object? sender, EventArgs e)
         {
-            // Immediately terminate the app process. On some platforms different APIs may be preferable.
             System.Environment.Exit(0);
         }
 
@@ -221,14 +275,15 @@ namespace RagNext
         {
             await DisplayAlert("Edit", "Redo not implemented.", "OK");
         }
+
         private async void OnSettingsGeneral(object? sender, EventArgs e)
         {
             var page = new Views.GeneralSettingsPage();
             await Navigation.PushModalAsync(page);
         }
+
         private async void OnSettingsAI(object? sender, EventArgs e)
         {
-            // Show as modal to keep behavior consistent with other dialogs
             var page = new Views.AISettingsPage();
             await Navigation.PushModalAsync(page);
         }
@@ -240,9 +295,7 @@ namespace RagNext
 
         private async void OnFileMenuClicked(object? sender, EventArgs e)
         {
-            // Show a platform-friendly action sheet instead of constructing a MenuFlyout
-            // (avoids APIs like MenuFlyout.Items and ShowAt which aren't available here)
-            var options = new[] {"New", "Save", "Load", "Exit"};
+            var options = new[] { "New", "Save", "Load", "Exit" };
             var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
 
             if (string.IsNullOrEmpty(choice) || choice == "Cancel")
@@ -262,14 +315,11 @@ namespace RagNext
                 case "Exit":
                     OnExitMenuClicked(this, EventArgs.Empty);
                     break;
-                
             }
         }
 
         private async void OnEditMenuClicked(object sender, EventArgs e)
         {
-            // Show a platform-friendly action sheet instead of constructing a MenuFlyout
-            // (avoids APIs like MenuFlyout.Items and ShowAt which aren't available هنا)
             var options = new[] { "Undo", "Redo" };
             var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
 
@@ -284,14 +334,11 @@ namespace RagNext
                 case "Redo":
                     OnEditRedo(this, EventArgs.Empty);
                     break;
-                
             }
         }
+
         private async void OnSettingsMenuClicked(object sender, EventArgs e)
         {
-            // Show a platform-friendly action sheet instead of constructing a MenuFlyout
-            // (avoids APIs like MenuFlyout.Items and ShowAt which aren't available هنا)
-            //var options = new[] { "General", "Text AI", "Image AI" };
             var options = new[] { "General", "Text AI" };
             var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
 
@@ -306,19 +353,16 @@ namespace RagNext
                 case "Text AI":
                     OnSettingsAI(this, EventArgs.Empty);
                     break;
-                    case "Image AI":
-                        var page = new Views.ImageAISettingsPage();
-                        await Navigation.PushModalAsync(page);
-                        break;
-
+                case "Image AI":
+                    var page = new Views.ImageAISettingsPage();
+                    await Navigation.PushModalAsync(page);
+                    break;
             }
         }
 
         private async void OnHelpMenuClicked(object sender, EventArgs e)
         {
-            // Show a platform-friendly action sheet instead of constructing a MenuFlyout
-            // (avoids APIs like MenuFlyout.Items and ShowAt which aren't available هنا)
-            var options = new[] {  "About" };
+            var options = new[] { "About" };
             var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
 
             if (string.IsNullOrEmpty(choice) || choice == "Cancel")
@@ -326,34 +370,27 @@ namespace RagNext
 
             switch (choice)
             {
-                
                 case "About":
                     OnHelpAbout(this, EventArgs.Empty);
                     break;
             }
         }
 
-        // Switch to the Rooms tab
         private async void OpenRoomsClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("//rooms"); // absolute route to the "rooms" ShellContent
+            await Shell.Current.GoToAsync("//rooms");
         }
 
-        // Switch to the GameObjects tab
         private async void OpenGameObjectsClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("//gameobjects");
         }
 
-        // Navigate to the RoomEdit page (route already registered in AppShell)
         private async void EditRoom(Guid roomId)
         {
             await Shell.Current.GoToAsync($"RoomEdit?roomId={roomId}");
         }
 
-        private void ToolbarItem_Clicked(object sender, EventArgs e)
-        {
-
-        }
+        private void ToolbarItem_Clicked(object sender, EventArgs e) { }
     }
 }

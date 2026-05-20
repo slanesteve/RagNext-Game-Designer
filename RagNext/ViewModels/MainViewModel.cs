@@ -11,7 +11,58 @@ namespace RagNext.ViewModels
         public Game? CurrentGame
         {
             get => _game;
-            set => SetProperty(ref _game, value);
+            set
+            {
+                // Swap the instance and check if it changed
+                if (SetProperty(ref _game, value))
+                {
+                    // CRITICAL: Explicitly broadcast that the flat and nested property paths have changed.
+                    // This forces the XAML UI text entries to grab the new values upon loading a file!
+                    OnPropertyChanged(nameof(CurrentGame));
+                    OnPropertyChanged(nameof(GameTitle));
+                    OnPropertyChanged(nameof(GameAuthor));
+                    OnPropertyChanged(nameof(GameVersion));
+                }
+            }
+        }
+
+        public string GameTitle
+        {
+            get => CurrentGame?.Title ?? string.Empty;
+            set
+            {
+                if (CurrentGame != null && CurrentGame.Title != value)
+                {
+                    CurrentGame.Title = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string GameAuthor
+        {
+            get => CurrentGame?.Author ?? string.Empty;
+            set
+            {
+                if (CurrentGame != null && CurrentGame.Author != value)
+                {
+                    CurrentGame.Author = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string GameVersion
+        {
+            get => CurrentGame?.Version ?? string.Empty;
+            set
+            {
+                if (CurrentGame != null && CurrentGame.Version != value)
+                {
+                    CurrentGame.Version = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         public ICommand SaveCommand { get; }
@@ -19,8 +70,9 @@ namespace RagNext.ViewModels
 
         public MainViewModel()
         {
-            CurrentGame = App.CurrentGame ?? new Game { Id = System.Guid.NewGuid(), Title = "New Game" };
-            App.CurrentGame = CurrentGame;
+            // SAFE INITIALIZATION: Do NOT automatically construct a new Game() here at startup.
+            // Let it pull the current application state safely, or remain null until the UI settles.
+            CurrentGame = App.CurrentGame;
 
             SaveCommand = new Command(async () =>
             {

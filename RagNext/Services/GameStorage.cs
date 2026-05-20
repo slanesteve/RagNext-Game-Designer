@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -52,8 +52,15 @@ namespace RagNext.Services
         private static string LegacyFilePath =>
             Path.Combine(FileSystem.Current.AppDataDirectory, "game.json");
 
-        public static async Task SaveAsync(Game game, string? fileName = null)
+        public static async Task SaveAsync(Game game, string? fileName = null, bool isExplicitUserSave = false)
         {
+            // If this is a quick/auto save (not an explicit user-triggered save with a custom name),
+            // and we have a tracked loaded filename, redirect back to that filename.
+            if (!isExplicitUserSave && !string.IsNullOrWhiteSpace(game.FileName))
+            {
+                fileName = game.FileName;
+            }
+
             if (string.IsNullOrWhiteSpace(fileName))
             {
                 // default filename: sanitized title + timestamp
@@ -65,6 +72,9 @@ namespace RagNext.Services
             var fullPath = Path.Combine(SavesDirectory, $"{fileName}.json");
             var json = JsonSerializer.Serialize(game, Options);
             await File.WriteAllTextAsync(fullPath, json).ConfigureAwait(false);
+
+            // Track the successfully saved filename on the game object
+            game.FileName = fileName;
 
             // optionally keep legacy file for apps that expect it
             try
@@ -92,7 +102,12 @@ namespace RagNext.Services
                     var latest = files.OrderByDescending(f => File.GetLastWriteTimeUtc(f)).First();
                     attemptedPath = latest;
                     var json = await File.ReadAllTextAsync(latest).ConfigureAwait(false);
-                    return JsonSerializer.Deserialize<Game>(json, Options);
+                    var game = JsonSerializer.Deserialize<Game>(json, Options);
+                    if (game is not null)
+                    {
+                        game.FileName = Path.GetFileNameWithoutExtension(latest);
+                    }
+                    return game;
                 }
 
                 // Fallback to legacy single-file behavior
@@ -101,7 +116,12 @@ namespace RagNext.Services
 
                 attemptedPath = LegacyFilePath;
                 var legacyJson = await File.ReadAllTextAsync(LegacyFilePath).ConfigureAwait(false);
-                return JsonSerializer.Deserialize<Game>(legacyJson, Options);
+                var legacyGame = JsonSerializer.Deserialize<Game>(legacyJson, Options);
+                if (legacyGame is not null)
+                {
+                    legacyGame.FileName = "game";
+                }
+                return legacyGame;
             }
             catch (Exception err)
             {
@@ -120,7 +140,12 @@ namespace RagNext.Services
                 return null;
 
             var json = await File.ReadAllTextAsync(candidate).ConfigureAwait(false);
-            return JsonSerializer.Deserialize<Game>(json, Options);
+            var game = JsonSerializer.Deserialize<Game>(json, Options);
+            if (game is not null)
+            {
+                game.FileName = fileName;
+            }
+            return game;
         }
 
         // List available saves (file names without extension)

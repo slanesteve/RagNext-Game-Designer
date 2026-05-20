@@ -18,7 +18,21 @@ namespace RagNext.Views.Controls
         private static void OnMainChanged(BindableObject bindable, object oldValue, object newValue)
         {
             var self = (RightPaneLayout)bindable;
-            self.MainPresenter.Content = (View?)newValue;
+            var newView = (View?)newValue;
+            self.MainPresenter.Content = newView;
+            if (newView != null)
+            {
+                newView.BindingContext = self.BindingContext;
+            }
+        }
+
+        protected override void OnBindingContextChanged()
+        {
+            base.OnBindingContextChanged();
+            if (Main != null)
+            {
+                Main.BindingContext = BindingContext;
+            }
         }
     }
 }

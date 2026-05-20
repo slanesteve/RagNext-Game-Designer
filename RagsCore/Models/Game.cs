@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
@@ -23,6 +23,9 @@ namespace RagsCore.Models
 
 
         public Guid Id { get; init; } = Guid.NewGuid();
+
+        [JsonIgnore]
+        public string? FileName { get; set; }
 
         private string _title = string.Empty;
         public string Title { get => _title; set => SetProperty(ref _title, value); }

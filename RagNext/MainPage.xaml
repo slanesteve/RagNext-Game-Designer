@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:RagNext"
@@ -12,36 +12,72 @@
         <ToolbarItem Text="Help" Clicked="OnHelpMenuClicked" />
     </ContentPage.ToolbarItems>
 
-    <!-- Wrap existing content -->
-    <controls:RightPaneLayout>
-        <controls:RightPaneLayout.Main>
-            <ScrollView>
-                <VerticalStackLayout Padding="30,20" Spacing="16">
-                    <Image Source="dotnet_bot.png" HeightRequest="140" Aspect="AspectFit"
-                           SemanticProperties.Description="dot net bot in a hovercraft number nine" />
-                    <Label Text="Edit Game" FontSize="20" HorizontalOptions="Center" />
+    <Grid>
+        <controls:RightPaneLayout>
+            <controls:RightPaneLayout.Main>
+                <ScrollView>
+                    <VerticalStackLayout Padding="30,20" Spacing="16">
+                        <Image Source="dotnet_bot.png" HeightRequest="140" Aspect="AspectFit"
+                               SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+                        <Label Text="Edit Game" FontSize="20" HorizontalOptions="Center" />
 
-                    <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" Background="#FFF" Padding="12">
-                        <Border.Shadow>
-                            <Shadow Radius="8" Opacity="0.35" Brush="Black" Offset="0,4" />
-                        </Border.Shadow>
-                        <VerticalStackLayout Spacing="12">
-                            <Label Text="Title" />
-                            <Entry Text="{Binding Title, Mode=TwoWay}" Placeholder="Enter game title" />
-                            <Label Text="Author" />
-                            <Entry Text="{Binding Author, Mode=TwoWay}" Placeholder="Enter author name" />
-                            <Label Text="Version" />
-                            <Entry Text="{Binding Version, Mode=TwoWay}" Placeholder="e.g. 1.0.0" />
-                        </VerticalStackLayout>
-                    </Border>
+                        <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" Background="#FFF" Padding="12">
+                            <Border.Shadow>
+                                <Shadow Radius="8" Opacity="0.35" Brush="Black" Offset="0,4" />
+                            </Border.Shadow>
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="Title" />
+                                <Entry Text="{Binding GameTitle, Mode=TwoWay}" Placeholder="Enter game title" />
 
-                    <HorizontalStackLayout Spacing="12" HorizontalOptions="Fill">
-                        <Button x:Name="CounterBtn" Text="Current Game: None"  HorizontalOptions="StartAndExpand" />
-                        <Button x:Name="Savebtn" Text="Save Game" Clicked="OnSaveClicked"
-                                SemanticProperties.Hint="Saves the game" HorizontalOptions="End" />
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
-            </ScrollView>
-        </controls:RightPaneLayout.Main>
-    </controls:RightPaneLayout>
+                                <Label Text="Author" />
+                                <Entry Text="{Binding GameAuthor, Mode=TwoWay}" Placeholder="Enter author name" />
+
+                                <Label Text="Version" />
+                                <Entry Text="{Binding GameVersion, Mode=TwoWay}" Placeholder="e.g. 1.0.0" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <HorizontalStackLayout Spacing="12" HorizontalOptions="Fill">
+                            <Button x:Name="CounterBtn" Text="Current Game: None" HorizontalOptions="StartAndExpand" />
+                            <Button x:Name="Savebtn" Text="Save Game" Clicked="OnSaveClicked"
+                                    SemanticProperties.Hint="Saves the game" HorizontalOptions="End" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </controls:RightPaneLayout.Main>
+        </controls:RightPaneLayout>
+
+        <Grid x:Name="StartupOverlayView" BackgroundColor="#A0000000" IsVisible="False">
+            <Border VerticalOptions="Center" HorizontalOptions="Center" WidthRequest="400" Padding="24" BackgroundColor="White" StrokeShape="RoundRectangle 12">
+                <Border.Shadow>
+                    <Shadow Radius="15" Opacity="0.5" Brush="Black" Offset="0,6"/>
+                </Border.Shadow>
+
+                <Grid>
+                    <VerticalStackLayout x:Name="WelcomeOptionsView" Spacing="16" HorizontalOptions="Center" IsVisible="True">
+                        <Label Text="Welcome to RagNext Designer" FontSize="22" FontAttributes="Bold" HorizontalTextAlignment="Center" Margin="0,0,0,10"/>
+                        <Button Text="Create New Game" Clicked="OnOverlayCreateClicked" BackgroundColor="#512BD4" TextColor="White" HeightRequest="45" WidthRequest="250"/>
+                        <Button Text="Load Saved Game" Clicked="OnOverlayLoadClicked" BackgroundColor="#512BD4" TextColor="White" HeightRequest="45" WidthRequest="250"/>
+                        <Button Text="Load Last Workspace" Clicked="OnOverlayDefaultClicked" BackgroundColor="#E0E0E0" TextColor="Black" HeightRequest="45" WidthRequest="250"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout x:Name="InlineSavePickerView" Spacing="16" HorizontalOptions="Center" IsVisible="False">
+                        <Label Text="Select a Saved Project" FontSize="20" FontAttributes="Bold" HorizontalTextAlignment="Center" Margin="0,0,0,10"/>
+
+                        <CollectionView x:Name="SavesCollectionView" SelectionMode="Single" HeightRequest="200" SelectionChanged="OnSaveSelectionChanged">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="10">
+                                        <Label Text="{Binding .}" FontSize="16" VerticalOptions="Center" TextColor="Black"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <Button Text="Cancel" Clicked="OnCloseSavePickerClicked" BackgroundColor="#E0E0E0" TextColor="Black" WidthRequest="200" Margin="0,10,0,0"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
 </ContentPage>

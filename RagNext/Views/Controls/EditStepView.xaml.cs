@@ -10,12 +10,42 @@ namespace RagNext.Views.Controls
 
         // Call SaveAsync whenever a user changes an input.
         private RagNext.ViewModels.EditStepViewModel? Vm => BindingContext as RagNext.ViewModels.EditStepViewModel;
-        private async Task SaveNowAsync() { if (Vm != null) await Vm.SaveAsync(); }
+        
+        private void SaveNowAsync()
+        {
+            var vmToSave = Vm;
+            if (vmToSave == null) return;
+
+            Dispatcher.Dispatch(async () =>
+            {
+                await vmToSave.SaveAsync();
+            });
+        }
 
         private void OnDefinitionChanged(object? sender, EventArgs e) => SaveNowAsync();
         private void OnEntryUnfocused(object? sender, FocusEventArgs e) => SaveNowAsync();
         private void OnEditorUnfocused(object? sender, FocusEventArgs e) => SaveNowAsync();
         private void OnCheckChanged(object? sender, CheckedChangedEventArgs e) => SaveNowAsync();
+
+        private void OnTextChanged(object? sender, TextChangedEventArgs e)
+        {
+            if (sender is BindableObject bindable && bindable.BindingContext is InputDefinition input)
+            {
+                // Only handle text and textarea inputs to avoid overwriting Guids or other types with strings
+                if (input.ControlType != InputControlType.Text && input.ControlType != InputControlType.TextArea)
+                {
+                    return;
+                }
+
+                var currentStr = input.Value?.ToString() ?? string.Empty;
+                var newStr = e.NewTextValue ?? string.Empty;
+                if (currentStr != newStr)
+                {
+                    input.Value = e.NewTextValue;
+                    SaveNowAsync();
+                }
+            }
+        }
 
         public EditStepView()
         {
@@ -90,10 +120,10 @@ namespace RagNext.Views.Controls
             //        input.Value = picker.SelectedItem;
             //};
 
-            picker.SelectedIndexChanged += async (s, _) =>
+            picker.SelectedIndexChanged += (s, _) =>
             {
                 if (picker.SelectedItem is not null) input.Value = picker.SelectedItem;
-                await SaveNowAsync();
+                SaveNowAsync();
             };
 
             // If needed, you can access the view model and its EditableInputs like this:

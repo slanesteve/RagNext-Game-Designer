@@ -9,7 +9,6 @@
              Title="Edit Object">
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Save" Clicked="OnSaveClicked" />
-        <ToolbarItem Text="Cancel" Clicked="OnCancelClicked" Priority="1" />
     </ContentPage.ToolbarItems>
 
     <Grid>
