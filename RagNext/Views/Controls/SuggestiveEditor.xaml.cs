@@ -146,11 +146,28 @@ namespace RagNext.Views.Controls
             }
         }
 
-        private void OnSuggestionTapped(object? sender, ItemTappedEventArgs e)
+        private void OnSuggestionItemTapped(object? sender, EventArgs e)
         {
-            if (e.Item is SuggestionItem selected)
+            if (sender is BindableObject bindable && bindable.BindingContext is SuggestionItem selected)
             {
                 ApplyAutocomplete(selected);
+            }
+        }
+
+        private void OnSuggestionPointerEntered(object? sender, PointerEventArgs e)
+        {
+            if (sender is Grid grid)
+            {
+                var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+                grid.BackgroundColor = isDark ? Color.FromArgb("#252530") : Color.FromArgb("#F0F0F5");
+            }
+        }
+
+        private void OnSuggestionPointerExited(object? sender, PointerEventArgs e)
+        {
+            if (sender is Grid grid)
+            {
+                grid.BackgroundColor = Colors.Transparent;
             }
         }
 
@@ -320,12 +337,14 @@ namespace RagNext.Views.Controls
 
         private void OnHelpIconPointerEntered(object? sender, PointerEventArgs e)
         {
-            HelpIcon.BackgroundColor = Color.FromArgb("#3a3a4c");
+            var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+            HelpIcon.BackgroundColor = isDark ? Color.FromArgb("#3a3a4c") : Color.FromArgb("#D0D0D5");
         }
 
         private void OnHelpIconPointerExited(object? sender, PointerEventArgs e)
         {
-            HelpIcon.BackgroundColor = Color.FromArgb("#2a2a35");
+            var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+            HelpIcon.BackgroundColor = isDark ? Color.FromArgb("#2a2a35") : Color.FromArgb("#E0E0E5");
         }
 
         private void OnMainEditorHandlerChanged(object? sender, EventArgs e)

@@ -10,6 +10,7 @@ using Microsoft.Maui.Storage;
 using System.Threading.Tasks;
 using RagNext.Views;
 using System.Windows.Input;
+using RagNext.Services;
 
 namespace RagNext.ViewModels
 {
@@ -137,28 +138,36 @@ namespace RagNext.ViewModels
             {
                 Editor = new EditStepViewModel(actionStep, async (newTarget) => 
                 {
-                    if (newTarget != null && newTarget != actionStep)
+                    if (newTarget != null)
                     {
-                        if (node.Parent?.Model is ObservableCollection<ActionStep> collection)
+                        if (newTarget != actionStep)
                         {
-                            var ix = collection.IndexOf(actionStep);
-                            if (ix >= 0)
+                            if (node.Parent?.Model is ObservableCollection<ActionStep> collection)
                             {
-                                collection.RemoveAt(ix);
-                                collection.Insert(ix, newTarget);
+                                var ix = collection.IndexOf(actionStep);
+                                if (ix >= 0)
+                                {
+                                    collection.RemoveAt(ix);
+                                    collection.Insert(ix, newTarget);
+                                }
                             }
-                        }
-                        else if (node.Parent?.Model is RagsCore.Models.Action parAct)
-                        {
-                            var ix = parAct.Nodes.IndexOf(actionStep);
-                            if (ix >= 0)
+                            else if (node.Parent?.Model is RagsCore.Models.Action parAct)
                             {
-                                parAct.Nodes.RemoveAt(ix);
-                                parAct.Nodes.Insert(ix, newTarget);
+                                var ix = parAct.Nodes.IndexOf(actionStep);
+                                if (ix >= 0)
+                                {
+                                    parAct.Nodes.RemoveAt(ix);
+                                    parAct.Nodes.Insert(ix, newTarget);
+                                }
                             }
+
+                            await RebuildAsync(newTarget);
                         }
 
-                        await RebuildAsync(newTarget);
+                        if (App.CurrentGame != null)
+                        {
+                            await GameStorage.SaveAsync(App.CurrentGame);
+                        }
                     }
                 });
                 return;
@@ -198,10 +207,10 @@ namespace RagNext.ViewModels
             _game = App.CurrentGame;
             _actions = player.Actions;
             SelectNodeCommand = new Command<object?>(o => { if (o is Node n) Selected = n; });
-            AddActionCommand = new Command(AddAction);
-            AddConditionCommand = new Command(AddCondition);
-            AddCommandCommand = new Command(AddCommand);
-            DeleteCommand = new Command(DeleteSelected);
+            AddActionCommand = new Command(async () => await AddActionAsync());
+            AddConditionCommand = new Command(async () => await AddConditionAsync());
+            AddCommandCommand = new Command(async () => await AddCommandAsync());
+            DeleteCommand = new Command(async () => await DeleteSelectedAsync());
             EditNodeCommand = new Command<object?>(o => { if (o is Node n) _ = EditNodeAsync(n); });
             _ = InitializeCatalogsAsync();
             Rebuild();
@@ -212,10 +221,10 @@ namespace RagNext.ViewModels
             _game = App.CurrentGame;
             _actions = actions;
             SelectNodeCommand = new Command<object?>(o => { if (o is Node n) Selected = n; });
-            AddActionCommand = new Command(AddAction);
-            AddConditionCommand = new Command(AddCondition);
-            AddCommandCommand = new Command(AddCommand);
-            DeleteCommand = new Command(DeleteSelected);
+            AddActionCommand = new Command(async () => await AddActionAsync());
+            AddConditionCommand = new Command(async () => await AddConditionAsync());
+            AddCommandCommand = new Command(async () => await AddCommandAsync());
+            DeleteCommand = new Command(async () => await DeleteSelectedAsync());
             EditNodeCommand = new Command<object?>(o => { if (o is Node n) _ = EditNodeAsync(n); });
             _ = InitializeCatalogsAsync();
             Rebuild();
@@ -288,28 +297,50 @@ namespace RagNext.ViewModels
             return node;
         }
 
-        private void AddAction() { _actions.Add(new RagsCore.Models.Action { Name = $"Action {_actions.Count + 1}" }); Rebuild(); }
-        private void AddCondition() { InsertStep(new VariableEqualsCondition()); }
-        private void AddCommand() { InsertStep(new SetVariableCommand()); }
+        private async Task AddActionAsync()
+        {
+            _actions.Add(new RagsCore.Models.Action { Name = $"Action {_actions.Count + 1}" });
+            Rebuild();
+            if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+        }
+
+        private async Task AddConditionAsync()
+        {
+            await InsertStepAsync(new VariableEqualsCondition());
+        }
+
+        private async Task AddCommandAsync()
+        {
+            await InsertStepAsync(new SetVariableCommand());
+        }
         
-        private void InsertStep(ActionStep step)
+        private async Task InsertStepAsync(ActionStep step)
         {
             if (Selected?.Kind == NodeKind.Action && Selected?.Model is RagsCore.Models.Action act) act.Nodes.Add(step);
             else if (Selected?.Model is ObservableCollection<ActionStep> collection) collection.Add(step);
             else if (Selected?.Model is ActionStep selectedStep && Selected?.Parent?.Model is ObservableCollection<ActionStep> parentCollection) parentCollection.Insert(parentCollection.IndexOf(selectedStep) + 1, step);
             else if (Selected?.Model is ActionStep selectedStepAct && Selected?.Parent?.Model is RagsCore.Models.Action parentAct) parentAct.Nodes.Insert(parentAct.Nodes.IndexOf(selectedStepAct) + 1, step);
             Rebuild();
+            if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
         }
 
-        private void DeleteSelected()
+        private async Task DeleteSelectedAsync()
         {
             if (Selected is null) return;
-            if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action a) { _actions.Remove(a); Rebuild(); return; }
+            if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action a)
+            {
+                _actions.Remove(a);
+                Rebuild();
+                if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+                return;
+            }
             if (Selected.Model is ActionStep step)
             {
                 if (Selected.Parent?.Model is ObservableCollection<ActionStep> parentCollection) parentCollection.Remove(step);
                 else if (Selected.Parent?.Model is RagsCore.Models.Action parentAct) parentAct.Nodes.Remove(step);
-                Rebuild(); return;
+                Rebuild();
+                if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+                return;
             }
         }
         
@@ -319,33 +350,40 @@ namespace RagNext.ViewModels
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
                 var page = new EditStepPage(step);
-                void OnClosed(object? s, EventArgs e)
+                async void OnClosed(object? s, EventArgs e)
                 {
                     page.Disappearing -= OnClosed;
                     
-                    object? newTarget = null;
-                    if (page.BindingContext is EditStepViewModel vm && vm.SelectedDefinition != null && vm.SelectedDefinition.Type != step.GetType())
+                    if (page.BindingContext is EditStepViewModel vm && vm.IsSaved)
                     {
-                          if (node.Parent?.Model is ObservableCollection<ActionStep> collection) {
-                              var ix = collection.IndexOf(step);
-                              if (ix>=0) {
-                                  collection.RemoveAt(ix);
-                                  var fiProp = vm.GetType().GetField("_target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                                  newTarget = fiProp?.GetValue(vm) as ActionStep;
-                                  if (newTarget is ActionStep nt) collection.Insert(ix, nt);
+                        object? newTarget = null;
+                        if (vm.SelectedDefinition != null && vm.SelectedDefinition.Type != step.GetType())
+                        {
+                              if (node.Parent?.Model is ObservableCollection<ActionStep> collection) {
+                                  var ix = collection.IndexOf(step);
+                                  if (ix>=0) {
+                                      collection.RemoveAt(ix);
+                                      var fiProp = vm.GetType().GetField("_target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                                      newTarget = fiProp?.GetValue(vm) as ActionStep;
+                                      if (newTarget is ActionStep nt) collection.Insert(ix, nt);
+                                  }
                               }
-                          }
-                          else if (node.Parent?.Model is RagsCore.Models.Action parAct) {
-                              var ix = parAct.Nodes.IndexOf(step);
-                              if (ix>=0) {
-                                  parAct.Nodes.RemoveAt(ix);
-                                  var fiProp = vm.GetType().GetField("_target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                                  newTarget = fiProp?.GetValue(vm) as ActionStep;
-                                  if (newTarget is ActionStep nt) parAct.Nodes.Insert(ix, nt);
+                              else if (node.Parent?.Model is RagsCore.Models.Action parAct) {
+                                  var ix = parAct.Nodes.IndexOf(step);
+                                  if (ix>=0) {
+                                      parAct.Nodes.RemoveAt(ix);
+                                      var fiProp = vm.GetType().GetField("_target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                                      newTarget = fiProp?.GetValue(vm) as ActionStep;
+                                      if (newTarget is ActionStep nt) parAct.Nodes.Insert(ix, nt);
+                                  }
                               }
-                          }
+                        }
+                        Rebuild(newTarget);
+                        if (App.CurrentGame != null)
+                        {
+                            await GameStorage.SaveAsync(App.CurrentGame);
+                        }
                     }
-                    Rebuild(newTarget);
                 }
                 page.Disappearing += OnClosed;
                 await (Application.Current.MainPage?.Navigation ?? Shell.Current.Navigation).PushModalAsync(page);

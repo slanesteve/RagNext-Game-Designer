@@ -16,7 +16,5 @@ namespace RagsCore.Models
 
         public ObservableCollection<GameObject> Inventory { get; set; } = new();
 
-        // Make Actions public so the action tree can bind.
-        public new ObservableCollection<Action> Actions { get; set; } = new();
     }
 }

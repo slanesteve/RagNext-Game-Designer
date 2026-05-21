@@ -22,7 +22,6 @@ namespace RagNext.Views.Controls
             });
         }
 
-        private void OnDefinitionChanged(object? sender, EventArgs e) => SaveNowAsync();
         private void OnEntryUnfocused(object? sender, FocusEventArgs e) => SaveNowAsync();
         private void OnEditorUnfocused(object? sender, FocusEventArgs e) => SaveNowAsync();
         private void OnCheckChanged(object? sender, CheckedChangedEventArgs e) => SaveNowAsync();
@@ -69,81 +68,35 @@ namespace RagNext.Views.Controls
 
         private void OnInputPickerLoaded(object? sender, EventArgs e)
         {
-            if (sender is not Picker picker)
-                return;
-
-            if (picker.BindingContext is not InputDefinition input)
+            if (sender is not Picker picker || picker.BindingContext is not InputDefinition input)
                 return;
 
             // Ensure display binding if not set in XAML
             if (picker.ItemDisplayBinding is null)
                 picker.ItemDisplayBinding = new Binding("Name");
 
-            // If Value is already set to an instance from PickerSource, set SelectedItem directly.
-            if (input.Value is not null && picker.ItemsSource is System.Collections.IList list)
+            // Setup our guarded selection changed event listener cleanly
+            picker.SelectedIndexChanged -= OnInputPickerSelectedIndexChanged;
+            picker.SelectedIndexChanged += OnInputPickerSelectedIndexChanged;
+        }
+
+        private void OnInputPickerSelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (sender is not Picker picker || picker.BindingContext is not InputDefinition input)
+                return;
+
+            if (picker.SelectedItem is not null)
             {
-                if (list.Contains(input.Value))
+                // Only save if picker's selected item differs from current input value (reference-level or name-level)
+                var isSame = Equals(input.Value, picker.SelectedItem) ||
+                             string.Equals(TryGetName(input.Value), TryGetName(picker.SelectedItem), StringComparison.Ordinal);
+
+                if (!isSame)
                 {
-                    picker.SelectedItem = input.Value;
-                }
-                else
-                {
-                    // Fallback to matching by name-like value.
-                    var savedName = TryGetName(input.Value);
-                    if (!string.IsNullOrWhiteSpace(savedName))
-                    {
-                        var selected = list.Cast<object?>().FirstOrDefault(o => string.Equals(TryGetName(o), savedName, StringComparison.Ordinal));
-                        if (selected != null)
-                            picker.SelectedItem = selected;
-                    }
-                }
-            }
-            else if (picker.ItemsSource is System.Collections.IList list2)
-            {
-                // Defensive fallback: if clone.Value is null, try to restore from the parent view model's target by label.
-                if (this.BindingContext is RagNext.ViewModels.EditStepViewModel vm)
-                {
-                    var index = vm.EditableInputs.IndexOf(input);
-                    if (index >= 0 && vm.SelectedDefinition != null)
-                    {
-                        // Try to find the intended value from the underlying target step.
-                        var intended = vm.EditableInputs.ElementAtOrDefault(index)?.Value;
-                        var intendedName = TryGetName(intended);
-                        if (intended is not null && list2.Contains(intended))
-                        {
-                            picker.SelectedItem = intended;
-                            input.Value = intended;
-                        }
-                        else if (!string.IsNullOrWhiteSpace(intendedName))
-                        {
-                            var selected = list2.Cast<object?>().FirstOrDefault(o => string.Equals(TryGetName(o), intendedName, StringComparison.Ordinal));
-                            if (selected != null)
-                            {
-                                picker.SelectedItem = selected;
-                                input.Value = selected;
-                            }
-                        }
-                    }
+                    input.Value = picker.SelectedItem;
+                    SaveNowAsync();
                 }
             }
-
-            // Keep Value in sync if the user changes selection.
-            //picker.SelectedIndexChanged += (s, _) =>
-            //{
-            //    // Avoid pushing null into Value; only update when selection exists.
-            //    if (picker.SelectedItem is not null)
-            //        input.Value = picker.SelectedItem;
-            //};
-
-            picker.SelectedIndexChanged += (s, _) =>
-            {
-                if (picker.SelectedItem is not null) input.Value = picker.SelectedItem;
-                SaveNowAsync();
-            };
-
-            // If needed, you can access the view model and its EditableInputs like this:
-            // var vm = this.BindingContext as RagNext.ViewModels.EditStepViewModel;
-            // var inputs = vm?.EditableInputs; // contains the clones used in the template
         }
 
         private static string? TryGetName(object? value)

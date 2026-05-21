@@ -22,6 +22,7 @@ namespace RagNext.ViewModels
         private ActionStep _target;
         private readonly Func<ActionStep, Task> _afterMutate;
         private bool _isSaving;
+        public bool IsSaved { get; private set; } = false;
 
         public ObservableCollection<StepTypeWrapper> Definitions { get; } = new();
         public ObservableCollection<InputDefinition> EditableInputs { get; } = new();
@@ -54,6 +55,7 @@ namespace RagNext.ViewModels
                     }
                     _target = newTarget;
                     BuildInputsFromTarget();
+                    _ = SaveAsync();
                 }
             }
         }
@@ -242,6 +244,7 @@ namespace RagNext.ViewModels
                 }
 
                 await _afterMutate(_target);
+                IsSaved = true;
             }
             finally
             {

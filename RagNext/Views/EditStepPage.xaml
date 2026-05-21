@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:behaviors="clr-namespace:RagNext.Behaviors"
+             xmlns:controls="clr-namespace:RagNext.Views.Controls"
              x:Class="RagNext.Views.EditStepPage"
              Title="{Binding SelectedDefinition.Name, StringFormat='Edit Step - {0}'}">
     <Grid>
@@ -22,9 +23,9 @@
                         <DataTemplate>
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="{Binding Label}" />
-                                <Entry Text="{Binding Value, Mode=TwoWay}"
+                                <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}"
                                        IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}" />
-                                <Editor Text="{Binding Value, Mode=TwoWay}" 
+                                <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}" 
                                         IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}" />
                                 <Grid IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}"
                                       ColumnDefinitions="*, Auto"
@@ -35,7 +36,7 @@
                                                 SelectedItem="{Binding Value, Mode=TwoWay}"
                                                 Loaded="OnInputPickerLoaded"
                                                 IsVisible="{Binding IsNormalMode}" />
-                                        <Entry Text="{Binding Value, Mode=TwoWay}"
+                                        <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}"
                                                IsVisible="{Binding IsManualMode}" />
                                     </Grid>
                                     <Button Grid.Column="1"

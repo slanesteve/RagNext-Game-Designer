@@ -25,8 +25,8 @@
                 HorizontalOptions="End"
                 VerticalOptions="Start"
                 Margin="0, 8, 12, 0"
-                BackgroundColor="#2a2a35"
-                Stroke="#4a4a5c"
+                BackgroundColor="{AppThemeBinding Light=#E0E0E5, Dark=#2a2a35}"
+                Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#4a4a5c}"
                 StrokeThickness="1"
                 ZIndex="998">
             <Border.StrokeShape>
@@ -38,7 +38,7 @@
                                           PointerExited="OnHelpIconPointerExited" />
             </Border.GestureRecognizers>
             <Label Text="?"
-                   TextColor="#a0a0b0"
+                   TextColor="{AppThemeBinding Light=#555565, Dark=#a0a0b0}"
                    FontSize="12"
                    FontAttributes="Bold"
                    HorizontalOptions="Center"
@@ -58,8 +58,8 @@
         <!-- Help Info Popup Card -->
         <Border x:Name="HelpPopupCard"
                 IsVisible="False"
-                BackgroundColor="#1e1e24"
-                Stroke="#3a3a4c"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1e1e24}"
+                Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#3a3a4c}"
                 StrokeThickness="1"
                 Padding="12"
                 ZIndex="999"
@@ -84,7 +84,7 @@
                            Text="✨ Dynamic Replacements"
                            FontAttributes="Bold"
                            FontSize="12"
-                           TextColor="#f0f0f4" />
+                           TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
                     <Label Grid.Column="1"
                            Text="❌"
                            TextColor="#7f8c8d"
@@ -97,23 +97,23 @@
                     </Label>
                 </Grid>
                 
-                <BoxView HeightRequest="1" BackgroundColor="#2d2d38" Margin="0,1" />
+                <BoxView HeightRequest="1" BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2d2d38}" Margin="0,1" />
                 
                 <Label Text="Type { to insert live game values that evaluate at runtime. For example:"
                        FontSize="11"
-                       TextColor="#a0a0b0"
+                       TextColor="{AppThemeBinding Light=#555555, Dark=#a0a0b0}"
                        LineBreakMode="WordWrap" />
                        
                 <VerticalStackLayout Spacing="3" Margin="4,0,0,0">
                     <Label Text="• {player.Name} ➔ Protagonist Name"
                            FontSize="10.5"
-                           TextColor="#f0f0f4" />
+                           TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
                     <Label Text="• {variables.Gold} ➔ Global Variables"
                            FontSize="10.5"
-                           TextColor="#f0f0f4" />
+                           TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
                     <Label Text="• {room.Name} ➔ Current Room Name"
                            FontSize="10.5"
-                           TextColor="#f0f0f4" />
+                           TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </Border>
@@ -121,8 +121,8 @@
         <!-- Floating Autocomplete Card Overlay -->
         <Border x:Name="PopupCard"
                 IsVisible="False"
-                BackgroundColor="#1e1e24"
-                Stroke="#3a3a4c"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1e1e24}"
+                Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#3a3a4c}"
                 StrokeThickness="1"
                 Padding="6"
                 ZIndex="999"
@@ -139,40 +139,44 @@
             </Border.StrokeShape>
 
             <Grid RowDefinitions="*,Auto">
-                <ListView x:Name="SuggestionsList"
-                          Grid.Row="0"
-                          ItemTapped="OnSuggestionTapped"
-                          BackgroundColor="Transparent"
-                          SeparatorColor="#2d2d38">
-                    <ListView.ItemTemplate>
+                <CollectionView x:Name="SuggestionsList"
+                                Grid.Row="0"
+                                SelectionMode="None"
+                                BackgroundColor="Transparent">
+                    <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="local:SuggestionItem">
-                            <ViewCell>
-                                <Grid ColumnDefinitions="*,Auto" Padding="8,4">
-                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                        <Label Text="{Binding DisplayText}"
-                                               FontAttributes="Bold"
-                                               FontSize="13"
-                                               TextColor="#f0f0f4" />
-                                        <Label Text="{Binding Description}"
-                                               FontSize="11"
-                                               TextColor="#a0a0b0"
-                                               LineBreakMode="TailTruncation" />
-                                    </VerticalStackLayout>
-                                    <Label Grid.Column="1"
-                                           Text="{Binding TypeName}"
-                                           FontSize="10"
-                                           FontAttributes="Italic"
-                                           TextColor="#7f8c8d"
-                                           VerticalOptions="Center"
-                                           Margin="8,0,0,0" />
-                                </Grid>
-                            </ViewCell>
+                            <Grid ColumnDefinitions="*,Auto"
+                                  Padding="8,6"
+                                  BackgroundColor="Transparent">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnSuggestionItemTapped" />
+                                    <PointerGestureRecognizer PointerEntered="OnSuggestionPointerEntered"
+                                                              PointerExited="OnSuggestionPointerExited" />
+                                </Grid.GestureRecognizers>
+                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <Label Text="{Binding DisplayText}"
+                                           FontAttributes="Bold"
+                                           FontSize="13"
+                                           TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
+                                    <Label Text="{Binding Description}"
+                                           FontSize="11"
+                                           TextColor="{AppThemeBinding Light=#555555, Dark=#a0a0b0}"
+                                           LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1"
+                                       Text="{Binding TypeName}"
+                                       FontSize="10"
+                                       FontAttributes="Italic"
+                                       TextColor="{AppThemeBinding Light=#777777, Dark=#7f8c8d}"
+                                       VerticalOptions="Center"
+                                       Margin="8,0,0,0" />
+                            </Grid>
                         </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
                 <Label Grid.Row="1"
                        Text="Tap a suggestion to autocomplete"
-                       TextColor="#7f8c8d"
+                       TextColor="{AppThemeBinding Light=#777777, Dark=#7f8c8d}"
                        FontSize="10"
                        HorizontalOptions="End"
                        Margin="0,4,4,0" />

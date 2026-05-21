@@ -11,8 +11,7 @@
         <Picker x:Name="DefinitionPicker"
                 ItemsSource="{Binding Definitions}"
                 ItemDisplayBinding="{Binding Name}"
-                SelectedItem="{Binding SelectedDefinition}"
-                SelectedIndexChanged="OnDefinitionChanged" />
+                SelectedItem="{Binding SelectedDefinition}" />
 
         <Label Text="Inputs" FontAttributes="Bold" />
         <CollectionView ItemsSource="{Binding EditableInputs}">
@@ -20,11 +19,11 @@
                 <DataTemplate>
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{Binding Label}" />
-                        <Entry Text="{Binding Value, Mode=OneWay}"
+                        <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}"
                                IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}"
                                TextChanged="OnTextChanged"
-                               Unfocused="OnEntryUnfocused" />
-                        <controls:SuggestiveEditor Text="{Binding Value, Mode=OneWay}"
+                               UnfocusedEvent="OnEntryUnfocused" />
+                        <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}"
                                 IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}"
                                 TextChanged="OnTextChanged"
                                 UnfocusedEvent="OnEditorUnfocused" />
@@ -35,17 +34,16 @@
                                 <Picker ItemsSource="{Binding PickerSource}"
                                         ItemDisplayBinding="{Binding Name}"
                                         Loaded="OnInputPickerLoaded"
-                                        SelectedIndexChanged="OnDefinitionChanged"
                                         xmlns:behaviors="clr-namespace:RagNext.Behaviors"
                                         IsVisible="{Binding IsNormalMode}">
                                     <Picker.Behaviors>
                                         <behaviors:SyncPickerSelectionBehavior />
                                     </Picker.Behaviors>
                                 </Picker>
-                                <Entry Text="{Binding Value, Mode=TwoWay}"
+                                <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}"
                                        IsVisible="{Binding IsManualMode}"
                                        TextChanged="OnTextChanged"
-                                       Unfocused="OnEntryUnfocused" />
+                                       UnfocusedEvent="OnEntryUnfocused" />
                             </Grid>
                             <Button Grid.Column="1"
                                     Text="{Binding ToggleButtonText}"

@@ -8,6 +8,10 @@ namespace RagsCore.Models
     {
         public Guid Id { get; init; } = Guid.NewGuid();
         public string OriginalFileName { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string Name => OriginalFileName;
+
         public string RelativePath { get; set; } = string.Empty; // under the game's Assets folder
         public string ContentType { get; set; } = "application/octet-stream";
         public MediaKind Kind { get; set; } = MediaKind.Other;
