@@ -64,6 +64,9 @@ namespace RagNext.Views.Controls
             if (DateTime.UtcNow - _lastContextChangedTime < TimeSpan.FromMilliseconds(800))
                 return;
 
+            if (BindingContext is ActionLibraryViewModel vm && vm.IsRebuilding)
+                return;
+
             // Delayed execution to allow the expander expansion layout to propagate and update height
             Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(200), async () =>
             {

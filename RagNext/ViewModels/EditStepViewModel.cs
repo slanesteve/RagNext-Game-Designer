@@ -17,6 +17,12 @@ namespace RagNext.ViewModels
         public Type Type { get; set; } = default!;
     }
 
+    public sealed class NamedOption
+    {
+        public string Name { get; set; } = string.Empty;
+        public override string ToString() => Name;
+    }
+
     public sealed class EditStepViewModel : BindableObject
     {
         private ActionStep _target;
@@ -46,16 +52,29 @@ namespace RagNext.ViewModels
                 
                 if (value != null && _target.GetType() != value.Type)
                 {
-                    var newTarget = (ActionStep)Activator.CreateInstance(value.Type)!;
-                    newTarget.Label = _target.Label;
-                    if (newTarget is RagsCore.Actions.Condition newCond && _target is RagsCore.Actions.Condition oldCond)
+                    var targetType = value.Type;
+                    // Defer step mutation, parameters rebuild, and saving/rebuilding completely
+                    // to allow the native Picker dropdown to fully close and layout to settle.
+                    Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(async () =>
                     {
-                        newCond.TrueBranch = oldCond.TrueBranch;
-                        newCond.FalseBranch = oldCond.FalseBranch;
-                    }
-                    _target = newTarget;
-                    BuildInputsFromTarget();
-                    _ = SaveAsync();
+                        await Task.Delay(150);
+                        
+                        // Guard: ensure the selected definition hasn't changed while we were waiting
+                        if (_selectedDefinition == null || _selectedDefinition.Type != targetType)
+                            return;
+
+                        var newTarget = (ActionStep)Activator.CreateInstance(targetType)!;
+                        newTarget.Label = _target.Label;
+                        if (newTarget is RagsCore.Actions.Condition newCond && _target is RagsCore.Actions.Condition oldCond)
+                        {
+                            newCond.TrueBranch = oldCond.TrueBranch;
+                            newCond.FalseBranch = oldCond.FalseBranch;
+                        }
+                        _target = newTarget;
+                        BuildInputsFromTarget();
+                        
+                        await SaveAsync();
+                    });
                 }
             }
         }
@@ -147,9 +166,23 @@ namespace RagNext.ViewModels
                 InputDataType.Character => game.Characters.Cast<object>().ToList(),
                 InputDataType.Variable => game.Variables.Cast<object>().ToList(),
                 InputDataType.Media => game.MediaAssets.Cast<object>().ToList(),
-                InputDataType.Operator => new List<object> { "=", "!=", ">", ">=", "<", "<=" },
+                InputDataType.Operator => new List<object>
+                {
+                    new NamedOption { Name = "=" },
+                    new NamedOption { Name = "!=" },
+                    new NamedOption { Name = ">" },
+                    new NamedOption { Name = ">=" },
+                    new NamedOption { Name = "<" },
+                    new NamedOption { Name = "<=" }
+                },
                 _ => input.Label.Equals("Gender", StringComparison.OrdinalIgnoreCase)
-                     ? new List<object> { "Male", "Female", "Non-binary", "Other" }
+                     ? new List<object>
+                     {
+                         new NamedOption { Name = "Male" },
+                         new NamedOption { Name = "Female" },
+                         new NamedOption { Name = "Non-binary" },
+                         new NamedOption { Name = "Other" }
+                     }
                      : null
             };
 
@@ -217,6 +250,7 @@ namespace RagNext.ViewModels
                         if (src.ControlType == InputControlType.ComboBox && valToSet != null)
                         {
                             if (valToSet is GameVariable gv) { valToSet = gv.Name; }
+                            else if (valToSet is NamedOption no) { valToSet = no.Name; }
                             else { 
                                 var idProp = valToSet.GetType().GetProperty("Id");
                                 if (idProp != null) valToSet = idProp.GetValue(valToSet);

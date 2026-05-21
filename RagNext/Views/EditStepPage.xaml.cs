@@ -21,6 +21,16 @@ namespace RagNext.Views
             await Navigation.PopModalAsync();
         }
 
+        private async void OnAskAIClicked(object? sender, EventArgs e)
+        {
+            if (sender is not Button btn) return;
+
+            var ai = MauiProgram.Services.GetService(typeof(RagNext.Services.IAIChatService)) as RagNext.Services.IAIChatService;
+            if (ai == null) return;
+
+            await RagNext.Services.AIAssistHelper.HandleAskAIAsync(this, btn, btn.CommandParameter, ai);
+        }
+
         private static void ConfigurePickerForInput(Picker picker, InputDefinition input)
         {
             picker.ItemsSource = input.PickerSource?.ToList();
@@ -44,6 +54,7 @@ namespace RagNext.Views
         {
             if (value is null) return null;
             if (value is string s) return s;
+            if (value is NamedOption no) return no.Name;
 
             if (value is System.Text.Json.JsonElement el)
             {

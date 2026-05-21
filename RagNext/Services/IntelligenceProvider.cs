@@ -26,6 +26,13 @@ namespace RagNext.Services
                 TypeName = "Current Object Property",
                 Description = "Description of this object."
             });
+            list.Add(new SuggestionItem
+            {
+                Token = "this.portrait",
+                DisplayText = "this.portrait",
+                TypeName = "Current Object Property",
+                Description = "Portrait or image path of this object."
+            });
 
             if (game != null)
             {
@@ -69,6 +76,13 @@ namespace RagNext.Services
                 TypeName = "Player Property",
                 Description = "Gender of the protagonist."
             });
+            list.Add(new SuggestionItem
+            {
+                Token = "player.portrait",
+                DisplayText = "player.portrait",
+                TypeName = "Player Property",
+                Description = "Portrait or image path of the protagonist."
+            });
 
             if (game?.Player != null)
             {
@@ -98,6 +112,13 @@ namespace RagNext.Services
                 DisplayText = "room.Description",
                 TypeName = "Room Property",
                 Description = "Description of the current room."
+            });
+            list.Add(new SuggestionItem
+            {
+                Token = "room.portrait",
+                DisplayText = "room.portrait",
+                TypeName = "Room Property",
+                Description = "Portrait or image path of the current room."
             });
             
             if (game != null)
@@ -134,6 +155,13 @@ namespace RagNext.Services
                 DisplayText = "focus.Description",
                 TypeName = "Focus Object Property",
                 Description = "Description of the current focus object."
+            });
+            list.Add(new SuggestionItem
+            {
+                Token = "focus.portrait",
+                DisplayText = "focus.portrait",
+                TypeName = "Focus Object Property",
+                Description = "Portrait or image path of the current focus object."
             });
             if (game != null)
             {
@@ -197,6 +225,13 @@ namespace RagNext.Services
                         TypeName = "Character Property",
                         Description = $"Health of character '{character.Name}'."
                     });
+                    list.Add(new SuggestionItem
+                    {
+                        Token = $"characters.{nameClean}.portrait",
+                        DisplayText = $"characters.{nameClean}.portrait",
+                        TypeName = "Character Property",
+                        Description = $"Portrait or image path of character '{character.Name}'."
+                    });
 
                     foreach (var attr in character.Attributes.Where(a => !string.IsNullOrWhiteSpace(a.Name)))
                     {
@@ -230,6 +265,13 @@ namespace RagNext.Services
                         DisplayText = $"objects.{nameClean}.Description",
                         TypeName = "Object Property",
                         Description = $"Description of object '{obj.Name}'."
+                    });
+                    list.Add(new SuggestionItem
+                    {
+                        Token = $"objects.{nameClean}.portrait",
+                        DisplayText = $"objects.{nameClean}.portrait",
+                        TypeName = "Object Property",
+                        Description = $"Portrait or image path of object '{obj.Name}'."
                     });
 
                     foreach (var attr in obj.Attributes.Where(a => !string.IsNullOrWhiteSpace(a.Name)))

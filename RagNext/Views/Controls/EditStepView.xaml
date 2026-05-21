@@ -19,14 +19,40 @@
                 <DataTemplate>
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{Binding Label}" />
-                        <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}"
-                               IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}"
-                               TextChanged="OnTextChanged"
-                               UnfocusedEvent="OnEntryUnfocused" />
-                        <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}"
-                                IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}"
-                                TextChanged="OnTextChanged"
-                                UnfocusedEvent="OnEditorUnfocused" />
+                        <Grid IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}"
+                              ColumnDefinitions="*, Auto"
+                              ColumnSpacing="8">
+                            <controls:SuggestiveEditor x:Name="TextEditor"
+                                                       Grid.Column="0"
+                                                       Text="{Binding Value, Mode=TwoWay}"
+                                                       TextChanged="OnTextChanged"
+                                                       UnfocusedEvent="OnEntryUnfocused" />
+                            <Button Grid.Column="1"
+                                    Text="✨"
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    Padding="0"
+                                    VerticalOptions="Center"
+                                    Clicked="OnAskAIClicked"
+                                    CommandParameter="{x:Reference TextEditor}" />
+                        </Grid>
+                        <Grid IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}"
+                              ColumnDefinitions="*, Auto"
+                              ColumnSpacing="8">
+                            <controls:SuggestiveEditor x:Name="TextAreaEditor"
+                                                       Grid.Column="0"
+                                                       Text="{Binding Value, Mode=TwoWay}"
+                                                       TextChanged="OnTextChanged"
+                                                       UnfocusedEvent="OnEditorUnfocused" />
+                            <Button Grid.Column="1"
+                                    Text="✨"
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    Padding="0"
+                                    VerticalOptions="Center"
+                                    Clicked="OnAskAIClicked"
+                                    CommandParameter="{x:Reference TextAreaEditor}" />
+                        </Grid>
                         <Grid IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}"
                               ColumnDefinitions="*, Auto"
                               ColumnSpacing="8">

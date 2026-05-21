@@ -84,16 +84,19 @@ namespace RagNext.Views.Controls
                     platformView.AllowDrop = true;
                     platformView.DragOver += (s, args) =>
                     {
-                        args.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
-                        args.Handled = true;
+                        if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+                        {
+                            args.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+                            args.Handled = true;
+                        }
                     };
                     platformView.Drop += async (s, args) =>
                     {
-                        args.Handled = true;
-                        var deferral = args.GetDeferral();
-                        try
+                        if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
                         {
-                            if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+                            args.Handled = true;
+                            var deferral = args.GetDeferral();
+                            try
                             {
                                 var items = await args.DataView.GetStorageItemsAsync();
                                 var filePaths = new System.Collections.Generic.List<string>();
@@ -116,14 +119,14 @@ namespace RagNext.Views.Controls
                                     }
                                 }
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Error dropping files: {ex.Message}");
-                        }
-                        finally
-                        {
-                            deferral.Complete();
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error dropping files: {ex.Message}");
+                            }
+                            finally
+                            {
+                                deferral.Complete();
+                            }
                         }
                     };
                 }
@@ -141,46 +144,52 @@ namespace RagNext.Views.Controls
                     platformView.AllowDrop = true;
                     platformView.DragOver += (s, args) =>
                     {
-                        args.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
-                        args.Handled = true;
+                        if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+                        {
+                            args.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+                            args.Handled = true;
+                        }
                     };
                     platformView.Drop += async (s, args) =>
                     {
-                        args.Handled = true;
-                        var deferral = args.GetDeferral();
-                        try
+                        if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
                         {
-                            if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+                            args.Handled = true;
+                            var deferral = args.GetDeferral();
+                            try
                             {
-                                var items = await args.DataView.GetStorageItemsAsync();
-                                var filePaths = new System.Collections.Generic.List<string>();
-                                foreach (var item in items)
+                                if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
                                 {
-                                    if (item is Windows.Storage.StorageFile file)
+                                    var items = await args.DataView.GetStorageItemsAsync();
+                                    var filePaths = new System.Collections.Generic.List<string>();
+                                    foreach (var item in items)
                                     {
-                                        filePaths.Add(file.Path);
-                                    }
-                                }
-                                if (filePaths.Count > 0)
-                                {
-                                    var vm = BindingContext as MediaLibraryViewModel;
-                                    if (vm != null)
-                                    {
-                                        MainThread.BeginInvokeOnMainThread(async () =>
+                                        if (item is Windows.Storage.StorageFile file)
                                         {
-                                            await vm.ImportExternalFilesAsync(filePaths, null);
-                                        });
+                                            filePaths.Add(file.Path);
+                                        }
+                                    }
+                                    if (filePaths.Count > 0)
+                                    {
+                                        var vm = BindingContext as MediaLibraryViewModel;
+                                        if (vm != null)
+                                        {
+                                            MainThread.BeginInvokeOnMainThread(async () =>
+                                            {
+                                                await vm.ImportExternalFilesAsync(filePaths, null);
+                                            });
+                                        }
                                     }
                                 }
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Error dropping files: {ex.Message}");
-                        }
-                        finally
-                        {
-                            deferral.Complete();
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error dropping files: {ex.Message}");
+                            }
+                            finally
+                            {
+                                deferral.Complete();
+                            }
                         }
                     };
                 }

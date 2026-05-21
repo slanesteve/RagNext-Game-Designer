@@ -59,6 +59,8 @@ namespace RagNext.ViewModels
         }
 
         private readonly Game? _game;
+        private bool _isRebuilding;
+        public bool IsRebuilding => _isRebuilding;
         private Node? _selected;
         public Node? Selected
         {
@@ -131,11 +133,9 @@ namespace RagNext.ViewModels
 
         private void SetEditorForSelected(Node? node)
         {
-            Editor = null;
-            ActionEditor = null;
-
             if (node?.Model is ActionStep actionStep)
             {
+                ActionEditor = null;
                 Editor = new EditStepViewModel(actionStep, async (newTarget) => 
                 {
                     if (newTarget != null)
@@ -175,6 +175,7 @@ namespace RagNext.ViewModels
 
             if (node?.Kind == NodeKind.Action && node.Model is RagsCore.Models.Action act)
             {
+                Editor = null;
                 var vm = new EditActionViewModel(act);
                 vm.PropertyChanged += (s, e) =>
                 {
@@ -186,10 +187,25 @@ namespace RagNext.ViewModels
                     }
                 };
                 ActionEditor = vm;
+                return;
             }
+
+            Editor = null;
+            ActionEditor = null;
         }
 
-        private async Task RebuildAsync(object? selectModelOverride = null) => await MainThread.InvokeOnMainThreadAsync(() => Rebuild(selectModelOverride));
+        private async Task RebuildAsync(object? selectModelOverride = null)
+        {
+            if (MainThread.IsMainThread)
+            {
+                Rebuild(selectModelOverride);
+                await Task.CompletedTask;
+            }
+            else
+            {
+                await MainThread.InvokeOnMainThreadAsync(() => Rebuild(selectModelOverride));
+            }
+        }
 
         public ObservableCollection<Node> Roots { get; } = new();
 
@@ -250,31 +266,40 @@ namespace RagNext.ViewModels
 
         private void Rebuild(object? selectModelOverride = null)
         {
-            var prevSelectedModel = selectModelOverride ?? Selected?.Model;
-            var prevExpanded = new HashSet<object>(ReferenceEqualityComparer.Instance);
-            foreach (var n in Roots.SelectMany(r => Flatten(r)))
-                if (n.IsExpanded && n.Model is not null)
-                    prevExpanded.Add(n.Model);
-
-            Roots.Clear();
-
-            foreach (var action in _actions)
+            if (_isRebuilding) return;
+            _isRebuilding = true;
+            try
             {
-                var actionNode = new Node { Kind = NodeKind.Action, Name = action.Name, Model = action, Level = 0, IsExpanded = true };
-                foreach (var step in action.Nodes)
+                var prevSelectedModel = selectModelOverride ?? Selected?.Model;
+                var prevExpanded = new HashSet<object>(ReferenceEqualityComparer.Instance);
+                foreach (var n in Roots.SelectMany(r => Flatten(r)))
+                    if (n.IsExpanded && n.Model is not null)
+                        prevExpanded.Add(n.Model);
+
+                Roots.Clear();
+
+                foreach (var action in _actions)
                 {
-                    var childNode = BuildStepNode(step, 1);
-                    childNode.Parent = actionNode;
-                    actionNode.Children.Add(childNode);
+                    var actionNode = new Node { Kind = NodeKind.Action, Name = action.Name, Model = action, Level = 0, IsExpanded = true };
+                    foreach (var step in action.Nodes)
+                    {
+                        var childNode = BuildStepNode(step, 1);
+                        childNode.Parent = actionNode;
+                        actionNode.Children.Add(childNode);
+                    }
+                    Roots.Add(actionNode);
                 }
-                Roots.Add(actionNode);
+
+                foreach (var n in Roots.SelectMany(r => Flatten(r)))
+                    if (n.Model is not null && prevExpanded.Contains(n.Model))
+                        n.IsExpanded = true;
+
+                Selected = Roots.SelectMany(r => Flatten(r)).FirstOrDefault(n => prevSelectedModel is not null && ReferenceEquals(n.Model, prevSelectedModel));
             }
-
-            foreach (var n in Roots.SelectMany(r => Flatten(r)))
-                if (n.Model is not null && prevExpanded.Contains(n.Model))
-                    n.IsExpanded = true;
-
-            Selected = Roots.SelectMany(r => Flatten(r)).FirstOrDefault(n => prevSelectedModel is not null && ReferenceEquals(n.Model, prevSelectedModel));
+            finally
+            {
+                MainThread.BeginInvokeOnMainThread(() => _isRebuilding = false);
+            }
 
             static IEnumerable<Node> Flatten(Node n) { yield return n; foreach (var c in n.Children) foreach (var d in Flatten(c)) yield return d; }
         }

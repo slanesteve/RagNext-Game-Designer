@@ -61,6 +61,30 @@ namespace RagNext.Views.Controls
             }
         }
 
+        private Page? FindParentPage()
+        {
+            Element? parent = this;
+            while (parent != null)
+            {
+                if (parent is Page page)
+                    return page;
+                parent = parent.Parent;
+            }
+            return null;
+        }
+
+        private async void OnAskAIClicked(object? sender, EventArgs e)
+        {
+            if (sender is not Button btn) return;
+            var parentPage = FindParentPage();
+            if (parentPage == null) return;
+
+            var ai = MauiProgram.Services.GetService(typeof(RagNext.Services.IAIChatService)) as RagNext.Services.IAIChatService;
+            if (ai == null) return;
+
+            await RagNext.Services.AIAssistHelper.HandleAskAIAsync(parentPage, btn, btn.CommandParameter, ai);
+        }
+
         public EditStepView()
         {
             InitializeComponent();
@@ -103,6 +127,7 @@ namespace RagNext.Views.Controls
         {
             if (value is null) return null;
             if (value is string s) return s;
+            if (value is RagNext.ViewModels.NamedOption no) return no.Name;
             if (value is Enum e) return e.ToString();
             if (value is System.Text.Json.JsonElement el)
             {
