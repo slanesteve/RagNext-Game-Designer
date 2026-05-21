@@ -29,9 +29,9 @@ namespace RagNext.Services
 
                 // Image AI settings
                 ImageProvider = Enum.TryParse(Preferences.Get(Prefix + nameof(AISettings.ImageProvider), AIProviderKind.OpenAICompatible.ToString()), out AIProviderKind imgKind) ? imgKind : AIProviderKind.OpenAICompatible,
-                ImageHost = Preferences.Get(Prefix + nameof(AISettings.ImageHost), "https://api.openai.com"),
+                ImageHost = Preferences.Get(Prefix + nameof(AISettings.ImageHost), "https://image.pollinations.ai"),
                 ImagePort = Preferences.Get(Prefix + nameof(AISettings.ImagePort), 0),
-                ImageModel = Preferences.Get(Prefix + nameof(AISettings.ImageModel), "dall-e-3"),
+                ImageModel = Preferences.Get(Prefix + nameof(AISettings.ImageModel), "flux"),
                 ImageApiKey = Preferences.Get(Prefix + nameof(AISettings.ImageApiKey), null),
 
                 // ComfyUI-specific

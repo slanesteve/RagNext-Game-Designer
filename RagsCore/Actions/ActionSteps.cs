@@ -1,7 +1,8 @@
 using System;
 using System.Text.Json.Serialization;
 using RagsCore.Models;
-using System.Collections.ObjectModel; // Added for ObservableCollection
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace RagsCore.Actions
 {
@@ -16,6 +17,14 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(ItemHeldByPlayerCondition), "item.heldByPlayer")]
     [JsonDerivedType(typeof(VariableComparisonCondition), "var.compare")]
     [JsonDerivedType(typeof(CharacterGenderCondition), "char.gender")]
+    [JsonDerivedType(typeof(CharacterInRoomCondition), "char.inRoom")]
+    [JsonDerivedType(typeof(ItemInRoomCondition), "item.inRoom")]
+    [JsonDerivedType(typeof(PlayerGenderCondition), "player.gender")]
+    [JsonDerivedType(typeof(ItemHeldByCharacterCondition), "item.heldByChar")]
+    [JsonDerivedType(typeof(ItemInObjectCondition), "item.inObject")]
+    [JsonDerivedType(typeof(ItemNotHeldByPlayerCondition), "item.notHeldByPlayer")]
+    [JsonDerivedType(typeof(ItemNotInObjectCondition), "item.notInObject")]
+    [JsonDerivedType(typeof(VariableComparisonToVariableCondition), "var.compareVar")]
     // Commands
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
@@ -29,6 +38,10 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(PlayerSetGenderCommand), "player.setGender")]
     [JsonDerivedType(typeof(SetNumericRandomlyCommand), "var.setRandom")]
     [JsonDerivedType(typeof(CharacterMoveToRoomCommand), "char.moveToRoom")]
+    [JsonDerivedType(typeof(DisplayMultimediaCommand), "media.displayMultimedia")]
+    [JsonDerivedType(typeof(CharacterDisplayPortraitCommand), "char.displayPortrait")]
+    [JsonDerivedType(typeof(CharacterSetPortraitMediaCommand), "char.setPortraitMedia")]
+    [JsonDerivedType(typeof(PlayerSetPortraitMediaCommand), "player.setPortraitMedia")]
     public abstract class ActionStep
     {
         public abstract ActionStepKind Kind { get; }
@@ -71,20 +84,28 @@ namespace RagsCore.Actions
 
     public sealed class PlayerInRoomCondition : Condition
     {
-        public Guid RoomId { get; set; }
+        public string RoomId { get; set; } = string.Empty;
         public override string TypeName => "Player in room";
-        public override bool Evaluate(ActionContext ctx) => ctx.CurrentRoom?.Id == RoomId;
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            return Guid.TryParse(resolved, out var g) && ctx.CurrentRoom?.Id == g;
+        }
     }
 
     public sealed class RoomHasObjectCondition : Condition
     {
-        public Guid RoomId { get; set; }
-        public Guid ObjectId { get; set; }
+        public string RoomId { get; set; } = string.Empty;
+        public string ObjectId { get; set; } = string.Empty;
         public override string TypeName => "Room has object";
         public override bool Evaluate(ActionContext ctx)
         {
-            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == RoomId);
-            return room is not null && room.ObjectIds.Contains(ObjectId);
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (!Guid.TryParse(resolvedRoom, out var rId) || !Guid.TryParse(resolvedObj, out var oId)) return false;
+            
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId);
+            return room is not null && room.ObjectIds.Contains(oId);
         }
     }
 
@@ -98,37 +119,49 @@ namespace RagsCore.Actions
 
     public sealed class MovePlayerToRoomCommand : GameCommand
     {
-        public Guid RoomId { get; set; }
+        public string RoomId { get; set; } = string.Empty;
         public override string TypeName => "Move player to room";
         public override void Execute(ActionContext ctx)
         {
-            ctx.SetVariable("player.currentRoomId", RoomId.ToString());
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            if (Guid.TryParse(resolved, out var g))
+                ctx.SetVariable("player.currentRoomId", g.ToString());
+            else if (!string.IsNullOrEmpty(resolved))
+                ctx.SetVariable("player.currentRoomId", resolved);
         }
     }
 
     public sealed class AddObjectToRoomCommand : GameCommand
     {
-        public Guid RoomId { get; set; }
-        public Guid ObjectId { get; set; }
+        public string RoomId { get; set; } = string.Empty;
+        public string ObjectId { get; set; } = string.Empty;
         public override string TypeName => "Add object to room";
         public override void Execute(ActionContext ctx)
         {
-            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == RoomId);
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (!Guid.TryParse(resolvedRoom, out var rId) || !Guid.TryParse(resolvedObj, out var oId)) return;
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId);
             if (room is null) return;
-            if (!room.ObjectIds.Contains(ObjectId))
-                room.ObjectIds.Add(ObjectId);
+            if (!room.ObjectIds.Contains(oId))
+                room.ObjectIds.Add(oId);
         }
     }
 
     public sealed class RemoveObjectFromRoomCommand : GameCommand
     {
-        public Guid RoomId { get; set; }
-        public Guid ObjectId { get; set; }
+        public string RoomId { get; set; } = string.Empty;
+        public string ObjectId { get; set; } = string.Empty;
         public override string TypeName => "Remove object from room";
         public override void Execute(ActionContext ctx)
         {
-            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == RoomId);
-            room?.ObjectIds.Remove(ObjectId);
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (!Guid.TryParse(resolvedRoom, out var rId) || !Guid.TryParse(resolvedObj, out var oId)) return;
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId);
+            room?.ObjectIds.Remove(oId);
         }
     }
 
@@ -154,12 +187,13 @@ namespace RagsCore.Actions
 
     public sealed class PlaySoundEffectCommand : GameCommand
     {
-        public Guid SoundId { get; set; }
+        public string SoundId { get; set; } = string.Empty;
         public double Volume { get; set; } = 100.0;
         public override string TypeName => "Media: Play Sound Effect";
         public override void Execute(ActionContext ctx)
         {
-            ctx.SetVariable("media.lastSoundId", SoundId.ToString());
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(SoundId, ctx);
+            ctx.SetVariable("media.lastSoundId", resolved);
             ctx.SetVariable("media.lastSoundVolume", Volume.ToString());
         }
     }
@@ -211,26 +245,31 @@ namespace RagsCore.Actions
 
     public sealed class CharacterMoveToRoomCommand : GameCommand
     {
-        public Guid CharacterId { get; set; }
-        public Guid RoomId { get; set; }
+        public string CharacterId { get; set; } = string.Empty;
+        public string RoomId { get; set; } = string.Empty;
         public override string TypeName => "Character: Move To Room";
         public override void Execute(ActionContext ctx)
         {
-            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == CharacterId);
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var cId) || !Guid.TryParse(resolvedRoom, out var rId)) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
             if (character is not null)
             {
-                ctx.SetVariable($"char.{CharacterId}.currentRoomId", RoomId.ToString());
+                ctx.SetVariable($"char.{cId}.currentRoomId", rId.ToString());
             }
         }
     }
 
     public sealed class PlayerInSameRoomAsCondition : Condition
     {
-        public Guid CharacterId { get; set; }
+        public string CharacterId { get; set; } = string.Empty;
         public override string TypeName => "Player: In Same Room As";
         public override bool Evaluate(ActionContext ctx)
         {
-            var charRoomVar = ctx.GetVariable($"char.{CharacterId}.currentRoomId")?.Value;
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            var charRoomVar = ctx.GetVariable($"char.{resolvedChar}.currentRoomId")?.Value;
             var playerRoomId = ctx.CurrentRoom?.Id.ToString() ?? ctx.GetVariable("player.currentRoomId")?.Value;
             return charRoomVar != null && playerRoomId != null && string.Equals(charRoomVar, playerRoomId, StringComparison.OrdinalIgnoreCase);
         }
@@ -238,11 +277,13 @@ namespace RagsCore.Actions
 
     public sealed class ItemHeldByPlayerCondition : Condition
     {
-        public Guid ItemId { get; set; }
+        public string ItemId { get; set; } = string.Empty;
         public override string TypeName => "Item: Held By Player";
         public override bool Evaluate(ActionContext ctx)
         {
-            return ctx.Player.Inventory.Any(item => item.Id == ItemId);
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            if (!Guid.TryParse(resolved, out var itemId)) return false;
+            return ctx.Player.Inventory.Any(item => item.Id == itemId);
         }
     }
 
@@ -282,15 +323,238 @@ namespace RagsCore.Actions
 
     public sealed class CharacterGenderCondition : Condition
     {
-        public Guid CharacterId { get; set; }
+        public string CharacterId { get; set; } = string.Empty;
         public string Gender { get; set; } = "Male";
         public override string TypeName => "Character: Gender";
         public override bool Evaluate(ActionContext ctx)
         {
-            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == CharacterId);
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolved, out var cId)) return false;
+            
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
             if (character is null) return false;
             var charGender = character.Properties.TryGetValue("Gender", out var g) ? g : "Male";
             return string.Equals(charGender, Gender, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    // NEW COMMANDS IMPLEMENTATION
+
+    public sealed class DisplayMultimediaCommand : GameCommand
+    {
+        public string MediaId { get; set; } = string.Empty;
+        public override string TypeName => "Media: Display Multimedia";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(MediaId, ctx);
+            ctx.SetVariable("media.lastDisplayedMediaId", resolved);
+        }
+    }
+
+    public sealed class CharacterDisplayPortraitCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string PortraitId { get; set; } = string.Empty;
+        public override string TypeName => "Character: Display Portrait";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            var resolvedPort = RagsCore.Services.TemplateResolver.Resolve(PortraitId, ctx);
+            ctx.SetVariable($"char.{resolvedChar}.displayedPortraitId", resolvedPort);
+        }
+    }
+
+    public sealed class CharacterSetPortraitMediaCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string MediaId { get; set; } = string.Empty;
+        public override string TypeName => "Character: Set Portrait Media";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            var resolvedMedia = RagsCore.Services.TemplateResolver.Resolve(MediaId, ctx);
+            
+            if (Guid.TryParse(resolvedChar, out var charId))
+            {
+                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+                if (character is not null)
+                {
+                    if (Guid.TryParse(resolvedMedia, out var mediaGuid))
+                    {
+                        var mediaAsset = ctx.Game.MediaAssets.FirstOrDefault(m => m.Id == mediaGuid);
+                        if (mediaAsset is not null)
+                        {
+                            character.PortraitImagePath = mediaAsset.RelativePath;
+                        }
+                    }
+                    else
+                    {
+                        character.PortraitImagePath = resolvedMedia;
+                    }
+                }
+            }
+        }
+    }
+
+    public sealed class PlayerSetPortraitMediaCommand : GameCommand
+    {
+        public string MediaId { get; set; } = string.Empty;
+        public override string TypeName => "Player: Set Portrait Media";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedMedia = RagsCore.Services.TemplateResolver.Resolve(MediaId, ctx);
+            if (Guid.TryParse(resolvedMedia, out var mediaGuid))
+            {
+                var mediaAsset = ctx.Game.MediaAssets.FirstOrDefault(m => m.Id == mediaGuid);
+                if (mediaAsset is not null)
+                {
+                    ctx.Player.PortraitImagePath = mediaAsset.RelativePath;
+                }
+            }
+            else
+            {
+                ctx.Player.PortraitImagePath = resolvedMedia;
+            }
+        }
+    }
+
+    // NEW CONDITIONS IMPLEMENTATION
+
+    public sealed class CharacterInRoomCondition : Condition
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string RoomId { get; set; } = string.Empty;
+        public override string TypeName => "Character: In Room";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var charRoomVar = ctx.GetVariable($"char.{resolvedChar}.currentRoomId")?.Value;
+            return charRoomVar != null && string.Equals(charRoomVar, resolvedRoom, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class ItemInRoomCondition : Condition
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public string RoomId { get; set; } = string.Empty;
+        public override string TypeName => "Item: In Room";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedItem = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            if (!Guid.TryParse(resolvedItem, out var itemId) || !Guid.TryParse(resolvedRoom, out var roomId)) return false;
+            
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == roomId);
+            return room is not null && room.ObjectIds.Contains(itemId);
+        }
+    }
+
+    public sealed class PlayerGenderCondition : Condition
+    {
+        public string Gender { get; set; } = "Male";
+        public override string TypeName => "Player: Gender";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            return string.Equals(ctx.Player.Gender, Gender, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class ItemHeldByCharacterCondition : Condition
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public string CharacterId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Held By Character";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedItem = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedItem, out var itemId) || !Guid.TryParse(resolvedChar, out var charId)) return false;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+            return character is not null && character.Inventory.Any(i => i.Id == itemId);
+        }
+    }
+
+    public sealed class ItemInObjectCondition : Condition
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public string ContainerObjectId { get; set; } = string.Empty;
+        public override string TypeName => "Item: In Object";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedItem = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var resolvedContainer = RagsCore.Services.TemplateResolver.Resolve(ContainerObjectId, ctx);
+            if (!Guid.TryParse(resolvedItem, out var itemId)) return false;
+
+            var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == itemId);
+            if (obj == null) return false;
+            obj.Properties.TryGetValue("ParentContainerId", out var pId);
+            return string.Equals(pId, resolvedContainer, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class ItemNotHeldByPlayerCondition : Condition
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Not Held By Player";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            if (!Guid.TryParse(resolved, out var itemId)) return true;
+            return !ctx.Player.Inventory.Any(item => item.Id == itemId);
+        }
+    }
+
+    public sealed class ItemNotInObjectCondition : Condition
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public string ObjectId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Not In Object";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedItem = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (!Guid.TryParse(resolvedItem, out var itemId)) return true;
+
+            var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == itemId);
+            if (obj == null) return true;
+            obj.Properties.TryGetValue("ParentContainerId", out var parentId);
+            return !string.Equals(parentId, resolvedObj, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class VariableComparisonToVariableCondition : Condition
+    {
+        public string NameA { get; set; } = string.Empty;
+        public string Comparison { get; set; } = "=";
+        public string NameB { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Comparison To Variable";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var valA = ctx.GetVariable(NameA)?.Value ?? string.Empty;
+            var valB = ctx.GetVariable(NameB)?.Value ?? string.Empty;
+
+            if (double.TryParse(valA, out double numA) && double.TryParse(valB, out double numB))
+            {
+                return Comparison switch
+                {
+                    "=" => numA == numB,
+                    "!=" => numA != numB,
+                    ">" => numA > numB,
+                    ">=" => numA >= numB,
+                    "<" => numA < numB,
+                    "<=" => numA <= numB,
+                    _ => false
+                };
+            }
+
+            return Comparison switch
+            {
+                "=" => string.Equals(valA, valB, StringComparison.OrdinalIgnoreCase),
+                "!=" => !string.Equals(valA, valB, StringComparison.OrdinalIgnoreCase),
+                _ => false
+            };
         }
     }
 }

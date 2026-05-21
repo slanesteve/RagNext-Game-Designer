@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -26,5 +26,20 @@ namespace RagsCore.Models
         public bool IsCollectible { get => _isCollectible; set => SetProperty(ref _isCollectible, value); }
 
         public Dictionary<string, string> Properties { get; } = new();
+
+        private string? _portraitImagePath;
+        public string? PortraitImagePath
+        {
+            get => _portraitImagePath;
+            set
+            {
+                if (SetProperty(ref _portraitImagePath, value))
+                {
+                    OnPropertyChanged(nameof(PortraitImageFileName));
+                }
+            }
+        }
+
+        public string PortraitImageFileName => System.IO.Path.GetFileName(_portraitImagePath ?? string.Empty);
     }
 }

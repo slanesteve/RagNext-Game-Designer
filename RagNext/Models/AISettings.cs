@@ -52,10 +52,10 @@ namespace RagNext.Models
         // Image AI settings
         public AIProviderKind ImageProvider { get; set; } = AIProviderKind.OpenAICompatible;
         public string? ImageApiKey { get; set; }
-        public string? ImageModel { get; set; } = "dall-e-3";
-        public string? ImageHost { get; set; } = "https://api.openai.com";
+        public string? ImageModel { get; set; } = "flux";
+        public string? ImageHost { get; set; } = "https://image.pollinations.ai";
         public int ImagePort { get; set; } = 0;
-        public Uri ImageBaseUri => new($"{(ImageHost ?? "https://api.openai.com").TrimEnd('/')}" + (ImagePort > 0 ? $":{ImagePort}" : ""));
+        public Uri ImageBaseUri => new($"{(ImageHost ?? "https://image.pollinations.ai").TrimEnd('/')}" + (ImagePort > 0 ? $":{ImagePort}" : ""));
 
         // ComfyUI-specific settings
         public string? ComfyWorkflowPath { get; set; }

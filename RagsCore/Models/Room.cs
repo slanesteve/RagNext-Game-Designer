@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -18,5 +18,20 @@ namespace RagsCore.Models
         public Dictionary<string, Guid> Exits { get; } = new();
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
         public ObservableCollection<Action> Actions { get; set; } = new(); // was internal
+
+        private string? _portraitImagePath;
+        public string? PortraitImagePath
+        {
+            get => _portraitImagePath;
+            set
+            {
+                if (SetProperty(ref _portraitImagePath, value))
+                {
+                    OnPropertyChanged(nameof(PortraitImageFileName));
+                }
+            }
+        }
+
+        public string PortraitImageFileName => System.IO.Path.GetFileName(_portraitImagePath ?? string.Empty);
     }
 }

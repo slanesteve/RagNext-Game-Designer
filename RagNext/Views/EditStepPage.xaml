@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:behaviors="clr-namespace:RagNext.Behaviors"
@@ -26,10 +26,26 @@
                                        IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}" />
                                 <Editor Text="{Binding Value, Mode=TwoWay}" 
                                         IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}" />
-                                <Picker ItemsSource="{Binding PickerSource}"
-                                        ItemDisplayBinding="{Binding Name}"
-                                        SelectedItem="{Binding Value, Mode=TwoWay}"
-                                        Loaded="OnInputPickerLoaded" />
+                                <Grid IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}"
+                                      ColumnDefinitions="*, Auto"
+                                      ColumnSpacing="8">
+                                    <Grid Grid.Column="0">
+                                        <Picker ItemsSource="{Binding PickerSource}"
+                                                ItemDisplayBinding="{Binding Name}"
+                                                SelectedItem="{Binding Value, Mode=TwoWay}"
+                                                Loaded="OnInputPickerLoaded"
+                                                IsVisible="{Binding IsNormalMode}" />
+                                        <Entry Text="{Binding Value, Mode=TwoWay}"
+                                               IsVisible="{Binding IsManualMode}" />
+                                    </Grid>
+                                    <Button Grid.Column="1"
+                                            Text="{Binding ToggleButtonText}"
+                                            Clicked="OnToggleManualMode"
+                                            WidthRequest="70"
+                                            HeightRequest="36"
+                                            Padding="0"
+                                            VerticalOptions="Center" />
+                                </Grid>
                                 <CheckBox IsChecked="{Binding Value, Mode=TwoWay}"
                                           IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}" />
                             </VerticalStackLayout>

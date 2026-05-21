@@ -12,6 +12,7 @@
                 Placeholder="{Binding Placeholder, Source={x:Reference self}}"
                 VerticalOptions="FillAndExpand"
                 HorizontalOptions="FillAndExpand"
+                AutoSize="TextChanges"
                 TextChanged="OnEditorTextChanged"
                 Focused="OnEditorFocused"
                 Unfocused="OnEditorUnfocused"

@@ -31,8 +31,10 @@ namespace RagNext.Views.Controls
         {
             if (sender is BindableObject bindable && bindable.BindingContext is InputDefinition input)
             {
-                // Only handle text and textarea inputs to avoid overwriting Guids or other types with strings
-                if (input.ControlType != InputControlType.Text && input.ControlType != InputControlType.TextArea)
+                // Only handle text, textarea, or ComboBox in manual mode to avoid overwriting Guids or other types with strings
+                if (input.ControlType != InputControlType.Text && 
+                    input.ControlType != InputControlType.TextArea &&
+                    !(input.ControlType == InputControlType.ComboBox && input.IsManualMode))
                 {
                     return;
                 }
@@ -44,6 +46,19 @@ namespace RagNext.Views.Controls
                     input.Value = e.NewTextValue;
                     SaveNowAsync();
                 }
+            }
+        }
+
+        private void OnToggleManualMode(object? sender, EventArgs e)
+        {
+            if (sender is BindableObject bindable && bindable.BindingContext is InputDefinition input)
+            {
+                input.IsManualMode = !input.IsManualMode;
+                if (!input.IsManualMode)
+                {
+                    input.Value = null;
+                }
+                SaveNowAsync();
             }
         }
 

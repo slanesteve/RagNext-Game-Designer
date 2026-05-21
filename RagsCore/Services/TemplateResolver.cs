@@ -85,6 +85,11 @@ namespace RagsCore.Services
                     return ctx.Player.Description;
                 case "gender":
                     return ctx.Player.Gender;
+                case "portrait":
+                case "characterportrait":
+                case "portraitimagepath":
+                case "portraitimage":
+                    return ctx.Player.PortraitImagePath;
                 case "attributes":
                 case "attribute":
                     if (parts.Length < 3) return null;
@@ -109,6 +114,11 @@ namespace RagsCore.Services
                     return room.Name;
                 case "description":
                     return room.Description;
+                case "portrait":
+                case "characterportrait":
+                case "portraitimagepath":
+                case "portraitimage":
+                    return room.PortraitImagePath;
                 case "attributes":
                 case "attribute":
                     if (parts.Length < 3) return null;
@@ -133,6 +143,11 @@ namespace RagsCore.Services
                     return focus.Name;
                 case "description":
                     return focus.Description;
+                case "portrait":
+                case "characterportrait":
+                case "portraitimagepath":
+                case "portraitimage":
+                    return focus.PortraitImagePath;
                 case "attributes":
                 case "attribute":
                     if (parts.Length < 3) return null;
@@ -177,6 +192,11 @@ namespace RagsCore.Services
                     return character.IsHostile.ToString();
                 case "health":
                     return character.Health.ToString();
+                case "portrait":
+                case "characterportrait":
+                case "portraitimagepath":
+                case "portraitimage":
+                    return character.PortraitImagePath;
                 case "attributes":
                 case "attribute":
                     if (parts.Length < 4) return null;
@@ -205,6 +225,11 @@ namespace RagsCore.Services
                     return obj.Description;
                 case "iscollectible":
                     return obj.IsCollectible.ToString();
+                case "portrait":
+                case "characterportrait":
+                case "portraitimagepath":
+                case "portraitimage":
+                    return obj.PortraitImagePath;
                 case "attributes":
                 case "attribute":
                     if (parts.Length < 4) return null;

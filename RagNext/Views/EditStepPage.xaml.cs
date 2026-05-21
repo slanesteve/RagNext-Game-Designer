@@ -75,5 +75,17 @@ namespace RagNext.Views
                 ConfigurePickerForInput(picker, input);
             }
         }
+
+        private void OnToggleManualMode(object? sender, EventArgs e)
+        {
+            if (sender is BindableObject bindable && bindable.BindingContext is InputDefinition input)
+            {
+                input.IsManualMode = !input.IsManualMode;
+                if (!input.IsManualMode)
+                {
+                    input.Value = null;
+                }
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.Threading;
 using Microsoft.Maui.Controls;
 using RagNext.ViewModels;
 using RagsCore.Models;
+using RagsCore.Services;
 using RagNext.Services;
 using System.Globalization;
 using Microsoft.Maui.Graphics.Converters;
@@ -302,6 +303,13 @@ namespace RagNext.Views
                 return;
             }
 
+            var game = App.CurrentGame;
+            if (game is null)
+            {
+                await DisplayAlert("Portrait", "No active game loaded.", "OK");
+                return;
+            }
+
             var prompt = await DisplayPromptAsync("Generate Portrait", "Enter a prompt for the image:", "Generate", "Cancel", placeholder: "heroic adventurer portrait");
             if (string.IsNullOrWhiteSpace(prompt)) return;
 
@@ -330,7 +338,60 @@ namespace RagNext.Views
                     return;
                 }
 
-                player.PortraitImagePath = path;
+                var mediaLibrary = MauiProgram.Services.GetService(typeof(IMediaLibrary)) as IMediaLibrary;
+                var treeStore = MauiProgram.Services.GetService(typeof(IMediaTreeStore)) as IMediaTreeStore;
+
+                if (mediaLibrary is not null && treeStore is not null)
+                {
+                    // Copy to media library
+                    var asset = await mediaLibrary.AddAsync(game, path, cts.Token);
+
+                    // Add to "Player" media folder in media tree
+                    var doc = await treeStore.LoadAsync(game);
+                    if (doc.Roots.Count == 0)
+                        doc.Roots.Add(new RagNext.Models.MediaFolder { Name = "Assets" });
+                    
+                    var rootFolder = doc.Roots.First();
+                    var folderName = "Player";
+                    var subfolder = rootFolder.Children.FirstOrDefault(f => f.Name.Equals(folderName, StringComparison.OrdinalIgnoreCase));
+                    if (subfolder is null)
+                    {
+                        subfolder = new RagNext.Models.MediaFolder { Name = folderName };
+                        rootFolder.Children.Add(subfolder);
+                    }
+                    if (!subfolder.AssetIds.Contains(asset.Id))
+                    {
+                        subfolder.AssetIds.Add(asset.Id);
+                    }
+                    await treeStore.SaveAsync(game, doc);
+
+                    // Refresh Media Tree View
+                    var mediaLibVm = MauiProgram.Services.GetService(typeof(RagNext.ViewModels.MediaLibraryViewModel)) as RagNext.ViewModels.MediaLibraryViewModel;
+                    mediaLibVm?.Refresh();
+
+                    // Resolve local path in game Assets folder and cleanup temp file
+                    var localPath = mediaLibrary.GetLocalPath(game, asset);
+                    try
+                    {
+                        if (System.IO.File.Exists(path) && !string.Equals(path, localPath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            System.IO.File.Delete(path);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to delete temp portrait file: {ex.Message}");
+                    }
+
+                    player.PortraitImagePath = localPath;
+                    UpdatePortraitImage(localPath);
+                }
+                else
+                {
+                    // Fallback to temp path if media library is unavailable
+                    player.PortraitImagePath = path;
+                    UpdatePortraitImage(path);
+                }
             }
             catch (TaskCanceledException)
             {
@@ -344,8 +405,6 @@ namespace RagNext.Views
 
         private void OnPortraitDragOver(object sender, DragEventArgs e)
         {
-            // No equivalent to AcceptedOperation on DropEventArgs in .NET MAUI
-            // You may set e.AcceptedOperation if you want to mark the event as handled
             e.AcceptedOperation = DataPackageOperation.Copy;
         }
 
@@ -354,46 +413,75 @@ namespace RagNext.Views
             var player = BindingContext as Player ?? App.CurrentGame?.Player;
             if (player is null) return;
 
-            // Retrieve the item set during drag start
-            if (e.Data.Properties.TryGetValue("DraggedItem", out var item))
+            string? localPath = null;
+
+            // 1. Try parsing the custom MediaAssetId format from Text payload (cross-platform / WinUI safe)
+            var text = await e.Data.GetTextAsync();
+            if (!string.IsNullOrWhiteSpace(text) && text.StartsWith("MediaAssetId:"))
             {
-                // Try common path properties
-                var pathProp = item.GetType().GetProperty("Path")
-                             ?? item.GetType().GetProperty("FullPath")
-                             ?? item.GetType().GetProperty("FilePath");
-
-                if (pathProp?.GetValue(item) is string path && !string.IsNullOrWhiteSpace(path))
+                var guidStr = text.Substring("MediaAssetId:".Length);
+                if (Guid.TryParse(guidStr, out var assetId) && App.CurrentGame is Game game)
                 {
-                    player.PortraitImagePath = path;
-                    UpdatePortraitImage(path);
-                    return;
-                }
-
-                // If a media asset was dragged from the media tree, resolve to a local file path
-                var assetProp = item.GetType().GetProperty("Asset");
-                var game = App.CurrentGame;
-                if (game is not null && assetProp?.GetValue(item) is RagsCore.Models.MediaAsset asset)
-                {
-                    var lib = MauiProgram.Services.GetService(typeof(RagsCore.Services.IMediaLibrary)) as RagsCore.Services.IMediaLibrary;
-                    if (lib is not null)
+                    var asset = game.MediaAssets?.FirstOrDefault(a => a.Id == assetId);
+                    if (asset is not null)
                     {
-                        var localPath = lib.GetLocalPath(game, asset);
-                        if (!string.IsNullOrWhiteSpace(localPath))
+                        var lib = MauiProgram.Services.GetService(typeof(RagsCore.Services.IMediaLibrary)) as RagsCore.Services.IMediaLibrary;
+                        if (lib is not null)
                         {
-                            player.PortraitImagePath = localPath;
-                            UpdatePortraitImage(localPath);
-                            return;
+                            localPath = lib.GetLocalPath(game, asset);
                         }
                     }
                 }
             }
 
-            // Fallback: if text was provided during drag start
-            var text = await e.Data.GetTextAsync();
-            if (!string.IsNullOrWhiteSpace(text))
+            // 2. Fallback to DraggedItem properties
+            if (string.IsNullOrWhiteSpace(localPath))
             {
-                player.PortraitImagePath = text;
-                UpdatePortraitImage(text);
+                if (e.Data.Properties.TryGetValue("DraggedItem", out var item))
+                {
+                    var pathProp = item.GetType().GetProperty("Path")
+                                 ?? item.GetType().GetProperty("FullPath")
+                                 ?? item.GetType().GetProperty("FilePath");
+
+                    if (pathProp?.GetValue(item) is string path && !string.IsNullOrWhiteSpace(path))
+                    {
+                        localPath = path;
+                    }
+                    else
+                    {
+                        var assetProp = item.GetType().GetProperty("Asset");
+                        if (App.CurrentGame is Game game && assetProp?.GetValue(item) is RagsCore.Models.MediaAsset asset)
+                        {
+                            var lib = MauiProgram.Services.GetService(typeof(RagsCore.Services.IMediaLibrary)) as RagsCore.Services.IMediaLibrary;
+                            if (lib is not null)
+                            {
+                                localPath = lib.GetLocalPath(game, asset);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Fallback to raw text if not already matching MediaAssetId
+            if (string.IsNullOrWhiteSpace(localPath) && !string.IsNullOrWhiteSpace(text) && !text.StartsWith("MediaAssetId:"))
+            {
+                localPath = text;
+            }
+
+            if (!string.IsNullOrWhiteSpace(localPath))
+            {
+                player.PortraitImagePath = localPath;
+                UpdatePortraitImage(localPath);
+            }
+        }
+
+        private void OnClearPortraitClicked(object? sender, EventArgs e)
+        {
+            var player = BindingContext as Player ?? App.CurrentGame?.Player;
+            if (player is not null)
+            {
+                player.PortraitImagePath = null;
+                UpdatePortraitImage(null);
             }
         }
 
@@ -401,8 +489,37 @@ namespace RagNext.Views
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                PortraitImage.ClearValue(Image.SourceProperty);
-                PortraitImage.Source = string.IsNullOrWhiteSpace(path) ? null : ImageSource.FromFile(path);
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    PortraitImage.IsVisible = false;
+                    PortraitImage.Source = null;
+                    PlaceholderLayout.IsVisible = true;
+                    PortraitFileNameLabel.Text = "No image selected";
+                    PortraitFileNameLabel.FontAttributes = FontAttributes.Italic;
+                    ClearPortraitButton.IsVisible = false;
+                }
+                else
+                {
+                    try
+                    {
+                        PortraitImage.Source = ImageSource.FromFile(path);
+                        PortraitImage.IsVisible = true;
+                        PlaceholderLayout.IsVisible = false;
+                        PortraitFileNameLabel.Text = System.IO.Path.GetFileName(path);
+                        PortraitFileNameLabel.FontAttributes = FontAttributes.None;
+                        ClearPortraitButton.IsVisible = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to load portrait image: {ex.Message}");
+                        PortraitImage.IsVisible = false;
+                        PortraitImage.Source = null;
+                        PlaceholderLayout.IsVisible = true;
+                        PortraitFileNameLabel.Text = "Error loading image";
+                        PortraitFileNameLabel.FontAttributes = FontAttributes.Italic;
+                        ClearPortraitButton.IsVisible = false;
+                    }
+                }
             });
         }
 
@@ -416,6 +533,105 @@ namespace RagNext.Views
         }
 
         private Task SetPortraitImageAsync(string path) => SetPortraitImageAsync(PortraitImage, path);
+
+        private async Task ImportPortraitFromFileAsync(string filePath)
+        {
+            if (BindingContext is not Player player) return;
+            var game = App.CurrentGame;
+            if (game is null) return;
+
+            var mediaLibrary = MauiProgram.Services.GetService(typeof(IMediaLibrary)) as IMediaLibrary;
+            var treeStore = MauiProgram.Services.GetService(typeof(IMediaTreeStore)) as IMediaTreeStore;
+
+            if (mediaLibrary is not null && treeStore is not null)
+            {
+                try
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                    // Copy to media library
+                    var asset = await mediaLibrary.AddAsync(game, filePath, cts.Token);
+
+                    // Add to "Player" media folder in media tree
+                    var doc = await treeStore.LoadAsync(game);
+                    if (doc.Roots.Count == 0)
+                        doc.Roots.Add(new RagNext.Models.MediaFolder { Name = "Assets" });
+
+                    var rootFolder = doc.Roots.First();
+                    var folderName = "Player";
+                    var subfolder = rootFolder.Children.FirstOrDefault(f => f.Name.Equals(folderName, StringComparison.OrdinalIgnoreCase));
+                    if (subfolder is null)
+                    {
+                        subfolder = new RagNext.Models.MediaFolder { Name = folderName };
+                        rootFolder.Children.Add(subfolder);
+                    }
+                    if (!subfolder.AssetIds.Contains(asset.Id))
+                    {
+                        subfolder.AssetIds.Add(asset.Id);
+                    }
+                    await treeStore.SaveAsync(game, doc);
+
+                    // Refresh Media Tree View
+                    var mediaLibVm = MauiProgram.Services.GetService(typeof(RagNext.ViewModels.MediaLibraryViewModel)) as RagNext.ViewModels.MediaLibraryViewModel;
+                    mediaLibVm?.Refresh();
+
+                    // Resolve local path in game Assets folder
+                    var localPath = mediaLibrary.GetLocalPath(game, asset);
+                    player.PortraitImagePath = localPath;
+                    UpdatePortraitImage(localPath);
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Import Error", $"Failed to import image: {ex.Message}", "OK");
+                }
+            }
+        }
+
+        private void OnPortraitBorderLoaded(object? sender, EventArgs e)
+        {
+#if WINDOWS
+            if (sender is Border border)
+            {
+                if (border.Handler?.PlatformView is Microsoft.UI.Xaml.FrameworkElement platformView)
+                {
+                    platformView.AllowDrop = true;
+                    platformView.DragOver += (s, args) =>
+                    {
+                        args.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+                        args.Handled = true;
+                    };
+                    platformView.Drop += async (s, args) =>
+                    {
+                        args.Handled = true;
+                        var deferral = args.GetDeferral();
+                        try
+                        {
+                            if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+                            {
+                                var items = await args.DataView.GetStorageItemsAsync();
+                                var firstFile = items.FirstOrDefault() as Windows.Storage.StorageFile;
+                                if (firstFile != null)
+                                {
+                                    var path = firstFile.Path;
+                                    MainThread.BeginInvokeOnMainThread(async () =>
+                                    {
+                                        await ImportPortraitFromFileAsync(path);
+                                    });
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error dropping portrait: {ex.Message}");
+                        }
+                        finally
+                        {
+                            deferral.Complete();
+                        }
+                    };
+                }
+            }
+#endif
+        }
     }
 
     // Option 1: keep absolute path (Windows only):

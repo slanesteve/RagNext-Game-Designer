@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
 namespace RagsCore.Actions
@@ -17,14 +16,86 @@ namespace RagsCore.Actions
         Item, RoomGroup, Group, Timer, Operator, None
     }
 
-    public class InputDefinition
+    public class InputDefinition : INotifyPropertyChanged
     {
-        public string Label { get; set; }
-        public InputControlType ControlType { get; set; }
-        public InputDataType DataType { get; set; }
-        public object? Value { get; set; }
+        private string _label = string.Empty;
+        private InputControlType _controlType;
+        private InputDataType _dataType;
+        private object? _value;
+        private IEnumerable<object>? _pickerSource;
+        private bool _isManualMode;
 
-        // Added: source for Picker / ComboBox style inputs
-        public IEnumerable<object>? PickerSource { get; set; }
+        public string Label
+        {
+            get => _label;
+            set { if (_label != value) { _label = value; OnPropertyChanged(); } }
+        }
+
+        public InputControlType ControlType
+        {
+            get => _controlType;
+            set { if (_controlType != value) { _controlType = value; OnPropertyChanged(); } }
+        }
+
+        public InputDataType DataType
+        {
+            get => _dataType;
+            set { if (_dataType != value) { _dataType = value; OnPropertyChanged(); } }
+        }
+
+        public object? Value
+        {
+            get => _value;
+            set
+            {
+                if (_value != value)
+                {
+                    _value = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsManualMode));
+                    OnPropertyChanged(nameof(IsNormalMode));
+                    OnPropertyChanged(nameof(ToggleButtonText));
+                }
+            }
+        }
+
+        public IEnumerable<object>? PickerSource
+        {
+            get => _pickerSource;
+            set { if (_pickerSource != value) { _pickerSource = value; OnPropertyChanged(); } }
+        }
+
+        [JsonIgnore]
+        public bool IsManualMode
+        {
+            get
+            {
+                if (_isManualMode) return true;
+                if (Value is string str && str.StartsWith("{") && str.EndsWith("}")) return true;
+                return false;
+            }
+            set
+            {
+                if (_isManualMode != value)
+                {
+                    _isManualMode = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsNormalMode));
+                    OnPropertyChanged(nameof(ToggleButtonText));
+                }
+            }
+        }
+
+        [JsonIgnore]
+        public bool IsNormalMode => !IsManualMode;
+
+        [JsonIgnore]
+        public string ToggleButtonText => IsManualMode ? "Pick" : "Text";
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

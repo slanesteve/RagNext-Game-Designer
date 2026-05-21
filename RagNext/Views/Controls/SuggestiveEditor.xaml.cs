@@ -10,12 +10,27 @@ namespace RagNext.Views.Controls
     public partial class SuggestiveEditor : ContentView
     {
         public static readonly BindableProperty TextProperty =
-            BindableProperty.Create(nameof(Text), typeof(string), typeof(SuggestiveEditor), string.Empty, BindingMode.TwoWay);
+            BindableProperty.Create(nameof(Text), typeof(string), typeof(SuggestiveEditor), string.Empty, BindingMode.TwoWay,
+                propertyChanged: OnTextChangedPropertyChanged);
 
         public string Text
         {
             get => (string)GetValue(TextProperty);
             set => SetValue(TextProperty, value);
+        }
+
+        private static void OnTextChangedPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is SuggestiveEditor se)
+            {
+                var newText = (string)newValue;
+                if (se.MainEditor.Text != newText)
+                {
+                    se.MainEditor.Text = newText;
+                }
+                se.MainEditor.InvalidateMeasure();
+                se.InvalidateMeasure();
+            }
         }
 
         public static readonly BindableProperty PlaceholderProperty =

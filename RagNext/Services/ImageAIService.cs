@@ -22,17 +22,20 @@ namespace RagNext.Services
         public async Task<string?> GenerateImageAsync(string prompt, int? size = null, CancellationToken ct = default)
         {
             var settings = App.CurrentAISettings ?? new AISettings();
-            var host = settings.ImageHost ?? "https://api.openai.com";
+            var host = settings.ImageHost ?? "https://image.pollinations.ai";
             var baseUri = settings.ImageBaseUri;
             int pixels = size ?? 1024;
             var sizeStr = $"{pixels}x{pixels}";
 
             // Choose provider by host/port
+            var isPollinations = host.Contains("pollinations.ai", StringComparison.OrdinalIgnoreCase);
             var isOpenAI = host.Contains("openai.com", StringComparison.OrdinalIgnoreCase);
             var isAutomatic = settings.ImagePort == 7860; // Automatic1111
             var isComfy = settings.ImagePort == 8188 || settings.ImagePort == 8000;
             var isGoogle = host.Contains("googleapis", StringComparison.OrdinalIgnoreCase);
 
+            if (isPollinations)
+                return await GenerateWithPollinationsAsync(prompt, pixels, ct);
             if (isOpenAI)
                 return await GenerateWithOpenAIAsync(baseUri, settings.ImageModel ?? "dall-e-3", settings.ImageApiKey, prompt, sizeStr, ct);
             if (isAutomatic)
@@ -44,6 +47,15 @@ namespace RagNext.Services
 
             // Fallback: try OpenAI-compatible
             return await GenerateWithOpenAIAsync(baseUri, settings.ImageModel ?? "dall-e-3", settings.ImageApiKey, prompt, sizeStr, ct);
+        }
+
+        private static async Task<string?> GenerateWithPollinationsAsync(string prompt, int pixels, CancellationToken ct)
+        {
+            var encodedPrompt = Uri.EscapeDataString(prompt);
+            var url = $"https://image.pollinations.ai/prompt/{encodedPrompt}?width={pixels}&height={pixels}&nologo=true&private=true";
+            
+            var bytes = await _http.GetByteArrayAsync(url, ct);
+            return await SaveImageAsync(bytes, "png");
         }
 
         private static async Task<string?> GenerateWithOpenAIAsync(Uri baseUri, string model, string? apiKey, string prompt, string size, CancellationToken ct)

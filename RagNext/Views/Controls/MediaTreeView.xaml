@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentView x:Name="MediaTreeRoot"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -14,13 +14,30 @@
                         <Setter Property="BackgroundColor" Value="#CCE5FF" />
                     </DataTrigger>
                 </Border.Triggers>
-                <HorizontalStackLayout Spacing="6">
-                    <Label Text="{Binding Icon}" />
-                    <Label Text="{Binding Name}" LineBreakMode="TailTruncation" />
-                </HorizontalStackLayout>
+                <Grid ColumnDefinitions="*, Auto">
+                    <HorizontalStackLayout Grid.Column="0" Spacing="6" VerticalOptions="Center">
+                        <Label Text="{Binding Icon}" VerticalOptions="Center" />
+                        <Label Text="{Binding Name}" LineBreakMode="TailTruncation" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <Button Grid.Column="1"
+                            Text="❌"
+                            FontAttributes="Bold"
+                            FontSize="10"
+                            TextColor="#c0392b"
+                            BackgroundColor="Transparent"
+                            BorderColor="Transparent"
+                            Padding="0"
+                            Margin="0,0,4,0"
+                            HeightRequest="20"
+                            WidthRequest="20"
+                            CornerRadius="10"
+                            VerticalOptions="Center"
+                            Command="{Binding Source={x:Reference MediaTreeRoot}, Path=BindingContext.RemoveAssetCommand}"
+                            CommandParameter="{Binding}" />
+                </Grid>
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding Source={x:Reference MediaTreeRoot}, Path=BindingContext.SelectNodeCommand}"
-                                          CommandParameter="{Binding}" />
+                                           CommandParameter="{Binding}" />
                     <DragGestureRecognizer DragStarting="OnMediaDragStarting" />
                 </Border.GestureRecognizers>
             </Border>
@@ -28,9 +45,9 @@
 
         <!-- Folder template (recursive via BindableLayout) -->
         <DataTemplate x:Key="FolderTemplate">
-            <toolkit:Expander x:Name="FolderExpander" IsExpanded="False">
+            <toolkit:Expander x:Name="FolderExpander" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
                 <toolkit:Expander.Header>
-                    <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
+                    <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent" Loaded="OnFolderBorderLoaded">
                         <Border.Triggers>
                             <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
                                 <Setter Property="BackgroundColor" Value="#CCE5FF" />
@@ -54,7 +71,9 @@
                         </HorizontalStackLayout>
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding Source={x:Reference MediaTreeRoot}, Path=BindingContext.SelectNodeCommand}"
-                                                  CommandParameter="{Binding}" />
+                                                   CommandParameter="{Binding}" />
+                            <DragGestureRecognizer DragStarting="OnMediaDragStarting" />
+                            <DropGestureRecognizer AllowDrop="True" Drop="OnMediaFolderDrop" DragOver="OnMediaFolderDragOver" />
                         </Border.GestureRecognizers>
                     </Border>
                 </toolkit:Expander.Header>
@@ -72,18 +91,101 @@
                                        AssetTemplate="{StaticResource AssetTemplate}" />
     </ContentView.Resources>
 
-    <Grid RowDefinitions="Auto,*" Padding="8,6">
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Padding="8,6" Loaded="OnLibraryRootLoaded">
+        <!-- Headless cross-platform audio player engine -->
+        <toolkit:MediaElement x:Name="MediaPlaybackEngine" ShouldAutoPlay="False" WidthRequest="1" HeightRequest="1" Opacity="0" InputTransparent="True" />
+
         <!-- Toolbar -->
-        <HorizontalStackLayout Spacing="8">
+        <HorizontalStackLayout Grid.Row="0" Spacing="8" Margin="0,0,0,6">
             <Button Text="+ Folder" Padding="10,6" Command="{Binding AddFolderCommand}" />
             <Button Text="Import..." Padding="10,6" Command="{Binding ImportFilesCommand}" />
             <Button Text="Rename" Padding="10,6" Command="{Binding RenameCommand}" />
             <Button Text="Delete" Padding="10,6" Command="{Binding DeleteCommand}" />
         </HorizontalStackLayout>
 
-        <!-- Root level using BindableLayout (no nested CollectionView) -->
-        <VerticalStackLayout Grid.Row="1" Spacing="0"
-                             BindableLayout.ItemsSource="{Binding Roots}"
-                             BindableLayout.ItemTemplateSelector="{StaticResource NodeTemplateSelector}" />
+        <!-- Scrollable Tree view area -->
+        <ScrollView Grid.Row="1">
+            <!-- Root level using BindableLayout (no nested CollectionView) -->
+            <VerticalStackLayout Spacing="0"
+                                 BindableLayout.ItemsSource="{Binding Roots}"
+                                 BindableLayout.ItemTemplateSelector="{StaticResource NodeTemplateSelector}" />
+        </ScrollView>
+
+        <!-- Adjustable resize Splitter bar -->
+        <Border Grid.Row="2"
+                HeightRequest="10"
+                BackgroundColor="#2a2a35"
+                Stroke="#3a3a4c"
+                StrokeThickness="1"
+                Margin="0,6"
+                ZIndex="10"
+                VerticalOptions="Center"
+                HorizontalOptions="Fill"
+                IsVisible="{Binding HasSelectedFile}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="5" />
+            </Border.StrokeShape>
+            <Border.GestureRecognizers>
+                <PanGestureRecognizer PanUpdated="OnSplitterPan" />
+            </Border.GestureRecognizers>
+            <!-- Centered grab indicator -->
+            <BoxView WidthRequest="30" HeightRequest="2" Color="#7f8c8d" HorizontalOptions="Center" VerticalOptions="Center" />
+        </Border>
+
+        <!-- Preview Panel Card -->
+        <Border x:Name="PreviewPanel"
+                Grid.Row="3"
+                HeightRequest="150"
+                BackgroundColor="#1e1e24"
+                Stroke="#3a3a4c"
+                StrokeThickness="1"
+                Padding="12"
+                IsVisible="{Binding HasSelectedFile}"
+                VerticalOptions="End"
+                HorizontalOptions="Fill">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+            </Border.StrokeShape>
+            
+            <Grid VerticalOptions="Fill" HorizontalOptions="Fill">
+                <!-- 1. Image Viewer -->
+                <Grid IsVisible="{Binding IsSelectedImage}" VerticalOptions="Fill" HorizontalOptions="Fill">
+                    <Image Source="{Binding SelectedFilePath}" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Grid>
+
+                <!-- 2. Audio Player Controls -->
+                <VerticalStackLayout IsVisible="{Binding IsSelectedAudio}" Spacing="8" VerticalOptions="Center" HorizontalOptions="Center">
+                    <HorizontalStackLayout Spacing="6" HorizontalOptions="Center">
+                        <Label Text="🔊" FontSize="18" VerticalOptions="Center" />
+                        <Label Text="{Binding Selected.Name}" FontAttributes="Bold" FontSize="14" TextColor="#f0f0f4" LineBreakMode="TailTruncation" MaxLines="1" WidthRequest="200" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    
+                    <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                        <Button Text="▶ Play" Padding="12,6" BackgroundColor="#27ae60" TextColor="White" Clicked="OnPlayAudioClicked" />
+                        <Button Text="⏸ Pause" Padding="12,6" BackgroundColor="#f39c12" TextColor="White" Clicked="OnPauseAudioClicked" />
+                        <Button Text="⏹ Stop" Padding="12,6" BackgroundColor="#c0392b" TextColor="White" Clicked="OnStopAudioClicked" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- 3. Video Player Controls -->
+                <Grid IsVisible="{Binding IsSelectedVideo}" VerticalOptions="Fill" HorizontalOptions="Fill">
+                    <toolkit:MediaElement x:Name="VideoPlaybackEngine"
+                                          ShouldAutoPlay="False"
+                                          ShouldShowPlaybackControls="True"
+                                          Aspect="AspectFit"
+                                          VerticalOptions="Fill"
+                                          HorizontalOptions="Fill" />
+                </Grid>
+
+                <!-- 4. Fallback Details (for other formats) -->
+                <Grid IsVisible="{Binding IsSelectedFallback}" VerticalOptions="Fill" HorizontalOptions="Fill">
+                    <VerticalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
+                        <Label Text="📦" FontSize="24" HorizontalOptions="Center" />
+                        <Label Text="{Binding Selected.Name}" FontAttributes="Bold" TextColor="#f0f0f4" HorizontalOptions="Center" LineBreakMode="TailTruncation" />
+                        <Label Text="{Binding Selected.Asset.Kind, StringFormat='Type: {0}'}" TextColor="#a0a0b0" FontSize="12" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </ContentView>

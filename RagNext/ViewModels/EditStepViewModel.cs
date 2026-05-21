@@ -110,7 +110,9 @@ namespace RagNext.ViewModels
             if (p.PropertyType == typeof(bool)) return InputControlType.Checkbox;
             if (p.PropertyType == typeof(int) || p.PropertyType == typeof(double) || p.PropertyType == typeof(float)) return InputControlType.Number;
             if (p.PropertyType == typeof(Guid) || p.Name.Contains("Id")) return InputControlType.ComboBox;
-            if (p.Name == "Name" && (p.DeclaringType == typeof(SetVariableCommand) || p.DeclaringType == typeof(SetNumericRandomlyCommand) || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType!))) return InputControlType.ComboBox; 
+            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName") && 
+                (p.DeclaringType == typeof(SetVariableCommand) || p.DeclaringType == typeof(SetNumericRandomlyCommand) || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType!))) 
+                return InputControlType.ComboBox; 
             if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
             if (p.Name.Equals("Gender", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
             if (p.Name.Contains("Text", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("Description", StringComparison.OrdinalIgnoreCase)) return InputControlType.TextArea;
@@ -120,12 +122,14 @@ namespace RagNext.ViewModels
         private InputDataType GetDataType(PropertyInfo p)
         {
             if (p.Name.Equals("RoomId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Room;
-            if (p.Name.Equals("ObjectId", StringComparison.OrdinalIgnoreCase)) return InputDataType.GameObject;
+            if (p.Name.Equals("ObjectId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("ContainerObjectId", StringComparison.OrdinalIgnoreCase)) return InputDataType.GameObject;
             if (p.Name.Equals("CharacterId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Character;
             if (p.Name.Equals("ItemId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Item;
             if (p.Name.Equals("SoundId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("PortraitId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("MediaId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Media;
             if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputDataType.Operator;
-            if (p.Name == "Name" && (p.DeclaringType == typeof(SetVariableCommand) || p.DeclaringType == typeof(SetNumericRandomlyCommand) || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType!))) return InputDataType.Variable;
+            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName") && 
+                (p.DeclaringType == typeof(SetVariableCommand) || p.DeclaringType == typeof(SetNumericRandomlyCommand) || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType!))) 
+                return InputDataType.Variable;
             return InputDataType.String;
         }
 
@@ -168,8 +172,27 @@ namespace RagNext.ViewModels
                 }
                 else if (input.Value is string strVal)
                 {
-                    var match = input.PickerSource.Cast<object>().FirstOrDefault(o => 
-                        string.Equals(o.ToString(), strVal, StringComparison.OrdinalIgnoreCase));
+                    object? match = null;
+                    if (Guid.TryParse(strVal, out var guidVal))
+                    {
+                        var firstObj = input.PickerSource.Cast<object>().FirstOrDefault();
+                        if (firstObj != null)
+                        {
+                            var prop = firstObj.GetType().GetProperty("Id");
+                            if (prop != null)
+                            {
+                                match = input.PickerSource.Cast<object>().FirstOrDefault(m =>
+                                    prop.GetValue(m) is Guid g && g == guidVal);
+                            }
+                        }
+                    }
+
+                    if (match == null)
+                    {
+                        match = input.PickerSource.Cast<object>().FirstOrDefault(o => 
+                            string.Equals(o.ToString(), strVal, StringComparison.OrdinalIgnoreCase));
+                    }
+
                     if (match is not null)
                         input.Value = match;
                 }
@@ -203,6 +226,10 @@ namespace RagNext.ViewModels
                             if (p.PropertyType == typeof(Guid) && valToSet is string strGuid && Guid.TryParse(strGuid, out var g))
                             {
                                 valToSet = g;
+                            }
+                            else if (p.PropertyType == typeof(string) && valToSet is Guid guidVal)
+                            {
+                                valToSet = guidVal.ToString();
                             }
                             else
                             {

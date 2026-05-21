@@ -354,7 +354,7 @@ namespace RagNext
 
         private async void OnSettingsMenuClicked(object sender, EventArgs e)
         {
-            var options = new[] { "General", "Text AI" };
+            var options = new[] { "General", "Text AI", "Image AI" };
             var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
 
             if (string.IsNullOrEmpty(choice) || choice == "Cancel")
