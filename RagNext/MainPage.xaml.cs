@@ -57,6 +57,21 @@ namespace RagNext
             StartupOverlayView.IsVisible = false;
         }
 
+        private void OnBackgroundTapped(object? sender, EventArgs e)
+        {
+            CloseStartupOverlay();
+        }
+
+        private void OnDialogTapped(object? sender, EventArgs e)
+        {
+            // Swallow tap event on the dialog card to prevent background click-off
+        }
+
+        private void OnCancelOverlayClicked(object sender, EventArgs e)
+        {
+            CloseStartupOverlay();
+        }
+
         private async void OnOverlayCreateClicked(object sender, EventArgs e)
         {
             CloseStartupOverlay();

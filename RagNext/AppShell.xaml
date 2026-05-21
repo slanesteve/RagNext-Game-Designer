@@ -7,6 +7,36 @@
     xmlns:views="clr-namespace:RagNext.Views"
     Title="RagNext">
 
+    <Shell.TitleView>
+        <Grid ColumnDefinitions="*,Auto" Margin="0" HeightRequest="45" VerticalOptions="Center">
+            <!-- Left part: title -->
+            <Label Text="RagNext Designer" FontSize="18" FontAttributes="Bold" 
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                   VerticalOptions="Center" Grid.Column="0" Margin="10,0,0,0" />
+
+            <!-- Right part: AI Status / Model Selection -->
+            <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Grid.Column="1" Margin="0,0,16,0">
+                <Label Text="✨ AI:" 
+                       TextColor="{AppThemeBinding Light={StaticResource Magenta}, Dark={StaticResource SecondaryDarkText}}" 
+                       VerticalOptions="Center" FontSize="13" FontAttributes="Bold"/>
+                <Label x:Name="ProviderLabel" 
+                       Text="None" 
+                       TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" 
+                       VerticalOptions="Center" FontSize="13" FontAttributes="Bold"/>
+                
+                <Picker x:Name="ModelPicker" 
+                        WidthRequest="280" 
+                        HeightRequest="32" 
+                        FontSize="12" 
+                        TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                        TitleColor="Gray"
+                        VerticalOptions="Center" 
+                        SelectedIndexChanged="OnModelPickerSelectedIndexChanged" />
+            </HorizontalStackLayout>
+        </Grid>
+    </Shell.TitleView>
+
     <TabBar>
         <ShellContent Title="Main" Route="main" ContentTemplate="{DataTemplate local:MainPage}" />
         <ShellContent Title="Player" Route="player" ContentTemplate="{DataTemplate views:PlayerEditPage}" />

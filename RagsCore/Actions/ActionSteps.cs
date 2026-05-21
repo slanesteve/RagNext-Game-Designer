@@ -138,7 +138,7 @@ namespace RagsCore.Actions
         public override string TypeName => "Display Text";
         public override void Execute(ActionContext ctx)
         {
-            ctx.SetVariable("system.lastDisplayedText", Text);
+            ctx.SetVariable("system.lastDisplayedText", RagsCore.Services.TemplateResolver.Resolve(Text, ctx));
         }
     }
 

@@ -2,7 +2,8 @@
 <ContentView
     x:Class="RagNext.Views.Controls.EditStepView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:RagNext.Views.Controls">
 
     <!-- Remove the inner ScrollView to avoid nested ScrollViews (parent page already scrolls) -->
     <VerticalStackLayout Padding="16" Spacing="12">
@@ -23,10 +24,10 @@
                                IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Text}"
                                TextChanged="OnTextChanged"
                                Unfocused="OnEntryUnfocused" />
-                        <Editor Text="{Binding Value, Mode=OneWay}"
+                        <controls:SuggestiveEditor Text="{Binding Value, Mode=OneWay}"
                                 IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=TextArea}"
                                 TextChanged="OnTextChanged"
-                                Unfocused="OnEditorUnfocused" />
+                                UnfocusedEvent="OnEditorUnfocused" />
                         <Picker ItemsSource="{Binding PickerSource}"
                                 ItemDisplayBinding="{Binding Name}"
                                 Loaded="OnInputPickerLoaded"

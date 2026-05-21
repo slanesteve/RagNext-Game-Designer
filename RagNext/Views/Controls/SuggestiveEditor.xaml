@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:RagNext.Services"
+             x:Class="RagNext.Views.Controls.SuggestiveEditor"
+             x:Name="self">
+
+    <Grid VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
+        <!-- The underlying Editor -->
+        <Editor x:Name="MainEditor"
+                Text="{Binding Text, Source={x:Reference self}, Mode=TwoWay}"
+                Placeholder="{Binding Placeholder, Source={x:Reference self}}"
+                VerticalOptions="FillAndExpand"
+                HorizontalOptions="FillAndExpand"
+                TextChanged="OnEditorTextChanged"
+                Focused="OnEditorFocused"
+                Unfocused="OnEditorUnfocused"
+                HandlerChanged="OnMainEditorHandlerChanged" />
+
+        <!-- Help Icon Button (Top-Right of Editor) -->
+        <Border x:Name="HelpIcon"
+                WidthRequest="22"
+                HeightRequest="22"
+                HorizontalOptions="End"
+                VerticalOptions="Start"
+                Margin="0, 8, 12, 0"
+                BackgroundColor="#2a2a35"
+                Stroke="#4a4a5c"
+                StrokeThickness="1"
+                ZIndex="998">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="11" />
+            </Border.StrokeShape>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnHelpIconTapped" />
+                <PointerGestureRecognizer PointerEntered="OnHelpIconPointerEntered"
+                                          PointerExited="OnHelpIconPointerExited" />
+            </Border.GestureRecognizers>
+            <Label Text="?"
+                   TextColor="#a0a0b0"
+                   FontSize="12"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+        </Border>
+
+        <!-- Light Dismiss Overlay for Help Popup -->
+        <Grid x:Name="HelpDismissOverlay"
+              IsVisible="False"
+              BackgroundColor="Transparent"
+              ZIndex="997">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnHelpDismissOverlayTapped" />
+            </Grid.GestureRecognizers>
+        </Grid>
+
+        <!-- Help Info Popup Card -->
+        <Border x:Name="HelpPopupCard"
+                IsVisible="False"
+                BackgroundColor="#1e1e24"
+                Stroke="#3a3a4c"
+                StrokeThickness="1"
+                Padding="12"
+                ZIndex="999"
+                WidthRequest="280"
+                HeightRequest="170"
+                HorizontalOptions="End"
+                VerticalOptions="Start"
+                Margin="0, 36, 12, 0">
+            <Border.Shadow>
+                <Shadow Offset="0,4" Radius="8" Opacity="0.3" Brush="Black" />
+            </Border.Shadow>
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+            </Border.StrokeShape>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnHelpPopupTapped" />
+            </Border.GestureRecognizers>
+
+            <VerticalStackLayout Spacing="6">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0"
+                           Text="✨ Dynamic Replacements"
+                           FontAttributes="Bold"
+                           FontSize="12"
+                           TextColor="#f0f0f4" />
+                    <Label Grid.Column="1"
+                           Text="❌"
+                           TextColor="#7f8c8d"
+                           FontSize="10"
+                           HorizontalOptions="End"
+                           VerticalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCloseHelpTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Grid>
+                
+                <BoxView HeightRequest="1" BackgroundColor="#2d2d38" Margin="0,1" />
+                
+                <Label Text="Type { to insert live game values that evaluate at runtime. For example:"
+                       FontSize="11"
+                       TextColor="#a0a0b0"
+                       LineBreakMode="WordWrap" />
+                       
+                <VerticalStackLayout Spacing="3" Margin="4,0,0,0">
+                    <Label Text="• {player.Name} ➔ Protagonist Name"
+                           FontSize="10.5"
+                           TextColor="#f0f0f4" />
+                    <Label Text="• {variables.Gold} ➔ Global Variables"
+                           FontSize="10.5"
+                           TextColor="#f0f0f4" />
+                    <Label Text="• {room.Name} ➔ Current Room Name"
+                           FontSize="10.5"
+                           TextColor="#f0f0f4" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Floating Autocomplete Card Overlay -->
+        <Border x:Name="PopupCard"
+                IsVisible="False"
+                BackgroundColor="#1e1e24"
+                Stroke="#3a3a4c"
+                StrokeThickness="1"
+                Padding="6"
+                ZIndex="999"
+                WidthRequest="350"
+                HeightRequest="220"
+                HorizontalOptions="Start"
+                VerticalOptions="Start"
+                Margin="12, 80, 0, 0">
+            <Border.Shadow>
+                <Shadow Offset="0,4" Radius="8" Opacity="0.3" Brush="Black" />
+            </Border.Shadow>
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+            </Border.StrokeShape>
+
+            <Grid RowDefinitions="*,Auto">
+                <ListView x:Name="SuggestionsList"
+                          Grid.Row="0"
+                          ItemTapped="OnSuggestionTapped"
+                          BackgroundColor="Transparent"
+                          SeparatorColor="#2d2d38">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="local:SuggestionItem">
+                            <ViewCell>
+                                <Grid ColumnDefinitions="*,Auto" Padding="8,4">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="{Binding DisplayText}"
+                                               FontAttributes="Bold"
+                                               FontSize="13"
+                                               TextColor="#f0f0f4" />
+                                        <Label Text="{Binding Description}"
+                                               FontSize="11"
+                                               TextColor="#a0a0b0"
+                                               LineBreakMode="TailTruncation" />
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="1"
+                                           Text="{Binding TypeName}"
+                                           FontSize="10"
+                                           FontAttributes="Italic"
+                                           TextColor="#7f8c8d"
+                                           VerticalOptions="Center"
+                                           Margin="8,0,0,0" />
+                                </Grid>
+                            </ViewCell>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Label Grid.Row="1"
+                       Text="Tap a suggestion to autocomplete"
+                       TextColor="#7f8c8d"
+                       FontSize="10"
+                       HorizontalOptions="End"
+                       Margin="0,4,4,0" />
+            </Grid>
+        </Border>
+    </Grid>
+</ContentView>

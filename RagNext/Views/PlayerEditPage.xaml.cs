@@ -128,6 +128,7 @@ namespace RagNext.Views
             try
             {
                 await GameStorage.SaveAsync(game, string.IsNullOrWhiteSpace(game.Title) ? $"save_{DateTime.Now:yyyyMMddHHmmss}" : game.Title);
+                await DisplayAlert("Saved", "Game saved successfully.", "OK");
                 await Navigation.PopAsync();
             }
             catch (Exception ex)
@@ -137,6 +138,33 @@ namespace RagNext.Views
         }
 
 
+
+        private string? GetInventoryOwnerName(GameObject item)
+        {
+            var game = App.CurrentGame;
+            if (game is null) return null;
+
+            // Check if player has it (exclude check if we are doing this for the player)
+            // But since this helper is general, we can check all
+            if (game.Player is not null && game.Player.Inventory.Any(o => o.Id == item.Id))
+            {
+                return "the Player";
+            }
+
+            // Check if any character has it
+            if (game.Characters is not null)
+            {
+                foreach (var ch in game.Characters)
+                {
+                    if (ch.Inventory.Any(o => o.Id == item.Id))
+                    {
+                        return $"Character '{ch.Name}'";
+                    }
+                }
+            }
+
+            return null;
+        }
 
         private async void OnAddInventoryClicked(object? sender, EventArgs e)
         {
@@ -159,7 +187,18 @@ namespace RagNext.Views
 
             var selected = candidates.FirstOrDefault(o => o.Name == choice);
             if (selected is not null)
+            {
+                var owner = GetInventoryOwnerName(selected);
+                if (owner is not null)
+                {
+                    var confirm = await DisplayAlert(
+                        "Warning",
+                        $"This item is already assigned to {owner}.\n\nAre you sure you want to assign it here as well?",
+                        "Yes", "No");
+                    if (!confirm) return;
+                }
                 player.Inventory.Add(selected);
+            }
         }
 
         private async void OnRemoveInventoryClicked(object? sender, EventArgs e)
@@ -176,6 +215,15 @@ namespace RagNext.Views
 
             player.Inventory.Remove(selected);
             if (list is not null) list.SelectedItem = null;
+        }
+
+        private void OnRemoveIndividualInventoryClicked(object? sender, EventArgs e)
+        {
+            if (sender is not Button btn) return;
+            if (BindingContext is not Player player) return;
+            if (btn.BindingContext is not GameObject selected) return;
+
+            player.Inventory.Remove(selected);
         }
 
         private async void OnAddAttributeClicked(object? sender, EventArgs e)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 
 namespace RagsCore.Models
@@ -14,12 +14,7 @@ namespace RagsCore.Models
         private int _health = 100;
         public int Health { get => _health; set => SetProperty(ref _health, value); }
 
-        // Optional simple dialogue or flavor text
-        private string? _dialogue;
-        public string? Dialogue { get => _dialogue; set => SetProperty(ref _dialogue, value); }
-
         public ObservableCollection<GameObject> Inventory { get; set; } = new();
-        public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
 
         // Make Actions public so the action tree can bind.
         public new ObservableCollection<Action> Actions { get; set; } = new();

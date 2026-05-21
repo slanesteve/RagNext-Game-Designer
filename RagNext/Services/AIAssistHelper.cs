@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Maui.Extensions;
 using Microsoft.Maui.Controls;
 using RagNext.Services;
 using RagNext.Views.Popups;
+using RagNext.Views.Controls;
 
 namespace RagNext.Services
 {
@@ -16,6 +17,7 @@ namespace RagNext.Services
             {
                 Entry entry => entry.Text,
                 Editor editor => editor.Text,
+                SuggestiveEditor se => se.Text,
                 _ => null
             };
 
@@ -27,13 +29,38 @@ namespace RagNext.Services
 
             using var spin = StartSpinner(btn);
             using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
-            var result = await ai.AskAsync(prompt, cts.Token);
-            if (string.IsNullOrWhiteSpace(result)) return;
-
-            switch (target)
+            try
             {
-                case Entry entry: entry.Text = result; break;
-                case Editor editor: editor.Text = result; break;
+                var result = await ai.AskAsync(prompt, cts.Token);
+                if (string.IsNullOrWhiteSpace(result)) return;
+
+                switch (target)
+                {
+                    case Entry entry: entry.Text = result; break;
+                    case Editor editor: editor.Text = result; break;
+                    case SuggestiveEditor se: se.Text = result; break;
+                }
+            }
+            catch (AITruncatedException ex)
+            {
+                if (!string.IsNullOrWhiteSpace(ex.PartialContent))
+                {
+                    switch (target)
+                    {
+                        case Entry entry: entry.Text = ex.PartialContent; break;
+                        case Editor editor: editor.Text = ex.PartialContent; break;
+                        case SuggestiveEditor se: se.Text = ex.PartialContent; break;
+                    }
+                    await page.DisplayAlert("AI Assist Truncated", $"{ex.Message}\n\nThe partial text generated so far has been filled in.", "OK");
+                }
+                else
+                {
+                    await page.DisplayAlert("AI Assist Error", ex.Message, "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await page.DisplayAlert("AI Assist Error", ex.Message, "OK");
             }
         }
 

@@ -6,6 +6,7 @@
     xmlns:rag="clr-namespace:RagNext"
     xmlns:controls="clr-namespace:RagNext.Views.Controls"
     xmlns:behaviors="clr-namespace:RagNext.Behaviors"
+    xmlns:models="clr-namespace:RagsCore.Models;assembly=RagsCore"
     Title="Edit Player">
 
     <ContentPage.ToolbarItems>
@@ -37,9 +38,8 @@
 
                 <Label Text="Description" />
                 <Grid ColumnDefinitions="*,Auto">
-                    <Editor x:Name="DescriptionEditor"
-                            Text="{Binding Description}"
-                            AutoSize="TextChanges"
+                    <controls:SuggestiveEditor x:Name="DescriptionEditor"
+                            Text="{Binding Description, Mode=TwoWay}"
                             Grid.Column="0" />
                     <Button Grid.Column="1"
                             Text="✨"
@@ -99,9 +99,17 @@
                                 SelectionMode="Single"
                                 HeightRequest="160">
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Padding="6">
-                                <Label Text="{Binding Name}" />
+                        <DataTemplate x:DataType="models:GameObject">
+                            <Grid Padding="6" ColumnDefinitions="*,Auto">
+                                <Label Text="{Binding Name}" VerticalOptions="Center" Grid.Column="0" />
+                                <Button Grid.Column="1"
+                                        Text="❌"
+                                        WidthRequest="28"
+                                        HeightRequest="28"
+                                        Padding="0"
+                                        BackgroundColor="#E05B5B"
+                                        TextColor="White"
+                                        Clicked="OnRemoveIndividualInventoryClicked" />
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
@@ -120,7 +128,7 @@
                                 HeightRequest="220">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid Padding="6" ColumnSpacing="8">
+                            <Grid Padding="6" ColumnSpacing="8" ColumnDefinitions="*,*">
                                 <Grid ColumnDefinitions="*,Auto" Grid.Column="0">
                                     <Entry x:Name="AttrNameEntry" Placeholder="Name" Text="{Binding Name}" Grid.Column="0" />
                                     <Button Grid.Column="1"

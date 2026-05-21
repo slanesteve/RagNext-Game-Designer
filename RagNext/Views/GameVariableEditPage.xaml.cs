@@ -49,6 +49,7 @@ namespace RagNext.Views
             try
             {
                 await GameStorage.SaveAsync(game, string.IsNullOrWhiteSpace(game.Title) ? $"save_{DateTime.Now:yyyyMMddHHmmss}" : game.Title);
+                await DisplayAlert("Saved", "Game saved successfully.", "OK");
                 await Navigation.PopAsync();
             }
             catch (Exception ex)

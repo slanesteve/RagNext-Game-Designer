@@ -15,6 +15,8 @@ namespace RagNext.Views
     {
         public string? RoomId { set { _ = SetRoomAsync(value); } }
 
+        private CollectionView? AttributesListView => this.FindByName<CollectionView>("AttributesList");
+
         private readonly IAIChatService? _ai;
 
         public RoomEditPage()
@@ -52,6 +54,7 @@ namespace RagNext.Views
             try
             {
                 await GameStorage.SaveAsync(game, string.IsNullOrWhiteSpace(game.Title) ? $"save_{DateTime.Now:yyyyMMddHHmmss}" : game.Title);
+                await DisplayAlert("Saved", "Game saved successfully.", "OK");
                 await Navigation.PopAsync();
             }
             catch (Exception ex)
@@ -83,6 +86,33 @@ namespace RagNext.Views
                 btn.Text = original;
                 btn.IsEnabled = true;
             });
+        }
+
+        private async void OnAddAttributeClicked(object? sender, EventArgs e)
+        {
+            if (BindingContext is not Room room) return;
+
+            var name = await DisplayPromptAsync("New Attribute", "Enter attribute name:");
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            var value = await DisplayPromptAsync("New Attribute", "Enter attribute value (optional):");
+            room.Attributes.Add(new CustomAttribute { Name = name.Trim(), Value = string.IsNullOrWhiteSpace(value) ? null : value });
+        }
+
+        private async void OnRemoveAttributeClicked(object? sender, EventArgs e)
+        {
+            if (BindingContext is not Room room) return;
+
+            var list = AttributesListView;
+            var selected = list?.SelectedItem as CustomAttribute;
+            if (selected is null)
+            {
+                await DisplayAlert("Remove", "Select an attribute to remove.", "OK");
+                return;
+            }
+
+            room.Attributes.Remove(selected);
+            if (list is not null) list.SelectedItem = null;
         }
 
         private async void OnAskAIClicked(object? sender, EventArgs e)

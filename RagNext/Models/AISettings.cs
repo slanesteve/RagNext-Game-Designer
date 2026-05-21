@@ -6,7 +6,8 @@ namespace RagNext.Models
     {
         Ollama,
         LMStudio,
-        OpenAICompatible
+        OpenAICompatible,
+        OpenRouter
     }
 
     public class AISettings
@@ -20,14 +21,33 @@ namespace RagNext.Models
         public int Port { get; set; } = 11434; // Ollama default
         public string Model { get; set; } = "llama3";
         public double Temperature { get; set; } = 0.7;
-        public int MaxTokens { get; set; } = 512;
+        public int MaxTokens { get; set; } = 2048;
         public string? ApiKey { get; set; } // for OpenAI-compatible endpoints
         public bool EnableAIHelp { get; set; } = true;
 
         // User-configurable system prompt (optional). Leave empty/null to use default.
         public string? SystemPrompt { get; set; }
 
-        public Uri BaseUri => new($"{Host.TrimEnd('/')}" + (Port > 0 ? $":{Port}" : ""));
+        public Uri BaseUri
+        {
+            get
+            {
+                var host = Host.TrimEnd('/');
+                var baseStr = Port > 0 ? $"{host}:{Port}" : host;
+                
+                if (Provider == AIProviderKind.OpenRouter && !baseStr.Contains("/api"))
+                {
+                    baseStr += "/api";
+                }
+                
+                if (!baseStr.EndsWith("/"))
+                {
+                    baseStr += "/";
+                }
+                
+                return new Uri(baseStr);
+            }
+        }
 
         // Image AI settings
         public AIProviderKind ImageProvider { get; set; } = AIProviderKind.OpenAICompatible;

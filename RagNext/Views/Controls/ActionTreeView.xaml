@@ -27,7 +27,9 @@
         </DataTemplate>
 
         <DataTemplate x:Key="StepTemplate">
-            <toolkit:Expander x:Name="StepExpander" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+            <toolkit:Expander x:Name="StepExpander"
+                              IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                              ExpandedChanged="OnExpanderExpandedChanged">
                 <toolkit:Expander.Header>
                     <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
                         <Border.Triggers>
@@ -60,7 +62,9 @@
         </DataTemplate>
 
         <DataTemplate x:Key="NodeTemplate">
-            <toolkit:Expander x:Name="InnerNodeExpander" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+            <toolkit:Expander x:Name="InnerNodeExpander"
+                              IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                              ExpandedChanged="OnExpanderExpandedChanged">
                 <toolkit:Expander.Header>
                     <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
                         <Border.Triggers>
@@ -95,7 +99,9 @@
         </DataTemplate>
 
         <DataTemplate x:Key="ActionTemplate">
-            <toolkit:Expander x:Name="ActionExpander" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+            <toolkit:Expander x:Name="ActionExpander"
+                              IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                              ExpandedChanged="OnExpanderExpandedChanged">
                 <toolkit:Expander.Header>
                     <Border Padding="4" Margin="{Binding Indent}" BackgroundColor="Transparent">
                         <Border.Triggers>

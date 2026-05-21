@@ -32,7 +32,7 @@ namespace RagNext.Services
 
             if (s.Provider == AIProviderKind.Ollama)
             {
-                var url = new Uri(s.BaseUri, "/api/generate");
+                var url = new Uri(s.BaseUri, "api/generate");
                 var body = new
                 {
                     model = s.Model,
@@ -46,20 +46,42 @@ namespace RagNext.Services
                 {
                     Content = new StringContent(json, Encoding.UTF8, "application/json")
                 };
-                var resp = await _http.SendAsync(req, ct);
+                var resp = await SendRequestWithGracefulErrorsAsync(req, s, ct);
                 var txt = await resp.Content.ReadAsStringAsync(ct);
                 if (!resp.IsSuccessStatusCode)
                     throw new InvalidOperationException($"AI provider error {(int)resp.StatusCode} {resp.ReasonPhrase}: {txt}");
 
                 using var doc = JsonDocument.Parse(txt);
+                string? responseStr = null;
                 if (doc.RootElement.TryGetProperty("response", out var response))
-                    return response.GetString();
+                {
+                    responseStr = response.GetString();
+                }
 
-                return txt;
+                // Check if Ollama hit the length limit (ran out of tokens)
+                if (doc.RootElement.TryGetProperty("done_reason", out var doneReason) && 
+                    doneReason.GetString() == "length")
+                {
+                    if (string.IsNullOrWhiteSpace(responseStr))
+                    {
+                        throw new AITruncatedException(
+                            "The Ollama model ran out of tokens before it could write any description.\n\n" +
+                            "Please open AI Settings and increase 'Max Tokens' (e.g. to 2048 or 4096), then try again.");
+                    }
+                    else
+                    {
+                        throw new AITruncatedException(
+                            "The Ollama model ran out of tokens and was cut off mid-generation (it reached the 'Max Tokens' limit).\n\n" +
+                            "Please open AI Settings and increase 'Max Tokens' to get complete descriptions.", 
+                            responseStr);
+                    }
+                }
+
+                return responseStr ?? txt;
             }
             else
             {
-                var url = new Uri(s.BaseUri, "/v1/chat/completions");
+                var url = new Uri(s.BaseUri, "v1/chat/completions");
                 using var req = new HttpRequestMessage(HttpMethod.Post, url);
                 if (!string.IsNullOrWhiteSpace(s.ApiKey))
                     req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", s.ApiKey);
@@ -78,7 +100,7 @@ namespace RagNext.Services
                 var json = JsonSerializer.Serialize(body);
                 req.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var resp = await _http.SendAsync(req, ct);
+                var resp = await SendRequestWithGracefulErrorsAsync(req, s, ct);
                 var txt = await resp.Content.ReadAsStringAsync(ct);
                 if (!resp.IsSuccessStatusCode)
                     throw new InvalidOperationException($"AI provider error {(int)resp.StatusCode} {resp.ReasonPhrase}: {txt}");
@@ -86,9 +108,35 @@ namespace RagNext.Services
                 using var doc = JsonDocument.Parse(txt);
                 if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
                 {
-                    var msg = choices[0].GetProperty("message");
-                    if (msg.TryGetProperty("content", out var content))
-                        return content.GetString();
+                    var firstChoice = choices[0];
+                    var msg = firstChoice.GetProperty("message");
+                    
+                    string? contentStr = null;
+                    if (msg.TryGetProperty("content", out var contentElement))
+                    {
+                        contentStr = contentElement.GetString();
+                    }
+
+                    // Check if the model hit the length limit (ran out of tokens)
+                    if (firstChoice.TryGetProperty("finish_reason", out var finishReason) && 
+                        finishReason.GetString() == "length")
+                    {
+                        if (string.IsNullOrWhiteSpace(contentStr))
+                        {
+                            throw new AITruncatedException(
+                                "The AI model ran out of tokens before it could write the final description (it spent its token budget thinking).\n\n" +
+                                "Please open AI Settings and increase 'Max Tokens' (e.g. to 2048 or 4096), then try again.");
+                        }
+                        else
+                        {
+                            throw new AITruncatedException(
+                                "The AI model ran out of tokens and was cut off mid-generation (it reached the 'Max Tokens' limit).\n\n" +
+                                "Please open AI Settings and increase 'Max Tokens' to get complete descriptions.", 
+                                contentStr);
+                        }
+                    }
+
+                    return contentStr;
                 }
 
                 if (doc.RootElement.TryGetProperty("error", out var err) && err.TryGetProperty("message", out var msgProp))
@@ -106,10 +154,10 @@ namespace RagNext.Services
             {
                 case AIProviderKind.Ollama:
                 {
-                    var url = new Uri(s.BaseUri, "/api/tags");
+                    var url = new Uri(s.BaseUri, "api/tags");
                     using var req = new HttpRequestMessage(HttpMethod.Get, url);
                     req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    var resp = await _http.SendAsync(req, ct);
+                    var resp = await SendRequestWithGracefulErrorsAsync(req, s, ct);
                     var txt = await resp.Content.ReadAsStringAsync(ct);
                     if (!resp.IsSuccessStatusCode)
                         throw new InvalidOperationException($"Failed to fetch models: {(int)resp.StatusCode} {resp.ReasonPhrase}: {txt}");
@@ -130,6 +178,7 @@ namespace RagNext.Services
 
                 case AIProviderKind.LMStudio:
                 case AIProviderKind.OpenAICompatible:
+                case AIProviderKind.OpenRouter:
                     return await GetOpenAICompatibleModelsAsync(s, ct);
 
                 default:
@@ -139,13 +188,13 @@ namespace RagNext.Services
 
         private async Task<IReadOnlyList<string>> GetOpenAICompatibleModelsAsync(AISettings s, CancellationToken ct)
         {
-            var url = new Uri(s.BaseUri, "/v1/models");
+            var url = new Uri(s.BaseUri, "v1/models");
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             if (!string.IsNullOrWhiteSpace(s.ApiKey))
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", s.ApiKey);
 
-            var resp = await _http.SendAsync(req, ct);
+            var resp = await SendRequestWithGracefulErrorsAsync(req, s, ct);
             var txt = await resp.Content.ReadAsStringAsync(ct);
             if (!resp.IsSuccessStatusCode)
                 throw new InvalidOperationException($"Failed to fetch models: {(int)resp.StatusCode} {resp.ReasonPhrase}: {txt}");
@@ -189,6 +238,45 @@ namespace RagNext.Services
             }
 
             return results.Where(x => !string.IsNullOrWhiteSpace(x)).OrderBy(x => x).ToList();
+        }
+
+        private async Task<HttpResponseMessage> SendRequestWithGracefulErrorsAsync(HttpRequestMessage req, AISettings s, CancellationToken ct)
+        {
+            try
+            {
+                return await _http.SendAsync(req, ct);
+            }
+            catch (System.Net.Http.HttpRequestException ex)
+            {
+                var providerName = s.Provider switch
+                {
+                    AIProviderKind.Ollama => "Ollama",
+                    AIProviderKind.LMStudio => "LM Studio",
+                    AIProviderKind.OpenAICompatible => "OpenAI-Compatible server",
+                    AIProviderKind.OpenRouter => "OpenRouter",
+                    _ => "AI provider"
+                };
+
+                throw new InvalidOperationException(
+                    $"Could not connect to {providerName}.\n\n" +
+                    $"Please make sure that the server is currently running and reachable at:\n" +
+                    $"{s.BaseUri}\n\n" +
+                    $"Details: {ex.Message}", ex);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                throw new InvalidOperationException($"An error occurred communicating with the AI service: {ex.Message}", ex);
+            }
+        }
+    }
+
+    public class AITruncatedException : Exception
+    {
+        public string? PartialContent { get; }
+
+        public AITruncatedException(string message, string? partialContent = null) : base(message)
+        {
+            PartialContent = partialContent;
         }
     }
 }

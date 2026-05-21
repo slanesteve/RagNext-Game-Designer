@@ -22,7 +22,7 @@ namespace RagNext.Services
                 Port = Preferences.Get(Prefix + nameof(AISettings.Port), 11434),
                 Model = Preferences.Get(Prefix + nameof(AISettings.Model), "llama3"),
                 Temperature = Preferences.Get(Prefix + nameof(AISettings.Temperature), 0.7),
-                MaxTokens = Preferences.Get(Prefix + nameof(AISettings.MaxTokens), 512),
+                MaxTokens = Preferences.Get(Prefix + nameof(AISettings.MaxTokens), 2048),
                 ApiKey = Preferences.Get(Prefix + nameof(AISettings.ApiKey), null),
                 EnableAIHelp = Preferences.Get(Prefix + nameof(AISettings.EnableAIHelp), true),
                 SystemPrompt = Preferences.Get(Prefix + nameof(AISettings.SystemPrompt), null),

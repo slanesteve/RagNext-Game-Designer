@@ -48,7 +48,13 @@
         </controls:RightPaneLayout>
 
         <Grid x:Name="StartupOverlayView" BackgroundColor="#A0000000" IsVisible="False">
-            <Border VerticalOptions="Center" HorizontalOptions="Center" WidthRequest="400" Padding="24" BackgroundColor="White" StrokeShape="RoundRectangle 12">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnBackgroundTapped" />
+            </Grid.GestureRecognizers>
+            <Border VerticalOptions="Center" HorizontalOptions="Center" WidthRequest="400" Padding="24" BackgroundColor="White" StrokeShape="RoundRectangle 12" InputTransparent="False">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDialogTapped" />
+                </Border.GestureRecognizers>
                 <Border.Shadow>
                     <Shadow Radius="15" Opacity="0.5" Brush="Black" Offset="0,6"/>
                 </Border.Shadow>
@@ -59,6 +65,7 @@
                         <Button Text="Create New Game" Clicked="OnOverlayCreateClicked" BackgroundColor="#512BD4" TextColor="White" HeightRequest="45" WidthRequest="250"/>
                         <Button Text="Load Saved Game" Clicked="OnOverlayLoadClicked" BackgroundColor="#512BD4" TextColor="White" HeightRequest="45" WidthRequest="250"/>
                         <Button Text="Load Last Workspace" Clicked="OnOverlayDefaultClicked" BackgroundColor="#E0E0E0" TextColor="Black" HeightRequest="45" WidthRequest="250"/>
+                        <Button Text="Cancel" Clicked="OnCancelOverlayClicked" BackgroundColor="#7f8c8d" TextColor="White" HeightRequest="45" WidthRequest="250"/>
                     </VerticalStackLayout>
 
                     <VerticalStackLayout x:Name="InlineSavePickerView" Spacing="16" HorizontalOptions="Center" IsVisible="False">

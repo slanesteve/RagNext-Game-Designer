@@ -1,4 +1,4 @@
-﻿using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls;
 using RagsCore.Models;
 using System;
 using Microsoft.Maui.ApplicationModel;
@@ -56,7 +56,19 @@ namespace RagNext
             }
         }
 
-        public static AISettings? CurrentAISettings { get; set; }
+        private static AISettings? _currentAISettings;
+        public static event Action<AISettings?>? AISettingsChanged;
+        public static AISettings? CurrentAISettings
+        {
+            get => _currentAISettings;
+            set
+            {
+                if (ReferenceEquals(_currentAISettings, value))
+                    return;
+                _currentAISettings = value;
+                AISettingsChanged?.Invoke(_currentAISettings);
+            }
+        }
 
         public App()
         {
