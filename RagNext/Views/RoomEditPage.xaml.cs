@@ -26,6 +26,25 @@ namespace RagNext.Views
             _ai = MauiProgram.Services.GetService(typeof(IAIChatService)) as IAIChatService;
         }
 
+        // ── Opposite direction map ─────────────────────────────────────────────
+        private static readonly IReadOnlyDictionary<string, string> _opposites =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["North"] = "South",
+                ["South"] = "North",
+                ["East"]  = "West",
+                ["West"]  = "East",
+                ["Up"]    = "Down",
+                ["Down"]  = "Up",
+                ["In"]    = "Out",
+                ["Out"]   = "In",
+            };
+
+        // One entry per direction: (picker, oneWayCheckbox, directionKey)
+        private record ExitControl(Picker Picker, CheckBox OneWay, string Direction);
+        private List<ExitControl>? _exitControls;
+        private bool _suppressExitEvents;
+
         private async System.Threading.Tasks.Task SetRoomAsync(string? value)
         {
             if (string.IsNullOrWhiteSpace(value)) return;
@@ -48,6 +67,170 @@ namespace RagNext.Views
                 if (e.PropertyName == nameof(Room.PortraitImagePath))
                     UpdatePortraitImage(room.PortraitImagePath);
             };
+
+            LoadExits(room);
+        }
+
+        // ── Exits editor ───────────────────────────────────────────────────────
+
+        private void LoadExits(Room room)
+        {
+            var game = App.CurrentGame;
+            if (game is null) return;
+
+            // Build a flat list of all rooms (except this one is still included so names display)
+            var allRooms = game.Rooms.ToList();
+
+            // Build control list once
+            _exitControls ??= new List<ExitControl>
+            {
+                new(NorthPicker, NorthOneWay, "North"),
+                new(SouthPicker, SouthOneWay, "South"),
+                new(EastPicker,  EastOneWay,  "East"),
+                new(WestPicker,  WestOneWay,  "West"),
+                new(UpPicker,    UpOneWay,    "Up"),
+                new(DownPicker,  DownOneWay,  "Down"),
+                new(InPicker,    InOneWay,    "In"),
+                new(OutPicker,   OutOneWay,   "Out"),
+            };
+
+            _suppressExitEvents = true;
+            try
+            {
+                foreach (var ec in _exitControls)
+                {
+                    // Detach old handlers before re-populating
+                    ec.Picker.SelectedIndexChanged -= OnExitPickerChanged;
+                    ec.OneWay.CheckedChanged       -= OnExitOneWayChanged;
+
+                    // Populate picker items
+                    ec.Picker.ItemsSource = allRooms;
+
+                    // Set selected room from exits dictionary
+                    if (room.Exits.TryGetValue(ec.Direction, out var destId))
+                    {
+                        var destRoom = allRooms.FirstOrDefault(r => r.Id == destId);
+                        ec.Picker.SelectedItem = destRoom;
+
+                        // One-Way = true when the reverse exit does NOT point back to this room
+                        if (_opposites.TryGetValue(ec.Direction, out var opposite))
+                        {
+                            var hasBackLink = destRoom is not null
+                                && destRoom.Exits.TryGetValue(opposite, out var backId)
+                                && backId == room.Id;
+                            ec.OneWay.IsChecked = !hasBackLink;
+                        }
+                        else
+                        {
+                            ec.OneWay.IsChecked = false;
+                        }
+                    }
+                    else
+                    {
+                        ec.Picker.SelectedItem = null;
+                        ec.OneWay.IsChecked    = false;
+                    }
+
+                    // Re-attach handlers
+                    ec.Picker.SelectedIndexChanged += OnExitPickerChanged;
+                    ec.OneWay.CheckedChanged       += OnExitOneWayChanged;
+                }
+            }
+            finally
+            {
+                _suppressExitEvents = false;
+            }
+        }
+
+        private void OnExitPickerChanged(object? sender, EventArgs e)
+        {
+            if (_suppressExitEvents) return;
+            if (sender is not Picker picker) return;
+            if (BindingContext is not Room room) return;
+
+            var ec = _exitControls?.FirstOrDefault(x => x.Picker == picker);
+            if (ec is null) return;
+
+            var game = App.CurrentGame;
+            if (game is null) return;
+
+            var destRoom = picker.SelectedItem as Room;
+
+            _suppressExitEvents = true;
+            try
+            {
+                if (destRoom is null)
+                {
+                    // Clear the exit
+                    room.Exits.Remove(ec.Direction);
+                    ec.OneWay.IsChecked = false;
+
+                    // Clear the back-link from any room that was pointing back at us via the opposite direction
+                    if (_opposites.TryGetValue(ec.Direction, out var opp))
+                    {
+                        foreach (var r in game.Rooms)
+                        {
+                            if (r.Exits.TryGetValue(opp, out var backId) && backId == room.Id)
+                                r.Exits.Remove(opp);
+                        }
+                    }
+                }
+                else
+                {
+                    // Set the forward exit
+                    room.Exits[ec.Direction] = destRoom.Id;
+
+                    // Bidirectional: if not one-way, set the reverse exit on the destination room
+                    if (!ec.OneWay.IsChecked && _opposites.TryGetValue(ec.Direction, out var opposite))
+                    {
+                        destRoom.Exits[opposite] = room.Id;
+                    }
+
+                    // Compute one-way state: true if back link is missing
+                    bool hasBack = _opposites.TryGetValue(ec.Direction, out var opp2)
+                        && destRoom.Exits.TryGetValue(opp2, out var backId)
+                        && backId == room.Id;
+                    ec.OneWay.IsChecked = !hasBack;
+                }
+            }
+            finally
+            {
+                _suppressExitEvents = false;
+            }
+        }
+
+        private void OnExitOneWayChanged(object? sender, CheckedChangedEventArgs e)
+        {
+            if (_suppressExitEvents) return;
+            if (sender is not CheckBox cb) return;
+            if (BindingContext is not Room room) return;
+
+            var ec = _exitControls?.FirstOrDefault(x => x.OneWay == cb);
+            if (ec is null) return;
+
+            var game = App.CurrentGame;
+            if (game is null) return;
+
+            var destRoom = ec.Picker.SelectedItem as Room;
+            if (destRoom is null) return;
+            if (!_opposites.TryGetValue(ec.Direction, out var opposite)) return;
+
+            _suppressExitEvents = true;
+            try
+            {
+                if (e.Value) // checked → one-way: remove the back-link
+                {
+                    destRoom.Exits.Remove(opposite);
+                }
+                else // unchecked → bidirectional: restore the back-link
+                {
+                    destRoom.Exits[opposite] = room.Id;
+                }
+            }
+            finally
+            {
+                _suppressExitEvents = false;
+            }
         }
 
         private async void OnSaveClicked(object sender, EventArgs e)

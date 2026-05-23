@@ -25,7 +25,7 @@ namespace RagsCore.Models
         private bool _isCollectible = true;
         public bool IsCollectible { get => _isCollectible; set => SetProperty(ref _isCollectible, value); }
 
-        public Dictionary<string, string> Properties { get; } = new();
+        public Dictionary<string, string> Properties { get; set; } = new();
 
         private string? _portraitImagePath;
         public string? PortraitImagePath

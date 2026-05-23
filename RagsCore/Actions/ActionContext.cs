@@ -11,12 +11,14 @@ namespace RagsCore.Actions
         public Room? CurrentRoom { get; }
         public Player Player => Game.Player;
         public GameObject? FocusObject { get; }
+        public object? FocusEntity { get; }
 
-        public ActionContext(Game game, Room? currentRoom = null, GameObject? focusObject = null)
+        public ActionContext(Game game, Room? currentRoom = null, GameObject? focusObject = null, object? focusEntity = null)
         {
             Game = game ?? throw new ArgumentNullException(nameof(game));
             CurrentRoom = currentRoom;
             FocusObject = focusObject;
+            FocusEntity = focusEntity ?? focusObject;
         }
 
         public GameVariable? GetVariable(string name) =>

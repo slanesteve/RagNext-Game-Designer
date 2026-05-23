@@ -1,7 +1,11 @@
-﻿namespace RagsNextPlayer
+using RagsCore.Models;
+
+namespace RagsNextPlayer
 {
     public partial class App : Application
     {
+        public static Game? CurrentGame { get; set; }
+
         public App()
         {
             InitializeComponent();

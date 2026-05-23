@@ -20,13 +20,6 @@
                         Clicked="OnAskAIClicked" CommandParameter="{x:Reference NameEntry}" />
             </Grid>
 
-            <Label Text="Type" />
-            <Grid ColumnDefinitions="*,Auto">
-                <Entry x:Name="TypeEntry" Text="{Binding Type}" Placeholder="string | int | bool" Grid.Column="0" />
-                <Button Text="✨" Grid.Column="1" WidthRequest="28" HeightRequest="28" Padding="0"
-                        Clicked="OnAskAIClicked" CommandParameter="{x:Reference TypeEntry}" />
-            </Grid>
-
             <Label Text="Value" />
             <Grid ColumnDefinitions="*,Auto">
                 <Entry x:Name="ValueEntry" Text="{Binding Value}" Grid.Column="0" />

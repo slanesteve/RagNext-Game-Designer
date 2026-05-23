@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -28,6 +29,7 @@ namespace RagNext.ViewModels
         private ActionStep _target;
         private readonly Func<ActionStep, Task> _afterMutate;
         private bool _isSaving;
+        private bool _hasPendingSave;
         public bool IsSaved { get; private set; } = false;
 
         public ObservableCollection<StepTypeWrapper> Definitions { get; } = new();
@@ -106,8 +108,78 @@ namespace RagNext.ViewModels
             CancelCommand = new Command(() => _afterMutate(null));
         }
 
+        public object? GetModelValue(string label)
+        {
+            if (_target == null) return null;
+            return _target.GetType().GetProperty(label)?.GetValue(_target);
+        }
+
+        public void SetModelValue(string label, object? value)
+        {
+            if (_target == null) return;
+            var p = _target.GetType().GetProperty(label);
+            if (p != null && p.CanWrite)
+            {
+                object? valToSet = value;
+                
+                if (valToSet is GameVariable gv) { valToSet = gv.Name; }
+                else if (valToSet is NamedOption no) { valToSet = no.Name; }
+                else if (valToSet != null && valToSet.GetType() != typeof(Guid) && valToSet.GetType() != typeof(string))
+                {
+                    var idProp = valToSet.GetType().GetProperty("Id");
+                    if (idProp != null) valToSet = idProp.GetValue(valToSet);
+                }
+
+                if (valToSet != null && p.PropertyType != valToSet.GetType())
+                {
+                    if (p.PropertyType == typeof(Guid) && valToSet is string strGuid && Guid.TryParse(strGuid, out var g))
+                    {
+                        valToSet = g;
+                    }
+                    else if (p.PropertyType == typeof(string) && valToSet is Guid guidVal)
+                    {
+                        valToSet = guidVal.ToString();
+                    }
+                    else if (p.PropertyType == typeof(double) || p.PropertyType == typeof(int) || p.PropertyType == typeof(float))
+                    {
+                        var strVal = valToSet?.ToString() ?? "0";
+                        if (double.TryParse(strVal, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedDouble))
+                        {
+                            valToSet = Convert.ChangeType(parsedDouble, p.PropertyType);
+                        }
+                        else
+                        {
+                            valToSet = Convert.ChangeType(0, p.PropertyType);
+                        }
+                    }
+                    else
+                    {
+                        try { valToSet = Convert.ChangeType(valToSet, p.PropertyType); } catch { }
+                    }
+                }
+
+                p.SetValue(_target, valToSet);
+            }
+        }
+
+        private void OnInputPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is not InputDefinition input) return;
+
+            if (e.PropertyName == nameof(InputDefinition.Value) || e.PropertyName == nameof(InputDefinition.IsManualMode))
+            {
+                SetModelValue(input.Label, input.Value);
+                _ = SaveAsync();
+            }
+        }
+
         private void BuildInputsFromTarget()
         {
+            foreach (var input in EditableInputs)
+            {
+                input.PropertyChanged -= OnInputPropertyChanged;
+            }
+
             EditableInputs.Clear();
             var props = _target.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.CanWrite && p.Name != "Label" && p.Name != "TrueBranch" && p.Name != "FalseBranch");
@@ -122,6 +194,7 @@ namespace RagNext.ViewModels
                     DataType = GetDataType(p)
                 };
                 PreparePickerSource(input);
+                input.PropertyChanged += OnInputPropertyChanged;
                 EditableInputs.Add(input);
             }
         }
@@ -131,25 +204,28 @@ namespace RagNext.ViewModels
             if (p.PropertyType == typeof(bool)) return InputControlType.Checkbox;
             if (p.PropertyType == typeof(int) || p.PropertyType == typeof(double) || p.PropertyType == typeof(float)) return InputControlType.Number;
             if (p.PropertyType == typeof(Guid) || p.Name.Contains("Id")) return InputControlType.ComboBox;
-            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName") && 
-                (p.DeclaringType == typeof(SetVariableCommand) || p.DeclaringType == typeof(SetNumericRandomlyCommand) || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType!))) 
+            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName" || p.Name == "SourceName") && 
+                (p.DeclaringType != null && (p.DeclaringType.Name.Contains("Variable") || p.DeclaringType.Name.Contains("Random") || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType)))) 
                 return InputControlType.ComboBox; 
             if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
             if (p.Name.Equals("Gender", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
+            if (p.Name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
             if (p.Name.Contains("Text", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("Description", StringComparison.OrdinalIgnoreCase)) return InputControlType.TextArea;
             return InputControlType.Text;
         }
 
         private InputDataType GetDataType(PropertyInfo p)
         {
-            if (p.Name.Equals("RoomId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Room;
+            if (p.Name.Equals("RoomId", StringComparison.OrdinalIgnoreCase) ||
+                p.Name.Equals("DestinationRoomId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Room;
             if (p.Name.Equals("ObjectId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("ContainerObjectId", StringComparison.OrdinalIgnoreCase)) return InputDataType.GameObject;
             if (p.Name.Equals("CharacterId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Character;
             if (p.Name.Equals("ItemId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Item;
             if (p.Name.Equals("SoundId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("PortraitId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("MediaId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Media;
             if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputDataType.Operator;
-            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName") && 
-                (p.DeclaringType == typeof(SetVariableCommand) || p.DeclaringType == typeof(SetNumericRandomlyCommand) || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType!))) 
+            if (p.Name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return InputDataType.Direction;
+            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName" || p.Name == "SourceName") && 
+                (p.DeclaringType != null && (p.DeclaringType.Name.Contains("Variable") || p.DeclaringType.Name.Contains("Random") || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType)))) 
                 return InputDataType.Variable;
             return InputDataType.String;
         }
@@ -174,6 +250,17 @@ namespace RagNext.ViewModels
                     new NamedOption { Name = ">=" },
                     new NamedOption { Name = "<" },
                     new NamedOption { Name = "<=" }
+                },
+                InputDataType.Direction => new List<object>
+                {
+                    new NamedOption { Name = "North" },
+                    new NamedOption { Name = "South" },
+                    new NamedOption { Name = "East" },
+                    new NamedOption { Name = "West" },
+                    new NamedOption { Name = "Up" },
+                    new NamedOption { Name = "Down" },
+                    new NamedOption { Name = "In" },
+                    new NamedOption { Name = "Out" }
                 },
                 _ => input.Label.Equals("Gender", StringComparison.OrdinalIgnoreCase)
                      ? new List<object>
@@ -236,55 +323,78 @@ namespace RagNext.ViewModels
 
         public async Task SaveAsync()
         {
-            if (_isSaving) return;
+            if (_isSaving)
+            {
+                _hasPendingSave = true;
+                return;
+            }
+            
             _isSaving = true;
+            _hasPendingSave = false;
+            
             try
             {
-                foreach (var src in EditableInputs)
+                do
                 {
-                    var p = _target.GetType().GetProperty(src.Label);
-                    if (p != null && p.CanWrite)
+                    _hasPendingSave = false;
+
+                    foreach (var src in EditableInputs)
                     {
-                        object? valToSet = src.Value;
-                        
-                        if (src.ControlType == InputControlType.ComboBox && valToSet != null)
+                        var p = _target.GetType().GetProperty(src.Label);
+                        if (p != null && p.CanWrite)
                         {
-                            if (valToSet is GameVariable gv) { valToSet = gv.Name; }
-                            else if (valToSet is NamedOption no) { valToSet = no.Name; }
-                            else { 
-                                var idProp = valToSet.GetType().GetProperty("Id");
-                                if (idProp != null) valToSet = idProp.GetValue(valToSet);
+                            object? valToSet = src.Value;
+                            
+                            if (src.ControlType == InputControlType.ComboBox && valToSet != null)
+                            {
+                                if (valToSet is GameVariable gv) { valToSet = gv.Name; }
+                                else if (valToSet is NamedOption no) { valToSet = no.Name; }
+                                else { 
+                                    var idProp = valToSet.GetType().GetProperty("Id");
+                                    if (idProp != null) valToSet = idProp.GetValue(valToSet);
+                                }
                             }
-                        }
 
-                        if (valToSet != null && p.PropertyType != valToSet.GetType())
-                        {
-                            if (p.PropertyType == typeof(Guid) && valToSet is string strGuid && Guid.TryParse(strGuid, out var g))
+                            if (valToSet != null && p.PropertyType != valToSet.GetType())
                             {
-                                valToSet = g;
+                                if (p.PropertyType == typeof(Guid) && valToSet is string strGuid && Guid.TryParse(strGuid, out var g))
+                                {
+                                    valToSet = g;
+                                }
+                                else if (p.PropertyType == typeof(string) && valToSet is Guid guidVal)
+                                {
+                                    valToSet = guidVal.ToString();
+                                }
+                                else if (p.PropertyType == typeof(double) || p.PropertyType == typeof(int) || p.PropertyType == typeof(float))
+                                {
+                                    var strVal = valToSet?.ToString() ?? "0";
+                                    if (double.TryParse(strVal, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedDouble))
+                                    {
+                                        valToSet = Convert.ChangeType(parsedDouble, p.PropertyType);
+                                    }
+                                    else
+                                    {
+                                        valToSet = Convert.ChangeType(0, p.PropertyType);
+                                    }
+                                }
+                                else
+                                {
+                                    try { valToSet = Convert.ChangeType(valToSet, p.PropertyType); } catch { }
+                                }
                             }
-                            else if (p.PropertyType == typeof(string) && valToSet is Guid guidVal)
-                            {
-                                valToSet = guidVal.ToString();
-                            }
-                            else
-                            {
-                                try { valToSet = Convert.ChangeType(valToSet, p.PropertyType); } catch { }
-                            }
-                        }
 
-                        p.SetValue(_target, valToSet);
+                            p.SetValue(_target, valToSet);
+                        }
                     }
-                }
 
-                await _afterMutate(_target);
-                IsSaved = true;
+                    await _afterMutate(_target);
+                    IsSaved = true;
+                } while (_hasPendingSave);
             }
             finally
             {
                 _isSaving = false;
             }
-            await Task.CompletedTask;
         }
     }
 }

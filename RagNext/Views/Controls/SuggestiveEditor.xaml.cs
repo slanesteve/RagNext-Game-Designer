@@ -19,10 +19,49 @@ namespace RagNext.Views.Controls
             set => SetValue(TextProperty, value);
         }
 
+        private int _bindingContextVersion = 0;
+        private bool _isBindingContextChanging = false;
+
+        protected override void OnBindingContextChanged()
+        {
+            base.OnBindingContextChanged();
+
+            // Only take manual control of the editor text when the control is used in
+            // "InputDefinition mode" (the action step editor). In all other cases
+            // (Room, Player, Object, etc.) the XAML TwoWay binding on Text drives the
+            // editor via OnTextChangedPropertyChanged, so we must NOT clear the editor here.
+            if (BindingContext is RagsCore.Actions.InputDefinition input)
+            {
+                var currentVersion = ++_bindingContextVersion;
+                _isBindingContextChanging = true;
+                try
+                {
+                    var valStr = input.Value?.ToString() ?? string.Empty;
+                    if (MainEditor.Text != valStr)
+                    {
+                        MainEditor.Text = valStr;
+                    }
+                }
+                finally
+                {
+                    Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(100), () =>
+                    {
+                        if (currentVersion == _bindingContextVersion)
+                            _isBindingContextChanging = false;
+                    });
+                }
+            }
+            // For all other binding contexts, do nothing — let {Binding Description, Mode=TwoWay}
+            // flow through the Text BindableProperty → OnTextChangedPropertyChanged → MainEditor.Text.
+        }
+
         private static void OnTextChangedPropertyChanged(BindableObject bindable, object oldValue, object newValue)
         {
             if (bindable is SuggestiveEditor se)
             {
+                if (se._isBindingContextChanging)
+                    return;
+
                 var newText = (string)newValue;
                 if (se.MainEditor.Text != newText)
                 {
@@ -46,6 +85,7 @@ namespace RagNext.Views.Controls
         public event EventHandler<FocusEventArgs>? UnfocusedEvent;
 
         private bool _isAutocompleteMode = false;
+        private bool _isSquareBracketMode = false;
         private int _bracketIndex = -1;
         private List<SuggestionItem> _allSuggestions = new();
 
@@ -61,8 +101,8 @@ namespace RagNext.Views.Controls
         {
             HelpPopupCard.IsVisible = false;
             HelpDismissOverlay.IsVisible = false;
-            // Load fresh suggestions dynamically from the current game
-            _allSuggestions = IntelligenceProvider.GetSuggestions(App.CurrentGame);
+            // Clear suggestion cache on focus; they are fetched dynamically on trigger character keypresses
+            _allSuggestions.Clear();
         }
 
         private void OnEditorUnfocused(object? sender, FocusEventArgs e)
@@ -79,6 +119,9 @@ namespace RagNext.Views.Controls
 
         private void OnEditorTextChanged(object? sender, TextChangedEventArgs e)
         {
+            if (_isBindingContextChanging)
+                return;
+
             // Hide help popup card on typing
             HelpPopupCard.IsVisible = false;
             HelpDismissOverlay.IsVisible = false;
@@ -96,7 +139,20 @@ namespace RagNext.Views.Controls
             if (cursor > 0 && newText.Length >= cursor && newText[cursor - 1] == '{')
             {
                 _isAutocompleteMode = true;
+                _isSquareBracketMode = false;
                 _bracketIndex = cursor - 1;
+                _allSuggestions = IntelligenceProvider.GetSuggestions(App.CurrentGame);
+                UpdateSuggestions(string.Empty);
+                return;
+            }
+
+            // Trigger autocomplete if character before cursor is '['
+            if (cursor > 0 && newText.Length >= cursor && newText[cursor - 1] == '[')
+            {
+                _isAutocompleteMode = true;
+                _isSquareBracketMode = true;
+                _bracketIndex = cursor - 1;
+                _allSuggestions = IntelligenceProvider.GetEntitySuggestions(App.CurrentGame);
                 UpdateSuggestions(string.Empty);
                 return;
             }
@@ -110,9 +166,10 @@ namespace RagNext.Views.Controls
                 }
 
                 var query = newText.Substring(_bracketIndex + 1, cursor - (_bracketIndex + 1));
+                var closingBracket = _isSquareBracketMode ? "]" : "}";
 
-                // Terminate autocomplete if query has spaces or closing bracket
-                if (query.Contains(" ") || query.Contains("}"))
+                // Terminate autocomplete if query has closing bracket or (for braces only) spaces
+                if ((!_isSquareBracketMode && query.Contains(" ")) || query.Contains(closingBracket))
                 {
                     HidePopup();
                     return;
@@ -181,7 +238,7 @@ namespace RagNext.Views.Controls
                 var before = currentText.Substring(0, _bracketIndex);
                 var after = cursor < currentText.Length ? currentText.Substring(cursor) : string.Empty;
 
-                var insertion = $"{{{item.Token}}}";
+                var insertion = _isSquareBracketMode ? $"[{item.Token}]" : $"{{{item.Token}}}";
                 MainEditor.Text = before + insertion + after;
 
                 // Move cursor after the inserted bracket token

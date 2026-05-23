@@ -68,6 +68,13 @@ namespace RagNext.ViewModels
             set
             {
                 if (_selected == value) return;
+                
+                // Force save the currently active editor step parameters before detaching/replacing it.
+                if (_editor != null)
+                {
+                    _ = _editor.SaveAsync();
+                }
+                
                 if (_selected != null) _selected.IsSelected = false;
                 _selected = value;
                 if (_selected != null) _selected.IsSelected = true;

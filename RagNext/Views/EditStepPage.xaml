@@ -73,6 +73,9 @@
                                             Padding="0"
                                             VerticalOptions="Center" />
                                 </Grid>
+                                <Entry Keyboard="Numeric"
+                                       IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Number}"
+                                       Text="{Binding Value, Mode=TwoWay}" />
                                 <CheckBox IsChecked="{Binding Value, Mode=TwoWay}"
                                           IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}" />
                             </VerticalStackLayout>

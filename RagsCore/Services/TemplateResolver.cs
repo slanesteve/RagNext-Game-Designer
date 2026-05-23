@@ -68,6 +68,23 @@ namespace RagsCore.Services
                     // If no prefix, check if it matches a variable name directly
                     var directVar = ctx.GetVariable(path)?.Value;
                     if (directVar != null) return directVar;
+
+                    var gameVarDirect = ctx.Game.Variables.FirstOrDefault(v => string.Equals(v.Name, path, StringComparison.OrdinalIgnoreCase));
+                    if (gameVarDirect != null) return gameVarDirect.Value;
+
+                    // Also support direct suffix fallback e.g. {my_var.value}
+                    if (path.EndsWith(".value", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var stripped = path.Substring(0, path.Length - 6);
+                        var v = ctx.GetVariable(stripped) ?? ctx.Game.Variables.FirstOrDefault(x => string.Equals(x.Name, stripped, StringComparison.OrdinalIgnoreCase));
+                        if (v != null) return v.Value;
+                    }
+                    else if (path.EndsWith(".name", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var stripped = path.Substring(0, path.Length - 5);
+                        var v = ctx.GetVariable(stripped) ?? ctx.Game.Variables.FirstOrDefault(x => string.Equals(x.Name, stripped, StringComparison.OrdinalIgnoreCase));
+                        if (v != null) return v.Name;
+                    }
                     return null;
             }
         }
@@ -131,28 +148,71 @@ namespace RagsCore.Services
 
         private static string? ResolveFocus(string[] parts, ActionContext ctx)
         {
-            var focus = ctx.FocusObject;
+            var focus = ctx.FocusEntity ?? ctx.FocusObject;
             if (focus == null) return null;
 
-            if (parts.Length < 2) return focus.Name;
+            string? name = null;
+            string? description = null;
+            string? portraitImagePath = null;
+            System.Collections.IEnumerable? attributes = null;
+
+            if (focus is GameObject go)
+            {
+                name = go.Name;
+                description = go.Description;
+                portraitImagePath = go.PortraitImagePath;
+                attributes = go.Attributes;
+            }
+            else if (focus is Player pl)
+            {
+                name = pl.Name;
+                description = pl.Description;
+                portraitImagePath = pl.PortraitImagePath;
+                attributes = pl.Attributes;
+            }
+            else if (focus is Room rm)
+            {
+                name = rm.Name;
+                description = rm.Description;
+                portraitImagePath = rm.PortraitImagePath;
+                attributes = rm.Attributes;
+            }
+
+            if (name == null)
+            {
+                var type = focus.GetType();
+                name = type.GetProperty("Name")?.GetValue(focus) as string;
+                description = type.GetProperty("Description")?.GetValue(focus) as string;
+                portraitImagePath = type.GetProperty("PortraitImagePath")?.GetValue(focus) as string;
+                attributes = type.GetProperty("Attributes")?.GetValue(focus) as System.Collections.IEnumerable;
+            }
+
+            if (parts.Length < 2) return name ?? focus.ToString();
 
             var prop = parts[1].ToLowerInvariant();
             switch (prop)
             {
                 case "name":
-                    return focus.Name;
+                    return name;
                 case "description":
-                    return focus.Description;
+                    return description;
+                case "gender":
+                    if (focus is Player p) return p.Gender;
+                    return focus.GetType().GetProperty("Gender")?.GetValue(focus) as string;
                 case "portrait":
                 case "characterportrait":
                 case "portraitimagepath":
                 case "portraitimage":
-                    return focus.PortraitImagePath;
+                    return portraitImagePath;
                 case "attributes":
                 case "attribute":
-                    if (parts.Length < 3) return null;
+                    if (parts.Length < 3 || attributes == null) return null;
                     var attrName = parts[2];
-                    return CustomAttribute.GetAttribute(attrName, focus.Attributes);
+                    if (attributes is System.Collections.ObjectModel.ObservableCollection<CustomAttribute> customAttrs)
+                    {
+                        return CustomAttribute.GetAttribute(attrName, customAttrs);
+                    }
+                    return null;
                 default:
                     return null;
             }
@@ -169,7 +229,22 @@ namespace RagsCore.Services
 
             // Otherwise check case-insensitive match in game variables list
             var gameVar = ctx.Game.Variables.FirstOrDefault(v => string.Equals(v.Name, varName, StringComparison.OrdinalIgnoreCase));
-            return gameVar?.Value;
+            if (gameVar != null) return gameVar.Value;
+
+            // If not found, and varName ends with .value or .name, handle accordingly
+            if (varName.EndsWith(".value", StringComparison.OrdinalIgnoreCase))
+            {
+                var stripped = varName.Substring(0, varName.Length - 6);
+                var v = ctx.GetVariable(stripped) ?? ctx.Game.Variables.FirstOrDefault(x => string.Equals(x.Name, stripped, StringComparison.OrdinalIgnoreCase));
+                if (v != null) return v.Value;
+            }
+            else if (varName.EndsWith(".name", StringComparison.OrdinalIgnoreCase))
+            {
+                var stripped = varName.Substring(0, varName.Length - 5);
+                var v = ctx.GetVariable(stripped) ?? ctx.Game.Variables.FirstOrDefault(x => string.Equals(x.Name, stripped, StringComparison.OrdinalIgnoreCase));
+                if (v != null) return v.Name;
+            }
+            return null;
         }
 
         private static string? ResolveCharacter(string[] parts, ActionContext ctx)

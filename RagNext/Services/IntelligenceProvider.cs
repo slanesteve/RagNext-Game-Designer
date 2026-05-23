@@ -289,6 +289,65 @@ namespace RagNext.Services
 
             return list;
         }
+
+        public static List<SuggestionItem> GetEntitySuggestions(Game? game)
+        {
+            var list = new List<SuggestionItem>();
+
+            // 1. Directions / Exits
+            var directions = new[] { "North", "South", "East", "West", "Up", "Down", "In", "Out" };
+            foreach (var dir in directions)
+            {
+                list.Add(new SuggestionItem
+                {
+                    Token = dir,
+                    DisplayText = dir,
+                    TypeName = "Exit Direction",
+                    Description = $"Clickable exit shortcut in player navigation."
+                });
+            }
+
+            if (game != null)
+            {
+                // 2. Objects
+                foreach (var obj in game.Objects.Where(o => !string.IsNullOrWhiteSpace(o.Name)))
+                {
+                    list.Add(new SuggestionItem
+                    {
+                        Token = obj.Name,
+                        DisplayText = obj.Name,
+                        TypeName = "Game Object",
+                        Description = $"Interactive inline link to object '{obj.Name}'."
+                    });
+                }
+
+                // 3. Characters
+                foreach (var ch in game.Characters.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
+                {
+                    list.Add(new SuggestionItem
+                    {
+                        Token = ch.Name,
+                        DisplayText = ch.Name,
+                        TypeName = "Character",
+                        Description = $"Interactive inline link to character '{ch.Name}'."
+                    });
+                }
+
+                // 4. Rooms
+                foreach (var room in game.Rooms.Where(r => !string.IsNullOrWhiteSpace(r.Name)))
+                {
+                    list.Add(new SuggestionItem
+                    {
+                        Token = room.Name,
+                        DisplayText = room.Name,
+                        TypeName = "Room",
+                        Description = $"Navigation/travel link to room '{room.Name}'."
+                    });
+                }
+            }
+
+            return list;
+        }
     }
 
     public class SuggestionItem

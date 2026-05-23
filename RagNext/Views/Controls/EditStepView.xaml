@@ -11,7 +11,8 @@
         <Picker x:Name="DefinitionPicker"
                 ItemsSource="{Binding Definitions}"
                 ItemDisplayBinding="{Binding Name}"
-                SelectedItem="{Binding SelectedDefinition}" />
+                SelectedItem="{Binding SelectedDefinition, Mode=OneWay}"
+                SelectedIndexChanged="OnDefinitionPickerSelectedIndexChanged" />
 
         <Label Text="Inputs" FontAttributes="Bold" />
         <CollectionView ItemsSource="{Binding EditableInputs}">
@@ -24,7 +25,7 @@
                               ColumnSpacing="8">
                             <controls:SuggestiveEditor x:Name="TextEditor"
                                                        Grid.Column="0"
-                                                       Text="{Binding Value, Mode=TwoWay}"
+                                                       Text="{Binding Value, Mode=OneWay}"
                                                        TextChanged="OnTextChanged"
                                                        UnfocusedEvent="OnEntryUnfocused" />
                             <Button Grid.Column="1"
@@ -41,7 +42,7 @@
                               ColumnSpacing="8">
                             <controls:SuggestiveEditor x:Name="TextAreaEditor"
                                                        Grid.Column="0"
-                                                       Text="{Binding Value, Mode=TwoWay}"
+                                                       Text="{Binding Value, Mode=OneWay}"
                                                        TextChanged="OnTextChanged"
                                                        UnfocusedEvent="OnEditorUnfocused" />
                             <Button Grid.Column="1"
@@ -57,16 +58,13 @@
                               ColumnDefinitions="*, Auto"
                               ColumnSpacing="8">
                             <Grid Grid.Column="0">
-                                <Picker ItemsSource="{Binding PickerSource}"
-                                        ItemDisplayBinding="{Binding Name}"
-                                        Loaded="OnInputPickerLoaded"
-                                        xmlns:behaviors="clr-namespace:RagNext.Behaviors"
+                                <Picker xmlns:behaviors="clr-namespace:RagNext.Behaviors"
                                         IsVisible="{Binding IsNormalMode}">
                                     <Picker.Behaviors>
                                         <behaviors:SyncPickerSelectionBehavior />
                                     </Picker.Behaviors>
                                 </Picker>
-                                <controls:SuggestiveEditor Text="{Binding Value, Mode=TwoWay}"
+                                <controls:SuggestiveEditor Text="{Binding Value, Mode=OneWay}"
                                        IsVisible="{Binding IsManualMode}"
                                        TextChanged="OnTextChanged"
                                        UnfocusedEvent="OnEntryUnfocused" />
@@ -79,10 +77,15 @@
                                     Padding="0"
                                     VerticalOptions="Center" />
                         </Grid>
+                        <Entry Keyboard="Numeric"
+                               IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Number}"
+                               Text="{Binding Value, Mode=OneWay}"
+                               TextChanged="OnTextChanged"
+                               Unfocused="OnEntryUnfocused" />
                         <CheckBox IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=Checkbox}" CheckedChanged="OnCheckChanged">
                             <CheckBox.Triggers>
                                 <DataTrigger TargetType="CheckBox" Binding="{Binding ControlType}" Value="Checkbox">
-                                    <Setter Property="IsChecked" Value="{Binding Value, Mode=TwoWay}" />
+                                    <Setter Property="IsChecked" Value="{Binding Value, Mode=OneWay}" />
                                 </DataTrigger>
                             </CheckBox.Triggers>
                         </CheckBox>

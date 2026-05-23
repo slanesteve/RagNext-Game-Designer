@@ -14,8 +14,8 @@ namespace RagsCore.Models
         private string _description = string.Empty;
         public string Description { get => _description; set => SetProperty(ref _description, value); }
 
-        public ObservableCollection<Guid> ObjectIds { get; } = new();
-        public Dictionary<string, Guid> Exits { get; } = new();
+        public ObservableCollection<Guid> ObjectIds { get; set; } = new();
+        public Dictionary<string, Guid> Exits { get; set; } = new();
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
         public ObservableCollection<Action> Actions { get; set; } = new(); // was internal
 

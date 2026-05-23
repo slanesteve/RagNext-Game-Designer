@@ -1,4 +1,4 @@
-﻿using RagsCore.Models;
+using RagsCore.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
 namespace RagsCore.Actions
@@ -7,7 +7,7 @@ namespace RagsCore.Actions
     {
         public string Name { get; set; } = string.Empty;
         // Unified ordered list: conditions and commands interleaved.
-        public ObservableCollection<ActionStep> Steps { get; } = new();
+        public ObservableCollection<ActionStep> Steps { get; set; } = new();
 
         // Convenience views (optional).
         public IEnumerable<Condition> Conditions => Steps.OfType<Condition>();

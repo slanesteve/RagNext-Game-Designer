@@ -42,6 +42,11 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(CharacterDisplayPortraitCommand), "char.displayPortrait")]
     [JsonDerivedType(typeof(CharacterSetPortraitMediaCommand), "char.setPortraitMedia")]
     [JsonDerivedType(typeof(PlayerSetPortraitMediaCommand), "player.setPortraitMedia")]
+    [JsonDerivedType(typeof(VariableIncrementCommand), "var.inc")]
+    [JsonDerivedType(typeof(VariableDecrementCommand), "var.dec")]
+    [JsonDerivedType(typeof(VariableSetToVariableCommand), "var.setToVar")]
+    [JsonDerivedType(typeof(SetRoomExitCommand), "room.setExit")]
+    [JsonDerivedType(typeof(DisableRoomExitCommand), "room.disableExit")]
     public abstract class ActionStep
     {
         public abstract ActionStepKind Kind { get; }
@@ -72,7 +77,7 @@ namespace RagsCore.Actions
         public string Name { get; set; } = string.Empty;
         public string? Value { get; set; }
         public bool CaseInsensitive { get; set; }
-        public override string TypeName => "Variable equals";
+        public override string TypeName => "Variable: Equals String";
         public override bool Evaluate(ActionContext ctx)
         {
             var v = ctx.GetVariable(Name)?.Value;
@@ -113,7 +118,7 @@ namespace RagsCore.Actions
     {
         public string Name { get; set; } = string.Empty;
         public string? Value { get; set; }
-        public override string TypeName => "Set variable";
+        public override string TypeName => "Variable: Set";
         public override void Execute(ActionContext ctx) => ctx.SetVariable(Name, Value);
     }
 
@@ -240,6 +245,59 @@ namespace RagsCore.Actions
             if (string.IsNullOrWhiteSpace(Name)) return;
             var val = _rnd.Next((int)Minimum, (int)Maximum + 1);
             ctx.SetVariable(Name, val.ToString());
+        }
+    }
+
+    public sealed class VariableIncrementCommand : GameCommand
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Increment";
+        public override void Execute(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(Name)) return;
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            var existing = ctx.GetVariable(Name)?.Value;
+            
+            if (double.TryParse(existing, out var existingNum) && double.TryParse(resolvedVal, out var addNum))
+            {
+                ctx.SetVariable(Name, (existingNum + addNum).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                ctx.SetVariable(Name, (existing ?? string.Empty) + resolvedVal);
+            }
+        }
+    }
+
+    public sealed class VariableDecrementCommand : GameCommand
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Decrement";
+        public override void Execute(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(Name)) return;
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            var existing = ctx.GetVariable(Name)?.Value;
+            
+            if (double.TryParse(existing, out var existingNum) && double.TryParse(resolvedVal, out var subNum))
+            {
+                ctx.SetVariable(Name, (existingNum - subNum).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+        }
+    }
+
+    public sealed class VariableSetToVariableCommand : GameCommand
+    {
+        public string Name { get; set; } = string.Empty;
+        public string SourceName { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Set to Variable";
+        public override void Execute(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(SourceName)) return;
+            var sourceVal = ctx.GetVariable(SourceName)?.Value;
+            ctx.SetVariable(Name, sourceVal);
         }
     }
 
@@ -555,6 +613,65 @@ namespace RagsCore.Actions
                 "!=" => !string.Equals(valA, valB, StringComparison.OrdinalIgnoreCase),
                 _ => false
             };
+        }
+    }
+
+    /// <summary>
+    /// Sets (or clears) a specific directional exit on a room at runtime.
+    /// Setting DestinationRoomId to empty/blank removes the exit.
+    /// </summary>
+    public sealed class SetRoomExitCommand : GameCommand
+    {
+        /// <summary>The room whose exit to modify. Leave blank to use the current room.</summary>
+        public string RoomId { get; set; } = string.Empty;
+        /// <summary>The direction key (e.g. "North", "South", "East", "West", "Up", "Down", "In", "Out").</summary>
+        public string Direction { get; set; } = string.Empty;
+        /// <summary>The destination room. Leave blank to remove the exit in this direction.</summary>
+        public string DestinationRoomId { get; set; } = string.Empty;
+        public override string TypeName => "Room: Set Exit";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedDest = RagsCore.Services.TemplateResolver.Resolve(DestinationRoomId, ctx);
+            var resolvedDir = RagsCore.Services.TemplateResolver.Resolve(Direction, ctx);
+
+            var rId = Guid.TryParse(resolvedRoom, out var g1) ? g1 : ctx.CurrentRoom?.Id;
+            if (rId == null || rId == Guid.Empty || string.IsNullOrWhiteSpace(resolvedDir)) return;
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId.Value);
+            if (room is null) return;
+
+            if (string.IsNullOrWhiteSpace(resolvedDest))
+            {
+                room.Exits.Remove(resolvedDir);
+            }
+            else if (Guid.TryParse(resolvedDest, out var destId) && destId != Guid.Empty)
+            {
+                room.Exits[resolvedDir] = destId;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Removes (disables) a specific directional exit from a room at runtime.
+    /// </summary>
+    public sealed class DisableRoomExitCommand : GameCommand
+    {
+        /// <summary>The room whose exit to disable. Leave blank to use the current room.</summary>
+        public string RoomId { get; set; } = string.Empty;
+        /// <summary>The direction key to remove (e.g. "North").</summary>
+        public string Direction { get; set; } = string.Empty;
+        public override string TypeName => "Room: Disable Exit";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedDir = RagsCore.Services.TemplateResolver.Resolve(Direction, ctx);
+
+            var rId = Guid.TryParse(resolvedRoom, out var g) ? g : ctx.CurrentRoom?.Id;
+            if (rId == null || rId == Guid.Empty || string.IsNullOrWhiteSpace(resolvedDir)) return;
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId.Value);
+            room?.Exits.Remove(resolvedDir);
         }
     }
 }

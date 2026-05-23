@@ -63,8 +63,8 @@
                 StrokeThickness="1"
                 Padding="12"
                 ZIndex="999"
-                WidthRequest="280"
-                HeightRequest="170"
+                WidthRequest="290"
+                HeightRequest="240"
                 HorizontalOptions="End"
                 VerticalOptions="Start"
                 Margin="0, 36, 12, 0">
@@ -78,10 +78,10 @@
                 <TapGestureRecognizer Tapped="OnHelpPopupTapped" />
             </Border.GestureRecognizers>
 
-            <VerticalStackLayout Spacing="6">
+            <VerticalStackLayout Spacing="5">
                 <Grid ColumnDefinitions="*,Auto">
                     <Label Grid.Column="0"
-                           Text="✨ Dynamic Replacements"
+                           Text="✨ Editor Guide"
                            FontAttributes="Bold"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
@@ -99,21 +99,34 @@
                 
                 <BoxView HeightRequest="1" BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2d2d38}" Margin="0,1" />
                 
-                <Label Text="Type { to insert live game values that evaluate at runtime. For example:"
+                <!-- Section 1: Dynamic Replacements -->
+                <Label Text="Type { to insert dynamic game variables:"
                        FontSize="11"
-                       TextColor="{AppThemeBinding Light=#555555, Dark=#a0a0b0}"
-                       LineBreakMode="WordWrap" />
-                       
-                <VerticalStackLayout Spacing="3" Margin="4,0,0,0">
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
+                <VerticalStackLayout Spacing="1.5" Margin="4,0,0,0">
                     <Label Text="• {player.Name} ➔ Protagonist Name"
-                           FontSize="10.5"
-                           TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
+                           FontSize="10"
+                           TextColor="{AppThemeBinding Light=#555555, Dark=#a0a0b0}" />
                     <Label Text="• {variables.Gold} ➔ Global Variables"
-                           FontSize="10.5"
-                           TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
-                    <Label Text="• {room.Name} ➔ Current Room Name"
-                           FontSize="10.5"
-                           TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
+                           FontSize="10"
+                           TextColor="{AppThemeBinding Light=#555555, Dark=#a0a0b0}" />
+                </VerticalStackLayout>
+                
+                <BoxView HeightRequest="1" BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2d2d38}" Margin="0,1" />
+                
+                <!-- Section 2: Hotlinks -->
+                <Label Text="Type [ to insert environment hotlinks:"
+                       FontSize="11"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#111111, Dark=#f0f0f4}" />
+                <VerticalStackLayout Spacing="1.5" Margin="4,0,0,0">
+                    <Label Text="• [A Ring] ➔ Character/object action menu"
+                           FontSize="10"
+                           TextColor="{AppThemeBinding Light=#555555, Dark=#a0a0b0}" />
+                    <Label Text="• [North] ➔ Clickable travel navigation"
+                           FontSize="10"
+                           TextColor="{AppThemeBinding Light=#555555, Dark=#a0a0b0}" />
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </Border>

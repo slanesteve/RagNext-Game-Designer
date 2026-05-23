@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
 using RagsCore.Models;
 using RagNext.Services;
 using RagNext.ViewModels;
@@ -310,7 +312,7 @@ namespace RagNext
 
         private async void OnFileMenuClicked(object? sender, EventArgs e)
         {
-            var options = new[] { "New", "Save", "Load", "Exit" };
+            var options = new[] { "New", "Save", "Load", "Publish", "Exit" };
             var choice = await DisplayActionSheet("Menu", "Cancel", null, options);
 
             if (string.IsNullOrEmpty(choice) || choice == "Cancel")
@@ -327,10 +329,24 @@ namespace RagNext
                 case "Load":
                     OnLoadMenuClicked(this, EventArgs.Empty);
                     break;
+                case "Publish":
+                    await OnPublishMenuClickedAsync();
+                    break;
                 case "Exit":
                     OnExitMenuClicked(this, EventArgs.Empty);
                     break;
             }
+        }
+
+        private async Task OnPublishMenuClickedAsync()
+        {
+            if (_game is null)
+            {
+                await DisplayAlert("Error", "No active game to publish.", "OK");
+                return;
+            }
+            var popup = new Views.Popups.PublishGamePopup(_game);
+            await this.ShowPopupAsync(popup);
         }
 
         private async void OnEditMenuClicked(object sender, EventArgs e)
