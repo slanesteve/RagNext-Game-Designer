@@ -25,18 +25,18 @@ jobs:
         run: dotnet workload install maui
 
       - name: Restore Player Dependencies
-        run: dotnet restore RagsNextPlayer/RagsNextPlayer.csproj -p:EnableWindowsTargeting=true
+        run: dotnet restore RagsNextPlayer/RagsNextPlayer.csproj -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
 
       - name: Restore Designer Dependencies
-        run: dotnet restore RagNext/RagsNextDesigner.csproj -p:EnableWindowsTargeting=true
+        run: dotnet restore RagNext/RagsNextDesigner.csproj -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
 
       - name: Publish Mac Catalyst Player
         run: |
-          dotnet publish RagsNextPlayer/RagsNextPlayer.csproj -c Release -f net9.0-maccatalyst -o ./Publish/PlayerTemplateMac -p:EnableWindowsTargeting=true
+          dotnet publish RagsNextPlayer/RagsNextPlayer.csproj -c Release -f net9.0-maccatalyst -o ./Publish/PlayerTemplateMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
 
       - name: Publish Mac Catalyst Designer
         run: |
-          dotnet publish RagNext/RagsNextDesigner.csproj -c Release -f net9.0-maccatalyst -o ./Publish/DesignerMac -p:EnableWindowsTargeting=true
+          dotnet publish RagNext/RagsNextDesigner.csproj -c Release -f net9.0-maccatalyst -o ./Publish/DesignerMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
 
       - name: Zip Mac Player (Preserves Unix Executable Permissions)
         run: |
