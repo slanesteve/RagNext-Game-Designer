@@ -37,11 +37,11 @@ jobs:
 
       - name: Publish Mac Catalyst Player
         run: |
-          dotnet publish RagsNextPlayer/RagsNextPlayer.csproj -c Debug -f net9.0-maccatalyst -o ./Publish/PlayerTemplateMac -p:EnableWindowsTargeting=true
+          dotnet publish RagsNextPlayer/RagsNextPlayer.csproj -c Debug -f net9.0-maccatalyst -o ./Publish/PlayerTemplateMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true
 
       - name: Publish Mac Catalyst Designer
         run: |
-          dotnet publish RagNext/RagsNextDesigner.csproj -c Debug -f net9.0-maccatalyst -o ./Publish/DesignerMac -p:EnableWindowsTargeting=true
+          dotnet publish RagNext/RagsNextDesigner.csproj -c Debug -f net9.0-maccatalyst -o ./Publish/DesignerMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true
 
       - name: Zip Mac Player (Preserves Unix Executable Permissions)
         run: |
