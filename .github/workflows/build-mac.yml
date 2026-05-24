@@ -18,7 +18,6 @@ jobs:
  
       - name: Install .NET MAUI Workload
         run: |
-          dotnet workload update
           dotnet workload install maui
  
       - name: Restore Player Dependencies
