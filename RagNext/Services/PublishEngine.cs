@@ -1,265 +1,356 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Maui.Storage;
 using RagsCore.Models;
-using RagsCore.Actions;
 
 namespace RagNext.Services
 {
+    /// <summary>
+    /// Publishes a standalone branded game executable by injecting the author's
+    /// game data into a pre-built Unity shell player template.
+    ///
+    /// How it works:
+    ///   1. Locate the correct Templates/{Platform}/ folder next to the Designer exe.
+    ///   2. Copy the entire template to the output directory.
+    ///   3. Rename RagNextPlayer.exe → MyGame.exe (and MyGame_Data/ on Windows/Linux).
+    ///   4. Write game.json + media assets into StreamingAssets/.
+    ///   5. Optionally zip the output for distribution.
+    ///
+    /// The end user receives a folder (or zip) containing their game branded with
+    /// the game title. They just double-click the executable — no Unity required.
+    /// </summary>
     public static class PublishEngine
     {
-        private static JsonSerializerOptions Options
-        {
-            get
-            {
-                var opts = new JsonSerializerOptions(JsonSerializerDefaults.Web)
-                {
-                    WriteIndented = true,
-                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve,
-                    MaxDepth = 128,
-                    PropertyNameCaseInsensitive = true
-                };
-                opts.Converters.Add(new StepDefinitionBaseJsonConverter());
-                return opts;
-            }
-        }
+        // ── Public API ────────────────────────────────────────────────────────
 
-        public static async Task PublishAsync(Game game, int targetPlatform, string destinationPath)
-        {
-            if (game == null) throw new ArgumentNullException(nameof(game));
-            if (string.IsNullOrWhiteSpace(destinationPath)) throw new ArgumentException("Destination path cannot be empty", nameof(destinationPath));
+        /// <summary>
+        /// Reports progress steps during publish. Each string is a completed step.
+        /// </summary>
+        public static event Action<string>? OnProgress;
 
-            // Clean title for folders and files
+        /// <summary>
+        /// Main entry point. Validates inputs then dispatches to the correct target handler.
+        /// </summary>
+        public static async Task PublishAsync(
+            Game game,
+            PackagingTarget target,
+            string outputDirectory,
+            bool createZip = false)
+        {
+            if (game is null)                       throw new ArgumentNullException(nameof(game));
+            if (string.IsNullOrWhiteSpace(outputDirectory))
+                throw new ArgumentException("Output directory cannot be empty.", nameof(outputDirectory));
+
             string cleanTitle = SanitizeName(game.Title ?? "Adventure");
 
-            if (targetPlatform == 2)
+            // Validate template exists before doing any file work
+            string templateDir = GetTemplateDir(target);
+            if (!Directory.Exists(templateDir))
+                throw new DirectoryNotFoundException(
+                    $"Shell template not found at:\n{templateDir}\n\n" +
+                    $"Build the Unity player for {target} once from Unity, then copy the output into:\n{templateDir}");
+
+            Report("Validating game data...");
+            ValidateGame(game);
+
+            Report($"Preparing output folder: {outputDirectory}");
+            if (Directory.Exists(outputDirectory))
+                Directory.Delete(outputDirectory, recursive: true);
+            Directory.CreateDirectory(outputDirectory);
+
+            switch (target)
             {
-                // Target: Universal Mobile/Hub Package (.rag)
-                await PackageAsRagAsync(game, destinationPath, cleanTitle);
+                case PackagingTarget.Windows:
+                    await PublishWindowsAsync(game, cleanTitle, templateDir, outputDirectory);
+                    break;
+                case PackagingTarget.MacOS:
+                    await PublishMacOSAsync(game, cleanTitle, templateDir, outputDirectory);
+                    break;
+                case PackagingTarget.Linux:
+                    await PublishLinuxAsync(game, cleanTitle, templateDir, outputDirectory);
+                    break;
+                case PackagingTarget.WebGL:
+                    await PublishWebGLAsync(game, cleanTitle, templateDir, outputDirectory);
+                    break;
             }
-            else
+
+            if (createZip)
             {
-                // Target: Windows Desktop (0) or macOS Desktop (1)
-                await PackageAsStandaloneAsync(game, targetPlatform, destinationPath, cleanTitle);
+                Report("Creating distribution ZIP...");
+                string zipPath = outputDirectory.TrimEnd(Path.DirectorySeparatorChar) + ".zip";
+                if (File.Exists(zipPath)) File.Delete(zipPath);
+                ZipFile.CreateFromDirectory(outputDirectory, zipPath);
+                Report($"ZIP created: {Path.GetFileName(zipPath)}");
             }
+
+            Report("✅ Publish complete!");
         }
 
-        private static async Task PackageAsStandaloneAsync(Game game, int targetPlatform, string destinationPath, string cleanTitle)
+        // ── Windows ───────────────────────────────────────────────────────────
+        // Output: MyGame/
+        //           MyGame.exe
+        //           MyGame_Data/
+        //             StreamingAssets/game.json + Assets/
+        //           UnityPlayer.dll
+        //           (other Unity runtime DLLs)
+
+        private static async Task PublishWindowsAsync(Game game, string title, string templateDir, string outputDir)
         {
-            // 1. Create target output directory
-            Directory.CreateDirectory(destinationPath);
+            Report("Copying Windows shell player...");
+            CopyDirectory(templateDir, outputDir);
 
-            // 2. Resolve source binary template folder
-            string runDir = AppDomain.CurrentDomain.BaseDirectory;
-            string platformSubDir = targetPlatform == 0 ? "Windows" : "MacCatalyst";
-            string bundledDir = Path.Combine(runDir, "Templates", platformSubDir);
-            string sourceBinDir;
+            // Rename exe
+            RenameFile(outputDir, "RagNextPlayer.exe", $"{title}.exe");
 
-            if (Directory.Exists(bundledDir))
+            // Rename _Data folder
+            RenameDirectory(outputDir, "RagNextPlayer_Data", $"{title}_Data");
+
+            // Inject game data
+            string streamingDir = Path.Combine(outputDir, $"{title}_Data", "StreamingAssets");
+            await InjectGameDataAsync(game, streamingDir);
+        }
+
+        // ── macOS ─────────────────────────────────────────────────────────────
+        // Output: MyGame.app/
+        //           Contents/
+        //             MacOS/MyGame          ← renamed binary
+        //             Resources/Data/
+        //               StreamingAssets/game.json + Assets/
+
+        private static async Task PublishMacOSAsync(Game game, string title, string templateDir, string outputDir)
+        {
+            Report("Copying macOS shell player...");
+            string appBundle = Path.Combine(outputDir, $"{title}.app");
+            CopyDirectory(templateDir, appBundle);
+
+            // Unity macOS .app has the binary in Contents/MacOS/RagNextPlayer
+            string macOsDir = Path.Combine(appBundle, "Contents", "MacOS");
+            RenameFile(macOsDir, "RagNextPlayer", title);
+
+            // Update the Info.plist CFBundleName (simple string replacement — no XML lib needed)
+            string plistPath = Path.Combine(appBundle, "Contents", "Info.plist");
+            if (File.Exists(plistPath))
             {
-                sourceBinDir = bundledDir;
+                string plist = await File.ReadAllTextAsync(plistPath);
+                plist = plist.Replace("RagNextPlayer", title);
+                await File.WriteAllTextAsync(plistPath, plist);
             }
-            else
+
+            // StreamingAssets lives under Contents/Resources/Data/
+            string streamingDir = Path.Combine(appBundle, "Contents", "Resources", "Data", "StreamingAssets");
+            await InjectGameDataAsync(game, streamingDir);
+        }
+
+        // ── Linux ─────────────────────────────────────────────────────────────
+        // Same structure as Windows but executable has no extension and uses ELF format
+
+        private static async Task PublishLinuxAsync(Game game, string title, string templateDir, string outputDir)
+        {
+            Report("Copying Linux shell player...");
+            CopyDirectory(templateDir, outputDir);
+
+            RenameFile(outputDir, "RagNextPlayer", title);
+            RenameDirectory(outputDir, "RagNextPlayer_Data", $"{title}_Data");
+
+            string streamingDir = Path.Combine(outputDir, $"{title}_Data", "StreamingAssets");
+            await InjectGameDataAsync(game, streamingDir);
+        }
+
+        // ── WebGL ─────────────────────────────────────────────────────────────
+        // Output: MyGame/
+        //           index.html
+        //           Build/
+        //           StreamingAssets/game.json + Assets/
+        //           TemplateData/
+
+        private static async Task PublishWebGLAsync(Game game, string title, string templateDir, string outputDir)
+        {
+            Report("Copying WebGL shell player...");
+            CopyDirectory(templateDir, outputDir);
+
+            // Update the page title in index.html
+            string indexPath = Path.Combine(outputDir, "index.html");
+            if (File.Exists(indexPath))
             {
-                // Fallback to local developer workspace
-                string projectRoot = GetWorkspaceRoot();
-                if (targetPlatform == 0)
-                {
-                    // Windows build directory
-                    sourceBinDir = Path.Combine(projectRoot, "RagsNextPlayer", "bin", "Debug", "net9.0-windows10.0.19041.0", "win10-x64");
-                }
-                else
-                {
-                    // macOS catalyst directory fallback
-                    sourceBinDir = Path.Combine(projectRoot, "RagsNextPlayer", "bin", "Debug", "net9.0-maccatalyst");
-                }
-
-                if (!Directory.Exists(sourceBinDir))
-                {
-                    // Fallback: Check if there's any published output or standard bin dir
-                    sourceBinDir = Path.Combine(projectRoot, "RagsNextPlayer", "bin", "Debug", "net9.0-windows10.0.19041.0");
-                    if (!Directory.Exists(sourceBinDir))
-                    {
-                        throw new DirectoryNotFoundException($"Could not locate pre-compiled player templates next to the executable at:\n{bundledDir}\n\nor at the developer fallback paths:\n{sourceBinDir}\n\nPlease bundle templates or compile the RagsNextPlayer project in Visual Studio first.");
-                    }
-                }
+                string html = await File.ReadAllTextAsync(indexPath);
+                html = html.Replace("RagNextPlayer", title)
+                           .Replace("<title>Unity WebGL Player", $"<title>{title}");
+                await File.WriteAllTextAsync(indexPath, html);
             }
 
-            // 3. Copy player binaries recursively to destination
-            CopyDirectory(sourceBinDir, destinationPath, true);
+            // WebGL StreamingAssets is directly at the root
+            string streamingDir = Path.Combine(outputDir, "StreamingAssets");
+            await InjectGameDataAsync(game, streamingDir);
+        }
 
-            // 4. Export serialized game data as game.json
-            string json = JsonSerializer.Serialize(game, Options);
-            string gameJsonPath = Path.Combine(destinationPath, "game.json");
+        // ── Game Data Injection ───────────────────────────────────────────────
+
+        /// <summary>
+        /// Writes game.json and copies all referenced media into the StreamingAssets folder.
+        /// </summary>
+        private static async Task InjectGameDataAsync(Game game, string streamingAssetsDir)
+        {
+            Directory.CreateDirectory(streamingAssetsDir);
+
+            // 1. Write flat game.json (Unity-compatible, no $id/$ref tracking)
+            Report("Writing game.json...");
+            string json        = GameJsonExporter.Export(game);
+            string gameJsonPath= Path.Combine(streamingAssetsDir, "game.json");
             await File.WriteAllTextAsync(gameJsonPath, json);
+            Report($"  game.json written ({new FileInfo(gameJsonPath).Length / 1024} KB)");
 
-            // 5. Copy game assets
-            string srcAssetsDir = Path.Combine(FileSystem.AppDataDirectory, game.Id.ToString("N"), "Assets");
-            string destAssetsDir = Path.Combine(destinationPath, "Assets");
+            // 2. Copy media assets
+            string srcAssetsDir  = Path.Combine(FileSystem.AppDataDirectory, game.Id.ToString("N"), "Assets");
+            string destAssetsDir = Path.Combine(streamingAssetsDir, "Assets");
 
-            if (Directory.Exists(srcAssetsDir))
+            int copiedCount = 0;
+            if (Directory.Exists(srcAssetsDir) && game.MediaAssets.Count > 0)
             {
                 Directory.CreateDirectory(destAssetsDir);
                 foreach (var asset in game.MediaAssets)
                 {
-                    if (string.IsNullOrEmpty(asset.RelativePath)) continue;
-                    
-                    // RelativePath is usually "Assets\filename" or "Assets/filename"
+                    if (string.IsNullOrWhiteSpace(asset.RelativePath)) continue;
                     string assetFileName = Path.GetFileName(asset.RelativePath);
-                    string srcFile = Path.Combine(srcAssetsDir, assetFileName);
-                    string destFile = Path.Combine(destAssetsDir, assetFileName);
+                    string srcFile       = Path.Combine(srcAssetsDir, assetFileName);
+                    string destFile      = Path.Combine(destAssetsDir, assetFileName);
 
                     if (File.Exists(srcFile))
                     {
-                        File.Copy(srcFile, destFile, true);
+                        File.Copy(srcFile, destFile, overwrite: true);
+                        copiedCount++;
                     }
                 }
             }
+            Report($"  {copiedCount} media asset(s) copied.");
+        }
 
-            // 6. Rename executable to match game title
-            if (targetPlatform == 0)
+        // ── Template Resolution ────────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns the path to the shell template for the given target.
+        /// Looks next to the running Designer executable, then falls back
+        /// to the developer workspace for local testing.
+        /// </summary>
+        public static string GetTemplateDir(PackagingTarget target)
+        {
+            string subDir = target switch
             {
-                string oldExe = Path.Combine(destinationPath, "RagsNextPlayer.exe");
-                string newExe = Path.Combine(destinationPath, $"{cleanTitle}.exe");
-                if (File.Exists(oldExe))
-                {
-                    if (File.Exists(newExe)) File.Delete(newExe);
-                    File.Move(oldExe, newExe);
-                }
+                PackagingTarget.Windows => "Windows",
+                PackagingTarget.MacOS   => "MacOS",
+                PackagingTarget.Linux   => "Linux",
+                PackagingTarget.WebGL   => "WebGL",
+                _ => throw new ArgumentOutOfRangeException(nameof(target))
+            };
+
+            // Primary: Templates/ folder next to the running Designer exe
+            string exeDir    = AppDomain.CurrentDomain.BaseDirectory;
+            string primary   = Path.Combine(exeDir, "Templates", subDir);
+            if (Directory.Exists(primary)) return primary;
+
+            // Developer fallback: workspace root Templates/
+            string workspace = GetWorkspaceRoot();
+            return Path.Combine(workspace, "Templates", subDir);
+        }
+
+        /// <summary>
+        /// Returns true if the template for a given target is available.
+        /// Used by the UI to show which platforms are ready to publish.
+        /// </summary>
+        public static bool IsTemplateAvailable(PackagingTarget target)
+            => Directory.Exists(GetTemplateDir(target));
+
+        /// <summary>
+        /// Returns a summary of what is in the game — used for the publish confirmation dialog.
+        /// </summary>
+        public static PublishSummary GetPublishSummary(Game game) => new PublishSummary
+        {
+            Title        = game.Title ?? "Untitled",
+            Author       = game.Author ?? "",
+            Version      = game.Version ?? "1.0.0",
+            RoomCount    = game.Rooms.Count,
+            ObjectCount  = game.Objects.Count,
+            CharacterCount = game.Characters.Count,
+            VariableCount= game.Variables.Count,
+            MediaCount   = game.MediaAssets.Count
+        };
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        private static void Report(string message) => OnProgress?.Invoke(message);
+
+        private static void ValidateGame(Game game)
+        {
+            var errors = new List<string>();
+            if (string.IsNullOrWhiteSpace(game.Title))  errors.Add("Game title is required.");
+            if (game.Rooms.Count == 0)                  errors.Add("The game must have at least one room.");
+            if (errors.Count > 0)
+                throw new InvalidOperationException("Cannot publish:\n• " + string.Join("\n• ", errors));
+        }
+
+        private static void CopyDirectory(string source, string destination)
+        {
+            Directory.CreateDirectory(destination);
+            foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+            {
+                string relative = Path.GetRelativePath(source, file);
+                string destFile = Path.Combine(destination, relative);
+                Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+                File.Copy(file, destFile, overwrite: true);
             }
         }
 
-        private static async Task PackageAsRagAsync(Game game, string destinationPath, string cleanTitle)
+        private static void RenameFile(string directory, string oldName, string newName)
         {
-            // 1. Create temporary working folder
-            string tempDir = Path.Combine(FileSystem.AppDataDirectory, "TempPublish_" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tempDir);
-
-            try
+            string oldPath = Path.Combine(directory, oldName);
+            string newPath = Path.Combine(directory, newName);
+            if (File.Exists(oldPath))
             {
-                // 2. Serialize game.json
-                string json = JsonSerializer.Serialize(game, Options);
-                string gameJsonPath = Path.Combine(tempDir, "game.json");
-                await File.WriteAllTextAsync(gameJsonPath, json);
-
-                // 3. Copy referenced active media assets
-                string srcAssetsDir = Path.Combine(FileSystem.AppDataDirectory, game.Id.ToString("N"), "Assets");
-                string destAssetsDir = Path.Combine(tempDir, "Assets");
-
-                if (Directory.Exists(srcAssetsDir))
-                {
-                    Directory.CreateDirectory(destAssetsDir);
-                    foreach (var asset in game.MediaAssets)
-                    {
-                        if (string.IsNullOrEmpty(asset.RelativePath)) continue;
-
-                        string assetFileName = Path.GetFileName(asset.RelativePath);
-                        string srcFile = Path.Combine(srcAssetsDir, assetFileName);
-                        string destFile = Path.Combine(destAssetsDir, assetFileName);
-
-                        if (File.Exists(srcFile))
-                        {
-                            File.Copy(srcFile, destFile, true);
-                        }
-                    }
-                }
-
-                // 4. Zip target zip path (.rag)
-                string outputZipPath = destinationPath;
-                if (!outputZipPath.EndsWith(".rag", StringComparison.OrdinalIgnoreCase))
-                {
-                    // If destinationPath is a directory, make a file path in it
-                    if (Directory.Exists(outputZipPath))
-                    {
-                        outputZipPath = Path.Combine(outputZipPath, $"{cleanTitle}.rag");
-                    }
-                    else
-                    {
-                        outputZipPath += ".rag";
-                    }
-                }
-
-                // Ensure parent directory of output zip exists
-                string? parentDir = Path.GetDirectoryName(outputZipPath);
-                if (!string.IsNullOrEmpty(parentDir))
-                {
-                    Directory.CreateDirectory(parentDir);
-                }
-
-                if (File.Exists(outputZipPath))
-                {
-                    File.Delete(outputZipPath);
-                }
-
-                ZipFile.CreateFromDirectory(tempDir, outputZipPath);
-            }
-            finally
-            {
-                // 5. Cleanup temporary folder
-                if (Directory.Exists(tempDir))
-                {
-                    Directory.Delete(tempDir, true);
-                }
+                if (File.Exists(newPath)) File.Delete(newPath);
+                File.Move(oldPath, newPath);
             }
         }
 
-        private static void CopyDirectory(string sourceDir, string destinationDir, bool recursive)
+        private static void RenameDirectory(string parentDir, string oldName, string newName)
         {
-            var dir = new DirectoryInfo(sourceDir);
-            if (!dir.Exists)
-                throw new DirectoryNotFoundException($"Source directory not found: {sourceDir}");
-
-            Directory.CreateDirectory(destinationDir);
-
-            foreach (var file in dir.GetFiles())
-            {
-                string targetFilePath = Path.Combine(destinationDir, file.Name);
-                file.CopyTo(targetFilePath, true);
-            }
-
-            if (recursive)
-            {
-                foreach (var subDir in dir.GetDirectories())
-                {
-                    string newDestinationDir = Path.Combine(destinationDir, subDir.Name);
-                    CopyDirectory(subDir.FullName, newDestinationDir, true);
-                }
-            }
+            string oldPath = Path.Combine(parentDir, oldName);
+            string newPath = Path.Combine(parentDir, newName);
+            if (Directory.Exists(oldPath))
+                Directory.Move(oldPath, newPath);
         }
 
         private static string GetWorkspaceRoot()
         {
-            // We search upwards from AppDataDirectory or use the active user directory mapping
-            // c:\Users\steve\source\repos\RagNext is our target workspace
-            string checkPath = @"c:\Users\steve\source\repos\RagNext";
-            if (Directory.Exists(checkPath))
-            {
-                return checkPath;
-            }
-
-            // Fallback: scan relative to running directory
             string current = AppDomain.CurrentDomain.BaseDirectory;
             while (!string.IsNullOrEmpty(current))
             {
-                if (File.Exists(Path.Combine(current, "RagNext.sln")))
-                {
-                    return current;
-                }
+                if (File.Exists(Path.Combine(current, "RagNext.sln"))) return current;
                 current = Path.GetDirectoryName(current)!;
             }
-
             return AppDomain.CurrentDomain.BaseDirectory;
         }
 
-        private static string SanitizeName(string name)
+        public static string SanitizeName(string name)
         {
             var invalid = Path.GetInvalidFileNameChars();
-            var clean = new string(name.Where(c => !invalid.Contains(c)).ToArray()).Trim();
+            var clean   = new string(name.Where(c => !invalid.Contains(c)).ToArray()).Trim();
             return string.IsNullOrEmpty(clean) ? "Adventure" : clean.Replace(" ", "_");
         }
+    }
+
+    /// <summary>Summary stats shown in the publish confirmation dialog.</summary>
+    public class PublishSummary
+    {
+        public string Title         { get; init; } = string.Empty;
+        public string Author        { get; init; } = string.Empty;
+        public string Version       { get; init; } = string.Empty;
+        public int    RoomCount     { get; init; }
+        public int    ObjectCount   { get; init; }
+        public int    CharacterCount{ get; init; }
+        public int    VariableCount { get; init; }
+        public int    MediaCount    { get; init; }
     }
 }
