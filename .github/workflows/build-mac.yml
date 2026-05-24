@@ -1,4 +1,4 @@
-name: Build macOS Catalyst Player & Designer
+name: Build macOS Catalyst Designer
 
 on:
   workflow_dispatch: # Allows you to manually trigger this build from the GitHub Actions tab
@@ -20,36 +20,17 @@ jobs:
         run: |
           dotnet workload install maui
  
-      - name: Restore Player Dependencies
-        run: dotnet restore RagsNextPlayer/RagsNextPlayer.csproj -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
- 
       - name: Restore Designer Dependencies
         run: dotnet restore RagNext/RagsNextDesigner.csproj -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
- 
-      - name: Build Mac Catalyst Player
-        run: |
-          dotnet build RagsNextPlayer/RagsNextPlayer.csproj -c Release -f net9.0-maccatalyst -o ./Publish/PlayerTemplateMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true
  
       - name: Build Mac Catalyst Designer
         run: |
           dotnet build RagNext/RagsNextDesigner.csproj -c Release -f net9.0-maccatalyst -o ./Publish/DesignerMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true
 
-      - name: Zip Mac Player (Preserves Unix Executable Permissions)
-        run: |
-          cd ./Publish/PlayerTemplateMac
-          zip -r ../../RagsNextPlayer.app.zip RagsNextPlayer.app
-
       - name: Zip Mac Designer (Preserves Unix Executable Permissions)
         run: |
           cd ./Publish/DesignerMac
           zip -r ../../RagsNextDesigner.app.zip RagsNextDesigner.app
-
-      - name: Upload Compiled Mac Player Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: RagsNextPlayer-Mac-Catalyst
-          path: RagsNextPlayer.app.zip
-          if-no-files-found: error
 
       - name: Upload Compiled Mac Designer Artifact
         uses: actions/upload-artifact@v4
@@ -57,3 +38,4 @@ jobs:
           name: RagsNextDesigner-Mac-Catalyst
           path: RagsNextDesigner.app.zip
           if-no-files-found: error
+
