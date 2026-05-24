@@ -1,10 +1,6 @@
 <Project>
-  <!-- Override standard linker behavior and targets to bypass workload SDK comparison bugs on Mac Catalyst -->
+  <!-- Set linker to SdkOnly for Mac Catalyst — avoids over-stripping app assemblies -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
     <MtouchLink>SdkOnly</MtouchLink>
   </PropertyGroup>
-
-  <Target Name="_LinkAssemblies" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'" />
-  <Target Name="ILLink" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'" />
-  <Target Name="_CompileInterfaceDefinitions" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'" />
 </Project>

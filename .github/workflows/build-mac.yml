@@ -1,38 +1,59 @@
 name: Build macOS Catalyst Designer
 
 on:
-  workflow_dispatch: # Allows you to manually trigger this build from the GitHub Actions tab
+  workflow_dispatch: # Manually trigger from the GitHub Actions tab
 
 jobs:
   build-mac:
-    runs-on: macos-15 # Uses Apple Silicon M1/M2 virtual machines in the cloud
+    runs-on: macos-15
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup .NET 9.x SDK
+      # Pin Xcode 16.4 — required by .NET 9.0.300 MAUI workload (iOS 18.5 SDK)
+      - name: Select Xcode 16.4
+        run: |
+          sudo xcode-select -switch /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Setup .NET 9.0.300 SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.100'
+          dotnet-version: '9.0.300'
 
+      # Install MAUI workload that ships with 9.0.300 — do NOT run 'update'
       - name: Install .NET MAUI Workload
+        run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
+
+      # Diagnostic — log environment so failures are easy to decode
+      - name: Log Build Environment
         run: |
-          dotnet workload install maui
- 
+          echo "=== .NET SDK ===" && dotnet --version
+          echo "=== MAUI Workload ===" && dotnet workload list
+          echo "=== Xcode ===" && xcodebuild -version
+          echo "=== macOS ===" && sw_vers
+
       - name: Restore Designer Dependencies
-        run: dotnet restore RagNext/RagsNextDesigner.csproj -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
- 
+        run: |
+          dotnet restore RagNext/RagsNextDesigner.csproj \
+            -p:EnableWindowsTargeting=true
+
       - name: Build Mac Catalyst Designer
         run: |
-          dotnet build RagNext/RagsNextDesigner.csproj -c Release -f net9.0-maccatalyst -o ./Publish/DesignerMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true
+          dotnet build RagNext/RagsNextDesigner.csproj \
+            -c Release \
+            -f net9.0-maccatalyst \
+            -o ./Publish/DesignerMac \
+            -p:EnableWindowsTargeting=true \
+            --no-restore
 
-      - name: Zip Mac Designer (Preserves Unix Executable Permissions)
+      - name: Zip Mac Designer (Preserves Unix Permissions)
         run: |
           cd ./Publish/DesignerMac
           zip -r ../../RagsNextDesigner.app.zip RagsNextDesigner.app
 
-      - name: Upload Compiled Mac Designer Artifact
+      - name: Upload Mac Designer Artifact
         uses: actions/upload-artifact@v4
         with:
           name: RagsNextDesigner-Mac-Catalyst
