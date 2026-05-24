@@ -11,6 +11,16 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
+      - name: Auto-Select Active Xcode 16 (iOS 18 SDK)
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | tail -n 1)
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH=$(ls -d /Applications/Xcode_15*.app 2>/dev/null | tail -n 1)
+          fi
+          echo "Selected Xcode at: $XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> $GITHUB_ENV
+
       - name: Setup .NET 9.x SDK
         uses: actions/setup-dotnet@v4
         with:
