@@ -11,37 +11,27 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Auto-Select Active Xcode 16 (iOS 18 SDK)
-        run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | tail -n 1)
-          if [ -z "$XCODE_PATH" ]; then
-            XCODE_PATH=$(ls -d /Applications/Xcode_15*.app 2>/dev/null | tail -n 1)
-          fi
-          echo "Selected Xcode at: $XCODE_PATH"
-          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
-          echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> $GITHUB_ENV
-
       - name: Setup .NET 9.x SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-
+ 
       - name: Install .NET MAUI Workload
         run: dotnet workload install maui
-
+ 
       - name: Restore Player Dependencies
         run: dotnet restore RagsNextPlayer/RagsNextPlayer.csproj -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
-
+ 
       - name: Restore Designer Dependencies
         run: dotnet restore RagNext/RagsNextDesigner.csproj -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
-
+ 
       - name: Build Mac Catalyst Player
         run: |
-          dotnet build RagsNextPlayer/RagsNextPlayer.csproj -c Release -f net9.0-maccatalyst -o ./Publish/PlayerTemplateMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true -p:MtouchLink=None
-
+          dotnet build RagsNextPlayer/RagsNextPlayer.csproj -c Release -f net9.0-maccatalyst -o ./Publish/PlayerTemplateMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true
+ 
       - name: Build Mac Catalyst Designer
         run: |
-          dotnet build RagNext/RagsNextDesigner.csproj -c Release -f net9.0-maccatalyst -o ./Publish/DesignerMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true -p:MtouchLink=None
+          dotnet build RagNext/RagsNextDesigner.csproj -c Release -f net9.0-maccatalyst -o ./Publish/DesignerMac -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false -p:_SdkValidationSkip=true
 
       - name: Zip Mac Player (Preserves Unix Executable Permissions)
         run: |
