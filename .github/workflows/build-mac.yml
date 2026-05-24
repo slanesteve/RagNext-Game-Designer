@@ -39,6 +39,7 @@ jobs:
       - name: Restore Designer Dependencies
         run: |
           dotnet restore RagNext/RagsNextDesigner.csproj \
+            -r maccatalyst-x64 \
             -p:EnableWindowsTargeting=true
 
       - name: Build Mac Catalyst Designer
@@ -46,6 +47,7 @@ jobs:
           dotnet build RagNext/RagsNextDesigner.csproj \
             -c Release \
             -f net9.0-maccatalyst \
+            -r maccatalyst-x64 \
             -o ./Publish/DesignerMac \
             -p:EnableWindowsTargeting=true \
             --no-restore
