@@ -1,13 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 
 namespace RagsCore.Models
 {
     /// <summary>
     /// Player model. Holds inventory and a reference to current room by Id to avoid circular object graphs.
     /// </summary>
-    public class Player : BaseModel, INotifyPropertyChanged
+    public class Player : BaseModel
     {
         private List<string> _genders = new()
         {"Male", "Female","Non-binary", "Other"};
@@ -49,12 +48,5 @@ namespace RagsCore.Models
         }
 
         public string PortraitImageFileName => System.IO.Path.GetFileName(_portraitImagePath ?? string.Empty);
-
-        protected void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
     }
 }

@@ -1,4 +1,3 @@
-﻿using RagsCore.Actions;
 using RagsCore.Actions;
 using System;
 using System.Collections.Generic;
@@ -15,7 +14,7 @@ namespace RagsCore.Models
     {
         
         
-        public string Title = string.Empty;
+        public new string Title = string.Empty;
 
         public Command()
         {
