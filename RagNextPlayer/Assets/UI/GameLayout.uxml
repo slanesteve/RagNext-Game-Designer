@@ -1,0 +1,84 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <ui:VisualElement name="root" class="root-container">
+
+    <!-- ══ TOP BAR ═══════════════════════════════════════════════════════════ -->
+    <ui:VisualElement name="top-bar" class="top-bar">
+      <ui:Label name="room-title" class="room-title" text="Room Name" />
+      <ui:Label name="game-info"  class="game-info"  text="by Author · v1.0" />
+    </ui:VisualElement>
+
+    <!-- ══ MAIN CONTENT AREA ════════════════════════════════════════════════ -->
+    <ui:VisualElement name="content-area" class="content-area">
+
+      <!-- LEFT COLUMN: Scene art + Narrative log -->
+      <ui:VisualElement name="left-column" class="left-column">
+
+        <!-- Scene artwork card -->
+        <ui:VisualElement name="scene-card" class="scene-card">
+          <ui:VisualElement name="scene-image" class="scene-image" />
+          <ui:Label name="scene-placeholder" class="scene-placeholder" text="🏰" />
+        </ui:VisualElement>
+
+        <!-- Narrative scroll log -->
+        <ui:VisualElement name="narrative-panel" class="narrative-panel">
+          <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
+                         vertical-scroller-visibility="AlwaysVisible"
+                         horizontal-scroller-visibility="Hidden" />
+        </ui:VisualElement>
+
+      </ui:VisualElement>
+
+      <!-- RIGHT COLUMN: Compass + Entity lists -->
+      <ui:VisualElement name="right-column" class="right-column">
+
+        <!-- Compass exits ring -->
+        <ui:VisualElement name="compass-card" class="compass-card">
+          <ui:Label class="section-header" text="Exits" />
+          <ui:VisualElement name="exits-container" class="exits-container" />
+        </ui:VisualElement>
+
+        <!-- Room Objects -->
+        <ui:VisualElement name="objects-card" class="entity-card">
+          <ui:Label class="section-header" text="Objects" />
+          <ui:VisualElement name="objects-list" class="entity-list" />
+        </ui:VisualElement>
+
+        <!-- Characters -->
+        <ui:VisualElement name="characters-card" class="entity-card">
+          <ui:Label class="section-header" text="Characters" />
+          <ui:VisualElement name="characters-list" class="entity-list" />
+        </ui:VisualElement>
+
+      </ui:VisualElement>
+
+    </ui:VisualElement>
+
+    <!-- ══ BOTTOM BAR: Player strip ══════════════════════════════════════════ -->
+    <ui:VisualElement name="bottom-bar" class="bottom-bar">
+
+      <!-- Player portrait -->
+      <ui:VisualElement name="player-portrait" class="player-portrait" />
+
+      <!-- Player info -->
+      <ui:VisualElement name="player-info" class="player-info">
+        <ui:Label name="player-name"   class="player-name"   text="Player" />
+        <ui:Label name="player-gender" class="player-gender" text="Male" />
+      </ui:VisualElement>
+
+      <!-- Inventory -->
+      <ui:VisualElement name="inventory-card" class="inventory-card">
+        <ui:Label class="section-header" text="Inventory" />
+        <ui:ScrollView name="inventory-scroll" class="inventory-scroll"
+                       horizontal-scroller-visibility="AlwaysVisible"
+                       vertical-scroller-visibility="Hidden">
+          <ui:VisualElement name="inventory-list" class="inventory-list" />
+        </ui:ScrollView>
+      </ui:VisualElement>
+
+    </ui:VisualElement>
+
+    <!-- ══ INTERACTION POPUP MENU (hidden by default) ═══════════════════════ -->
+    <ui:VisualElement name="interaction-menu" class="interaction-menu" style="display: none;" />
+
+  </ui:VisualElement>
+</ui:UXML>

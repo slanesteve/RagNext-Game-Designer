@@ -1,0 +1,124 @@
+using System.Collections.Generic;
+using RagNextPlayer.Runtime;
+using RagNextPlayer.Runtime.Models;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace RagNextPlayer.Managers
+{
+    /// <summary>
+    /// Implements IGameEventSink. Receives every executed command from ActionExecutor
+    /// and routes its side-effects to the correct manager — exactly as MainPage.HandleCommandEffect
+    /// did in the MAUI player, but decoupled from any MAUI types.
+    /// </summary>
+    public class CommandEffectRouter : MonoBehaviour, IGameEventSink
+    {
+        private void OnEnable()
+        {
+            GameManager.Instance.OnRoomEntered += OnRoomEntered;
+        }
+
+        private void OnDisable()
+        {
+            if (GameManager.Instance is not null)
+                GameManager.Instance.OnRoomEntered -= OnRoomEntered;
+        }
+
+        private void OnRoomEntered(RoomData room)
+        {
+            UIManager.Instance?.RenderRoom(room);
+        }
+
+        // ── IGameEventSink ────────────────────────────────────────────────────
+
+        public void OnCommandExecuted(CommandData cmd, GameExecutionContext ctx)
+        {
+            // UI calls must happen on the main thread — in Unity single-threaded
+            // model this is always safe unless called from a Task continuation.
+            HandleCommandEffect(cmd, ctx);
+        }
+
+        public void OnConditionEvaluated(ConditionData cond, bool result, GameExecutionContext ctx)
+        {
+            // Log in debug builds; no direct UI effect
+            Debug.Log($"[Condition] {cond.Type} → {result}");
+        }
+
+        // ── Command → UI Routing ──────────────────────────────────────────────
+
+        private void HandleCommandEffect(CommandData cmd, GameExecutionContext ctx)
+        {
+            switch (cmd)
+            {
+                case DisplayTextCommandData c:
+                    var text = TemplateResolver.Resolve(c.Text, ctx.Game);
+                    UIManager.Instance?.AppendNarrativeText(text);
+                    break;
+
+                case MovePlayerToRoomCommandData c:
+                    // State was already written to player.currentRoomId by ActionExecutor.
+                    // Now trigger the animated room transition.
+                    var roomId = ctx.GetVariable("player.currentRoomId")?.Value;
+                    if (!string.IsNullOrEmpty(roomId))
+                        GameManager.Instance?.MovePlayerToRoom(roomId);
+                    break;
+
+                case AddObjectToRoomCommandData:
+                case RemoveObjectFromRoomCommandData:
+                    UIManager.Instance?.RefreshEntityLists();
+                    break;
+
+                case SetVariableCommandData c:
+                    // If a script moved the player by writing to player.currentRoomId directly
+                    if (string.Equals(c.Name, "player.currentRoomId", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        var targetId = ctx.GetVariable("player.currentRoomId")?.Value;
+                        if (!string.IsNullOrEmpty(targetId))
+                            GameManager.Instance?.MovePlayerToRoom(targetId);
+                    }
+                    break;
+
+                case PlayerSetNameCommandData:
+                    UIManager.Instance?.RefreshPlayerPanel();
+                    break;
+
+                case PlayerSetGenderCommandData:
+                    UIManager.Instance?.RefreshPlayerPanel();
+                    break;
+
+                case PlayerSetDescriptionCommandData c:
+                    UIManager.Instance?.AppendNarrativeText($"[Player] {ctx.Game.Player.Description}");
+                    break;
+
+                case PlayerSetPortraitMediaCommandData:
+                    UIManager.Instance?.RefreshPlayerPortrait();
+                    break;
+
+                case DisplayMultimediaCommandData:
+                    {
+                        var mediaId  = ctx.GetVariable("media.lastDisplayedMediaId")?.Value;
+                        var asset    = ctx.Game.MediaAssets.Find(a => a.Id == mediaId);
+                        if (asset is not null)
+                            UIManager.Instance?.DisplaySceneImage(asset.RelativePath);
+                    }
+                    break;
+
+                case CharacterDisplayPortraitCommandData c:
+                    {
+                        var portId = ctx.GetVariable($"char.{ctx.Resolve(c.CharacterId)}.displayedPortraitId")?.Value;
+                        var asset  = ctx.Game.MediaAssets.Find(a => a.Id == portId);
+                        if (asset is not null)
+                            UIManager.Instance?.DisplaySceneImage(asset.RelativePath);
+                    }
+                    break;
+
+                case PlaySoundEffectCommandData c:
+                    {
+                        var soundId = ctx.Resolve(c.SoundId);
+                        AudioManager.Instance?.PlaySound(soundId, (float)(c.Volume / 100.0));
+                    }
+                    break;
+            }
+        }
+    }
+}
