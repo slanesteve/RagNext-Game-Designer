@@ -70,9 +70,4 @@
 	  <ProjectReference Include="..\RagsCore\RagsCore.csproj" />
 	</ItemGroup>
 
-  <!-- Override standard linker and registrar targets to bypass workload SDK comparison bugs -->
-  <Target Name="_LinkAssemblies" />
-  <Target Name="ILLink" />
-  <Target Name="_CompileInterfaceDefinitions" />
-
 </Project>
