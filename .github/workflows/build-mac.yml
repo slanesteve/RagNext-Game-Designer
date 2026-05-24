@@ -22,9 +22,11 @@ jobs:
         with:
           dotnet-version: '9.0.300'
 
-      # Install MAUI workload that ships with 9.0.300 — do NOT run 'update'
+      # --skip-manifest-update = use manifests bundled with SDK 9.0.300 (iOS 18.5/Xcode 16.4)
+      # Without this flag, dotnet pulls the latest manifests from NuGet which now include
+      # the iOS 26 / Xcode 26 preview workloads — and that breaks Xcode 16.4 builds.
       - name: Install .NET MAUI Workload
-        run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
+        run: dotnet workload install maui --skip-manifest-update
 
       # Diagnostic — log environment so failures are easy to decode
       - name: Log Build Environment
