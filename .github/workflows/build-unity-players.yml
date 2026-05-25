@@ -29,12 +29,11 @@ jobs:
             Library-${{ matrix.targetPlatform }}-
             Library-
 
-      # Build using GameCI Action with automated Personal login credentials
+      # Build using GameCI Action with automated Personal license
       - name: Build Unity Player
         uses: game-ci/unity-builder@v4
         env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           projectPath: RagNextPlayer
           unityVersion: 6000.3.6f1
