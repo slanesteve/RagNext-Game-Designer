@@ -1,0 +1,49 @@
+name: Build Unity Player Templates
+
+on:
+  workflow_dispatch: # Manually trigger from GitHub Actions
+
+jobs:
+  build:
+    name: Build for ${{ matrix.targetPlatform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform:
+          - StandaloneOSX       # macOS player template
+          - StandaloneLinux64   # Linux player template
+          - WebGL               # WebGL player template
+          - StandaloneWindows64 # Windows player template
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Cache Library folder to make subsequent runs fast
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: RagNextPlayer/Library
+          key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('RagNextPlayer/Assets/**', 'RagNextPlayer/Packages/**') }}
+          restore-keys: |
+            Library-${{ matrix.targetPlatform }}-
+            Library-
+
+      # Build using GameCI Action (Runs inside a free Linux container cross-compiling the target)
+      - name: Build Unity Player
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: RagNextPlayer
+          unityVersion: 6000.3.6f1
+          targetPlatform: ${{ matrix.targetPlatform }}
+          buildName: RagNextPlayer
+
+      # Upload build output as zip artifacts
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnityTemplate-${{ matrix.targetPlatform }}
+          path: build/${{ matrix.targetPlatform }}
+          if-no-files-found: error

@@ -89,7 +89,9 @@
     border-radius: 8px;
     border-width: 1px;
     border-color: #2A2A38;
-    height: 420px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 100px;
     overflow: hidden;
     align-items: center;
     justify-content: center;
@@ -187,9 +189,8 @@
 /* ── Right Column ─────────────────────────────────────────────────────────── */
 .right-column {
     flex-direction: column;
-    width: 300px;
-    flex-shrink: 0;
     row-gap: 10px;
+    min-width: 150px;
 }
 
 /* Section headers */
@@ -305,12 +306,11 @@
 .bottom-bar {
     flex-direction: row;
     align-items: center;
-    flex-shrink: 0;
     background-color: #101014;
     border-top-width: 1px;
     border-top-color: #2A2A38;
     padding: 8px 14px;
-    height: 90px;
+    min-height: 80px;
     column-gap: 14px;
 }
 
@@ -565,5 +565,23 @@
     color: #444450;
     border-color: #222228;
     background-color: #121216;
+}
+
+/* ── Splitter Styles (TwoPaneSplitView) ────────────────────────────────────── */
+.unity-two-pane-split-view__drag-line {
+    background-color: #2A2A38;
+}
+
+.unity-two-pane-split-view__drag-line--hovered {
+    background-color: #4AABFF;
+}
+
+.unity-two-pane-split-view__handle {
+    background-color: #1E1E28;
+    border-color: #2A2A38;
+}
+
+.unity-two-pane-split-view__handle:hover {
+    background-color: #4AABFF;
 }
 

@@ -12,75 +12,80 @@
     </ui:VisualElement>
 
 
-    <!-- ══ MAIN CONTENT AREA ════════════════════════════════════════════════ -->
-    <ui:VisualElement name="content-area" class="content-area">
+    <!-- ══ MAIN SPLITTER (Vertical) ══════════════════════════════════════════ -->
+    <ui:TwoPaneSplitView name="main-splitter" orientation="Vertical" fixed-pane-index="1" fixed-pane-initial-dimension="90" style="flex-grow: 1; min-height: 0;">
 
-      <!-- LEFT COLUMN: Scene art + Narrative log -->
-      <ui:VisualElement name="left-column" class="left-column">
+      <!-- Pane 0: Top Main Area with Horizontal Splitter -->
+      <ui:TwoPaneSplitView name="content-splitter" orientation="Horizontal" fixed-pane-index="1" fixed-pane-initial-dimension="300" class="content-area" style="min-height: 0;">
 
-        <!-- Scene artwork card -->
-        <ui:VisualElement name="scene-card" class="scene-card">
-          <ui:VisualElement name="scene-image" class="scene-image" />
-          <ui:Label name="scene-placeholder" class="scene-placeholder" text="🏰" />
+        <!-- Pane 0: Left Column with Vertical Splitter between Scene Art and Narrative -->
+        <ui:TwoPaneSplitView name="left-column-splitter" orientation="Vertical" fixed-pane-index="0" fixed-pane-initial-dimension="350" class="left-column" style="min-height: 0;">
+
+          <!-- Scene artwork card (Pane 0) -->
+          <ui:VisualElement name="scene-card" class="scene-card">
+            <ui:VisualElement name="scene-image" class="scene-image" />
+            <ui:Label name="scene-placeholder" class="scene-placeholder" text="🏰" />
+          </ui:VisualElement>
+
+          <!-- Narrative scroll log (Pane 1) -->
+          <ui:VisualElement name="narrative-panel" class="narrative-panel">
+            <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
+                           vertical-scroller-visibility="AlwaysVisible"
+                           horizontal-scroller-visibility="Hidden" />
+          </ui:VisualElement>
+
+        </ui:TwoPaneSplitView>
+
+        <!-- Pane 1: Right Column -->
+        <ui:VisualElement name="right-column" class="right-column">
+
+          <!-- Compass exits ring -->
+          <ui:VisualElement name="compass-card" class="compass-card">
+            <ui:Label class="section-header" text="Exits" />
+            <ui:VisualElement name="exits-container" class="exits-container" />
+          </ui:VisualElement>
+
+          <!-- Room Objects -->
+          <ui:VisualElement name="objects-card" class="entity-card">
+            <ui:Label class="section-header" text="Objects" />
+            <ui:VisualElement name="objects-list" class="entity-list" />
+          </ui:VisualElement>
+
+          <!-- Characters -->
+          <ui:VisualElement name="characters-card" class="entity-card">
+            <ui:Label class="section-header" text="Characters" />
+            <ui:VisualElement name="characters-list" class="entity-list" />
+          </ui:VisualElement>
+
         </ui:VisualElement>
 
-        <!-- Narrative scroll log -->
-        <ui:VisualElement name="narrative-panel" class="narrative-panel">
-          <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
-                         vertical-scroller-visibility="AlwaysVisible"
-                         horizontal-scroller-visibility="Hidden" />
+      </ui:TwoPaneSplitView>
+
+      <!-- Pane 1: Bottom Bar (Player Strip) -->
+      <ui:VisualElement name="bottom-bar" class="bottom-bar">
+
+        <!-- Player portrait -->
+        <ui:VisualElement name="player-portrait" class="player-portrait" />
+
+        <!-- Player info -->
+        <ui:VisualElement name="player-info" class="player-info">
+          <ui:Label name="player-name"   class="player-name"   text="Player" />
+          <ui:Label name="player-gender" class="player-gender" text="Male" />
+        </ui:VisualElement>
+
+        <!-- Inventory -->
+        <ui:VisualElement name="inventory-card" class="inventory-card">
+          <ui:Label class="section-header" text="Inventory" />
+          <ui:ScrollView name="inventory-scroll" class="inventory-scroll"
+                         horizontal-scroller-visibility="AlwaysVisible"
+                         vertical-scroller-visibility="Hidden">
+            <ui:VisualElement name="inventory-list" class="inventory-list" />
+          </ui:ScrollView>
         </ui:VisualElement>
 
       </ui:VisualElement>
 
-      <!-- RIGHT COLUMN: Compass + Entity lists -->
-      <ui:VisualElement name="right-column" class="right-column">
-
-        <!-- Compass exits ring -->
-        <ui:VisualElement name="compass-card" class="compass-card">
-          <ui:Label class="section-header" text="Exits" />
-          <ui:VisualElement name="exits-container" class="exits-container" />
-        </ui:VisualElement>
-
-        <!-- Room Objects -->
-        <ui:VisualElement name="objects-card" class="entity-card">
-          <ui:Label class="section-header" text="Objects" />
-          <ui:VisualElement name="objects-list" class="entity-list" />
-        </ui:VisualElement>
-
-        <!-- Characters -->
-        <ui:VisualElement name="characters-card" class="entity-card">
-          <ui:Label class="section-header" text="Characters" />
-          <ui:VisualElement name="characters-list" class="entity-list" />
-        </ui:VisualElement>
-
-      </ui:VisualElement>
-
-    </ui:VisualElement>
-
-    <!-- ══ BOTTOM BAR: Player strip ══════════════════════════════════════════ -->
-    <ui:VisualElement name="bottom-bar" class="bottom-bar">
-
-      <!-- Player portrait -->
-      <ui:VisualElement name="player-portrait" class="player-portrait" />
-
-      <!-- Player info -->
-      <ui:VisualElement name="player-info" class="player-info">
-        <ui:Label name="player-name"   class="player-name"   text="Player" />
-        <ui:Label name="player-gender" class="player-gender" text="Male" />
-      </ui:VisualElement>
-
-      <!-- Inventory -->
-      <ui:VisualElement name="inventory-card" class="inventory-card">
-        <ui:Label class="section-header" text="Inventory" />
-        <ui:ScrollView name="inventory-scroll" class="inventory-scroll"
-                       horizontal-scroller-visibility="AlwaysVisible"
-                       vertical-scroller-visibility="Hidden">
-          <ui:VisualElement name="inventory-list" class="inventory-list" />
-        </ui:ScrollView>
-      </ui:VisualElement>
-
-    </ui:VisualElement>
+    </ui:TwoPaneSplitView>
 
     <!-- ══ INTERACTION POPUP MENU (hidden by default) ═══════════════════════ -->
     <ui:VisualElement name="interaction-menu" class="interaction-menu" style="display: none;" />

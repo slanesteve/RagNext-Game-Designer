@@ -54,13 +54,20 @@ namespace RagNextPlayer.Managers
 
         private struct TypewriterSession
         {
-            public Coroutine Coroutine;
             public Label PlainLabel;
             public VisualElement RichElement;
             public System.Action CompleteAction;
         }
 
-        private readonly List<TypewriterSession> _activeTypewriters = new();
+        private struct TypewriterJob
+        {
+            public VisualElement FlowElement;
+            public string ParagraphText;
+        }
+
+        private TypewriterSession _currentSession;
+        private readonly Queue<TypewriterJob> _typewriterQueue = new();
+        private Coroutine _typewriterQueueCoroutine;
 
 
         private void Awake()
@@ -387,46 +394,74 @@ namespace RagNextPlayer.Managers
         {
             if (string.IsNullOrWhiteSpace(text)) return;
 
-            var paragraphs = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            // Normalize newlines to standard Unix \n to handle \r\n and raw \r safely
+            text = text.Replace("\r\n", "\n").Replace("\r", "\n");
+
+            var paragraphs = text.Split(new[] { "\n" }, StringSplitOptions.None);
+
+            if (!_typewriterEnabled)
+            {
+                foreach (var para in paragraphs)
+                {
+                    if (string.IsNullOrWhiteSpace(para))
+                    {
+                        var spacer = new VisualElement();
+                        spacer.AddToClassList("narrative-spacer");
+                        _narrativeScroll.Add(spacer);
+                        continue;
+                    }
+
+                    var flow = BuildParagraphFlow(para);
+                    _narrativeScroll.Add(flow);
+                }
+                ScrollNarrativeToBottom();
+                return;
+            }
+
             foreach (var para in paragraphs)
             {
                 if (string.IsNullOrWhiteSpace(para))
                 {
-                    var spacer = new VisualElement();
-                    spacer.AddToClassList("narrative-spacer");
-                    _narrativeScroll.Add(spacer);
+                    _typewriterQueue.Enqueue(new TypewriterJob { ParagraphText = null });
                     continue;
                 }
 
-                var flow = new VisualElement();
-                flow.AddToClassList("narrative-paragraph");
-
-                // Parse [EntityName] hotlinks — same regex as MAUI player
-                var matches = Regex.Matches(para, @"\[([^\]]+)\]");
-                int lastIdx = 0;
-
-                foreach (Match match in matches)
-                {
-                    if (match.Index > lastIdx)
-                        flow.Add(MakePlainLabel(para.Substring(lastIdx, match.Index - lastIdx)));
-
-                    var entityName = match.Groups[1].Value;
-                    var link       = new Button(() => HandleInlineEntityClicked(entityName));
-                    link.text      = entityName;
-                    link.AddToClassList("narrative-hotlink");
-                    flow.Add(link);
-
-                    lastIdx = match.Index + match.Length;
-                }
-
-                if (lastIdx < para.Length)
-                    flow.Add(MakePlainLabel(para.Substring(lastIdx)));
-
-                if (_typewriterEnabled)
-                    StartTypewriter(flow, para);
-                else
-                    _narrativeScroll.Add(flow);
+                var flow = BuildParagraphFlow(para);
+                _typewriterQueue.Enqueue(new TypewriterJob { FlowElement = flow, ParagraphText = para });
             }
+
+            if (_typewriterQueueCoroutine == null)
+            {
+                _typewriterQueueCoroutine = StartCoroutine(RunTypewriterQueue());
+            }
+        }
+
+        private VisualElement BuildParagraphFlow(string para)
+        {
+            var flow = new VisualElement();
+            flow.AddToClassList("narrative-paragraph");
+
+            var matches = Regex.Matches(para, @"\[([^\]]+)\]");
+            int lastIdx = 0;
+
+            foreach (Match match in matches)
+            {
+                if (match.Index > lastIdx)
+                    flow.Add(MakePlainLabel(para.Substring(lastIdx, match.Index - lastIdx)));
+
+                var entityName = match.Groups[1].Value;
+                var link       = new Button(() => HandleInlineEntityClicked(entityName));
+                link.text      = entityName;
+                link.AddToClassList("narrative-hotlink");
+                flow.Add(link);
+
+                lastIdx = match.Index + match.Length;
+            }
+
+            if (lastIdx < para.Length)
+                flow.Add(MakePlainLabel(para.Substring(lastIdx)));
+
+            return flow;
         }
 
         private Label MakePlainLabel(string text)
@@ -438,54 +473,91 @@ namespace RagNextPlayer.Managers
 
         public void AutocompleteActiveTypewriters()
         {
-            if (_activeTypewriters.Count == 0) return;
-
-            // Copy list since completing individual sessions modifies _activeTypewriters
-            var sessions = new List<TypewriterSession>(_activeTypewriters);
-            _activeTypewriters.Clear();
-
-            foreach (var session in sessions)
+            if (_typewriterQueueCoroutine != null)
             {
-                if (session.Coroutine != null)
-                {
-                    StopCoroutine(session.Coroutine);
-                }
-                session.CompleteAction();
+                StopCoroutine(_typewriterQueueCoroutine);
+                _typewriterQueueCoroutine = null;
             }
+
+            if (_currentSession.CompleteAction != null)
+            {
+                _currentSession.CompleteAction();
+                _currentSession = default;
+            }
+
+            while (_typewriterQueue.Count > 0)
+            {
+                var job = _typewriterQueue.Dequeue();
+                if (job.ParagraphText == null)
+                {
+                    var spacer = new VisualElement();
+                    spacer.AddToClassList("narrative-spacer");
+                    _narrativeScroll.Add(spacer);
+                }
+                else
+                {
+                    _narrativeScroll.Add(job.FlowElement);
+                }
+            }
+
+            ScrollNarrativeToBottom();
         }
 
-        private void StartTypewriter(VisualElement element, string fullText)
+        private IEnumerator RunTypewriterQueue()
+        {
+            while (_typewriterQueue.Count > 0)
+            {
+                var job = _typewriterQueue.Dequeue();
+                if (job.ParagraphText == null)
+                {
+                    var spacer = new VisualElement();
+                    spacer.AddToClassList("narrative-spacer");
+                    _narrativeScroll.Add(spacer);
+                    ScrollNarrativeToBottom();
+                    yield return null;
+                    continue;
+                }
+
+                yield return StartCoroutine(TypewriterRevealRoutine(job.FlowElement, job.ParagraphText));
+            }
+
+            _typewriterQueueCoroutine = null;
+        }
+
+        private IEnumerator TypewriterRevealRoutine(VisualElement element, string fullText)
         {
             var session = new TypewriterSession();
             var cleanText = Regex.Replace(fullText, @"\[([^\]]+)\]", "$1");
+
+            var container = new VisualElement();
+            container.AddToClassList("narrative-paragraph");
+
             var plain = new Label();
             plain.AddToClassList("narrative-text");
-            _narrativeScroll.Add(plain);
+            container.Add(plain);
+
+            _narrativeScroll.Add(container);
 
             session.PlainLabel = plain;
             session.RichElement = element;
             session.CompleteAction = () =>
             {
-                if (_narrativeScroll.Contains(plain))
-                    _narrativeScroll.Remove(plain);
+                if (_narrativeScroll.Contains(container))
+                    _narrativeScroll.Remove(container);
                 if (!_narrativeScroll.Contains(element))
                     _narrativeScroll.Add(element);
                 ScrollNarrativeToBottom();
             };
 
-            session.Coroutine = StartCoroutine(TypewriterReveal(session, cleanText));
-            _activeTypewriters.Add(session);
-        }
+            _currentSession = session;
 
-        private IEnumerator TypewriterReveal(TypewriterSession session, string cleanText)
-        {
             for (int i = 0; i <= cleanText.Length; i++)
             {
-                session.PlainLabel.text = cleanText.Substring(0, i);
+                plain.text = cleanText.Substring(0, i);
                 yield return new WaitForSeconds(_typewriterSpeed);
             }
 
-            _activeTypewriters.Remove(session);
+            _currentSession = default;
             session.CompleteAction();
         }
 

@@ -71,11 +71,17 @@ namespace RagNext.Services
             }).ToList()
         };
 
+        private static string NormalizeNewlines(string? val)
+        {
+            if (string.IsNullOrWhiteSpace(val)) return string.Empty;
+            return val.Replace("\r\n", "\n").Replace("\r", "\n");
+        }
+
         private static object BuildPlayerDto(Player p) => new
         {
             Id                = p.Id.ToString(),
             p.Name,
-            p.Description,
+            Description       = NormalizeNewlines(p.Description),
             p.Gender,
             PortraitImagePath = p.PortraitImagePath,
             // Avoid circular reference: store room ID, not the full Room object
@@ -88,7 +94,7 @@ namespace RagNext.Services
         {
             Id                = r.Id.ToString(),
             r.Name,
-            r.Description,
+            Description       = NormalizeNewlines(r.Description),
             PortraitImagePath = r.PortraitImagePath,
             // Exits: Dictionary<string, Guid> → Dictionary<string, string>
             Exits             = r.Exits.ToDictionary(k => k.Key, v => v.Value.ToString()),
@@ -100,7 +106,7 @@ namespace RagNext.Services
         {
             Id                = o.Id.ToString(),
             o.Name,
-            o.Description,
+            Description       = NormalizeNewlines(o.Description),
             PortraitImagePath = (o as Character)?.PortraitImagePath ?? o.PortraitImagePath,
             IsCollectible     = o.IsCollectible,
             IsCharacter       = o is Character,
