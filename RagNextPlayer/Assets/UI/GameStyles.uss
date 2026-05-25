@@ -48,7 +48,13 @@
     color: #4AABFF;
     -unity-font-style: bold;
     letter-spacing: 1px;
+    cursor: link;
 }
+
+.room-title:hover {
+    color: #FFB84A;
+}
+
 
 .game-info {
     font-size: 11px;
@@ -60,15 +66,21 @@
 .content-area {
     flex-direction: row;
     flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0px;
     padding: 10px;
     column-gap: 10px;
+    overflow: hidden;
 }
 
 /* ── Left Column ──────────────────────────────────────────────────────────── */
 .left-column {
     flex-direction: column;
-    flex-grow: 6;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0px;
     row-gap: 10px;
+    min-height: 0px;
 }
 
 /* Scene Art Card */
@@ -77,7 +89,7 @@
     border-radius: 8px;
     border-width: 1px;
     border-color: #2A2A38;
-    height: 240px;
+    height: 420px;
     overflow: hidden;
     align-items: center;
     justify-content: center;
@@ -87,7 +99,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    -unity-background-scale-mode: ScaleAndCrop;
+    -unity-background-scale-mode: scale-to-fit;
 }
 
 .scene-placeholder {
@@ -99,6 +111,9 @@
 /* Narrative Panel */
 .narrative-panel {
     flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0px;
+    min-height: 0px;
     background-color: #141418;
     border-radius: 8px;
     border-width: 1px;
@@ -109,6 +124,9 @@
 
 .narrative-scroll {
     flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0px;
+    min-height: 0px;
     padding: 12px;
 }
 
@@ -134,9 +152,9 @@
 }
 
 .narrative-status {
-    font-size: 13px;
-    color: #888899;
-    -unity-font-style: italic;
+    font-size: 14px;
+    color: #D0D0D8;
+    white-space: normal;
     margin: 3px 0;
 }
 
@@ -169,9 +187,9 @@
 /* ── Right Column ─────────────────────────────────────────────────────────── */
 .right-column {
     flex-direction: column;
-    flex-grow: 4;
+    width: 300px;
+    flex-shrink: 0;
     row-gap: 10px;
-    max-width: 320px;
 }
 
 /* Section headers */
@@ -287,6 +305,7 @@
 .bottom-bar {
     flex-direction: row;
     align-items: center;
+    flex-shrink: 0;
     background-color: #101014;
     border-top-width: 1px;
     border-top-color: #2A2A38;
@@ -302,9 +321,15 @@
     border-width: 2px;
     border-color: #FFB84A;
     background-color: #1E1E28;
-    -unity-background-scale-mode: ScaleAndCrop;
+    -unity-background-scale-mode: scale-and-crop;
     flex-shrink: 0;
+    cursor: link;
 }
+
+.player-portrait:hover {
+    border-color: #4AABFF;
+}
+
 
 .player-info {
     flex-direction: column;
@@ -402,3 +427,143 @@
 .interaction-menu-cancel:hover {
     color: #E0E0E8;
 }
+
+/* ── Settings Controls & Settings Panel ──────────────────────────────────── */
+.settings-btn {
+    background-color: #1E1E28;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 11px;
+    padding: 4px 10px;
+    -unity-font-style: bold;
+}
+
+.settings-btn:hover {
+    background-color: #2A2A38;
+    border-color: #4AABFF;
+    color: #4AABFF;
+}
+
+.settings-btn:active {
+    background-color: #1A1A20;
+    color: #FFB84A;
+}
+
+.settings-menu {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    background-color: #18181E;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #4AABFF;
+    padding: 20px;
+    min-width: 280px;
+    max-width: 360px;
+    flex-direction: column;
+    row-gap: 12px;
+    z-index: 200;
+}
+
+.settings-menu-title {
+    font-size: 16px;
+    color: #4AABFF;
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+    -unity-text-align: upper-center;
+}
+
+.settings-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    column-gap: 10px;
+}
+
+.settings-label {
+    font-size: 13px;
+    color: #E0E0E8;
+    flex-grow: 1;
+}
+
+.settings-toggle-btn {
+    background-color: #1E1E28;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 12px;
+    padding: 6px 12px;
+    min-width: 110px;
+}
+
+.settings-toggle-btn:hover {
+    border-color: #4AABFF;
+    background-color: #22222E;
+}
+
+.settings-slider {
+    flex-grow: 1;
+    min-width: 120px;
+}
+
+.settings-separator {
+    height: 1px;
+    background-color: #2A2A38;
+    margin: 4px 0;
+}
+
+.quit-btn {
+    background-color: #4C1C24;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #FF4A4A;
+    color: #FFC0C0;
+    font-size: 13px;
+    padding: 8px 12px;
+    -unity-font-style: bold;
+}
+
+.quit-btn:hover {
+    background-color: #FF4A4A;
+    color: #0D0D0F;
+}
+
+.settings-menu-cancel {
+    background-color: transparent;
+    border-width: 0;
+    color: #888899;
+    font-size: 12px;
+    -unity-text-align: upper-center;
+    margin-top: 4px;
+}
+
+.settings-menu-cancel:hover {
+    color: #E0E0E8;
+}
+
+.slot-btn {
+    background-color: #1E1E28;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 11px;
+    padding: 4px 8px;
+    min-width: 55px;
+}
+
+.slot-btn:hover {
+    border-color: #4AABFF;
+    color: #4AABFF;
+}
+
+.slot-btn:disabled {
+    color: #444450;
+    border-color: #222228;
+    background-color: #121216;
+}
+

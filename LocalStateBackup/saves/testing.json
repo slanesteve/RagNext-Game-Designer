@@ -1,0 +1,73 @@
+{
+  "id": "29ece83f-ea05-436d-a70a-f94533c372b3",
+  "title": "testing",
+  "author": "steve",
+  "version": "1.0.0",
+  "player": {
+    "genders": [
+      "Male",
+      "Female",
+      "Non-binary",
+      "Other"
+    ],
+    "id": "0307d756-211a-4d46-a7ea-9acad49c87eb",
+    "name": "Player",
+    "description": "The protagonist of this adventure.",
+    "bPromptForName": false,
+    "gender": "Male",
+    "startingRoom": null,
+    "inventory": [],
+    "attributes": [],
+    "actions": [
+      {
+        "version": 1,
+        "id": "72d127d8-1886-415a-bfa7-32cc8411a733",
+        "name": "testjsonaction",
+        "initiallyActive": true,
+        "type": "string",
+        "nodes": [
+          {
+            "title": "Steps",
+            "steps": [
+              {
+                "kind": "Command",
+                "name": "Display Text",
+                "inputs": {
+                  "Text": "sometext"
+                },
+                "steps": []
+              },
+              {
+                "kind": "Condition",
+                "name": "Condition 2",
+                "inputs": {},
+                "steps": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "mediaAssets": [],
+  "rooms": [],
+  "objects": [],
+  "characters": [
+    {
+      "isHostile": false,
+      "health": 100,
+      "dialogue": null,
+      "inventory": [],
+      "attributes": [],
+      "actions": [],
+      "media": [],
+      "id": "d9c406ed-3fa5-4e0e-9375-49b8434f505a",
+      "name": "New Character",
+      "description": "",
+      "isCollectible": true,
+      "properties": {}
+    }
+  ],
+  "variables": [],
+  "createdAt": "2025-11-11T15:16:52.0282771Z"
+}

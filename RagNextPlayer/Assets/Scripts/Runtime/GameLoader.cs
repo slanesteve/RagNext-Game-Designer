@@ -1,8 +1,9 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using RagNextPlayer.Runtime.Models;
 using UnityEngine;
 
@@ -14,10 +15,10 @@ namespace RagNextPlayer.Runtime
     /// </summary>
     public static class GameLoader
     {
-        private static readonly JsonSerializerOptions _options = new()
+        private static readonly JsonSerializerSettings _settings = new()
         {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new Models.ActionStepConverter() }
+            NullValueHandling = NullValueHandling.Ignore,
+            Converters = { new Models.ActionStepConverter(), new Models.ActionStepListConverter() }
         };
 
         /// <summary>
@@ -78,7 +79,7 @@ namespace RagNextPlayer.Runtime
         {
             try
             {
-                return JsonSerializer.Deserialize<GameData>(json, _options);
+                return JsonConvert.DeserializeObject<GameData>(json, _settings);
             }
             catch (Exception ex)
             {

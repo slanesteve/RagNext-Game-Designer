@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.Generic;
 using RagNextPlayer.Runtime;
 using RagNextPlayer.Runtime.Models;
@@ -29,11 +30,23 @@ namespace RagNextPlayer.Managers
 
         private void Start()
         {
-            var root = _uiDocument?.rootVisualElement;
-            _menuPanel = root?.Q<VisualElement>("interaction-menu");
-            _menuPanel?.RegisterCallback<ClickEvent>(e => e.StopPropagation());
+            GetMenuPanel();
             HideMenu();
         }
+
+        private VisualElement? GetMenuPanel()
+        {
+            if (_menuPanel is not null) return _menuPanel;
+            if (_uiDocument is null) _uiDocument = GetComponent<UIDocument>();
+            var root = _uiDocument?.rootVisualElement;
+            _menuPanel = root?.Q<VisualElement>("interaction-menu");
+            if (_menuPanel is not null)
+            {
+                _menuPanel.RegisterCallback<ClickEvent>(e => e.StopPropagation());
+            }
+            return _menuPanel;
+        }
+
 
         // ── Public API ────────────────────────────────────────────────────────
 
@@ -42,26 +55,25 @@ namespace RagNextPlayer.Managers
             _currentEntity = entity;
             _isInventory   = isInventory;
 
-            if (_menuPanel is null) return;
+            var panel = GetMenuPanel();
+            if (panel is null) return;
 
-            // Build action options
+            // Only show actions explicitly defined by the game designer
             var options = new List<(string Label, System.Action Handler)>();
-
-            options.Add(("👁️ Examine", () => ExecuteExamine(entity)));
-
-            if (!isInventory && entity.IsCollectible && !entity.IsCharacter)
-                options.Add(("✋ Pick Up", () => ExecutePickUp(entity)));
-
-            if (entity.IsCharacter)
-                options.Add(("💬 Talk To", () => ExecuteTalkTo(entity)));
 
             foreach (var act in entity.Actions)
             {
                 if (act.InitallyActive)
                 {
                     var captured = act;
-                    options.Add(($"⚡ {act.Name}", () => ExecuteCustomAction(entity, captured)));
+                    options.Add((act.Name, () => ExecuteCustomAction(entity, captured)));
                 }
+            }
+
+            if (options.Count == 0)
+            {
+                // Nothing to show — silently ignore the tap
+                return;
             }
 
             BuildMenuUI(entity.Name, options);
@@ -69,11 +81,61 @@ namespace RagNextPlayer.Managers
             _menuPanel.BringToFront();
         }
 
+
         public void HideMenu()
         {
-            if (_menuPanel is not null)
-                _menuPanel.style.display = DisplayStyle.None;
+            var panel = GetMenuPanel();
+            if (panel is not null)
+                panel.style.display = DisplayStyle.None;
         }
+
+        public void ShowRoomMenu(RoomData room)
+        {
+            var panel = GetMenuPanel();
+            if (panel is null) return;
+
+            var options = new List<(string Label, System.Action Handler)>();
+            foreach (var act in room.Actions)
+            {
+                if (act.InitallyActive)
+                {
+                    var captured = act;
+                    options.Add((act.Name, () => ExecuteRoomAction(room, captured)));
+                }
+            }
+
+            if (options.Count == 0) return;
+
+            BuildMenuUI(room.Name, options);
+            panel.style.display = DisplayStyle.Flex;
+            panel.BringToFront();
+        }
+
+
+
+        public void ShowPlayerMenu(PlayerData player)
+        {
+            var panel = GetMenuPanel();
+            if (panel is null) return;
+
+            var options = new List<(string Label, System.Action Handler)>();
+            foreach (var act in player.Actions)
+            {
+                if (act.InitallyActive)
+                {
+                    var captured = act;
+                    options.Add((act.Name, () => ExecutePlayerAction(player, captured)));
+                }
+            }
+
+            if (options.Count == 0) return;
+
+            BuildMenuUI(player.Name, options);
+            panel.style.display = DisplayStyle.Flex;
+            panel.BringToFront();
+        }
+
+
 
         public void HandleInlineClick(string name)
         {
@@ -103,46 +165,19 @@ namespace RagNextPlayer.Managers
                 return;
             }
 
-            // Global fallback
+            // Global fallback for objects
             var globalObj = game.Objects.Find(o =>
                 string.Equals(o.Name, name, System.StringComparison.OrdinalIgnoreCase));
-            if (globalObj is not null) ShowMenu(globalObj, false);
+            if (globalObj is not null) { ShowMenu(globalObj, false); return; }
+
+            // Global fallback for characters
+            var globalChar = game.Characters.Find(c =>
+                string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase));
+            if (globalChar is not null) { ShowMenu(globalChar, false); return; }
         }
+
 
         // ── Action Handlers ───────────────────────────────────────────────────
-
-        private void ExecuteExamine(GameObjectData entity)
-        {
-            HideMenu();
-            var ctx  = GameManager.Instance?.MakeContext(entity);
-            var desc = string.IsNullOrWhiteSpace(entity.Description)
-                ? $"You examine the {entity.Name}. Nothing remarkable stands out."
-                : ctx!.Resolve(entity.Description);
-            UIManager.Instance?.AppendNarrativeText($"[{entity.Name}] » {desc}");
-        }
-
-        private void ExecutePickUp(GameObjectData entity)
-        {
-            HideMenu();
-            var game = GameManager.Instance?.ActiveGame;
-            var room = GameManager.Instance?.CurrentRoom;
-            if (game is null || room is null) return;
-
-            room.ObjectIds.Remove(entity.Id);
-            game.Player.Inventory.Add(entity);
-            UIManager.Instance?.AppendNarrativeText($"✋ You pick up the {entity.Name}.");
-            UIManager.Instance?.RefreshEntityLists();
-        }
-
-        private void ExecuteTalkTo(GameObjectData entity)
-        {
-            HideMenu();
-            var ctx  = GameManager.Instance?.MakeContext(entity);
-            var text = string.IsNullOrWhiteSpace(entity.Description)
-                ? $"{entity.Name} has nothing to say."
-                : ctx!.Resolve(entity.Description);
-            UIManager.Instance?.AppendNarrativeText($"[{entity.Name}] \"{text}\"");
-        }
 
         private void ExecuteCustomAction(GameObjectData entity, ActionData action)
         {
@@ -152,10 +187,50 @@ namespace RagNextPlayer.Managers
             if (ctx is not null)
             {
                 ActionExecutor.Execute(action, ctx, sink);
-                UIManager.Instance?.AppendNarrativeText($"⚡ {action.Name} executed.");
                 UIManager.Instance?.RefreshEntityLists();
             }
         }
+
+        private void ExecuteRoomAction(RoomData room, ActionData action)
+        {
+            HideMenu();
+            var game = GameManager.Instance?.ActiveGame;
+            if (game is null) return;
+            var ctx = new GameExecutionContext(game, room, null);
+            var sink = GetComponent<CommandEffectRouter>();
+            if (sink is not null)
+            {
+                ActionExecutor.Execute(action, ctx, sink);
+                UIManager.Instance?.RefreshEntityLists();
+            }
+        }
+
+        private void ExecutePlayerAction(PlayerData player, ActionData action)
+        {
+            HideMenu();
+            var game = GameManager.Instance?.ActiveGame;
+            var room = GameManager.Instance?.CurrentRoom;
+            if (game is null) return;
+
+            // Build a lightweight GameObjectData stub so {this.Name} etc. resolve to the player
+            var playerStub = new GameObjectData
+            {
+                Id                = player.Id,
+                Name              = player.Name,
+                Description       = player.Description,
+                PortraitImagePath = player.PortraitImagePath,
+            };
+
+            var ctx  = new GameExecutionContext(game, room, playerStub);
+            var sink = GetComponent<CommandEffectRouter>();
+            if (sink is not null)
+            {
+                ActionExecutor.Execute(action, ctx, sink);
+                UIManager.Instance?.RefreshEntityLists();
+            }
+        }
+
+
 
         // ── Menu UI Builder ───────────────────────────────────────────────────
 

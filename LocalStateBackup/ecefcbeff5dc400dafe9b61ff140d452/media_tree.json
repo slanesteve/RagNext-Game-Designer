@@ -1,0 +1,27 @@
+{
+  "roots": [
+    {
+      "id": "f6493376-0df8-4a6c-9685-69364dfd85f5",
+      "name": "Assets",
+      "children": [
+        {
+          "id": "8fb7619b-9ea4-4747-9f8b-40599eaa87be",
+          "name": "bilbo1",
+          "children": [
+            {
+              "id": "b2e3ef3a-e796-4657-b80d-0678afdd9bb8",
+              "name": "bilbo2",
+              "children": [],
+              "assetIds": [
+                "88b0d83b-2cac-4d5f-87d7-fd94757f7226",
+                "cffe72db-0193-4161-bceb-6048d735e563"
+              ]
+            }
+          ],
+          "assetIds": []
+        }
+      ],
+      "assetIds": []
+    }
+  ]
+}

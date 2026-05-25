@@ -1,11 +1,16 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <ui:Style src="project://database/Assets/UI/GameStyles.uss?fileID=7433451118617782107&amp;guid=0cf91808b5cc2af43bbc800baeb214b6&amp;type=3#GameStyles" />
   <ui:VisualElement name="root" class="root-container">
 
     <!-- ══ TOP BAR ═══════════════════════════════════════════════════════════ -->
     <ui:VisualElement name="top-bar" class="top-bar">
       <ui:Label name="room-title" class="room-title" text="Room Name" />
-      <ui:Label name="game-info"  class="game-info"  text="by Author · v1.0" />
+      <ui:VisualElement style="flex-direction: row; align-items: center; column-gap: 12px;">
+        <ui:Label name="game-info"  class="game-info"  text="by Author · v1.0" />
+        <ui:Button name="settings-btn" class="settings-btn" text="⚙ Settings" />
+      </ui:VisualElement>
     </ui:VisualElement>
+
 
     <!-- ══ MAIN CONTENT AREA ════════════════════════════════════════════════ -->
     <ui:VisualElement name="content-area" class="content-area">
@@ -79,6 +84,57 @@
 
     <!-- ══ INTERACTION POPUP MENU (hidden by default) ═══════════════════════ -->
     <ui:VisualElement name="interaction-menu" class="interaction-menu" style="display: none;" />
+
+    <!-- ══ SETTINGS POPUP MENU (hidden by default) ═══════════════════════════ -->
+    <ui:VisualElement name="settings-menu" class="settings-menu" style="display: none;">
+      <ui:Label class="settings-menu-title" text="Settings" />
+      
+      <!-- Screen Mode Toggle -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Screen Mode" />
+        <ui:Button name="fullscreen-toggle-btn" class="settings-toggle-btn" text="Fullscreen" />
+      </ui:VisualElement>
+
+      <!-- Typewriter reveal toggle -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Text Scrolling" />
+        <ui:Button name="typewriter-toggle-btn" class="settings-toggle-btn" text="Typewriter ON" />
+      </ui:VisualElement>
+
+      <!-- Master Volume Slider -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Volume" />
+        <ui:SliderInt name="volume-slider" class="settings-slider" low-value="0" high-value="100" value="100" />
+      </ui:VisualElement>
+
+      <!-- Save slots -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Save Game" />
+        <ui:VisualElement style="flex-direction: row; column-gap: 6px;">
+          <ui:Button name="save-slot-1-btn" class="slot-btn" text="Slot 1" />
+          <ui:Button name="save-slot-2-btn" class="slot-btn" text="Slot 2" />
+          <ui:Button name="save-slot-3-btn" class="slot-btn" text="Slot 3" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+
+      <!-- Load slots -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Load Game" />
+        <ui:VisualElement style="flex-direction: row; column-gap: 6px;">
+          <ui:Button name="load-slot-1-btn" class="slot-btn" text="Slot 1" />
+          <ui:Button name="load-slot-2-btn" class="slot-btn" text="Slot 2" />
+          <ui:Button name="load-slot-3-btn" class="slot-btn" text="Slot 3" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+
+      <!-- Separator -->
+      <ui:VisualElement class="settings-separator" />
+
+      <!-- Quit Game -->
+      <ui:Button name="quit-game-btn" class="quit-btn" text="Quit Game" />
+      <ui:Button name="close-settings-btn" class="settings-menu-cancel" text="✕ Close" />
+    </ui:VisualElement>
+
 
   </ui:VisualElement>
 </ui:UXML>

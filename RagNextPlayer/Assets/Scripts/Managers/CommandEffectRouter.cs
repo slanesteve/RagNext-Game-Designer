@@ -15,19 +15,22 @@ namespace RagNextPlayer.Managers
     {
         private void OnEnable()
         {
-            GameManager.Instance.OnRoomEntered += OnRoomEntered;
+            // No OnRoomEntered subscription here — UIManager handles room rendering.
+        }
+
+        private void Start()
+        {
+            // No OnRoomEntered subscription here — UIManager handles room rendering.
         }
 
         private void OnDisable()
         {
-            if (GameManager.Instance is not null)
-                GameManager.Instance.OnRoomEntered -= OnRoomEntered;
+            // Nothing to unsubscribe.
         }
 
-        private void OnRoomEntered(RoomData room)
-        {
-            UIManager.Instance?.RenderRoom(room);
-        }
+        // CommandEffectRouter does NOT handle OnRoomEntered.
+        // UIManager subscribes to GameManager.OnRoomEntered and calls RenderRoom directly.
+        // Having both call RenderRoom causes double narrative entries.
 
         // ── IGameEventSink ────────────────────────────────────────────────────
 
@@ -51,9 +54,11 @@ namespace RagNextPlayer.Managers
             switch (cmd)
             {
                 case DisplayTextCommandData c:
-                    var text = TemplateResolver.Resolve(c.Text, ctx.Game);
-                    UIManager.Instance?.AppendNarrativeText(text);
+                    // ctx.Resolve includes FocusObject, room, and player context
+                    UIManager.Instance?.AppendNarrativeText(ctx.Resolve(c.Text));
                     break;
+
+
 
                 case MovePlayerToRoomCommandData c:
                     // State was already written to player.currentRoomId by ActionExecutor.

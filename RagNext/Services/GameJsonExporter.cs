@@ -56,7 +56,7 @@ namespace RagNext.Services
             game.Title,
             game.Author,
             game.Version,
-            game.Description,
+            Description = "",
             Player     = BuildPlayerDto(game.Player),
             Rooms      = game.Rooms.Select(r => BuildRoomDto(r)).ToList(),
             Objects    = game.Objects.Select(o => BuildObjectDto(o)).ToList(),
@@ -67,7 +67,7 @@ namespace RagNext.Services
                 Id           = m.Id.ToString(),
                 m.Name,
                 m.RelativePath,
-                m.MediaType
+                MediaType    = m.ContentType
             }).ToList()
         };
 

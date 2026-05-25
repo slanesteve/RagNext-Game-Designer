@@ -1,0 +1,253 @@
+{
+  "id": "89933cda-d1ea-443e-b311-b8c75c6b2f88",
+  "title": "New Game",
+  "author": "Unknown",
+  "version": "1.0.0",
+  "player": {
+    "genders": [
+      "Male",
+      "Female",
+      "Non-binary",
+      "Other"
+    ],
+    "id": "98b74060-7709-4936-8d1d-0ae085ba5683",
+    "name": "Player",
+    "description": "The protagonist of this adventure.",
+    "bPromptForName": false,
+    "gender": "Male",
+    "startingRoom": null,
+    "inventory": [],
+    "attributes": [],
+    "actions": [
+      {
+        "id": "b877dd8f-0098-40fe-9972-636c1f0f1077",
+        "name": "myFirstAction",
+        "descriptionHtml": "",
+        "initallyActive": true,
+        "type": "string",
+        "nodes": [
+          {
+            "title": "Steps",
+            "steps": [
+              {
+                "name": "Display Text",
+                "category": "General",
+                "inputs": [
+                  {
+                    "label": "Text",
+                    "controlType": "TextArea",
+                    "dataType": "String",
+                    "value": "\u003Cdiv\u003E\u003Cfont size=\\\u00223\\\u0022\u003E\u003Cp\u003E\u003Cfont size=\\\u00223\\\u0022\u003Easdf\u003C/font\u003E\u003C/p\u003E\u003Cp data-stable-paragraph=\\\u0022true\\\u0022\u003E\u003Cfont size=\\\u00223\\\u0022\u003E\u003C/font\u003E\u003C/p\u003E\u003Cp data-stable-paragraph=\\\u0022true\\\u0022\u003Esome text\u003Cfont size=\\\u00223\\\u0022\u003E\u003C/font\u003E\u003C/p\u003E\u003C/font\u003E\u003C/div\u003E",
+                    "pickerSource": null
+                  }
+                ],
+                "kind": 0
+              },
+              {
+                "steps": [
+                  {
+                    "name": "Character: Move Inventory To Player",
+                    "category": "Character",
+                    "inputs": [
+                      {
+                        "label": "Character",
+                        "controlType": "ComboBox",
+                        "dataType": "Character",
+                        "value": null,
+                        "pickerSource": [
+                          {
+                            "isHostile": false,
+                            "health": 100,
+                            "dialogue": null,
+                            "inventory": [],
+                            "attributes": [],
+                            "actions": [],
+                            "media": [],
+                            "id": "39eff980-5655-4d47-aa4f-e3d198bb02df",
+                            "name": "New Character",
+                            "description": "",
+                            "isCollectible": true,
+                            "properties": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "kind": 0
+                  }
+                ],
+                "name": "Additional Data Check",
+                "category": "General",
+                "inputs": [
+                  {
+                    "label": "Data Key",
+                    "controlType": "Text",
+                    "dataType": "String",
+                    "value": "\u003Cp\u003E\u003Cfont size=\\\u00223\\\u0022\u003Ekey1\u003C/font\u003E\u003C/p\u003E",
+                    "pickerSource": null
+                  },
+                  {
+                    "label": "Expected Value",
+                    "controlType": "Text",
+                    "dataType": "String",
+                    "value": "\u003Cp\u003E\u003Cfont size=\\\u00223\\\u0022\u003Eval1\u003C/font\u003E\u003C/p\u003E",
+                    "pickerSource": null
+                  }
+                ],
+                "kind": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "mediaAssets": [
+    {
+      "id": "0c440ea1-fe6a-45b5-902d-9d3503c7bf34",
+      "originalFileName": "Copilot_20251103_092657.png",
+      "relativePath": "Assets\\69f42c09cb400aad3f99c21c26d935cebc71dae1f96692e6b109b9d9a18e7a84.png",
+      "contentType": "image/png",
+      "kind": 0,
+      "sha256": "69f42c09cb400aad3f99c21c26d935cebc71dae1f96692e6b109b9d9a18e7a84",
+      "addedAtUtc": "2025-11-07T15:11:38.0895858Z",
+      "width": null,
+      "height": null,
+      "duration": null
+    }
+  ],
+  "rooms": [
+    {
+      "id": "ca32afe6-d323-4577-8f97-f2f51364f136",
+      "name": "New Room",
+      "description": "",
+      "objectIds": [],
+      "exits": {},
+      "attributes": [],
+      "actions": [
+        {
+          "id": "b3d29c46-e454-4570-a440-5042e890d184",
+          "name": "roomaction",
+          "descriptionHtml": "",
+          "initallyActive": true,
+          "type": "string",
+          "nodes": [
+            {
+              "title": "Steps",
+              "steps": [
+                {
+                  "name": "",
+                  "category": "",
+                  "inputs": [],
+                  "kind": 0
+                },
+                {
+                  "steps": [
+                    {
+                      "steps": [],
+                      "name": "Condition 1",
+                      "category": "Logic",
+                      "inputs": [],
+                      "kind": 1
+                    }
+                  ],
+                  "name": "",
+                  "category": "",
+                  "inputs": [],
+                  "kind": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "attributes": [],
+      "media": [],
+      "actions": [
+        {
+          "id": "f84af85d-fe50-4f0e-8903-748c5b610225",
+          "name": "Action 1",
+          "descriptionHtml": "",
+          "initallyActive": true,
+          "type": "string",
+          "nodes": [
+            {
+              "title": "Steps",
+              "steps": [
+                {
+                  "steps": [
+                    {
+                      "steps": [
+                        {
+                          "name": "Command 1",
+                          "category": "General",
+                          "inputs": [],
+                          "kind": 0
+                        },
+                        {
+                          "steps": [],
+                          "name": "Condition 2",
+                          "category": "Logic",
+                          "inputs": [],
+                          "kind": 1
+                        }
+                      ],
+                      "name": "Condition 1",
+                      "category": "Logic",
+                      "inputs": [],
+                      "kind": 1
+                    }
+                  ],
+                  "name": "",
+                  "category": "",
+                  "inputs": [],
+                  "kind": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "id": "72f4e3d2-f058-4984-a872-28fd72218c24",
+      "name": "New Object",
+      "description": "",
+      "isCollectible": true,
+      "properties": {}
+    }
+  ],
+  "characters": [
+    {
+      "isHostile": false,
+      "health": 100,
+      "dialogue": null,
+      "inventory": [],
+      "attributes": [],
+      "actions": [],
+      "media": [],
+      "id": "39eff980-5655-4d47-aa4f-e3d198bb02df",
+      "name": "New Character",
+      "description": "",
+      "isCollectible": true,
+      "properties": {}
+    },
+    {
+      "isHostile": false,
+      "health": 100,
+      "dialogue": null,
+      "inventory": [],
+      "attributes": [],
+      "actions": [],
+      "media": [],
+      "id": "fe28c57f-36bf-457f-b1d3-bd1976fa6706",
+      "name": "char2",
+      "description": "",
+      "isCollectible": true,
+      "properties": {}
+    }
+  ],
+  "variables": [],
+  "createdAt": "2025-11-06T18:52:51.2546618Z"
+}

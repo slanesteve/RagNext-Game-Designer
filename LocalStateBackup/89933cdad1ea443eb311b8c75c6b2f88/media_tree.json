@@ -1,0 +1,49 @@
+{
+  "roots": [
+    {
+      "id": "aab2fd48-29e2-4c3c-b7ab-ea981bc8ea4e",
+      "name": "Assets",
+      "children": [
+        {
+          "id": "16651444-42b7-44ed-ad56-37a28fa3d2af",
+          "name": "test",
+          "children": [
+            {
+              "id": "2ce49d5b-0713-4312-a708-caef76f1076b",
+              "name": "subundertest",
+              "children": [],
+              "assetIds": [
+                "1cb14a9c-94a2-4438-8532-7191d318ffbe",
+                "0c440ea1-fe6a-45b5-902d-9d3503c7bf34"
+              ]
+            }
+          ],
+          "assetIds": [
+            "9dda5e96-fb05-4432-b25b-0b107a3eb651"
+          ]
+        },
+        {
+          "id": "fdaad55a-b7c3-41c3-b342-0875b9bfe535",
+          "name": "Images",
+          "children": [],
+          "assetIds": [
+            "d89f19d8-65eb-4a87-b111-73c84abae18e",
+            "ad57aec3-0796-4e38-8e4c-d8f725e4a205"
+          ]
+        },
+        {
+          "id": "29781a7d-c354-4a44-ae4e-64675bb23b63",
+          "name": "ImagesSteve",
+          "children": [],
+          "assetIds": []
+        }
+      ],
+      "assetIds": [
+        "17a1c583-f8d0-4e49-afb5-3d0d2d132761",
+        "584e390f-56ed-4240-a89a-a1f35712d526",
+        "f7b92bae-b289-4e1b-9c2c-77cb03f631c6",
+        "9dda5e96-fb05-4432-b25b-0b107a3eb651"
+      ]
+    }
+  ]
+}

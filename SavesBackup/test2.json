@@ -1,0 +1,29 @@
+{
+  "id": "f9516978-2327-4a3d-bb9e-d65b8674889a",
+  "title": "test2",
+  "author": "steve",
+  "version": "1.0.0",
+  "player": {
+    "genders": [
+      "Male",
+      "Female",
+      "Non-binary",
+      "Other"
+    ],
+    "id": "cccbbac6-37cc-40b9-9620-9e1b41016ab7",
+    "name": "Player",
+    "description": "The protagonist of this adventure.",
+    "bPromptForName": false,
+    "gender": "Male",
+    "startingRoom": null,
+    "inventory": [],
+    "attributes": [],
+    "actions": []
+  },
+  "mediaAssets": [],
+  "rooms": [],
+  "objects": [],
+  "characters": [],
+  "variables": [],
+  "createdAt": "2025-11-07T18:04:01.3622336Z"
+}

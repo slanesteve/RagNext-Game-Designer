@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Linq;
 using System.Threading;
@@ -605,16 +606,19 @@ namespace RagNext.Views
                     platformView.AllowDrop = true;
                     platformView.DragOver += (s, args) =>
                     {
-                        args.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
-                        args.Handled = true;
+                        if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+                        {
+                            args.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+                            args.Handled = true;
+                        }
                     };
                     platformView.Drop += async (s, args) =>
                     {
-                        args.Handled = true;
-                        var deferral = args.GetDeferral();
-                        try
+                        if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
                         {
-                            if (args.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+                            args.Handled = true;
+                            var deferral = args.GetDeferral();
+                            try
                             {
                                 var items = await args.DataView.GetStorageItemsAsync();
                                 var firstFile = items.FirstOrDefault() as Windows.Storage.StorageFile;
@@ -627,14 +631,14 @@ namespace RagNext.Views
                                     });
                                 }
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Error dropping portrait: {ex.Message}");
-                        }
-                        finally
-                        {
-                            deferral.Complete();
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error dropping portrait: {ex.Message}");
+                            }
+                            finally
+                            {
+                                deferral.Complete();
+                            }
                         }
                     };
                 }

@@ -541,80 +541,31 @@ namespace RagsNextPlayer
             return grid;
         }
 
-        // --- CONTEXT ACTION SHEET FLYOUT ---
         private async void ShowEntityInteractionMenu(GameObject entity, bool isInventory)
         {
             if (_game is null || _currentRoom is null) return;
 
-            var actions = new List<string> { "👁️ Examine" };
+            // Only show actions explicitly defined by the game designer
+            var activeActions = entity.Actions.Where(a => a.InitallyActive).ToList();
 
-            // Inventory & Pick-up actions
-            if (!isInventory && entity.IsCollectible && entity is not Character)
+            if (activeActions.Count == 0)
             {
-                actions.Add("✋ Pick Up");
+                AppendStatusMessage($"({entity.Name} has no actions defined.)");
+                return;
             }
 
-            // Talk Option for characters
-            if (entity is Character)
-            {
-                actions.Add("💬 Talk To");
-            }
+            var options = activeActions.Select(a => a.Name).ToArray();
 
-            // Mapped custom game actions
-            foreach (var act in entity.Actions)
-            {
-                if (act.InitallyActive)
-                {
-                    actions.Add($"⚡ {act.Name}");
-                }
-            }
-
-            var selection = await DisplayActionSheet(
-                entity.Name,
-                "Cancel",
-                null,
-                actions.ToArray());
-
+            var selection = await DisplayActionSheet(entity.Name, "Cancel", null, options);
             if (string.IsNullOrWhiteSpace(selection) || selection == "Cancel") return;
 
             var ctx = new ActionContext(_game, _currentRoom, entity);
+            var chosen = activeActions.FirstOrDefault(a => string.Equals(a.Name, selection, StringComparison.Ordinal));
+            if (chosen is null) return;
 
-            if (selection == "👁️ Examine")
-            {
-                var rawDesc = string.IsNullOrWhiteSpace(entity.Description)
-                    ? $"You examine the {entity.Name}. Nothing remarkable stands out."
-                    : entity.Description;
-                var desc = RagsCore.Services.TemplateResolver.Resolve(rawDesc, ctx);
-                AppendStatusMessage($"[{entity.Name}] » {desc}");
-            }
-            else if (selection == "✋ Pick Up")
-            {
-                _currentRoom.ObjectIds.Remove(entity.Id);
-                _game.Player.Inventory.Add(entity);
-                AppendStatusMessage($"✋ You pick up the {entity.Name}.");
-                PopulateRoomLists();
-                _ = NarrativeScrollView.ScrollToAsync(0, double.MaxValue, true);
-            }
-            else if (selection == "💬 Talk To")
-            {
-                var dialogue = string.IsNullOrWhiteSpace(entity.Description)
-                    ? $"{entity.Name} has nothing to say."
-                    : entity.Description;
-                AppendStatusMessage($"[{entity.Name}] \"{dialogue}\"");
-            }
-            else if (selection.StartsWith("⚡ "))
-            {
-                var actionName = selection.Substring(2);
-                var act = entity.Actions.FirstOrDefault(a => string.Equals(a.Name, actionName));
-                if (act is not null)
-                {
-                    var sink = this as IGameEventSink;
-                    ActionExecutor.Execute(act, ctx, sink);
-                    AppendStatusMessage($"⚡ {act.Name} executed.");
-                    RefreshRoomContext();
-                }
-            }
+            ActionExecutor.Execute(chosen, ctx, this);
         }
+
 
         // ── IGameEventSink implementation ──────────────────────────────────────
 

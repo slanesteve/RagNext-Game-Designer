@@ -1,0 +1,426 @@
+{
+  "$id": "1",
+  "id": "ecefcbef-f5dc-400d-afe9-b61ff140d452",
+  "title": "Bilbo",
+  "author": "steve",
+  "version": "1.0.0",
+  "player": {
+    "$id": "2",
+    "genders": {
+      "$id": "3",
+      "$values": [
+        "Male",
+        "Female",
+        "Non-binary",
+        "Other"
+      ]
+    },
+    "id": "4b7648f2-7eb9-422b-ba84-7475832f30ee",
+    "name": "Player",
+    "description": "The protagonist of this adventure.",
+    "bPromptForName": false,
+    "gender": "Male",
+    "startingRoom": null,
+    "inventory": {
+      "$id": "4",
+      "$values": []
+    },
+    "attributes": {
+      "$id": "5",
+      "$values": []
+    },
+    "actions": {
+      "$id": "6",
+      "$values": [
+        {
+          "$id": "7",
+          "id": "bf89d0cf-836b-401a-910e-e5e077ddf1a8",
+          "name": "Action 1",
+          "initallyActive": true,
+          "type": "string",
+          "nodes": {
+            "$id": "8",
+            "$values": [
+              {
+                "$id": "9",
+                "title": "Node 1",
+                "steps": {
+                  "$id": "10",
+                  "$values": [
+                    {
+                      "$id": "1",
+                      "name": "Action: Add Custom Choice",
+                      "category": "Action",
+                      "inputs": {
+                        "$id": "2",
+                        "$values": [
+                          {
+                            "$id": "3",
+                            "label": "Choice Text",
+                            "controlType": "Text",
+                            "dataType": "String",
+                            "value": "test",
+                            "pickerSource": null
+                          },
+                          {
+                            "$id": "4",
+                            "label": "Target Variable",
+                            "controlType": "ComboBox",
+                            "dataType": "Variable",
+                            "value": null,
+                            "pickerSource": null
+                          }
+                        ]
+                      },
+                      "kind": 0
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$id": "11",
+          "id": "f69372d1-8a60-480f-b6da-c6f1400dcddc",
+          "name": "Action 2",
+          "initallyActive": true,
+          "type": "string",
+          "nodes": {
+            "$id": "12",
+            "$values": [
+              {
+                "$id": "13",
+                "title": "Steps",
+                "steps": {
+                  "$id": "14",
+                  "$values": [
+                    {
+                      "$id": "1",
+                      "steps": {
+                        "$id": "2",
+                        "$values": [
+                          {
+                            "$id": "1",
+                            "name": "Item: Move To Room",
+                            "category": "Item",
+                            "inputs": {
+                              "$id": "2",
+                              "$values": [
+                                {
+                                  "$id": "3",
+                                  "label": "Room",
+                                  "controlType": "ComboBox",
+                                  "dataType": "Room",
+                                  "value": {
+                                    "$id": "4",
+                                    "id": "d30d7f85-29d7-4a9a-8533-391df37bb813",
+                                    "name": "New Room",
+                                    "description": "",
+                                    "objectIds": {
+                                      "$id": "5",
+                                      "$values": []
+                                    },
+                                    "exits": {
+                                      "$id": "6"
+                                    },
+                                    "attributes": {
+                                      "$id": "7",
+                                      "$values": []
+                                    },
+                                    "actions": {
+                                      "$id": "8",
+                                      "$values": []
+                                    }
+                                  },
+                                  "pickerSource": null
+                                }
+                              ]
+                            },
+                            "kind": 0
+                          }
+                        ]
+                      },
+                      "name": "Player: In Room",
+                      "category": "Player",
+                      "inputs": {
+                        "$id": "3",
+                        "$values": [
+                          {
+                            "$id": "4",
+                            "label": "Room",
+                            "controlType": "ComboBox",
+                            "dataType": "Room",
+                            "value": {
+                              "$id": "5",
+                              "id": "d30d7f85-29d7-4a9a-8533-391df37bb813",
+                              "name": "New Room",
+                              "description": "",
+                              "objectIds": {
+                                "$id": "6",
+                                "$values": []
+                              },
+                              "exits": {
+                                "$id": "7"
+                              },
+                              "attributes": {
+                                "$id": "8",
+                                "$values": []
+                              },
+                              "actions": {
+                                "$id": "9",
+                                "$values": []
+                              }
+                            },
+                            "pickerSource": null
+                          }
+                        ]
+                      },
+                      "kind": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "portraitImagePath": "C:\\Users\\steve\\AppData\\Local\\Packages\\com.companyname.ragnext_vy9pdc8qvq4t2\\LocalState\\ecefcbeff5dc400dafe9b61ff140d452\\Assets\\af68c1c761484434608bd86b316fb07e4a92af2f8ac114dd1a77625eab314e3f.png",
+    "portraitImageFileName": "af68c1c761484434608bd86b316fb07e4a92af2f8ac114dd1a77625eab314e3f.png"
+  },
+  "mediaAssets": {
+    "$id": "15",
+    "$values": [
+      {
+        "$id": "16",
+        "id": "88b0d83b-2cac-4d5f-87d7-fd94757f7226",
+        "originalFileName": "Copilot_20251103_092657.png",
+        "relativePath": "Assets\\69f42c09cb400aad3f99c21c26d935cebc71dae1f96692e6b109b9d9a18e7a84.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "69f42c09cb400aad3f99c21c26d935cebc71dae1f96692e6b109b9d9a18e7a84",
+        "addedAtUtc": "2025-11-07T15:08:08.9616846Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "17",
+        "id": "cffe72db-0193-4161-bceb-6048d735e563",
+        "originalFileName": "image.png",
+        "relativePath": "Assets\\af68c1c761484434608bd86b316fb07e4a92af2f8ac114dd1a77625eab314e3f.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "af68c1c761484434608bd86b316fb07e4a92af2f8ac114dd1a77625eab314e3f",
+        "addedAtUtc": "2025-12-19T20:11:40.3305451Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      }
+    ]
+  },
+  "rooms": {
+    "$id": "18",
+    "$values": [
+      {
+        "$id": "19",
+        "id": "d30d7f85-29d7-4a9a-8533-391df37bb813",
+        "name": "New Room",
+        "description": "",
+        "objectIds": {
+          "$id": "20",
+          "$values": []
+        },
+        "exits": {
+          "$id": "21"
+        },
+        "attributes": {
+          "$id": "22",
+          "$values": []
+        },
+        "actions": {
+          "$id": "23",
+          "$values": []
+        }
+      },
+      {
+        "$id": "24",
+        "id": "32f4dbd7-c640-4145-97ca-98a0738aa5b6",
+        "name": "Room2",
+        "description": "this is room2",
+        "objectIds": {
+          "$id": "25",
+          "$values": []
+        },
+        "exits": {
+          "$id": "26"
+        },
+        "attributes": {
+          "$id": "27",
+          "$values": []
+        },
+        "actions": {
+          "$id": "28",
+          "$values": []
+        }
+      }
+    ]
+  },
+  "objects": {
+    "$id": "29",
+    "$values": [
+      {
+        "$id": "30",
+        "attributes": {
+          "$id": "31",
+          "$values": []
+        },
+        "media": {
+          "$id": "32",
+          "$values": []
+        },
+        "actions": {
+          "$id": "33",
+          "$values": [
+            {
+              "$id": "34",
+              "id": "189f361c-4a54-4463-9acf-58b7ed41a4d4",
+              "name": "Test NewObject Action",
+              "initallyActive": true,
+              "type": "string",
+              "nodes": {
+                "$id": "35",
+                "$values": [
+                  {
+                    "$id": "36",
+                    "title": "Steps",
+                    "steps": {
+                      "$id": "37",
+                      "$values": [
+                        {
+                          "$id": "1",
+                          "name": "Item: Move To Room",
+                          "category": "Item",
+                          "inputs": {
+                            "$id": "2",
+                            "$values": [
+                              {
+                                "$id": "3",
+                                "label": "Room",
+                                "controlType": "ComboBox",
+                                "dataType": "Room",
+                                "value": {
+                                  "$id": "4",
+                                  "id": "32f4dbd7-c640-4145-97ca-98a0738aa5b6",
+                                  "name": "Room2",
+                                  "description": "this is room2",
+                                  "objectIds": {
+                                    "$id": "5",
+                                    "$values": []
+                                  },
+                                  "exits": {
+                                    "$id": "6"
+                                  },
+                                  "attributes": {
+                                    "$id": "7",
+                                    "$values": []
+                                  },
+                                  "actions": {
+                                    "$id": "8",
+                                    "$values": []
+                                  }
+                                },
+                                "pickerSource": null
+                              }
+                            ]
+                          },
+                          "kind": 0
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "id": "0dc2c453-22f1-4088-92da-c228c42e1835",
+        "name": "Object42",
+        "description": "",
+        "isCollectible": true,
+        "properties": {
+          "$id": "38"
+        }
+      }
+    ]
+  },
+  "characters": {
+    "$id": "39",
+    "$values": [
+      {
+        "$id": "40",
+        "isHostile": false,
+        "health": 100,
+        "dialogue": null,
+        "inventory": {
+          "$id": "41",
+          "$values": []
+        },
+        "attributes": {
+          "$id": "42",
+          "$values": []
+        },
+        "actions": {
+          "$id": "43",
+          "$values": []
+        },
+        "media": {
+          "$id": "44",
+          "$values": []
+        },
+        "id": "b097f1d5-c263-4d7e-bdda-3b09bc4d63d6",
+        "name": "New Character",
+        "description": "",
+        "isCollectible": true,
+        "properties": {
+          "$id": "45"
+        }
+      },
+      {
+        "$id": "46",
+        "isHostile": false,
+        "health": 100,
+        "dialogue": null,
+        "inventory": {
+          "$id": "47",
+          "$values": []
+        },
+        "attributes": {
+          "$id": "48",
+          "$values": []
+        },
+        "actions": {
+          "$id": "49",
+          "$values": []
+        },
+        "media": {
+          "$id": "50",
+          "$values": []
+        },
+        "id": "77826643-6692-4472-8026-74056d564977",
+        "name": "New Character",
+        "description": "",
+        "isCollectible": true,
+        "properties": {
+          "$id": "51"
+        }
+      }
+    ]
+  },
+  "variables": {
+    "$id": "52",
+    "$values": []
+  },
+  "createdAt": "2025-11-07T15:07:43.7960707Z"
+}

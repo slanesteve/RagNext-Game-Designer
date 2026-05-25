@@ -70,16 +70,20 @@ namespace RagNextPlayer.Managers
             // Seed player.currentRoomId if not present
             EnsurePlayerRoomVariable();
 
+            // Dynamically populate room ObjectIds from description hotlinks if empty
+            PopulateRoomObjectIdsFromDescription(ActiveGame);
+
             CurrentState = GameState.Playing;
             OnGameLoaded?.Invoke(ActiveGame);
 
             // Navigate to the starting room
-            var startId = ActiveGame.Player.StartingRoom?.Id
+            var startId = ActiveGame.Player.StartingRoomId
                           ?? (ActiveGame.Rooms.Count > 0 ? ActiveGame.Rooms[0].Id : null);
 
             if (startId is not null)
                 await TransitionToRoomAsync(startId);
         }
+
 
         // ── Room Transitions ─────────────────────────────────────────────────
 
@@ -141,7 +145,7 @@ namespace RagNextPlayer.Managers
             if (ActiveGame is null) return;
             if (ActiveGame.Variables.Exists(v => v.Name == "player.currentRoomId")) return;
 
-            var startId = ActiveGame.Player.StartingRoom?.Id
+            var startId = ActiveGame.Player.StartingRoomId
                           ?? (ActiveGame.Rooms.Count > 0 ? ActiveGame.Rooms[0].Id : string.Empty);
 
             ActiveGame.Variables.Add(new GameVariableData
@@ -151,9 +155,121 @@ namespace RagNextPlayer.Managers
             });
         }
 
+        private void PopulateRoomObjectIdsFromDescription(GameData game)
+        {
+            foreach (var room in game.Rooms)
+            {
+                if (string.IsNullOrWhiteSpace(room.Description)) continue;
+
+                var matches = System.Text.RegularExpressions.Regex.Matches(room.Description, @"\[([^\]]+)\]");
+                foreach (System.Text.RegularExpressions.Match match in matches)
+                {
+                    var entityName = match.Groups[1].Value.Trim();
+
+                    // Search in objects
+                    var obj = game.Objects.Find(o => string.Equals(o.Name, entityName, StringComparison.OrdinalIgnoreCase));
+                    if (obj is not null)
+                    {
+                        if (!room.ObjectIds.Contains(obj.Id))
+                        {
+                            room.ObjectIds.Add(obj.Id);
+                        }
+                        continue;
+                    }
+
+                    // Search in characters
+                    var ch = game.Characters.Find(c => string.Equals(c.Name, entityName, StringComparison.OrdinalIgnoreCase));
+                    if (ch is not null)
+                    {
+                        if (!room.ObjectIds.Contains(ch.Id))
+                        {
+                            room.ObjectIds.Add(ch.Id);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Save / Load System ────────────────────────────────────────────────
+        public string GetSaveFilePath(int slot)
+        {
+            return System.IO.Path.Combine(Application.persistentDataPath, $"save_slot_{slot}.json");
+        }
+
+        public bool HasSaveFile(int slot)
+        {
+            return System.IO.File.Exists(GetSaveFilePath(slot));
+        }
+
+        public void SaveGame(int slot)
+        {
+            if (ActiveGame is null) return;
+            try
+            {
+                // Ensure room variable matches CurrentRoom before saving
+                if (CurrentRoom is not null)
+                {
+                    var roomVar = ActiveGame.Variables.Find(v => v.Name == "player.currentRoomId");
+                    if (roomVar is not null)
+                        roomVar.Value = CurrentRoom.Id;
+                }
+
+                var path = GetSaveFilePath(slot);
+                var settings = new Newtonsoft.Json.JsonSerializerSettings
+                {
+                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
+                    ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                };
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(ActiveGame, settings);
+                System.IO.File.WriteAllText(path, json);
+                Debug.Log($"[GameManager] Game saved to slot {slot} at: {path}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GameManager] Save error: {ex.Message}");
+            }
+        }
+
+        public async Task LoadGameAsync(int slot)
+        {
+            if (!HasSaveFile(slot)) return;
+            try
+            {
+                var path = GetSaveFilePath(slot);
+                var json = System.IO.File.ReadAllText(path);
+                var settings = new Newtonsoft.Json.JsonSerializerSettings
+                {
+                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto
+                };
+                var loadedGame = Newtonsoft.Json.JsonConvert.DeserializeObject<GameData>(json, settings);
+
+                if (loadedGame is not null)
+                {
+                    ActiveGame = loadedGame;
+                    CurrentState = GameState.Playing;
+
+                    // Trigger loaded callbacks
+                    OnGameLoaded?.Invoke(ActiveGame);
+
+                    // Find and enter the current room
+                    var roomIdVar = ActiveGame.Variables.Find(v => v.Name == "player.currentRoomId")?.Value;
+                    if (roomIdVar is not null)
+                    {
+                        await TransitionToRoomAsync(roomIdVar);
+                    }
+                    Debug.Log($"[GameManager] Game loaded from slot {slot}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GameManager] Load error: {ex.Message}");
+            }
+        }
+
         /// <summary>Build an execution context for the current room.</summary>
         public GameExecutionContext MakeContext(GameObjectData? focusObject = null)
             => new GameExecutionContext(ActiveGame!, CurrentRoom, focusObject);
+
     }
 
     // Tiny helper to avoid null-conditional chain verbosity

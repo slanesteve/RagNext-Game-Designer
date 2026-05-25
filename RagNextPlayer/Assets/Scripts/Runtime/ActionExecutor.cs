@@ -43,7 +43,9 @@ namespace RagNextPlayer.Runtime
         }
 
         /// <summary>Returns the resolved text of {token} patterns in a string.</summary>
-        public string Resolve(string? text) => TemplateResolver.Resolve(text, Game);
+        public string Resolve(string? text) =>
+            TemplateResolver.Resolve(text, Game, CurrentRoom, FocusObject);
+
     }
 
     /// <summary>

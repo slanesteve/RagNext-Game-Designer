@@ -35,15 +35,51 @@ namespace RagNextPlayer.Managers
         private VisualElement  _sceneImageContainer;
         private VisualElement  _narrativePanel;
 
+        // Settings Elements
+        private Button         _settingsBtn;
+        private VisualElement  _settingsMenu;
+        private Button         _fullscreenToggleBtn;
+        private Button         _typewriterToggleBtn;
+        private SliderInt      _volumeSlider;
+        private Button         _quitGameBtn;
+        private Button         _closeSettingsBtn;
+        private VisualElement  _playerPortrait;
+        private Label          _scenePlaceholder;
+
         // ── Typewriter effect ─────────────────────────────────────────────────
         [Header("Narrative Settings")]
-        [SerializeField] private bool  _typewriterEnabled = true;
+        [SerializeField] private bool  _typewriterEnabled = false; // Default to false (MAUI style fade-in transition)
         [SerializeField] private float _typewriterSpeed   = 0.018f; // seconds per char
+
 
         private void Awake()
         {
             if (Instance == null) Instance = this;
             else { Destroy(gameObject); return; }
+        }
+
+        private bool _isSubscribed = false;
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed) return;
+            if (GameManager.Instance is not null)
+            {
+                GameManager.Instance.OnGameLoaded  += OnGameLoaded;
+                GameManager.Instance.OnRoomEntered += OnRoomEntered;
+                _isSubscribed = true;
+            }
+        }
+
+        private void UnsubscribeEvents()
+        {
+            if (!_isSubscribed) return;
+            if (GameManager.Instance is not null)
+            {
+                GameManager.Instance.OnGameLoaded  -= OnGameLoaded;
+                GameManager.Instance.OnRoomEntered -= OnRoomEntered;
+                _isSubscribed = false;
+            }
         }
 
         private void OnEnable()
@@ -64,22 +100,98 @@ namespace RagNextPlayer.Managers
             _sceneImageContainer    = _root.Q<VisualElement>("scene-image");
             _narrativePanel         = _root.Q<VisualElement>("narrative-panel");
 
-            // Subscribe to game events
-            if (GameManager.Instance is not null)
+            // Settings components
+            _settingsBtn            = _root.Q<Button>("settings-btn");
+            _settingsMenu           = _root.Q<VisualElement>("settings-menu");
+            _fullscreenToggleBtn    = _root.Q<Button>("fullscreen-toggle-btn");
+            _typewriterToggleBtn    = _root.Q<Button>("typewriter-toggle-btn");
+            _volumeSlider           = _root.Q<SliderInt>("volume-slider");
+            _quitGameBtn            = _root.Q<Button>("quit-game-btn");
+            _closeSettingsBtn       = _root.Q<Button>("close-settings-btn");
+            _playerPortrait         = _root.Q<VisualElement>("player-portrait");
+            _scenePlaceholder       = _root.Q<Label>("scene-placeholder");
+
+            if (_settingsBtn is not null) _settingsBtn.clicked += OpenSettingsMenu;
+            if (_fullscreenToggleBtn is not null) _fullscreenToggleBtn.clicked += ToggleFullscreen;
+            if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked += ToggleTypewriter;
+            if (_quitGameBtn is not null) _quitGameBtn.clicked += QuitGame;
+            if (_closeSettingsBtn is not null) _closeSettingsBtn.clicked += CloseSettingsMenu;
+            if (_volumeSlider is not null)
             {
-                GameManager.Instance.OnGameLoaded  += OnGameLoaded;
-                GameManager.Instance.OnRoomEntered += OnRoomEntered;
+                _volumeSlider.value = Mathf.RoundToInt(AudioListener.volume * 100f);
+                _volumeSlider.RegisterValueChangedCallback(OnVolumeChanged);
+            }
+
+            if (_roomTitleLabel is not null)
+            {
+                _roomTitleLabel.pickingMode = PickingMode.Position;
+                _roomTitleLabel.RegisterCallback<ClickEvent>(OnRoomTitleClicked);
+            }
+
+            if (_playerPortrait is not null)
+            {
+                _playerPortrait.pickingMode = PickingMode.Position;
+                _playerPortrait.RegisterCallback<ClickEvent>(OnPlayerPortraitClicked);
+            }
+
+            // Wire up Save / Load slot buttons
+            for (int slot = 1; slot <= 3; slot++)
+            {
+                int capturedSlot = slot;
+                var saveBtn = _root.Q<Button>($"save-slot-{capturedSlot}-btn");
+                if (saveBtn is not null) saveBtn.clicked += () => SaveGameSlot(capturedSlot);
+
+                var loadBtn = _root.Q<Button>($"load-slot-{capturedSlot}-btn");
+                if (loadBtn is not null) loadBtn.clicked += () => LoadGameSlot(capturedSlot);
+            }
+
+            SubscribeEvents();
+        }
+
+        private bool _firstRoomRendered = false;
+
+        private void Start()
+        {
+            SubscribeEvents();
+
+            // Self-healing synchronization: if game is already loaded AND no room has
+            // been rendered yet (OnRoomEntered hasn't fired), render the current room now.
+            if (GameManager.Instance?.ActiveGame is not null)
+            {
+                OnGameLoaded(GameManager.Instance.ActiveGame);
+                if (GameManager.Instance.CurrentRoom is not null && !_firstRoomRendered)
+                {
+                    OnRoomEntered(GameManager.Instance.CurrentRoom);
+                }
             }
         }
 
         private void OnDisable()
         {
-            if (GameManager.Instance is not null)
+            UnsubscribeEvents();
+
+            if (_settingsBtn is not null) _settingsBtn.clicked -= OpenSettingsMenu;
+            if (_fullscreenToggleBtn is not null) _fullscreenToggleBtn.clicked -= ToggleFullscreen;
+            if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked -= ToggleTypewriter;
+            if (_quitGameBtn is not null) _quitGameBtn.clicked -= QuitGame;
+            if (_closeSettingsBtn is not null) _closeSettingsBtn.clicked -= CloseSettingsMenu;
+            if (_volumeSlider is not null)
             {
-                GameManager.Instance.OnGameLoaded  -= OnGameLoaded;
-                GameManager.Instance.OnRoomEntered -= OnRoomEntered;
+                _volumeSlider.UnregisterValueChangedCallback(OnVolumeChanged);
+            }
+
+            if (_roomTitleLabel is not null)
+            {
+                _roomTitleLabel.UnregisterCallback<ClickEvent>(OnRoomTitleClicked);
+            }
+
+            if (_playerPortrait is not null)
+            {
+                _playerPortrait.UnregisterCallback<ClickEvent>(OnPlayerPortraitClicked);
             }
         }
+
+
 
         // ── Game / Room Events ────────────────────────────────────────────────
 
@@ -89,37 +201,49 @@ namespace RagNextPlayer.Managers
                 _gameInfoLabel.text = $"by {game.Author}  ·  v{game.Version}";
 
             RefreshPlayerPanel();
+            RefreshPlayerPortrait();
         }
+
 
         private void OnRoomEntered(RoomData room)
         {
+            _firstRoomRendered = true;
             RenderRoom(room);
         }
+
 
         // ── Public Interface (called by CommandEffectRouter) ──────────────────
 
         public void RenderRoom(RoomData room)
         {
             if (room is null) return;
-            var game = GameManager.Instance?.ActiveGame;
 
             // Room title
             if (_roomTitleLabel is not null)
                 _roomTitleLabel.text = room.Name;
 
-            // Scene image
+            // Scene image (preserve aspect ratio scale and hide placeholder)
             if (!string.IsNullOrWhiteSpace(room.PortraitImagePath))
+            {
                 DisplaySceneImage(room.PortraitImagePath);
+            }
+            else
+            {
+                var elem = _root?.Q<VisualElement>("scene-image");
+                if (elem is not null) elem.style.backgroundImage = null;
+                if (_scenePlaceholder is not null) _scenePlaceholder.style.display = DisplayStyle.Flex;
+            }
 
             // Compass exits
             BuildExitButtons(room);
 
-            // Narrative description (typewriter)
+            // Narrative description — appended here only (CommandEffectRouter does NOT duplicate this)
             AppendNarrativeEntry(room.Name, room.Description);
 
             // Entity lists
             RefreshEntityLists();
         }
+
 
         public void AppendNarrativeText(string text)
         {
@@ -161,7 +285,9 @@ namespace RagNextPlayer.Managers
 
             if (_playerNameLabel   is not null) _playerNameLabel.text   = player.Name;
             if (_playerGenderLabel is not null) _playerGenderLabel.text = player.Gender;
+            RefreshPlayerPortrait();
         }
+
 
         public void RefreshPlayerPortrait()
         {
@@ -204,8 +330,9 @@ namespace RagNextPlayer.Managers
             var game = GameManager.Instance?.ActiveGame;
             var room = GameManager.Instance?.CurrentRoom;
             var resolved = game is not null
-                ? TemplateResolver.Resolve(description, game)
+                ? TemplateResolver.Resolve(description, game, room)
                 : description;
+
 
             // Separator
             var sep = new VisualElement();
@@ -278,15 +405,15 @@ namespace RagNextPlayer.Managers
 
         private IEnumerator TypewriterReveal(VisualElement element, string fullText)
         {
-            // Reveal the full container immediately but fade in character by character
-            // via a dedicated typewriter label on top, then swap to the rich element
+            // Strip bracketed hotlinks when typing plain clean text
+            var cleanText = Regex.Replace(fullText, @"\[([^\]]+)\]", "$1");
             var plain = new Label();
             plain.AddToClassList("narrative-text");
             _narrativeScroll.Add(plain);
 
-            for (int i = 0; i <= fullText.Length; i++)
+            for (int i = 0; i <= cleanText.Length; i++)
             {
-                plain.text = fullText.Substring(0, i);
+                plain.text = cleanText.Substring(0, i);
                 yield return new WaitForSeconds(_typewriterSpeed);
             }
 
@@ -295,6 +422,7 @@ namespace RagNextPlayer.Managers
             _narrativeScroll.Add(element);
             ScrollNarrativeToBottom();
         }
+
 
         private void BuildExitButtons(RoomData room)
         {
@@ -315,6 +443,7 @@ namespace RagNextPlayer.Managers
         {
             var row = new VisualElement();
             row.AddToClassList("entity-row");
+            row.pickingMode = PickingMode.Position;
 
             var dot = new VisualElement();
             dot.AddToClassList(entity.IsCharacter ? "entity-dot--character" : "entity-dot--object");
@@ -348,8 +477,12 @@ namespace RagNextPlayer.Managers
 
         private void ScrollNarrativeToBottom()
         {
+            // Schedule two frames out to let Unity UI Toolkit complete layout before scrolling
             _narrativeScroll?.schedule.Execute(() =>
-                _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue));
+            {
+                _narrativeScroll?.schedule.Execute(() =>
+                    _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue));
+            });
         }
 
         private void LoadAndDisplayImage(string path, string elementName)
@@ -357,17 +490,167 @@ namespace RagNextPlayer.Managers
             StartCoroutine(LoadImageCoroutine(path, elementName));
         }
 
+        private string FormatLocalPathForWeb(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+
+            if (path.StartsWith("file://") || path.StartsWith("http://") || path.StartsWith("https://"))
+                return path;
+
+            string fullPath = path;
+            if (!System.IO.Path.IsPathRooted(path))
+            {
+                fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, path);
+            }
+            else
+            {
+                // Standalone fallback: redirect designer AppData path to current StreamingAssets/Assets/ copy
+                var fileName = System.IO.Path.GetFileName(path);
+                var streamingLocalPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Assets", fileName);
+                if (System.IO.File.Exists(streamingLocalPath))
+                {
+                    fullPath = streamingLocalPath;
+                }
+            }
+
+            fullPath = fullPath.Replace("\\", "/");
+            if (!fullPath.StartsWith("/"))
+                return "file:///" + fullPath;
+            else
+                return "file://" + fullPath;
+        }
+
         private IEnumerator LoadImageCoroutine(string path, string elementName)
         {
-            using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture("file://" + path);
+            string url = FormatLocalPathForWeb(path);
+            Debug.Log($"[UIManager] Loading texture for '{elementName}' from URL: '{url}'");
+            using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url);
+
             yield return req.SendWebRequest();
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
                 var tex  = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
                 var elem = _root?.Q<VisualElement>(elementName);
                 if (elem is not null)
+                {
                     elem.style.backgroundImage = new StyleBackground(tex);
+                    if (elementName == "scene-image" && _scenePlaceholder is not null)
+                    {
+                        _scenePlaceholder.style.display = DisplayStyle.None;
+                    }
+                    Debug.Log($"[UIManager] Successfully applied texture to '{elementName}'");
+                }
+            }
+            else
+            {
+                Debug.LogError($"[UIManager] Failed to load texture for '{elementName}' from URL '{url}': {req.error}");
             }
         }
+
+
+        // ── Settings Callbacks & Save/Load Slots ────────────────────────────────
+        private void OpenSettingsMenu()
+        {
+            if (_settingsMenu is null) return;
+
+            // Sync toggle button texts with current engine states
+            if (_fullscreenToggleBtn is not null)
+            {
+                _fullscreenToggleBtn.text = Screen.fullScreen ? "Windowed" : "Fullscreen";
+            }
+            if (_typewriterToggleBtn is not null)
+            {
+                _typewriterToggleBtn.text = _typewriterEnabled ? "Typewriter ON" : "Typewriter OFF";
+            }
+            if (_volumeSlider is not null)
+            {
+                _volumeSlider.value = Mathf.RoundToInt(AudioListener.volume * 100f);
+            }
+
+            RefreshSaveLoadSlots();
+
+            _settingsMenu.style.display = DisplayStyle.Flex;
+            _settingsMenu.BringToFront();
+        }
+
+        private void CloseSettingsMenu()
+        {
+            if (_settingsMenu is not null)
+                _settingsMenu.style.display = DisplayStyle.None;
+        }
+
+        private void ToggleFullscreen()
+        {
+            Screen.fullScreen = !Screen.fullScreen;
+            if (_fullscreenToggleBtn is not null)
+            {
+                _fullscreenToggleBtn.text = Screen.fullScreen ? "Fullscreen" : "Windowed";
+            }
+        }
+
+        private void ToggleTypewriter()
+        {
+            _typewriterEnabled = !_typewriterEnabled;
+            if (_typewriterToggleBtn is not null)
+            {
+                _typewriterToggleBtn.text = _typewriterEnabled ? "Typewriter ON" : "Typewriter OFF";
+            }
+        }
+
+        private void OnVolumeChanged(ChangeEvent<int> evt)
+        {
+            AudioListener.volume = evt.newValue / 100f;
+        }
+
+        private void QuitGame()
+        {
+            Debug.Log("[UIManager] Gracefully quitting game standalone.");
+            Application.Quit();
+        }
+
+        private void RefreshSaveLoadSlots()
+        {
+            for (int slot = 1; slot <= 3; slot++)
+            {
+                var loadBtn = _root.Q<Button>($"load-slot-{slot}-btn");
+                if (loadBtn is not null)
+                {
+                    bool hasSave = GameManager.Instance is not null && GameManager.Instance.HasSaveFile(slot);
+                    loadBtn.SetEnabled(hasSave);
+                }
+            }
+        }
+
+        private void SaveGameSlot(int slot)
+        {
+            if (GameManager.Instance is null) return;
+            GameManager.Instance.SaveGame(slot);
+            AppendNarrativeText($"Game saved successfully to Slot {slot}.");
+            CloseSettingsMenu();
+        }
+
+        private async void LoadGameSlot(int slot)
+        {
+            if (GameManager.Instance is null) return;
+            AppendNarrativeText($"Loading save from Slot {slot}...");
+            CloseSettingsMenu();
+            await GameManager.Instance.LoadGameAsync(slot);
+            AppendNarrativeText($"Game loaded successfully from Slot {slot}.");
+        }
+
+        private void OnRoomTitleClicked(ClickEvent evt)
+        {
+            var room = GameManager.Instance?.CurrentRoom;
+            if (room is null) return;
+            InteractionController.Instance?.ShowRoomMenu(room);
+        }
+
+        private void OnPlayerPortraitClicked(ClickEvent evt)
+        {
+            var player = GameManager.Instance?.ActiveGame?.Player;
+            if (player is null) return;
+            InteractionController.Instance?.ShowPlayerMenu(player);
+        }
+
     }
 }

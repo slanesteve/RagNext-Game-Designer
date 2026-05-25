@@ -35,8 +35,13 @@ namespace RagNext.Views.Popups
             VersionEntry.Text = game.Version ?? "1.0.0";
 
             // Default output folder
-            string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            DestinationEntry.Text = Path.Combine(docs, "RagNext_Published",
+            string defaultFolder = Microsoft.Maui.Storage.Preferences.Default.Get("LastPublishDirectory", string.Empty);
+            if (string.IsNullOrWhiteSpace(defaultFolder))
+            {
+                string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                defaultFolder = Path.Combine(docs, "RagNext_Published");
+            }
+            DestinationEntry.Text = Path.Combine(defaultFolder,
                 PublishEngine.SanitizeName(game.Title ?? "MyAdventure"));
 
             // Show template availability on each platform card
@@ -113,7 +118,33 @@ namespace RagNext.Views.Popups
             TemplateMissingLabel.IsVisible = !PublishEngine.IsTemplateAvailable(target);
         }
 
-        // ── Browse ────────────────────────────────────────────────────────────
+        private void SaveLastPublishDirectory(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            string title = TitleEntry?.Text?.Trim() ?? _game.Title ?? "MyAdventure";
+            string sanitizedTitle = PublishEngine.SanitizeName(title);
+            string baseDir = path;
+
+            // Strip trailing directory separators
+            baseDir = baseDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            // If the path ends with the game title, strip it to get the parent base folder
+            if (baseDir.EndsWith(sanitizedTitle, StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    string? parent = Path.GetDirectoryName(baseDir);
+                    if (!string.IsNullOrWhiteSpace(parent))
+                    {
+                        baseDir = parent;
+                    }
+                }
+                catch {}
+            }
+
+            Microsoft.Maui.Storage.Preferences.Default.Set("LastPublishDirectory", baseDir);
+        }
 
         private async void OnBrowseClicked(object sender, EventArgs e)
         {
@@ -121,8 +152,15 @@ namespace RagNext.Views.Popups
             {
                 var result = await FolderPicker.Default.PickAsync(CancellationToken.None);
                 if (result?.IsSuccessful == true && result.Folder is not null)
-                    DestinationEntry.Text = Path.Combine(result.Folder.Path,
+                {
+                    string selectedPath = result.Folder.Path;
+                    SaveLastPublishDirectory(selectedPath);
+
+                    // Load the base directory we just saved to construct the DestinationEntry.Text properly
+                    string baseFolder = Microsoft.Maui.Storage.Preferences.Default.Get("LastPublishDirectory", selectedPath);
+                    DestinationEntry.Text = Path.Combine(baseFolder,
                         PublishEngine.SanitizeName(TitleEntry.Text?.Trim() ?? "MyAdventure"));
+                }
             }
             catch (Exception ex)
             {
@@ -166,6 +204,26 @@ namespace RagNext.Views.Popups
             SetControlsEnabled(false);
             ProgressSection.IsVisible = true;
             PublishSpinner.IsRunning  = true;
+
+            // Auto-scroll main popup ScrollView to make progress section visible
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(100);
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    if (BodyScrollView is not null)
+                    {
+                        await BodyScrollView.ScrollToAsync(0, double.MaxValue, animated: true);
+                    }
+                });
+            });
+
+            // Save directory to preferences
+            try
+            {
+                SaveLastPublishDirectory(destination);
+            }
+            catch {}
 
             try
             {

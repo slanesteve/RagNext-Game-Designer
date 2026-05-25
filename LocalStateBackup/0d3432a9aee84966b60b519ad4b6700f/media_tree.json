@@ -1,0 +1,69 @@
+{
+  "roots": [
+    {
+      "id": "571caae6-8b2f-4386-87ae-5b18c6c9472c",
+      "name": "Assets",
+      "children": [
+        {
+          "id": "00e055c1-f09b-4550-b32d-5310713f5ca8",
+          "name": "Characters",
+          "children": [
+            {
+              "id": "ecdd704d-e753-4585-bd14-3f3b9c829a9a",
+              "name": "Jane",
+              "children": [],
+              "assetIds": [
+                "26615de8-f4be-4043-9ecf-f2b1bcd8cdbe",
+                "fffd9702-16ef-4d7b-8107-688878f119dc",
+                "5dd7c552-4799-45f2-b991-2f8b47063f48"
+              ]
+            },
+            {
+              "id": "93de198c-1931-4e42-80ee-6942cdcd12da",
+              "name": "Doe",
+              "children": [],
+              "assetIds": [
+                "79db4855-d812-4c6b-b4ad-b76f15e0ab73"
+              ]
+            }
+          ],
+          "assetIds": [
+            "0a3b43b2-0367-459f-923b-d4e5259b5f69"
+          ]
+        },
+        {
+          "id": "62e8126a-01da-494e-92b7-48bf4bd9d226",
+          "name": "Player",
+          "children": [],
+          "assetIds": [
+            "3e7397af-d003-4067-9ccd-7a3da97b57ac",
+            "a82fe05a-bbe1-48a2-aec4-eecbe2f33bab"
+          ]
+        },
+        {
+          "id": "e2c43bca-6c6c-4a62-be72-5a2543d2a3f7",
+          "name": "Rooms",
+          "children": [],
+          "assetIds": [
+            "2e338938-bc94-4c8a-bab8-b7b78584aef9",
+            "f43e2845-63e1-4d52-a33c-f26113e93a52",
+            "251b5684-ede3-467c-82eb-36e57fdf3a83"
+          ]
+        },
+        {
+          "id": "f3bd3fcb-cf17-47e3-9513-9f5ca9a8b0de",
+          "name": "Objects",
+          "children": [],
+          "assetIds": [
+            "aca64e07-2491-465b-b59b-0118781875a5"
+          ]
+        }
+      ],
+      "assetIds": [
+        "3eb5edb4-0bb2-4007-807e-b3e25457c8b8",
+        "37587825-8fb7-43d6-93b0-7af9eec5b25a",
+        "5dd7c552-4799-45f2-b991-2f8b47063f48"
+      ]
+    }
+  ]
+}

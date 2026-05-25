@@ -114,12 +114,18 @@ namespace RagNext.Services
                     AddFile(outZip, "MyGame.app/Contents/Resources/Game.rags", bundleMs);
                     break;
                 }
-                case PackagingTarget.Android:
+                case PackagingTarget.Linux:
                 {
-                    // Android Player will read from assets
-                    AddPlaceholder(outZip, "player/README.txt",
-                        "Replace with the Android Player project. Copy assets/Game.rags into the Player's Assets (MauiAsset) at build time.");
-                    AddFile(outZip, "assets/Game.rags", bundleMs);
+                    AddPlaceholder(outZip, "Player/README.txt",
+                        "Replace this folder with the Linux Player build.\r\nExpected to run Player binary next to Game.rags.");
+                    AddFile(outZip, "Game.rags", bundleMs);
+                    break;
+                }
+                case PackagingTarget.WebGL:
+                {
+                    AddPlaceholder(outZip, "Player/README.txt",
+                        "Replace this folder with the WebGL Player build.");
+                    AddFile(outZip, "Game.rags", bundleMs);
                     break;
                 }
             }

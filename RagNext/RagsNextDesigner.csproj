@@ -31,7 +31,7 @@
 		<ApplicationVersion>1</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
-		<WindowsPackageType>None</WindowsPackageType>
+		<!-- <WindowsPackageType>None</WindowsPackageType> -->
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
@@ -212,4 +212,15 @@
 	  </MauiAsset>
 	</ItemGroup>
 
+	<!-- Automatically copy standalone player templates from workspace root into target build output directory for packaging/deployment -->
+	<Target Name="CopyTemplatesToOutput" AfterTargets="Build" Condition="Exists('$(MSBuildThisFileDirectory)..\Templates')">
+		<ItemGroup>
+			<TemplateFiles Include="$(MSBuildThisFileDirectory)..\Templates\**\*.*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(TemplateFiles)"
+			  DestinationFiles="@(TemplateFiles->'$(TargetDir)Templates\%(RecursiveDir)%(Filename)%(Extension)')"
+			  SkipUnchangedFiles="true" />
+	</Target>
+
 </Project>
+
