@@ -101,6 +101,12 @@
         <ui:Button name="typewriter-toggle-btn" class="settings-toggle-btn" text="Typewriter ON" />
       </ui:VisualElement>
 
+      <!-- Typewriter Speed Slider -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Text Speed" />
+        <ui:Slider name="typewriter-speed-slider" class="settings-slider" low-value="0.001" high-value="0.05" value="0.018" />
+      </ui:VisualElement>
+
       <!-- Master Volume Slider -->
       <ui:VisualElement class="settings-row">
         <ui:Label class="settings-label" text="Volume" />

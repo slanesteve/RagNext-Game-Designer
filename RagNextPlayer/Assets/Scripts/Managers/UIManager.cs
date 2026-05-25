@@ -40,6 +40,7 @@ namespace RagNextPlayer.Managers
         private VisualElement  _settingsMenu;
         private Button         _fullscreenToggleBtn;
         private Button         _typewriterToggleBtn;
+        private Slider         _typewriterSpeedSlider;
         private SliderInt      _volumeSlider;
         private Button         _quitGameBtn;
         private Button         _closeSettingsBtn;
@@ -50,6 +51,16 @@ namespace RagNextPlayer.Managers
         [Header("Narrative Settings")]
         [SerializeField] private bool  _typewriterEnabled = false; // Default to false (MAUI style fade-in transition)
         [SerializeField] private float _typewriterSpeed   = 0.018f; // seconds per char
+
+        private struct TypewriterSession
+        {
+            public Coroutine Coroutine;
+            public Label PlainLabel;
+            public VisualElement RichElement;
+            public System.Action CompleteAction;
+        }
+
+        private readonly List<TypewriterSession> _activeTypewriters = new();
 
 
         private void Awake()
@@ -105,17 +116,31 @@ namespace RagNextPlayer.Managers
             _settingsMenu           = _root.Q<VisualElement>("settings-menu");
             _fullscreenToggleBtn    = _root.Q<Button>("fullscreen-toggle-btn");
             _typewriterToggleBtn    = _root.Q<Button>("typewriter-toggle-btn");
+            _typewriterSpeedSlider  = _root.Q<Slider>("typewriter-speed-slider");
             _volumeSlider           = _root.Q<SliderInt>("volume-slider");
             _quitGameBtn            = _root.Q<Button>("quit-game-btn");
             _closeSettingsBtn       = _root.Q<Button>("close-settings-btn");
             _playerPortrait         = _root.Q<VisualElement>("player-portrait");
             _scenePlaceholder       = _root.Q<Label>("scene-placeholder");
 
+            // Load saved settings
+            _typewriterEnabled     = PlayerPrefs.GetInt("Pref_TypewriterEnabled", 1) == 1;
+            _typewriterSpeed       = PlayerPrefs.GetFloat("Pref_TypewriterSpeed", 0.018f);
+            float savedVolume      = PlayerPrefs.GetFloat("Pref_MasterVolume", 1.0f);
+            AudioListener.volume   = savedVolume;
+
             if (_settingsBtn is not null) _settingsBtn.clicked += OpenSettingsMenu;
             if (_fullscreenToggleBtn is not null) _fullscreenToggleBtn.clicked += ToggleFullscreen;
             if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked += ToggleTypewriter;
             if (_quitGameBtn is not null) _quitGameBtn.clicked += QuitGame;
             if (_closeSettingsBtn is not null) _closeSettingsBtn.clicked += CloseSettingsMenu;
+
+            if (_typewriterSpeedSlider is not null)
+            {
+                _typewriterSpeedSlider.value = _typewriterSpeed;
+                _typewriterSpeedSlider.RegisterValueChangedCallback(OnTypewriterSpeedChanged);
+            }
+
             if (_volumeSlider is not null)
             {
                 _volumeSlider.value = Mathf.RoundToInt(AudioListener.volume * 100f);
@@ -175,6 +200,10 @@ namespace RagNextPlayer.Managers
             if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked -= ToggleTypewriter;
             if (_quitGameBtn is not null) _quitGameBtn.clicked -= QuitGame;
             if (_closeSettingsBtn is not null) _closeSettingsBtn.clicked -= CloseSettingsMenu;
+            if (_typewriterSpeedSlider is not null)
+            {
+                _typewriterSpeedSlider.UnregisterValueChangedCallback(OnTypewriterSpeedChanged);
+            }
             if (_volumeSlider is not null)
             {
                 _volumeSlider.UnregisterValueChangedCallback(OnVolumeChanged);
@@ -248,6 +277,7 @@ namespace RagNextPlayer.Managers
         public void AppendNarrativeText(string text)
         {
             if (string.IsNullOrWhiteSpace(text) || _narrativeScroll is null) return;
+            AutocompleteActiveTypewriters();
 
             // Use BuildNarrativeBody so the text is wrapped in a narrative-paragraph
             // VisualElement (flex-direction:row, flex-wrap:wrap). A bare Label with
@@ -328,6 +358,7 @@ namespace RagNextPlayer.Managers
         private void AppendNarrativeEntry(string roomName, string description)
         {
             if (_narrativeScroll is null) return;
+            AutocompleteActiveTypewriters();
 
             var game = GameManager.Instance?.ActiveGame;
             var room = GameManager.Instance?.CurrentRoom;
@@ -392,7 +423,7 @@ namespace RagNextPlayer.Managers
                     flow.Add(MakePlainLabel(para.Substring(lastIdx)));
 
                 if (_typewriterEnabled)
-                    StartCoroutine(TypewriterReveal(flow, para));
+                    StartTypewriter(flow, para);
                 else
                     _narrativeScroll.Add(flow);
             }
@@ -405,24 +436,57 @@ namespace RagNextPlayer.Managers
             return lbl;
         }
 
-        private IEnumerator TypewriterReveal(VisualElement element, string fullText)
+        public void AutocompleteActiveTypewriters()
         {
-            // Strip bracketed hotlinks when typing plain clean text
+            if (_activeTypewriters.Count == 0) return;
+
+            // Copy list since completing individual sessions modifies _activeTypewriters
+            var sessions = new List<TypewriterSession>(_activeTypewriters);
+            _activeTypewriters.Clear();
+
+            foreach (var session in sessions)
+            {
+                if (session.Coroutine != null)
+                {
+                    StopCoroutine(session.Coroutine);
+                }
+                session.CompleteAction();
+            }
+        }
+
+        private void StartTypewriter(VisualElement element, string fullText)
+        {
+            var session = new TypewriterSession();
             var cleanText = Regex.Replace(fullText, @"\[([^\]]+)\]", "$1");
             var plain = new Label();
             plain.AddToClassList("narrative-text");
             _narrativeScroll.Add(plain);
 
+            session.PlainLabel = plain;
+            session.RichElement = element;
+            session.CompleteAction = () =>
+            {
+                if (_narrativeScroll.Contains(plain))
+                    _narrativeScroll.Remove(plain);
+                if (!_narrativeScroll.Contains(element))
+                    _narrativeScroll.Add(element);
+                ScrollNarrativeToBottom();
+            };
+
+            session.Coroutine = StartCoroutine(TypewriterReveal(session, cleanText));
+            _activeTypewriters.Add(session);
+        }
+
+        private IEnumerator TypewriterReveal(TypewriterSession session, string cleanText)
+        {
             for (int i = 0; i <= cleanText.Length; i++)
             {
-                plain.text = cleanText.Substring(0, i);
+                session.PlainLabel.text = cleanText.Substring(0, i);
                 yield return new WaitForSeconds(_typewriterSpeed);
             }
 
-            // Replace plain label with the rich (hotlink) version
-            _narrativeScroll.Remove(plain);
-            _narrativeScroll.Add(element);
-            ScrollNarrativeToBottom();
+            _activeTypewriters.Remove(session);
+            session.CompleteAction();
         }
 
 
@@ -564,6 +628,10 @@ namespace RagNextPlayer.Managers
             {
                 _typewriterToggleBtn.text = _typewriterEnabled ? "Typewriter ON" : "Typewriter OFF";
             }
+            if (_typewriterSpeedSlider is not null)
+            {
+                _typewriterSpeedSlider.value = _typewriterSpeed;
+            }
             if (_volumeSlider is not null)
             {
                 _volumeSlider.value = Mathf.RoundToInt(AudioListener.volume * 100f);
@@ -590,19 +658,31 @@ namespace RagNextPlayer.Managers
             }
         }
 
-        private void ToggleTypewriter()
-        {
-            _typewriterEnabled = !_typewriterEnabled;
-            if (_typewriterToggleBtn is not null)
-            {
-                _typewriterToggleBtn.text = _typewriterEnabled ? "Typewriter ON" : "Typewriter OFF";
-            }
-        }
+         private void ToggleTypewriter()
+         {
+             _typewriterEnabled = !_typewriterEnabled;
+             PlayerPrefs.SetInt("Pref_TypewriterEnabled", _typewriterEnabled ? 1 : 0);
+             PlayerPrefs.Save();
+             if (_typewriterToggleBtn is not null)
+             {
+                 _typewriterToggleBtn.text = _typewriterEnabled ? "Typewriter ON" : "Typewriter OFF";
+             }
+         }
 
-        private void OnVolumeChanged(ChangeEvent<int> evt)
-        {
-            AudioListener.volume = evt.newValue / 100f;
-        }
+         private void OnTypewriterSpeedChanged(ChangeEvent<float> evt)
+         {
+             _typewriterSpeed = evt.newValue;
+             PlayerPrefs.SetFloat("Pref_TypewriterSpeed", _typewriterSpeed);
+             PlayerPrefs.Save();
+         }
+
+         private void OnVolumeChanged(ChangeEvent<int> evt)
+         {
+             float vol = evt.newValue / 100f;
+             AudioListener.volume = vol;
+             PlayerPrefs.SetFloat("Pref_MasterVolume", vol);
+             PlayerPrefs.Save();
+         }
 
         private void QuitGame()
         {
