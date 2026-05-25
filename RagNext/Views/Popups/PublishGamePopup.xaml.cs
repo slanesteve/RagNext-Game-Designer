@@ -39,10 +39,10 @@ namespace RagNext.Views.Popups
             if (string.IsNullOrWhiteSpace(defaultFolder))
             {
                 string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                defaultFolder = Path.Combine(docs, "RagNext_Published");
+                defaultFolder = Path.Combine(docs, "RagNext_Published",
+                    PublishEngine.SanitizeName(game.Title ?? "MyAdventure"));
             }
-            DestinationEntry.Text = Path.Combine(defaultFolder,
-                PublishEngine.SanitizeName(game.Title ?? "MyAdventure"));
+            DestinationEntry.Text = defaultFolder;
 
             // Show template availability on each platform card
             RefreshTemplateStatus();
@@ -121,29 +121,7 @@ namespace RagNext.Views.Popups
         private void SaveLastPublishDirectory(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return;
-
-            string title = TitleEntry?.Text?.Trim() ?? _game.Title ?? "MyAdventure";
-            string sanitizedTitle = PublishEngine.SanitizeName(title);
-            string baseDir = path;
-
-            // Strip trailing directory separators
-            baseDir = baseDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-            // If the path ends with the game title, strip it to get the parent base folder
-            if (baseDir.EndsWith(sanitizedTitle, StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    string? parent = Path.GetDirectoryName(baseDir);
-                    if (!string.IsNullOrWhiteSpace(parent))
-                    {
-                        baseDir = parent;
-                    }
-                }
-                catch {}
-            }
-
-            Microsoft.Maui.Storage.Preferences.Default.Set("LastPublishDirectory", baseDir);
+            Microsoft.Maui.Storage.Preferences.Default.Set("LastPublishDirectory", path);
         }
 
         private async void OnBrowseClicked(object sender, EventArgs e)
@@ -154,12 +132,8 @@ namespace RagNext.Views.Popups
                 if (result?.IsSuccessful == true && result.Folder is not null)
                 {
                     string selectedPath = result.Folder.Path;
+                    DestinationEntry.Text = selectedPath;
                     SaveLastPublishDirectory(selectedPath);
-
-                    // Load the base directory we just saved to construct the DestinationEntry.Text properly
-                    string baseFolder = Microsoft.Maui.Storage.Preferences.Default.Get("LastPublishDirectory", selectedPath);
-                    DestinationEntry.Text = Path.Combine(baseFolder,
-                        PublishEngine.SanitizeName(TitleEntry.Text?.Trim() ?? "MyAdventure"));
                 }
             }
             catch (Exception ex)

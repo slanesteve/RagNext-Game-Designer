@@ -249,10 +249,12 @@ namespace RagNextPlayer.Managers
         {
             if (string.IsNullOrWhiteSpace(text) || _narrativeScroll is null) return;
 
-            var label = new Label();
-            label.AddToClassList("narrative-status");
-            label.text = $"» {text}";
-            _narrativeScroll.Add(label);
+            // Use BuildNarrativeBody so the text is wrapped in a narrative-paragraph
+            // VisualElement (flex-direction:row, flex-wrap:wrap). A bare Label with
+            // white-space:normal doesn't constrain its width in Unity UI Toolkit,
+            // causing the layout engine to record a 1-line height even when the text
+            // visually wraps — which makes the next element overlap this one.
+            BuildNarrativeBody(text);
             ScrollNarrativeToBottom();
         }
 
