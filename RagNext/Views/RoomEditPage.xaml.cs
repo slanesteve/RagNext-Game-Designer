@@ -35,6 +35,10 @@ namespace RagNext.Views
                 ["South"] = "North",
                 ["East"]  = "West",
                 ["West"]  = "East",
+                ["NorthWest"] = "SouthEast",
+                ["SouthEast"] = "NorthWest",
+                ["NorthEast"] = "SouthWest",
+                ["SouthWest"] = "NorthEast",
                 ["Up"]    = "Down",
                 ["Down"]  = "Up",
                 ["In"]    = "Out",
@@ -62,6 +66,8 @@ namespace RagNext.Views
 
             BindingContext = room;
 
+            InitializeRoomObjectsList(room);
+
             UpdatePortraitImage(room.PortraitImagePath);
             room.PropertyChanged += (s, e) =>
             {
@@ -70,6 +76,71 @@ namespace RagNext.Views
             };
 
             LoadExits(room);
+        }
+
+        // ── Room Objects Settings Handlers ───────────────────────────────────
+
+        public class ObjectCheckItem : BindableObject
+        {
+            public Guid Id { get; }
+            public string Name { get; }
+
+            private bool _isChecked;
+            public bool IsChecked
+            {
+                get => _isChecked;
+                set
+                {
+                    _isChecked = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            public ObjectCheckItem(Guid id, string name, bool isChecked)
+            {
+                Id = id;
+                Name = name;
+                IsChecked = isChecked;
+            }
+        }
+
+        private readonly System.Collections.ObjectModel.ObservableCollection<ObjectCheckItem> _availableRoomObjects = new();
+
+        private void InitializeRoomObjectsList(Room room)
+        {
+            _availableRoomObjects.Clear();
+            var game = App.CurrentGame;
+            if (game?.Objects is null) return;
+
+            foreach (var otherObj in game.Objects)
+            {
+                bool isChecked = room.ObjectIds.Contains(otherObj.Id);
+                var checkItem = new ObjectCheckItem(otherObj.Id, otherObj.Name, isChecked);
+                _availableRoomObjects.Add(checkItem);
+            }
+
+            var checkList = this.FindByName<CollectionView>("ObjectsCheckList");
+            if (checkList is not null)
+            {
+                checkList.ItemsSource = _availableRoomObjects;
+            }
+        }
+
+        private void OnRoomObjectCheckedChanged(object sender, CheckedChangedEventArgs e)
+        {
+            if (BindingContext is not Room room) return;
+            if (sender is CheckBox cb && cb.BindingContext is ObjectCheckItem item)
+            {
+                if (e.Value)
+                {
+                    if (!room.ObjectIds.Contains(item.Id))
+                        room.ObjectIds.Add(item.Id);
+                }
+                else
+                {
+                    room.ObjectIds.Remove(item.Id);
+                }
+            }
         }
 
         // ── Exits editor ───────────────────────────────────────────────────────
@@ -89,6 +160,10 @@ namespace RagNext.Views
                 new(SouthPicker, SouthOneWay, "South"),
                 new(EastPicker,  EastOneWay,  "East"),
                 new(WestPicker,  WestOneWay,  "West"),
+                new(NorthWestPicker, NorthWestOneWay, "NorthWest"),
+                new(NorthEastPicker, NorthEastOneWay, "NorthEast"),
+                new(SouthWestPicker, SouthWestOneWay, "SouthWest"),
+                new(SouthEastPicker, SouthEastOneWay, "SouthEast"),
                 new(UpPicker,    UpOneWay,    "Up"),
                 new(DownPicker,  DownOneWay,  "Down"),
                 new(InPicker,    InOneWay,    "In"),

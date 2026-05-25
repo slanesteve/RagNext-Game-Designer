@@ -40,6 +40,8 @@ namespace RagNext.Views
 
             BindingContext = obj;
 
+            InitializeContainedItemsList(obj);
+
             UpdatePortraitImage(obj.PortraitImagePath);
             obj.PropertyChanged += (s, e) =>
             {
@@ -458,6 +460,74 @@ namespace RagNext.Views
                 }
             }
 #endif
+        }
+
+        // ── Container Settings Handlers ─────────────────────────────────────
+
+        public class ObjectCheckItem : BindableObject
+        {
+            public Guid Id { get; }
+            public string Name { get; }
+
+            private bool _isChecked;
+            public bool IsChecked
+            {
+                get => _isChecked;
+                set
+                {
+                    _isChecked = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            public ObjectCheckItem(Guid id, string name, bool isChecked)
+            {
+                Id = id;
+                Name = name;
+                IsChecked = isChecked;
+            }
+        }
+
+        private readonly System.Collections.ObjectModel.ObservableCollection<ObjectCheckItem> _availableContainedItems = new();
+
+        private void InitializeContainedItemsList(GameObject currentObj)
+        {
+            _availableContainedItems.Clear();
+            var game = App.CurrentGame;
+            if (game?.Objects is null) return;
+
+            foreach (var otherObj in game.Objects)
+            {
+                if (otherObj.Id == currentObj.Id) continue; // Exclude itself
+
+                bool isChecked = currentObj.ContainedObjectIds.Contains(otherObj.Id);
+                var checkItem = new ObjectCheckItem(otherObj.Id, otherObj.Name, isChecked);
+                _availableContainedItems.Add(checkItem);
+            }
+
+            ContainedObjectsCheckList.ItemsSource = _availableContainedItems;
+        }
+
+        private void OnIsContainerCheckedChanged(object sender, CheckedChangedEventArgs e)
+        {
+            ContainedItemsSection.IsVisible = e.Value;
+        }
+
+        private void OnContainedItemCheckedChanged(object sender, CheckedChangedEventArgs e)
+        {
+            if (BindingContext is not GameObject obj) return;
+            if (sender is CheckBox cb && cb.BindingContext is ObjectCheckItem item)
+            {
+                if (e.Value)
+                {
+                    if (!obj.ContainedObjectIds.Contains(item.Id))
+                        obj.ContainedObjectIds.Add(item.Id);
+                }
+                else
+                {
+                    obj.ContainedObjectIds.Remove(item.Id);
+                }
+            }
         }
     }
 }

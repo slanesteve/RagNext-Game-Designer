@@ -81,6 +81,10 @@ namespace RagNextPlayer.Runtime.Models
                 "char.setPortraitMedia"  => typeof(CharacterSetPortraitMediaCommandData),
                 "media.playSound"        => typeof(PlaySoundEffectCommandData),
                 "media.displayMultimedia"=> typeof(DisplayMultimediaCommandData),
+                "general.endGame"        => typeof(EndGameCommandData),
+                "general.promptInput"    => typeof(PromptPlayerInputCommandData),
+                "general.openContainer"  => typeof(OpenContainerCommandData),
+                "general.closeContainer" => typeof(CloseContainerCommandData),
 
                 _ => throw new JsonSerializationException($"Unknown ActionStep $type: '{typeName}'")
             };

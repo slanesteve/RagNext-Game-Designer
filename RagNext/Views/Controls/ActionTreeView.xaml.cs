@@ -23,6 +23,9 @@ namespace RagNext.Views.Controls
         public static readonly BindableProperty GameObjectProperty =
             BindableProperty.Create(nameof(GameObject), typeof(GameObject), typeof(ActionTreeView), propertyChanged: OnContextChanged);
 
+        public static readonly BindableProperty CharacterProperty =
+            BindableProperty.Create(nameof(Character), typeof(Character), typeof(ActionTreeView), propertyChanged: OnContextChanged);
+
         public Player? Player
         {
             get => (Player?)GetValue(PlayerProperty);
@@ -41,6 +44,12 @@ namespace RagNext.Views.Controls
             set => SetValue(GameObjectProperty, value);
         }
 
+        public Character? Character
+        {
+            get => (Character?)GetValue(CharacterProperty);
+            set => SetValue(CharacterProperty, value);
+        }
+
         private DateTime _lastContextChangedTime = DateTime.UtcNow;
 
         private static void OnContextChanged(BindableObject bindable, object oldValue, object newValue)
@@ -53,6 +62,8 @@ namespace RagNext.Views.Controls
                 self.BindingContext = new ActionLibraryViewModel(self.Room);
             else if (self.GameObject != null)
                 self.BindingContext = new ActionLibraryViewModel(self.GameObject);
+            else if (self.Character != null)
+                self.BindingContext = new ActionLibraryViewModel(self.Character);
         }
 
         private void OnExpanderExpandedChanged(object? sender, ExpandedChangedEventArgs e)

@@ -47,6 +47,10 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(VariableSetToVariableCommand), "var.setToVar")]
     [JsonDerivedType(typeof(SetRoomExitCommand), "room.setExit")]
     [JsonDerivedType(typeof(DisableRoomExitCommand), "room.disableExit")]
+    [JsonDerivedType(typeof(EndGameCommand), "general.endGame")]
+    [JsonDerivedType(typeof(PromptPlayerInputCommand), "general.promptInput")]
+    [JsonDerivedType(typeof(OpenContainerCommand), "general.openContainer")]
+    [JsonDerivedType(typeof(CloseContainerCommand), "general.closeContainer")]
     public abstract class ActionStep
     {
         public abstract ActionStepKind Kind { get; }
@@ -672,6 +676,58 @@ namespace RagsCore.Actions
 
             var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId.Value);
             room?.Exits.Remove(resolvedDir);
+        }
+    }
+
+    public enum PlayerInputType { Text, Objects, Characters, Custom }
+
+    public sealed class EndGameCommand : GameCommand
+    {
+        public string FinalMessage { get; set; } = string.Empty;
+        public override string TypeName => "General: End Game";
+        public override void Execute(ActionContext ctx)
+        {
+            ctx.SetVariable("system.isGameOver", "true");
+            ctx.SetVariable("system.endGameMessage", RagsCore.Services.TemplateResolver.Resolve(FinalMessage, ctx));
+        }
+    }
+
+    public sealed class PromptPlayerInputCommand : GameCommand
+    {
+        public string PromptText { get; set; } = string.Empty;
+        public PlayerInputType InputType { get; set; } = PlayerInputType.Text;
+        public string CustomOptions { get; set; } = string.Empty;
+        public string StoreVariableName { get; set; } = string.Empty;
+        public override string TypeName => "General: Prompt Player Input";
+        public override void Execute(ActionContext ctx)
+        {
+            ctx.SetVariable("system.prompt.text", RagsCore.Services.TemplateResolver.Resolve(PromptText, ctx));
+            ctx.SetVariable("system.prompt.type", InputType.ToString());
+            ctx.SetVariable("system.prompt.options", CustomOptions);
+            ctx.SetVariable("system.prompt.targetVar", StoreVariableName);
+            ctx.SetVariable("system.prompt.active", "true");
+        }
+    }
+
+    public sealed class OpenContainerCommand : GameCommand
+    {
+        public string ObjectId { get; set; } = string.Empty;
+        public override string TypeName => "General: Open Container";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            ctx.SetVariable($"obj.{resolved}.containerOpen", "true");
+        }
+    }
+
+    public sealed class CloseContainerCommand : GameCommand
+    {
+        public string ObjectId { get; set; } = string.Empty;
+        public override string TypeName => "General: Close Container";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            ctx.SetVariable($"obj.{resolved}.containerOpen", "false");
         }
     }
 }

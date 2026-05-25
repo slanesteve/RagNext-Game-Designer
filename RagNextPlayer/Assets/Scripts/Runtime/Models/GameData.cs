@@ -56,9 +56,12 @@ namespace RagNextPlayer.Runtime.Models
         public string? PortraitImagePath  { get; set; }
         public bool    IsCollectible      { get; set; }
         public bool    IsCharacter        { get; set; }
-        public List<ActionData>            Actions    { get; set; } = new List<ActionData>();
-        public List<GameObjectData>        Inventory  { get; set; } = new List<GameObjectData>();
-        public Dictionary<string, string>  Properties { get; set; } = new Dictionary<string, string>();
+        public List<ActionData>            Actions            { get; set; } = new List<ActionData>();
+        public List<GameObjectData>        Inventory          { get; set; } = new List<GameObjectData>();
+        public Dictionary<string, string>  Properties         { get; set; } = new Dictionary<string, string>();
+        public bool                        IsContainer        { get; set; }
+        public bool                        ContainerOpen      { get; set; }
+        public List<string>                ContainedObjectIds { get; set; } = new List<string>();
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -132,6 +135,10 @@ namespace RagNextPlayer.Runtime.Models
     public class CharacterSetPortraitMediaCommandData: CommandData { public string CharacterId { get; set; } = string.Empty; public string MediaId { get; set; } = string.Empty; }
     public class PlaySoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; }
     public class DisplayMultimediaCommandData        : CommandData { public string MediaId { get; set; } = string.Empty; }
+    public class EndGameCommandData                  : CommandData { public string FinalMessage { get; set; } = string.Empty; }
+    public class PromptPlayerInputCommandData        : CommandData { public string PromptText { get; set; } = string.Empty; public string InputType { get; set; } = "Text"; public string CustomOptions { get; set; } = string.Empty; public string StoreVariableName { get; set; } = string.Empty; }
+    public class OpenContainerCommandData            : CommandData { public string ObjectId { get; set; } = string.Empty; }
+    public class CloseContainerCommandData           : CommandData { public string ObjectId { get; set; } = string.Empty; }
 
     // ── Supporting ────────────────────────────────────────────────────────────
     public class GameVariableData

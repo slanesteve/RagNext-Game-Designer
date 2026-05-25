@@ -242,6 +242,43 @@ namespace RagNextPlayer.Runtime
                 case AddCommentCommandData:
                     break; // Design-time only — no runtime effect
 
+                case EndGameCommandData c:
+                    ctx.SetVariable("system.isGameOver", "true");
+                    ctx.SetVariable("system.endGameMessage", ctx.Resolve(c.FinalMessage));
+                    break;
+
+                case PromptPlayerInputCommandData c:
+                    ctx.SetVariable("system.prompt.text", ctx.Resolve(c.PromptText));
+                    ctx.SetVariable("system.prompt.type", c.InputType);
+                    ctx.SetVariable("system.prompt.options", c.CustomOptions);
+                    ctx.SetVariable("system.prompt.targetVar", c.StoreVariableName);
+                    ctx.SetVariable("system.prompt.active", "true");
+                    break;
+
+                case OpenContainerCommandData c:
+                    {
+                        var id = ctx.Resolve(c.ObjectId);
+                        var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, id, StringComparison.OrdinalIgnoreCase));
+                        if (obj is not null)
+                        {
+                            obj.ContainerOpen = true;
+                            ctx.SetVariable($"obj.{id}.containerOpen", "true");
+                        }
+                    }
+                    break;
+
+                case CloseContainerCommandData c:
+                    {
+                        var id = ctx.Resolve(c.ObjectId);
+                        var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, id, StringComparison.OrdinalIgnoreCase));
+                        if (obj is not null)
+                        {
+                            obj.ContainerOpen = false;
+                            ctx.SetVariable($"obj.{id}.containerOpen", "false");
+                        }
+                    }
+                    break;
+
                 default:
                     Debug.LogWarning($"[ActionExecutor] Unhandled command type: {cmd.Type}");
                     break;

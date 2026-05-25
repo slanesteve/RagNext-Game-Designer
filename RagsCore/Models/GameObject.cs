@@ -19,6 +19,14 @@ namespace RagsCore.Models
         private string _name = string.Empty;
         public string Name { get => _name; set => SetProperty(ref _name, value); }
 
+        private bool _isContainer;
+        public bool IsContainer { get => _isContainer; set => SetProperty(ref _isContainer, value); }
+
+        private bool _containerOpen;
+        public bool ContainerOpen { get => _containerOpen; set => SetProperty(ref _containerOpen, value); }
+
+        public ObservableCollection<Guid> ContainedObjectIds { get; set; } = new();
+
         private string _description = string.Empty;
         public string Description { get => _description; set => SetProperty(ref _description, value); }
 

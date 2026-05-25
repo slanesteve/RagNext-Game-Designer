@@ -13,7 +13,7 @@
 
 
     <!-- ══ MAIN SPLITTER (Vertical) ══════════════════════════════════════════ -->
-    <ui:TwoPaneSplitView name="main-splitter" orientation="Vertical" fixed-pane-index="1" fixed-pane-initial-dimension="90" style="flex-grow: 1; min-height: 0;">
+    <ui:TwoPaneSplitView name="main-splitter" orientation="Vertical" fixed-pane-index="1" fixed-pane-initial-dimension="125" style="flex-grow: 1; min-height: 0;">
 
       <!-- Pane 0: Top Main Area with Horizontal Splitter -->
       <ui:TwoPaneSplitView name="content-splitter" orientation="Horizontal" fixed-pane-index="1" fixed-pane-initial-dimension="300" class="content-area" style="min-height: 0;">
@@ -39,10 +39,42 @@
         <!-- Pane 1: Right Column -->
         <ui:VisualElement name="right-column" class="right-column">
 
-          <!-- Compass exits ring -->
+          <!-- Static Compass Navigation Ring -->
           <ui:VisualElement name="compass-card" class="compass-card">
-            <ui:Label class="section-header" text="Exits" />
-            <ui:VisualElement name="exits-container" class="exits-container" />
+            <ui:Label class="section-header" text="Navigation" />
+            
+            <!-- Beautiful 3x3 Cardinal Compass Rose -->
+            <ui:VisualElement name="compass-rose" class="compass-rose">
+              <!-- Row 1 -->
+              <ui:VisualElement class="compass-row">
+                <ui:Button name="compass-dir-nw" class="compass-rose-btn compass-btn--inactive" text="↖" />
+                <ui:Button name="compass-dir-north" class="compass-rose-btn compass-btn--inactive" text="▲" />
+                <ui:Button name="compass-dir-ne" class="compass-rose-btn compass-btn--inactive" text="↗" />
+              </ui:VisualElement>
+              <!-- Row 2 -->
+              <ui:VisualElement class="compass-row">
+                <ui:Button name="compass-dir-west" class="compass-rose-btn compass-btn--inactive" text="◀" />
+                <ui:VisualElement name="compass-center" class="compass-center">
+                  <ui:Label class="compass-center-dot" text="❖" />
+                </ui:VisualElement>
+                <ui:Button name="compass-dir-east" class="compass-rose-btn compass-btn--inactive" text="▶" />
+              </ui:VisualElement>
+              <!-- Row 3 -->
+              <ui:VisualElement class="compass-row">
+                <ui:Button name="compass-dir-sw" class="compass-rose-btn compass-btn--inactive" text="↙" />
+                <ui:Button name="compass-dir-south" class="compass-rose-btn compass-btn--inactive" text="▼" />
+                <ui:Button name="compass-dir-se" class="compass-rose-btn compass-btn--inactive" text="↘" />
+              </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Auxiliary Portal Transitions -->
+            <ui:VisualElement name="compass-auxiliary" class="compass-auxiliary">
+              <ui:Button name="compass-dir-up" class="compass-aux-btn compass-btn--inactive" text="▲ Up" />
+              <ui:Button name="compass-dir-down" class="compass-aux-btn compass-btn--inactive" text="▼ Down" />
+              <ui:Button name="compass-dir-in" class="compass-aux-btn compass-btn--inactive" text="📥 In" />
+              <ui:Button name="compass-dir-out" class="compass-aux-btn compass-btn--inactive" text="📤 Out" />
+            </ui:VisualElement>
+            
           </ui:VisualElement>
 
           <!-- Room Objects -->
@@ -146,6 +178,31 @@
       <ui:Button name="close-settings-btn" class="settings-menu-cancel" text="✕ Close" />
     </ui:VisualElement>
 
+    <!-- ══ GAME OVER POPUP MENU (hidden by default) ══════════════════════════ -->
+    <ui:VisualElement name="game-over-menu" class="settings-menu" style="display: none;">
+      <ui:Label class="settings-menu-title" text="Game Over" />
+      <ui:Label name="game-over-message" class="game-over-message" text="Thank you for playing!" />
+      <ui:Button name="game-over-restart-btn" class="settings-toggle-btn" style="margin-top: 10px; width: auto;" text="↺ Restart Game" />
+      <ui:Button name="game-over-load-btn" class="settings-toggle-btn" style="margin-top: 6px; width: auto;" text="📥 Load Save Game" />
+      <ui:Button name="game-over-exit-btn" class="quit-btn" style="margin-top: 12px;" text="✕ Quit Game" />
+    </ui:VisualElement>
+
+    <!-- ══ PLAYER PROMPT INPUT POPUP (hidden by default) ══════════════════ -->
+    <ui:VisualElement name="prompt-input-menu" class="settings-menu" style="display: none;">
+      <ui:Label name="prompt-input-title" class="settings-menu-title" text="Input Required" />
+      <ui:Label name="prompt-input-message" class="prompt-input-message" text="Please provide input:" />
+      
+      <!-- Text input container -->
+      <ui:VisualElement name="prompt-text-container" style="flex-direction: row; align-items: center; margin-top: 8px; margin-bottom: 4px;">
+        <ui:TextField name="prompt-text-field" style="flex-grow: 1;" />
+      </ui:VisualElement>
+      
+      <!-- Selection list container (for Objects, Characters, and Custom list selection buttons) -->
+      <ui:ScrollView name="prompt-selection-scroll" style="max-height: 150px; margin-top: 8px; display: none;" />
+      
+      <!-- Submit / Close options -->
+      <ui:Button name="prompt-submit-btn" class="settings-toggle-btn" style="margin-top: 12px; width: auto;" text="✔ Submit" />
+    </ui:VisualElement>
 
   </ui:VisualElement>
 </ui:UXML>

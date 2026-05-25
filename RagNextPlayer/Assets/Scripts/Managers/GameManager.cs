@@ -53,6 +53,11 @@ namespace RagNextPlayer.Managers
             await LoadGameAsync();
         }
 
+        public void RestartGame()
+        {
+            _ = LoadGameAsync();
+        }
+
         // ── Loading ───────────────────────────────────────────────────────────
         private async Task LoadGameAsync()
         {
@@ -201,6 +206,16 @@ namespace RagNextPlayer.Managers
             return System.IO.File.Exists(GetSaveFilePath(slot));
         }
 
+        private Newtonsoft.Json.JsonSerializerSettings GetSaveLoadSettings()
+        {
+            return new Newtonsoft.Json.JsonSerializerSettings
+            {
+                NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
+                ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
+                Converters = { new ActionStepConverter(), new ActionStepListConverter() }
+            };
+        }
+
         public void SaveGame(int slot)
         {
             if (ActiveGame is null) return;
@@ -215,11 +230,7 @@ namespace RagNextPlayer.Managers
                 }
 
                 var path = GetSaveFilePath(slot);
-                var settings = new Newtonsoft.Json.JsonSerializerSettings
-                {
-                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-                    ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-                };
+                var settings = GetSaveLoadSettings();
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(ActiveGame, settings);
                 System.IO.File.WriteAllText(path, json);
                 Debug.Log($"[GameManager] Game saved to slot {slot} at: {path}");
@@ -237,10 +248,7 @@ namespace RagNextPlayer.Managers
             {
                 var path = GetSaveFilePath(slot);
                 var json = System.IO.File.ReadAllText(path);
-                var settings = new Newtonsoft.Json.JsonSerializerSettings
-                {
-                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto
-                };
+                var settings = GetSaveLoadSettings();
                 var loadedGame = Newtonsoft.Json.JsonConvert.DeserializeObject<GameData>(json, settings);
 
                 if (loadedGame is not null)

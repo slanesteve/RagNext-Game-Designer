@@ -90,13 +90,18 @@ namespace RagNext.ViewModels
             _afterMutate = afterMutate;
 
             var baseType = _target.Kind == ActionStepKind.Command ? typeof(GameCommand) : typeof(RagsCore.Actions.Condition);
-            var types = Assembly.GetAssembly(typeof(ActionStep))!.GetTypes()
-                .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(baseType));
+            var sortedWrappers = Assembly.GetAssembly(typeof(ActionStep))!.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(baseType))
+                .Select(t => new StepTypeWrapper {
+                    Name = ((ActionStep)Activator.CreateInstance(t)!).TypeName,
+                    Type = t
+                })
+                .OrderBy(w => w.Name)
+                .ToList();
 
-            foreach (var t in types)
+            foreach (var w in sortedWrappers)
             {
-                var instance = (ActionStep)Activator.CreateInstance(t)!;
-                Definitions.Add(new StepTypeWrapper { Name = instance.TypeName, Type = t });
+                Definitions.Add(w);
             }
 
             _selectedDefinition = Definitions.FirstOrDefault(d => d.Type == _target.GetType());

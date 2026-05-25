@@ -26,7 +26,7 @@ namespace RagNextPlayer.Managers
         private Label          _roomTitleLabel;
         private Label          _gameInfoLabel;
         private ScrollView     _narrativeScroll;
-        private VisualElement  _exitsContainer;
+        private readonly System.Collections.Generic.Dictionary<string, Button> _compassButtons = new(System.StringComparer.OrdinalIgnoreCase);
         private VisualElement  _objectsListContainer;
         private VisualElement  _charactersListContainer;
         private VisualElement  _inventoryListContainer;
@@ -46,6 +46,21 @@ namespace RagNextPlayer.Managers
         private Button         _closeSettingsBtn;
         private VisualElement  _playerPortrait;
         private Label          _scenePlaceholder;
+
+        // Game Over modal references
+        private VisualElement  _gameOverMenu;
+        private Label          _gameOverMessage;
+        private Button         _gameOverRestartBtn;
+        private Button         _gameOverLoadBtn;
+        private Button         _gameOverExitBtn;
+
+        // Prompt Input modal references
+        private VisualElement  _promptInputMenu;
+        private Label          _promptInputMessage;
+        private TextField      _promptTextField;
+        private ScrollView     _promptSelectionScroll;
+        private Button         _promptSubmitBtn;
+        private string         _promptTargetVarName = string.Empty;
 
         // ── Typewriter effect ─────────────────────────────────────────────────
         [Header("Narrative Settings")]
@@ -109,7 +124,21 @@ namespace RagNextPlayer.Managers
             _roomTitleLabel         = _root.Q<Label>("room-title");
             _gameInfoLabel          = _root.Q<Label>("game-info");
             _narrativeScroll        = _root.Q<ScrollView>("narrative-scroll");
-            _exitsContainer         = _root.Q<VisualElement>("exits-container");
+            // Bind static compass buttons
+            _compassButtons.Clear();
+            _compassButtons["North"] = _root.Q<Button>("compass-dir-north");
+            _compassButtons["South"] = _root.Q<Button>("compass-dir-south");
+            _compassButtons["East"]  = _root.Q<Button>("compass-dir-east");
+            _compassButtons["West"]  = _root.Q<Button>("compass-dir-west");
+            _compassButtons["NorthWest"] = _root.Q<Button>("compass-dir-nw");
+            _compassButtons["NorthEast"] = _root.Q<Button>("compass-dir-ne");
+            _compassButtons["SouthWest"] = _root.Q<Button>("compass-dir-sw");
+            _compassButtons["SouthEast"] = _root.Q<Button>("compass-dir-se");
+            _compassButtons["Up"]    = _root.Q<Button>("compass-dir-up");
+            _compassButtons["Down"]  = _root.Q<Button>("compass-dir-down");
+            _compassButtons["In"]    = _root.Q<Button>("compass-dir-in");
+            _compassButtons["Out"]   = _root.Q<Button>("compass-dir-out");
+
             _objectsListContainer   = _root.Q<VisualElement>("objects-list");
             _charactersListContainer= _root.Q<VisualElement>("characters-list");
             _inventoryListContainer = _root.Q<VisualElement>("inventory-list");
@@ -129,6 +158,26 @@ namespace RagNextPlayer.Managers
             _closeSettingsBtn       = _root.Q<Button>("close-settings-btn");
             _playerPortrait         = _root.Q<VisualElement>("player-portrait");
             _scenePlaceholder       = _root.Q<Label>("scene-placeholder");
+
+            // Query Game Over menu elements
+            _gameOverMenu        = _root.Q<VisualElement>("game-over-menu");
+            _gameOverMessage     = _root.Q<Label>("game-over-message");
+            _gameOverRestartBtn  = _root.Q<Button>("game-over-restart-btn");
+            _gameOverLoadBtn     = _root.Q<Button>("game-over-load-btn");
+            _gameOverExitBtn     = _root.Q<Button>("game-over-exit-btn");
+
+            // Query Prompt Input elements
+            _promptInputMenu       = _root.Q<VisualElement>("prompt-input-menu");
+            _promptInputMessage    = _root.Q<Label>("prompt-input-message");
+            _promptTextField       = _root.Q<TextField>("prompt-text-field");
+            _promptSelectionScroll = _root.Q<ScrollView>("prompt-selection-scroll");
+            _promptSubmitBtn       = _root.Q<Button>("prompt-submit-btn");
+
+            // Bind Game Over / Prompt Input click handlers
+            if (_gameOverRestartBtn is not null) _gameOverRestartBtn.clicked += RestartGameAction;
+            if (_gameOverLoadBtn is not null)    _gameOverLoadBtn.clicked    += OpenLoadGameFromGameOver;
+            if (_gameOverExitBtn is not null)    _gameOverExitBtn.clicked    += ExitGameAction;
+            if (_promptSubmitBtn is not null)    _promptSubmitBtn.clicked    += SubmitPromptInput;
 
             // Load saved settings
             _typewriterEnabled     = PlayerPrefs.GetInt("Pref_TypewriterEnabled", 1) == 1;
@@ -207,6 +256,12 @@ namespace RagNextPlayer.Managers
             if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked -= ToggleTypewriter;
             if (_quitGameBtn is not null) _quitGameBtn.clicked -= QuitGame;
             if (_closeSettingsBtn is not null) _closeSettingsBtn.clicked -= CloseSettingsMenu;
+
+            // Unbind Game Over / Prompt Input click handlers
+            if (_gameOverRestartBtn is not null) _gameOverRestartBtn.clicked -= RestartGameAction;
+            if (_gameOverLoadBtn is not null)    _gameOverLoadBtn.clicked    -= OpenLoadGameFromGameOver;
+            if (_gameOverExitBtn is not null)    _gameOverExitBtn.clicked    -= ExitGameAction;
+            if (_promptSubmitBtn is not null)    _promptSubmitBtn.clicked    -= SubmitPromptInput;
             if (_typewriterSpeedSlider is not null)
             {
                 _typewriterSpeedSlider.UnregisterValueChangedCallback(OnTypewriterSpeedChanged);
@@ -235,6 +290,9 @@ namespace RagNextPlayer.Managers
         {
             if (_gameInfoLabel is not null)
                 _gameInfoLabel.text = $"by {game.Author}  ·  v{game.Version}";
+
+            // Clear narrative history on game load to restore pristine log state
+            _narrativeScroll?.Clear();
 
             RefreshPlayerPanel();
             RefreshPlayerPortrait();
@@ -301,10 +359,32 @@ namespace RagNextPlayer.Managers
             var room = GameManager.Instance?.CurrentRoom;
             if (game is null || room is null) return;
 
+            // Gather all contained object IDs globally to exclude them from top-level room/inventory listings
+            var containedIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var o in game.Objects)
+            {
+                if (o.IsContainer && o.ContainedObjectIds is not null)
+                {
+                    foreach (var cId in o.ContainedObjectIds)
+                        containedIds.Add(cId);
+                }
+            }
+
             // Objects
             _objectsListContainer?.Clear();
-            foreach (var obj in game.Objects.FindAll(o => room.ObjectIds.Contains(o.Id) && !o.IsCharacter))
+            foreach (var obj in game.Objects.FindAll(o => room.ObjectIds.Contains(o.Id) && !o.IsCharacter && !containedIds.Contains(o.Id)))
+            {
                 _objectsListContainer?.Add(CreateEntityRow(obj, false));
+                if (obj.IsContainer && obj.ContainerOpen && obj.ContainedObjectIds is not null)
+                {
+                    foreach (var childId in obj.ContainedObjectIds)
+                    {
+                        var childObj = game.Objects.Find(o => string.Equals(o.Id, childId, StringComparison.OrdinalIgnoreCase));
+                        if (childObj is not null)
+                            _objectsListContainer?.Add(CreateNestedEntityRow(childObj, false));
+                    }
+                }
+            }
 
             // Characters
             _charactersListContainer?.Clear();
@@ -313,8 +393,19 @@ namespace RagNextPlayer.Managers
 
             // Inventory
             _inventoryListContainer?.Clear();
-            foreach (var item in game.Player.Inventory)
+            foreach (var item in game.Player.Inventory.FindAll(i => !containedIds.Contains(i.Id)))
+            {
                 _inventoryListContainer?.Add(CreateEntityRow(item, true));
+                if (item.IsContainer && item.ContainerOpen && item.ContainedObjectIds is not null)
+                {
+                    foreach (var childId in item.ContainedObjectIds)
+                    {
+                        var childObj = game.Objects.Find(o => string.Equals(o.Id, childId, StringComparison.OrdinalIgnoreCase));
+                        if (childObj is not null)
+                            _inventoryListContainer?.Add(CreateNestedEntityRow(childObj, true));
+                    }
+                }
+            }
         }
 
         public void RefreshPlayerPanel()
@@ -564,16 +655,30 @@ namespace RagNextPlayer.Managers
 
         private void BuildExitButtons(RoomData room)
         {
-            if (_exitsContainer is null) return;
-            _exitsContainer.Clear();
+            // Reset all static compass buttons to inactive (dimmed, non-clickable) state
+            foreach (var kvp in _compassButtons)
+            {
+                if (kvp.Value is null) continue;
+                kvp.Value.RemoveFromClassList("compass-btn--active");
+                kvp.Value.AddToClassList("compass-btn--inactive");
+                kvp.Value.SetEnabled(false);
+                kvp.Value.clickable = null; // Clear previous transition actions
+            }
 
+            // High-intensity glow highlights for active exit directions
             foreach (var exit in room.Exits)
             {
-                var btn = new Button(() => GameManager.Instance?.MovePlayerToRoom(exit.Value));
-                btn.text = exit.Key;
-                btn.AddToClassList("compass-btn");
-                btn.AddToClassList($"compass-btn--{exit.Key.ToLower()}");
-                _exitsContainer.Add(btn);
+                string key = exit.Key;
+                if (_compassButtons.TryGetValue(key, out var btn) && btn is not null)
+                {
+                    btn.RemoveFromClassList("compass-btn--inactive");
+                    btn.AddToClassList("compass-btn--active");
+                    btn.SetEnabled(true);
+
+                    // Add dynamic move player click action
+                    string targetRoomId = exit.Value;
+                    btn.clickable = new Clickable(() => GameManager.Instance?.MovePlayerToRoom(targetRoomId));
+                }
             }
         }
 
@@ -587,7 +692,12 @@ namespace RagNextPlayer.Managers
             dot.AddToClassList(entity.IsCharacter ? "entity-dot--character" : "entity-dot--object");
             row.Add(dot);
 
-            var lbl = new Label(entity.Name);
+            string nameText = entity.Name;
+            if (entity.IsContainer)
+            {
+                nameText += entity.ContainerOpen ? " [Open]" : " [Closed]";
+            }
+            var lbl = new Label(nameText);
             lbl.AddToClassList("entity-name");
             row.Add(lbl);
 
@@ -597,6 +707,36 @@ namespace RagNextPlayer.Managers
             row.Add(btn);
 
             // Tap on the whole row also opens the menu
+            row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
+
+            return row;
+        }
+
+        private VisualElement CreateNestedEntityRow(GameObjectData entity, bool isInventory)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("entity-row");
+            row.AddToClassList("entity-row--nested");
+            row.pickingMode = PickingMode.Position;
+
+            var arrow = new Label("↳");
+            arrow.AddToClassList("entity-nested-arrow");
+            row.Add(arrow);
+
+            var dot = new VisualElement();
+            dot.AddToClassList("entity-dot--object");
+            row.Add(dot);
+
+            var lbl = new Label(entity.Name);
+            lbl.AddToClassList("entity-name");
+            lbl.AddToClassList("entity-name--nested");
+            row.Add(lbl);
+
+            var btn = new Button(() => ShowEntityInteractionMenu(entity, isInventory));
+            btn.text = "⋯";
+            btn.AddToClassList("entity-action-btn");
+            row.Add(btn);
+
             row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
 
             return row;
@@ -804,6 +944,144 @@ namespace RagNextPlayer.Managers
             var player = GameManager.Instance?.ActiveGame?.Player;
             if (player is null) return;
             InteractionController.Instance?.ShowPlayerMenu(player);
+        }
+
+        // ── Game Over HUD Methods ─────────────────────────────────────────────
+
+        public void ShowGameOverScreen(string finalMessage)
+        {
+            if (_gameOverMessage is not null)
+                _gameOverMessage.text = finalMessage;
+
+            if (_gameOverMenu is not null)
+                _gameOverMenu.style.display = DisplayStyle.Flex;
+        }
+
+        private void RestartGameAction()
+        {
+            if (_gameOverMenu is not null)
+                _gameOverMenu.style.display = DisplayStyle.None;
+
+            GameManager.Instance?.RestartGame();
+        }
+
+        private void OpenLoadGameFromGameOver()
+        {
+            if (_gameOverMenu is not null)
+                _gameOverMenu.style.display = DisplayStyle.None;
+
+            OpenSettingsMenu();
+        }
+
+        private void ExitGameAction()
+        {
+            Debug.Log("[UIManager] Exiting game...");
+            Application.Quit();
+        }
+
+        // ── Player Prompt Input Modal HUD Methods ─────────────────────────────
+
+        public void ShowPromptInputScreen(string promptText, string inputType, string customOptions, string storeVariableName)
+        {
+            _promptTargetVarName = storeVariableName;
+
+            if (_promptInputMessage is not null)
+                _promptInputMessage.text = promptText;
+
+            var textContainer = _root.Q<VisualElement>("prompt-text-container");
+            var selScroll = _promptSelectionScroll;
+
+            if (textContainer is null || selScroll is null) return;
+
+            // Reset visibility
+            textContainer.style.display = DisplayStyle.None;
+            selScroll.style.display     = DisplayStyle.None;
+            selScroll.Clear();
+
+            if (string.Equals(inputType, "Text", System.StringComparison.OrdinalIgnoreCase))
+            {
+                textContainer.style.display = DisplayStyle.Flex;
+                if (_promptTextField is not null)
+                {
+                    _promptTextField.value = string.Empty;
+                    _promptTextField.Focus();
+                }
+            }
+            else
+            {
+                selScroll.style.display = DisplayStyle.Flex;
+                List<string> options = new List<string>();
+
+                if (string.Equals(inputType, "Objects", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    var game = GameManager.Instance?.ActiveGame;
+                    if (game is not null)
+                    {
+                        foreach (var obj in game.Objects)
+                            options.Add(obj.Name);
+                    }
+                }
+                else if (string.Equals(inputType, "Characters", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    var game = GameManager.Instance?.ActiveGame;
+                    if (game is not null)
+                    {
+                        foreach (var ch in game.Characters)
+                            options.Add(ch.Name);
+                    }
+                }
+                else if (string.Equals(inputType, "Custom", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(customOptions))
+                    {
+                        foreach (var opt in customOptions.Split(','))
+                            options.Add(opt.Trim());
+                    }
+                }
+
+                // Render option buttons in scroll list
+                foreach (var opt in options)
+                {
+                    var btn = new Button(() => SubmitPromptSelection(opt));
+                    btn.text = opt;
+                    btn.AddToClassList("prompt-choice-btn");
+                    selScroll.Add(btn);
+                }
+            }
+
+            if (_promptInputMenu is not null)
+                _promptInputMenu.style.display = DisplayStyle.Flex;
+        }
+
+        private void SubmitPromptSelection(string value)
+        {
+            if (GameManager.Instance?.ActiveGame is null || string.IsNullOrWhiteSpace(_promptTargetVarName)) return;
+
+            var vars = GameManager.Instance.ActiveGame.Variables;
+            var targetVar = vars.Find(v => string.Equals(v.Name, _promptTargetVarName, System.StringComparison.OrdinalIgnoreCase));
+            if (targetVar is null)
+            {
+                targetVar = new GameVariableData { Name = _promptTargetVarName, Value = value };
+                vars.Add(targetVar);
+            }
+            else
+            {
+                targetVar.Value = value;
+            }
+
+            if (_promptInputMenu is not null)
+                _promptInputMenu.style.display = DisplayStyle.None;
+
+            var currentRoom = GameManager.Instance.CurrentRoom;
+            if (currentRoom is not null)
+                RenderRoom(currentRoom);
+        }
+
+        private void SubmitPromptInput()
+        {
+            if (_promptTextField is null) return;
+            string valueEntered = _promptTextField.value;
+            SubmitPromptSelection(valueEntered);
         }
 
     }

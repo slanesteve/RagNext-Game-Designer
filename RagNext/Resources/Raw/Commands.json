@@ -587,6 +587,32 @@
       ]
     },
     {
+      "name": "Prompt Player Input",
+      "category": "General",
+      "inputs": [
+        {
+          "label": "Prompt Text",
+          "controlType": "TextArea",
+          "dataType": "String"
+        },
+        {
+          "label": "Input Type",
+          "controlType": "ComboBox",
+          "dataType": "String"
+        },
+        {
+          "label": "Custom Options",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Store Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        }
+      ]
+    },
+    {
       "name": "Variable: Set Numeric Randomly",
       "category": "Variable",
       "inputs": [
@@ -606,7 +632,35 @@
     {
       "name": "End The Game",
       "category": "System",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Final Message",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Item: Open Container",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Container Object",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        }
+      ]
+    },
+    {
+      "name": "Item: Close Container",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Container Object",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        }
+      ]
     }
   ]
 }

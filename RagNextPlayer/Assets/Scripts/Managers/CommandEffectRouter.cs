@@ -70,6 +70,8 @@ namespace RagNextPlayer.Managers
 
                 case AddObjectToRoomCommandData:
                 case RemoveObjectFromRoomCommandData:
+                case OpenContainerCommandData:
+                case CloseContainerCommandData:
                     UIManager.Instance?.RefreshEntityLists();
                     break;
 
@@ -122,6 +124,19 @@ namespace RagNextPlayer.Managers
                         var soundId = ctx.Resolve(c.SoundId);
                         AudioManager.Instance?.PlaySound(soundId, (float)(c.Volume / 100.0));
                     }
+                    break;
+
+                case EndGameCommandData c:
+                    UIManager.Instance?.ShowGameOverScreen(ctx.Resolve(c.FinalMessage));
+                    break;
+
+                case PromptPlayerInputCommandData c:
+                    UIManager.Instance?.ShowPromptInputScreen(
+                        ctx.Resolve(c.PromptText),
+                        c.InputType,
+                        c.CustomOptions,
+                        c.StoreVariableName
+                    );
                     break;
             }
         }

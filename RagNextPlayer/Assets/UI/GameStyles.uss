@@ -69,8 +69,8 @@
     flex-shrink: 1;
     flex-basis: 0px;
     padding: 10px;
-    column-gap: 10px;
     overflow: hidden;
+    margin-bottom: 4px; /* Clear bottom split handle */
 }
 
 /* ── Left Column ──────────────────────────────────────────────────────────── */
@@ -81,6 +81,7 @@
     flex-basis: 0px;
     row-gap: 10px;
     min-height: 0px;
+    margin-right: 6px; /* Clear vertical split handle */
 }
 
 /* Scene Art Card */
@@ -95,6 +96,7 @@
     overflow: hidden;
     align-items: center;
     justify-content: center;
+    margin-bottom: 3px; /* Clear horizontal split handle */
 }
 
 .scene-image {
@@ -122,6 +124,7 @@
     border-color: #2A2A38;
     transition-property: opacity;
     transition-duration: 0.3s;
+    margin-top: 3px; /* Clear horizontal split handle */
 }
 
 .narrative-scroll {
@@ -191,6 +194,9 @@
     flex-direction: column;
     row-gap: 10px;
     min-width: 150px;
+    margin-left: 6px; /* Clear vertical split handle */
+    padding-left: 2px;
+    margin-right: 4px;
 }
 
 /* Section headers */
@@ -216,34 +222,114 @@
 }
 
 /* ── Exits Compass ────────────────────────────────────────────────────────── */
-.exits-container {
+.compass-rose {
+    background-color: #16161E;
+    border-radius: 50%;
+    border-width: 1px;
+    border-color: #2E2E3E;
+    width: 120px;
+    height: 120px;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    margin-bottom: 12px;
+}
+
+.compass-row {
+    flex-direction: row;
+    column-gap: 4px;
+    margin: 2px 0;
+}
+
+.compass-rose-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    background-color: #121216;
+    border-width: 1px;
+    font-size: 13px;
+    -unity-font-style: bold;
+    padding: 0;
+    -unity-text-align: middle-center;
+}
+
+.compass-center {
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+}
+
+.compass-center-dot {
+    font-size: 14px;
+    color: #4AABFF;
+    -unity-font-style: bold;
+}
+
+.compass-auxiliary {
     flex-direction: row;
     flex-wrap: wrap;
     column-gap: 6px;
     row-gap: 6px;
+    justify-content: center;
+    margin-top: 4px;
 }
 
-.compass-btn {
-    background-color: #1E1E28;
+.compass-aux-btn {
+    background-color: #121216;
     border-radius: 6px;
     border-width: 1px;
-    border-color: #4AABFF;
-    color: #4AABFF;
-    font-size: 13px;
-    padding: 6px 14px;
+    font-size: 11px;
+    padding: 6px 12px;
     -unity-font-style: bold;
-    transition-property: background-color, color;
-    transition-duration: 0.15s;
 }
 
-.compass-btn:hover {
+/* Dimmed / Inactive exits */
+.compass-btn--inactive {
+    opacity: 0.12;
+    border-color: #222228;
+    color: #444450;
+    background-color: #0E0E12;
+}
+
+/* Active Exits (Cardinal directions / blue glow) */
+.compass-rose-btn.compass-btn--active {
+    border-color: #4AABFF;
+    color: #4AABFF;
+    background-color: #1E1E28;
+    opacity: 1.0;
+}
+
+.compass-rose-btn.compass-btn--active:hover {
     background-color: #4AABFF;
     color: #0D0D0F;
 }
 
-.compass-btn:active {
-    background-color: #2A88CC;
-    color: #FFFFFF;
+/* Active Vertical portals (amber gold glow) */
+.compass-aux-btn.compass-btn--active {
+    border-color: #FFB84A;
+    color: #FFB84A;
+    background-color: #1E1E28;
+    opacity: 1.0;
+}
+
+.compass-aux-btn.compass-btn--active:hover {
+    background-color: #FFB84A;
+    color: #0D0D0F;
+}
+
+/* Active Spatial portals (pink glow) */
+.compass-aux-btn.compass-btn--active {
+    border-color: #FF6B9D;
+    color: #FF6B9D;
+    background-color: #1E1E28;
+    opacity: 1.0;
+}
+
+.compass-aux-btn.compass-btn--active:hover {
+    background-color: #FF6B9D;
+    color: #0D0D0F;
 }
 
 /* ── Entity Lists ─────────────────────────────────────────────────────────── */
@@ -310,8 +396,9 @@
     border-top-width: 1px;
     border-top-color: #2A2A38;
     padding: 8px 14px;
-    min-height: 80px;
+    min-height: 115px; /* Sized to fit inventory scroll and info */
     column-gap: 14px;
+    margin-top: 4px; /* Clear vertical split handle */
 }
 
 .player-portrait {
@@ -367,7 +454,38 @@
 .inventory-list {
     flex-direction: row;
     align-items: center;
-    column-gap: 6px;
+    column-gap: 8px;
+    padding: 4px 0;
+}
+
+/* Horizontal pill-style badges for inventory items */
+.inventory-list .entity-row {
+    flex-direction: row;
+    align-items: center;
+    background-color: #1E1E28;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: #3A3A4A;
+    padding: 5px 14px;
+    flex-shrink: 0;
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.inventory-list .entity-row:hover {
+    background-color: #2E2E3E;
+    border-color: #FFB84A; /* Amber glow on hover */
+}
+
+/* Hide action button in inventory pills since tapping the entire pill interacts */
+.inventory-list .entity-row .entity-action-btn {
+    display: none;
+}
+
+.inventory-list .entity-row .entity-name {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #E0E0E8;
 }
 
 /* ── Interaction Popup Menu ────────────────────────────────────────────────── */
@@ -583,5 +701,55 @@
 
 .unity-two-pane-split-view__handle:hover {
     background-color: #4AABFF;
+}
+
+/* ── Game Over & Player Input Modal Styling ───────────────────────────────── */
+.game-over-message,
+.prompt-input-message {
+    font-size: 13px;
+    color: #888899;
+    white-space: normal;
+    margin: 4px 0 8px 0;
+    -unity-text-align: middle-center;
+}
+
+.prompt-choice-btn {
+    background-color: #1E1E28;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 12px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    -unity-text-align: middle-left;
+}
+
+.prompt-choice-btn:hover {
+    background-color: #2A2A38;
+    border-color: #FFB84A;
+    color: #FFB84A;
+}
+
+/* ── Nested Container Items Styling ────────────────────────────────────────── */
+.entity-row--nested {
+    padding-left: 20px;
+    background-color: #121217;
+    border-radius: 4px;
+    margin-left: 10px;
+    margin-bottom: 2px;
+}
+
+.entity-nested-arrow {
+    font-size: 14px;
+    color: #FFB84A;
+    margin-right: 4px;
+    -unity-font-style: bold;
+}
+
+.entity-name--nested {
+    font-size: 11px;
+    color: #A0A0B0;
+    -unity-font-style: italic;
 }
 

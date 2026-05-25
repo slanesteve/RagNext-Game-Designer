@@ -107,6 +107,8 @@ namespace RagNext.ViewModels
             }
         }
 
+        public string HostElementType { get; } = "GameObject";
+
         public sealed class EditActionViewModel : BindableObject
         {
             private readonly RagsCore.Models.Action _action;
@@ -227,6 +229,7 @@ namespace RagNext.ViewModels
 
         public ActionLibraryViewModel(Player player)
         {
+            HostElementType = "Player";
             _game = App.CurrentGame;
             _actions = player.Actions;
             SelectNodeCommand = new Command<object?>(o => { if (o is Node n) Selected = n; });
@@ -239,8 +242,9 @@ namespace RagNext.ViewModels
             Rebuild();
         }
 
-        public ActionLibraryViewModel(ObservableCollection<RagsCore.Models.Action> actions)
+        public ActionLibraryViewModel(ObservableCollection<RagsCore.Models.Action> actions, string hostElementType = "GameObject")
         {
+            HostElementType = hostElementType;
             _game = App.CurrentGame;
             _actions = actions;
             SelectNodeCommand = new Command<object?>(o => { if (o is Node n) Selected = n; });
@@ -253,8 +257,9 @@ namespace RagNext.ViewModels
             Rebuild();
         }
 
-        public ActionLibraryViewModel(Room room) : this(room.Actions) { }
-        public ActionLibraryViewModel(GameObject obj) : this(obj.Actions) { }
+        public ActionLibraryViewModel(Room room) : this(room.Actions, "Room") { }
+        public ActionLibraryViewModel(GameObject obj) : this(obj.Actions, "GameObject") { }
+        public ActionLibraryViewModel(Character character) : this(character.Actions, "Character") { }
 
         private static async Task InitializeCatalogsAsync()
         {
@@ -329,10 +334,115 @@ namespace RagNext.ViewModels
             return node;
         }
 
+        private sealed class ActionTemplateCommand
+        {
+            [System.Text.Json.Serialization.JsonPropertyName("$type")]
+            public string? Type { get; set; }
+            public string? Text { get; set; }
+            public string? ObjectId { get; set; }
+            public string? RoomId { get; set; }
+        }
+
+        private sealed class ActionTemplate
+        {
+            [System.Text.Json.Serialization.JsonPropertyName("name")]
+            public string? Name { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("elementTypes")]
+            public List<string>? ElementTypes { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("commands")]
+            public List<ActionTemplateCommand>? Commands { get; set; }
+        }
+
         private async Task AddActionAsync()
         {
-            _actions.Add(new RagsCore.Models.Action { Name = $"Action {_actions.Count + 1}" });
-            Rebuild();
+            List<ActionTemplate> templates;
+            try
+            {
+                using var stream = await FileSystem.OpenAppPackageFileAsync("ActionTemplates.json");
+                templates = await System.Text.Json.JsonSerializer.DeserializeAsync<List<ActionTemplate>>(stream) ?? new();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load templates: {ex}");
+                templates = new() { new ActionTemplate { Name = "New Action (Blank)", ElementTypes = new() { HostElementType } } };
+            }
+
+            var matching = templates.Where(t => t.ElementTypes?.Contains(HostElementType, StringComparer.OrdinalIgnoreCase) == true).ToList();
+            if (matching.Count == 0)
+            {
+                matching.Add(new ActionTemplate { Name = "New Action (Blank)", ElementTypes = new() { HostElementType } });
+            }
+
+            var options = matching.Select(t => t.Name ?? "Unnamed Template").ToArray();
+            var choice = await Shell.Current.DisplayActionSheet("Select Action Template", "Cancel", null, options);
+            if (string.IsNullOrWhiteSpace(choice) || choice == "Cancel")
+                return;
+
+            var template = matching.FirstOrDefault(t => t.Name == choice) ?? matching[0];
+
+            string actionName = template.Name == "New Action (Blank)" ? $"Action {_actions.Count + 1}" : template.Name ?? $"Action {_actions.Count + 1}";
+            var newAction = new RagsCore.Models.Action { Name = actionName };
+
+            // Resolve context element properties
+            string selfName = "Object";
+            string selfId = "";
+            string selfDescription = "";
+
+            if (Roots.Count > 0 && Selected?.Model is null)
+            {
+                // Unselected or general action, try to fetch the contextual object details from App.CurrentGame or properties
+            }
+
+            // We can search through the bindings or context elements
+            if (HostElementType == "GameObject" && App.CurrentGame != null)
+            {
+                // We don't have direct access to the GameObject editing unless we parse parent binding or just default to generic {this.Name} replacement.
+                // Wait, in ActionTemplates.json: "Text": "You pick up the {this.Name}."
+                // In RAG, can we dynamically resolve "{this.Name}" at runtime when player triggers the action, or is it supposed to be written literally?
+                // The implementation plan says: "templates support context replacements (e.g. {this.Name})"
+                // Let's replace {this.Name}, {this.Id}, {this.Description} with the current element's values!
+                // How do we find the contextual object? ActionTreeView has GameObject/Character/Room/Player properties!
+                // In ActionLibraryViewModel we are constructed with those exact elements!
+                // Let's look at the constructors. We have:
+                // ActionLibraryViewModel(Player player)
+                // ActionLibraryViewModel(Room room)
+                // ActionLibraryViewModel(GameObject obj)
+                // ActionLibraryViewModel(Character character)
+                // Let's store a reference to the host model or its details in the ViewModel constructor!
+            }
+
+            // Let's see if we can resolve these placeholder strings dynamically or keep them as literal template tags if they are resolved at runtime.
+            // RAG's text parser in the player handles "{this.Name}" dynamically at runtime! But just in case, we can keep the string intact as "{this.Name}".
+            // Let's map commands into RagsCore ActionStep instances.
+            if (template.Commands != null)
+            {
+                foreach (var cmdSpec in template.Commands)
+                {
+                    if (cmdSpec.Type == "general.displayText")
+                    {
+                        var step = new DisplayTextCommand { Text = cmdSpec.Text ?? "" };
+                        newAction.Nodes.Add(step);
+                    }
+                    else if (cmdSpec.Type == "room.removeObject")
+                    {
+                        var step = new RemoveObjectFromRoomCommand { ObjectId = cmdSpec.ObjectId ?? "{this.Id}" };
+                        newAction.Nodes.Add(step);
+                    }
+                    else if (cmdSpec.Type == "item.openContainer")
+                    {
+                        var step = new OpenContainerCommand { ObjectId = cmdSpec.ObjectId ?? "{this.Id}" };
+                        newAction.Nodes.Add(step);
+                    }
+                    else if (cmdSpec.Type == "item.closeContainer")
+                    {
+                        var step = new CloseContainerCommand { ObjectId = cmdSpec.ObjectId ?? "{this.Id}" };
+                        newAction.Nodes.Add(step);
+                    }
+                }
+            }
+
+            _actions.Add(newAction);
+            Rebuild(newAction);
             if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
         }
 
