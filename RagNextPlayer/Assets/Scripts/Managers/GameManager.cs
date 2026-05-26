@@ -120,9 +120,15 @@ namespace RagNextPlayer.Managers
 
                 // 2. Update state
                 CurrentRoom = room;
-                ActiveGame!.Variables
-                    .Find(v => v.Name == "player.currentRoomId")
-                    .Let(v => v!.Value = roomId);
+                var roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                if (roomVar is null)
+                {
+                    ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = roomId });
+                }
+                else
+                {
+                    roomVar.Value = roomId;
+                }
 
                 // 3. Notify UI
                 OnRoomEntered?.Invoke(room);
@@ -224,9 +230,15 @@ namespace RagNextPlayer.Managers
                 // Ensure room variable matches CurrentRoom before saving
                 if (CurrentRoom is not null)
                 {
-                    var roomVar = ActiveGame.Variables.Find(v => v.Name == "player.currentRoomId");
-                    if (roomVar is not null)
+                    var roomVar = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                    if (roomVar is null)
+                    {
+                        ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = CurrentRoom.Id });
+                    }
+                    else
+                    {
                         roomVar.Value = CurrentRoom.Id;
+                    }
                 }
 
                 var path = GetSaveFilePath(slot);
@@ -260,7 +272,12 @@ namespace RagNextPlayer.Managers
                     OnGameLoaded?.Invoke(ActiveGame);
 
                     // Find and enter the current room
-                    var roomIdVar = ActiveGame.Variables.Find(v => v.Name == "player.currentRoomId")?.Value;
+                    var roomIdVar = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
+                    if (roomIdVar is null)
+                    {
+                        // Fallback for old save files created before the fix
+                        roomIdVar = ActiveGame.Player.StartingRoomId ?? (ActiveGame.Rooms.Count > 0 ? ActiveGame.Rooms[0].Id : null);
+                    }
                     if (roomIdVar is not null)
                     {
                         await TransitionToRoomAsync(roomIdVar);

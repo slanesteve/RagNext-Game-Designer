@@ -918,9 +918,109 @@ namespace RagNextPlayer.Managers
         private void SaveGameSlot(int slot)
         {
             if (GameManager.Instance is null) return;
+            if (GameManager.Instance.HasSaveFile(slot))
+            {
+                ShowOverwriteConfirmation(slot);
+            }
+            else
+            {
+                PerformSave(slot);
+            }
+        }
+
+        private void ShowOverwriteConfirmation(int slot)
+        {
+            // Create full-screen overlay to block input
+            var overlay = new VisualElement();
+            overlay.name = "overwrite-confirm-overlay";
+            overlay.style.position = Position.Absolute;
+            overlay.style.left = 0;
+            overlay.style.top = 0;
+            overlay.style.width = new Length(100, LengthUnit.Percent);
+            overlay.style.height = new Length(100, LengthUnit.Percent);
+            overlay.style.backgroundColor = new Color(0f, 0f, 0f, 0.75f);
+            overlay.style.alignItems = Align.Center;
+            overlay.style.justifyContent = Justify.Center;
+
+            // Dialog container
+            var dialog = new VisualElement();
+            dialog.style.backgroundColor = new Color(0.12f, 0.12f, 0.14f, 0.95f);
+            dialog.style.borderWidth = 1;
+            dialog.style.borderColor = new Color(1f, 1f, 1f, 0.1f);
+            dialog.style.borderRadius = 12;
+            dialog.style.paddingLeft = 24;
+            dialog.style.paddingRight = 24;
+            dialog.style.paddingTop = 24;
+            dialog.style.paddingBottom = 24;
+            dialog.style.width = 400;
+
+            // Title
+            var title = new Label("Overwrite Save?");
+            title.style.fontSize = 18;
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            title.style.color = Color.white;
+            title.style.marginBottom = 12;
+            dialog.Add(title);
+
+            // Message
+            var message = new Label($"Slot {slot} already contains a saved game. Are you sure you want to overwrite it?");
+            message.style.fontSize = 14;
+            message.style.color = new Color(0.7f, 0.7f, 0.75f);
+            message.style.whiteSpace = WhiteSpace.Normal;
+            message.style.marginBottom = 24;
+            dialog.Add(message);
+
+            // Buttons Container
+            var buttonRow = new VisualElement();
+            buttonRow.style.flexDirection = FlexDirection.Row;
+            buttonRow.style.justifyContent = Justify.End;
+
+            // Cancel Button
+            var cancelBtn = new Button(() => {
+                _root.Remove(overlay);
+            }) { text = "Cancel" };
+            cancelBtn.style.backgroundColor = new Color(0.2f, 0.2f, 0.22f);
+            cancelBtn.style.color = Color.white;
+            cancelBtn.style.borderWidth = 0;
+            cancelBtn.style.borderRadius = 6;
+            cancelBtn.style.paddingLeft = 16;
+            cancelBtn.style.paddingRight = 16;
+            cancelBtn.style.paddingTop = 8;
+            cancelBtn.style.paddingBottom = 8;
+            cancelBtn.style.marginRight = 12;
+            cancelBtn.style.fontSize = 13;
+            buttonRow.Add(cancelBtn);
+
+            // Overwrite Button
+            var overwriteBtn = new Button(() => {
+                _root.Remove(overlay);
+                PerformSave(slot);
+            }) { text = "Yes, Overwrite" };
+            overwriteBtn.style.backgroundColor = new Color(0.35f, 0.2f, 0.8f); // premium purple
+            overwriteBtn.style.color = Color.white;
+            overwriteBtn.style.borderWidth = 0;
+            overwriteBtn.style.borderRadius = 6;
+            overwriteBtn.style.paddingLeft = 16;
+            overwriteBtn.style.paddingRight = 16;
+            overwriteBtn.style.paddingTop = 8;
+            overwriteBtn.style.paddingBottom = 8;
+            overwriteBtn.style.fontSize = 13;
+            buttonRow.Add(overwriteBtn);
+
+            dialog.Add(buttonRow);
+            overlay.Add(dialog);
+
+            _root.Add(overlay);
+            overlay.BringToFront();
+        }
+
+        private void PerformSave(int slot)
+        {
+            if (GameManager.Instance is null) return;
             GameManager.Instance.SaveGame(slot);
             AppendNarrativeText($"Game saved successfully to Slot {slot}.");
             CloseSettingsMenu();
+            RefreshSaveLoadSlots();
         }
 
         private async void LoadGameSlot(int slot)

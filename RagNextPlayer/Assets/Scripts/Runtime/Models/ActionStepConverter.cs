@@ -90,7 +90,12 @@ namespace RagNextPlayer.Runtime.Models
             };
 
             using var subReader = jo.CreateReader();
-            return serializer.Deserialize(subReader, targetType);
+            var step = (ActionStepData?)serializer.Deserialize(subReader, targetType);
+            if (step is not null)
+            {
+                step.Type = typeName;
+            }
+            return step;
         }
     }
 
