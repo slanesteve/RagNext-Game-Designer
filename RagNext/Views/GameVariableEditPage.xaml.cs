@@ -18,6 +18,7 @@ namespace RagNext.Views
         {
             InitializeComponent();
             _ai = MauiProgram.Services.GetService(typeof(IAIChatService)) as IAIChatService;
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
         }
 
         private async System.Threading.Tasks.Task SetVariableAsync(string? value)

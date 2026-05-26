@@ -40,5 +40,22 @@ namespace RagNext.Views.Popups
             IsCancelled = true;
             await base.CloseAsync();
         }
+
+        private async void OnAskAIClicked(object sender, EventArgs e)
+        {
+            if (sender is not Button btn) return;
+            var ai = MauiProgram.Services.GetService(typeof(RagNext.Services.IAIChatService)) as RagNext.Services.IAIChatService;
+            if (ai == null)
+            {
+                await Application.Current.MainPage.DisplayAlert("AI Helper", "AI service is not configured.", "OK");
+                return;
+            }
+
+            var parentPage = Application.Current?.Windows?[0]?.Page ?? Application.Current?.MainPage;
+            if (parentPage != null)
+            {
+                await RagNext.Services.AIAssistHelper.HandleAskAIAsync(parentPage, btn, PromptEditor, ai);
+            }
+        }
     }
 }

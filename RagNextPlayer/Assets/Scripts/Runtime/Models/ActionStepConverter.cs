@@ -85,6 +85,7 @@ namespace RagNextPlayer.Runtime.Models
                 "general.promptInput"    => typeof(PromptPlayerInputCommandData),
                 "general.openContainer"  => typeof(OpenContainerCommandData),
                 "general.closeContainer" => typeof(CloseContainerCommandData),
+                "general.callFunction"   => typeof(CallFunctionCommandData),
 
                 _ => throw new JsonSerializationException($"Unknown ActionStep $type: '{typeName}'")
             };

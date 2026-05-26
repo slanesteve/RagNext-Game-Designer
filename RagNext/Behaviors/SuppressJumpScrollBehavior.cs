@@ -144,16 +144,35 @@ namespace RagNext.Behaviors
             // Prevent sudden jump to top (region <= 50)
             if (!_suppress && _lastY > 50 && e.ScrollY <= 50)
             {
-                try
+                _suppress = true;
+                var targetY = _lastY;
+                _ = MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    _suppress = true;
-                    _ = MainThread.InvokeOnMainThreadAsync(async () =>
-                        await _scroll!.ScrollToAsync(0, _lastY, animated: false));
-                }
-                finally
-                {
-                    _suppress = false;
-                }
+                    try
+                    {
+                        // Pass 1: Quick restore after 150ms
+                        await Task.Delay(150);
+                        if (_scroll != null)
+                        {
+                            await _scroll.ScrollToAsync(0, targetY, animated: false);
+                        }
+
+                        // Pass 2: Safety restore after 400ms to catch slower layout settling
+                        await Task.Delay(250);
+                        if (_scroll != null)
+                        {
+                            await _scroll.ScrollToAsync(0, targetY, animated: false);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[SuppressJumpScroll] Delayed restoration failed: {ex.Message}");
+                    }
+                    finally
+                    {
+                        _suppress = false;
+                    }
+                });
                 return;
             }
 

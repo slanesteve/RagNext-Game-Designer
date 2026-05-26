@@ -167,6 +167,66 @@ namespace RagNext.Views.Controls
             await RagNext.Services.AIAssistHelper.HandleAskAIAsync(parentPage, btn, btn.CommandParameter, ai);
         }
 
+        private void OnAddCustomOptionClicked(object? sender, EventArgs e)
+        {
+            if (_isBindingContextChanging) return;
+            if (Vm == null) return;
+
+            if (sender is Button btn)
+            {
+                var input = Vm.EditableInputs.FirstOrDefault(x => x.Label == "CustomOptions");
+                if (input == null) return;
+
+                Entry? entry = null;
+                if (btn.Parent is Grid grid)
+                {
+                    entry = grid.Children.OfType<Entry>().FirstOrDefault();
+                }
+
+                if (entry != null)
+                {
+                    var text = entry.Text?.Trim();
+                    if (string.IsNullOrEmpty(text)) return;
+
+                    var currentVal = input.Value?.ToString() ?? string.Empty;
+                    var items = currentVal.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                          .Select(x => x.Trim())
+                                          .ToList();
+
+                    if (!items.Contains(text))
+                    {
+                        items.Add(text);
+                        var newVal = string.Join(",", items);
+                        input.Value = newVal; // Automatically triggers OnInputPropertyChanged -> SetModelValue -> SaveAsync()
+                        entry.Text = string.Empty;
+                    }
+                }
+            }
+        }
+
+        private void OnDeleteCustomOptionClicked(object? sender, EventArgs e)
+        {
+            if (_isBindingContextChanging) return;
+            if (Vm == null) return;
+
+            if (sender is Button btn && btn.CommandParameter is string itemToDelete)
+            {
+                var input = Vm.EditableInputs.FirstOrDefault(x => x.Label == "CustomOptions");
+                if (input == null) return;
+
+                var currentVal = input.Value?.ToString() ?? string.Empty;
+                var items = currentVal.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                      .Select(x => x.Trim())
+                                      .ToList();
+
+                if (items.Remove(itemToDelete))
+                {
+                    var newVal = string.Join(",", items);
+                    input.Value = newVal; // Automatically triggers OnInputPropertyChanged -> SetModelValue -> SaveAsync()
+                }
+            }
+        }
+
         public EditStepView()
         {
             InitializeComponent();

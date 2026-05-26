@@ -38,6 +38,8 @@ namespace RagNext
             Routing.RegisterRoute("GameVariableEdit", typeof(RagNext.Views.GameVariableEditPage));
             Routing.RegisterRoute("CharacterEdit", typeof(RagNext.Views.CharacterEditPage));
             Routing.RegisterRoute("PlayerEdit", typeof(RagNext.Views.PlayerEditPage));
+            Routing.RegisterRoute("GlobalFunctionEdit", typeof(RagNext.Views.GlobalFunctionEditPage));
+            Routing.RegisterRoute("GameTimerEdit", typeof(RagNext.Views.GameTimerEditPage));
             Routing.RegisterRoute(nameof(AISettingsPage), typeof(AISettingsPage));
         }
 

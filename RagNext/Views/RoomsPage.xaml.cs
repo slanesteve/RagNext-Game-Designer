@@ -12,6 +12,7 @@ namespace RagNext.Views
         {
             InitializeComponent();
             BindingContext = vm;
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
         }
 
         private async void OnRoomSelected(object sender, SelectionChangedEventArgs e)

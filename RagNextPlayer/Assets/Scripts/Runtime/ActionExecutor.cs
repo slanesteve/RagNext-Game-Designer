@@ -62,52 +62,123 @@ namespace RagNextPlayer.Runtime
     ///   - Exceptions are caught per-node so a single bad command never aborts
     ///     the rest of the action sequence.
     /// </summary>
+    public class ActionRunner
+    {
+        private Stack<IEnumerator<ActionStepData>> _scopes = new();
+        private GameExecutionContext _ctx;
+        private IGameEventSink? _sink;
+        
+        public bool IsSuspended { get; private set; }
+        
+        public ActionRunner(ActionData action, GameExecutionContext ctx, IGameEventSink? sink)
+        {
+            _ctx = ctx;
+            _sink = sink;
+            _scopes.Push(action.Nodes.GetEnumerator());
+        }
+        
+        public void Resume()
+        {
+            IsSuspended = false;
+            _ctx.SetVariable("system.prompt.active", "false");
+            ExecuteNext();
+        }
+        
+        public void ExecuteNext()
+        {
+            while (_scopes.Count > 0 && !IsSuspended)
+            {
+                var currentScope = _scopes.Peek();
+                if (currentScope.MoveNext())
+                {
+                    var node = currentScope.Current;
+                    if (node is null) continue;
+                    
+                    if (node is CommandData cmd)
+                    {
+                        try
+                        {
+                            if (cmd is CallFunctionCommandData callCmd)
+                            {
+                                var func = _ctx.Game.Functions.Find(f => f.Id == callCmd.FunctionId || string.Equals(f.Name, callCmd.FunctionId, System.StringComparison.OrdinalIgnoreCase));
+                                if (func != null && func.Nodes != null && func.Nodes.Count > 0)
+                                {
+                                    _scopes.Push(func.Nodes.GetEnumerator());
+                                }
+                            }
+                            else
+                            {
+                                ActionExecutor.ExecuteCommand(cmd, _ctx);
+                                _sink?.OnCommandExecuted(cmd, _ctx);
+                            }
+
+                            if (_ctx.GetVariable("system.prompt.active")?.Value == "true")
+                            {
+                                IsSuspended = true;
+                                break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"[ActionExecutor] Error executing {node.Type}: {ex.Message}");
+                        }
+                    }
+                    else if (node is ConditionData cond)
+                    {
+                        try
+                        {
+                            bool result = ActionExecutor.EvaluateCondition(cond, _ctx);
+                            _sink?.OnConditionEvaluated(cond, result, _ctx);
+                            
+                            var branch = result ? cond.TrueBranch : cond.FalseBranch;
+                            if (branch != null && branch.Count > 0)
+                            {
+                                _scopes.Push(branch.GetEnumerator());
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"[ActionExecutor] Error evaluating {node.Type}: {ex.Message}");
+                        }
+                    }
+                }
+                else
+                {
+                    currentScope.Dispose();
+                    _scopes.Pop();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Executes a game action (list of ActionSteps) recursively, propagating
+    /// results to the caller through IGameEventSink.
+    ///
+    /// Design principles (ported from MAUI ActionExecutor):
+    ///   - Model objects mutate state only — no Unity API calls inside Execute().
+    ///   - The sink (CommandEffectRouter) drives all UI/audio side-effects.
+    ///   - Conditions recurse fully: TrueBranch / FalseBranch can contain further
+    ///     commands or deeply-nested conditions with no depth limit.
+    ///   - Exceptions are caught per-node so a single bad command never aborts
+    ///     the rest of the action sequence.
+    /// </summary>
     public static class ActionExecutor
     {
+        public static ActionRunner? ActiveRunner { get; set; }
+
         public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null)
         {
             if (action is null || ctx is null) return;
-            foreach (var node in action.Nodes)
-                ExecuteNode(node, ctx, sink);
-        }
-
-        private static void ExecuteNode(ActionStepData node, GameExecutionContext ctx, IGameEventSink? sink)
-        {
-            if (node is null) return;
-
-            if (node is CommandData cmd)
-            {
-                try
-                {
-                    ExecuteCommand(cmd, ctx);
-                    sink?.OnCommandExecuted(cmd, ctx);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[ActionExecutor] Error executing {node.Type}: {ex.Message}");
-                }
-            }
-            else if (node is ConditionData cond)
-            {
-                try
-                {
-                    bool result = EvaluateCondition(cond, ctx);
-                    sink?.OnConditionEvaluated(cond, result, ctx);
-
-                    var branch = result ? cond.TrueBranch : cond.FalseBranch;
-                    foreach (var step in branch)
-                        ExecuteNode(step, ctx, sink);  // ← full recursion, unlimited depth
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[ActionExecutor] Error evaluating {node.Type}: {ex.Message}");
-                }
-            }
+            
+            var runner = new ActionRunner(action, ctx, sink);
+            ActiveRunner = runner;
+            runner.ExecuteNext();
         }
 
         // ── Command Dispatch ──────────────────────────────────────────────────
 
-        private static void ExecuteCommand(CommandData cmd, GameExecutionContext ctx)
+        internal static void ExecuteCommand(CommandData cmd, GameExecutionContext ctx)
         {
             switch (cmd)
             {
@@ -289,7 +360,7 @@ namespace RagNextPlayer.Runtime
 
         // ── Condition Dispatch ────────────────────────────────────────────────
 
-        private static bool EvaluateCondition(ConditionData cond, GameExecutionContext ctx)
+        internal static bool EvaluateCondition(ConditionData cond, GameExecutionContext ctx)
         {
             return cond switch
             {

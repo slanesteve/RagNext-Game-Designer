@@ -19,6 +19,15 @@ namespace RagNext.Views.Controls
             set => SetValue(TextProperty, value);
         }
 
+        public static readonly BindableProperty ShowToolbarProperty =
+            BindableProperty.Create(nameof(ShowToolbar), typeof(bool), typeof(SuggestiveEditor), false);
+
+        public bool ShowToolbar
+        {
+            get => (bool)GetValue(ShowToolbarProperty);
+            set => SetValue(ShowToolbarProperty, value);
+        }
+
         private int _bindingContextVersion = 0;
         private bool _isBindingContextChanging = false;
 
@@ -41,6 +50,7 @@ namespace RagNext.Views.Controls
                     {
                         MainEditor.Text = valStr;
                     }
+                    UpdateLivePreview(valStr);
                 }
                 finally
                 {
@@ -67,6 +77,7 @@ namespace RagNext.Views.Controls
                 {
                     se.MainEditor.Text = newText;
                 }
+                se.UpdateLivePreview(newText);
                 se.MainEditor.InvalidateMeasure();
                 se.InvalidateMeasure();
             }
@@ -128,6 +139,7 @@ namespace RagNext.Views.Controls
 
             // Keep Text property in sync
             Text = e.NewTextValue ?? string.Empty;
+            UpdateLivePreview(Text);
 
             // Forward text changed event
             TextChanged?.Invoke(this, e);
@@ -428,6 +440,333 @@ namespace RagNext.Views.Controls
                 parent = parent.Parent;
             }
             return null;
+        }
+
+        public void WrapSelection(string startTag, string endTag)
+        {
+            var text = MainEditor.Text ?? string.Empty;
+            var cursor = MainEditor.CursorPosition;
+            var selectionLength = MainEditor.SelectionLength;
+
+            if (selectionLength > 0 && cursor >= 0 && cursor + selectionLength <= text.Length)
+            {
+                var before = text.Substring(0, cursor);
+                var selected = text.Substring(cursor, selectionLength);
+                var after = text.Substring(cursor + selectionLength);
+
+                // Case A: Selected text is already wrapped in the tags (e.g., "<b>hello</b>")
+                if (selected.StartsWith(startTag) && selected.EndsWith(endTag))
+                {
+                    var unwrapped = selected.Substring(startTag.Length, selected.Length - startTag.Length - endTag.Length);
+                    MainEditor.Text = before + unwrapped + after;
+                    MainEditor.CursorPosition = cursor;
+                    MainEditor.SelectionLength = unwrapped.Length;
+                }
+                // Case B: Selection is immediately bordered by the tags (e.g., "<b>" + "hello" + "</b>")
+                else if (before.EndsWith(startTag) && after.StartsWith(endTag))
+                {
+                    var newBefore = before.Substring(0, before.Length - startTag.Length);
+                    var newAfter = after.Substring(endTag.Length);
+                    MainEditor.Text = newBefore + selected + newAfter;
+                    MainEditor.CursorPosition = newBefore.Length;
+                    MainEditor.SelectionLength = selected.Length;
+                }
+                else
+                {
+                    // Not wrapped, so wrap it
+                    MainEditor.Text = before + startTag + selected + endTag + after;
+                    MainEditor.CursorPosition = cursor + startTag.Length;
+                    MainEditor.SelectionLength = selected.Length;
+                }
+            }
+            else
+            {
+                if (cursor < 0 || cursor > text.Length)
+                {
+                    cursor = text.Length;
+                }
+                var before = text.Substring(0, cursor);
+                var after = text.Substring(cursor);
+
+                // If cursor is immediately between the tags, remove them (toggle empty)
+                if (before.EndsWith(startTag) && after.StartsWith(endTag))
+                {
+                    var newBefore = before.Substring(0, before.Length - startTag.Length);
+                    var newAfter = after.Substring(endTag.Length);
+                    MainEditor.Text = newBefore + newAfter;
+                    MainEditor.CursorPosition = newBefore.Length;
+                }
+                else
+                {
+                    MainEditor.Text = before + startTag + endTag + after;
+                    MainEditor.CursorPosition = cursor + startTag.Length;
+                }
+            }
+            MainEditor.Focus();
+        }
+
+        private void OnBoldClicked(object? sender, EventArgs e) => WrapSelection("<b>", "</b>");
+        private void OnItalicClicked(object? sender, EventArgs e) => WrapSelection("<i>", "</i>");
+        private void OnUnderlineClicked(object? sender, EventArgs e) => WrapSelection("<u>", "</u>");
+
+        private async void OnColorClicked(object? sender, EventArgs e)
+        {
+            var colors = new[] { "Red (#FF0000)", "Green (#00FF00)", "Blue (#0000FF)", "Yellow (#FFFF00)", "Orange (#FFA500)", "Purple (#800080)", "Custom..." };
+            var choice = await Application.Current?.MainPage?.DisplayActionSheet("Select Text Color", "Cancel", null, colors);
+            if (string.IsNullOrEmpty(choice) || choice == "Cancel") return;
+
+            string hex = "#FFFFFF";
+            if (choice.Contains("#"))
+            {
+                int idx = choice.IndexOf('#');
+                int closeIdx = choice.IndexOf(')');
+                if (idx != -1 && closeIdx != -1)
+                {
+                    hex = choice.Substring(idx, closeIdx - idx);
+                }
+                else
+                {
+                    hex = choice.Substring(idx);
+                }
+            }
+            else if (choice == "Custom...")
+            {
+                var customHex = await Application.Current?.MainPage?.DisplayPromptAsync("Custom Color", "Enter Hex Color (e.g. #FF5500):", "OK", "Cancel", "#FF5500");
+                if (string.IsNullOrWhiteSpace(customHex)) return;
+                hex = customHex.Trim();
+                if (!hex.StartsWith("#")) hex = "#" + hex;
+            }
+
+            WrapSelection($"<color={hex}>", "</color>");
+        }
+
+        private async void OnHighlightClicked(object? sender, EventArgs e)
+        {
+            var colors = new[] { "Yellow (#FFFF00)", "Green (#00FF00)", "Cyan (#00FFFF)", "Magenta (#FF00FF)", "Red (#FF0000)", "Custom..." };
+            var choice = await Application.Current?.MainPage?.DisplayActionSheet("Select Highlight Color", "Cancel", null, colors);
+            if (string.IsNullOrEmpty(choice) || choice == "Cancel") return;
+
+            string hex = "#FFFF00";
+            if (choice.Contains("#"))
+            {
+                int idx = choice.IndexOf('#');
+                int closeIdx = choice.IndexOf(')');
+                if (idx != -1 && closeIdx != -1)
+                {
+                    hex = choice.Substring(idx, closeIdx - idx);
+                }
+                else
+                {
+                    hex = choice.Substring(idx);
+                }
+            }
+            else if (choice == "Custom...")
+            {
+                var customHex = await Application.Current?.MainPage?.DisplayPromptAsync("Custom Highlight", "Enter Hex Color (e.g. #FFFF00):", "OK", "Cancel", "#FFFF00");
+                if (string.IsNullOrWhiteSpace(customHex)) return;
+                hex = customHex.Trim();
+                if (!hex.StartsWith("#")) hex = "#" + hex;
+            }
+
+            if (hex.Length == 7)
+            {
+                hex += "55"; // Append 33% alpha transparency so text shines through TMPro mark highlights
+            }
+
+            WrapSelection($"<mark={hex}>", "</mark>");
+        }
+
+        private void OnClearFormattingClicked(object? sender, EventArgs e)
+        {
+            var text = MainEditor.Text ?? string.Empty;
+            var cursor = MainEditor.CursorPosition;
+            var selectionLength = MainEditor.SelectionLength;
+
+            if (selectionLength > 0 && cursor >= 0 && cursor + selectionLength <= text.Length)
+            {
+                var before = text.Substring(0, cursor);
+                var selected = text.Substring(cursor, selectionLength);
+                var after = text.Substring(cursor + selectionLength);
+
+                // Strip all tags inside the selection
+                var cleaned = System.Text.RegularExpressions.Regex.Replace(selected, @"<[^>]+>", "");
+
+                // Recursively strip any bordering tags (open/close tag pairs that immediately touch the selection boundaries)
+                while (true)
+                {
+                    var openBeforeMatch = System.Text.RegularExpressions.Regex.Match(before, @"<[^>]+>$");
+                    var closeAfterMatch = System.Text.RegularExpressions.Regex.Match(after, @"^</[^>]+>");
+                    if (openBeforeMatch.Success && closeAfterMatch.Success)
+                    {
+                        before = before.Substring(0, before.Length - openBeforeMatch.Length);
+                        after = after.Substring(closeAfterMatch.Length);
+                    }
+                    else
+                    {
+                        // Check for matching open/open or close/close border tags to strip nesting cleanly
+                        var borderBefore = System.Text.RegularExpressions.Regex.Match(before, @"<[^>]+>$");
+                        var borderAfter = System.Text.RegularExpressions.Regex.Match(after, @"^<[^>]+>");
+                        if (borderBefore.Success && borderAfter.Success)
+                        {
+                            before = before.Substring(0, before.Length - borderBefore.Length);
+                            after = after.Substring(borderAfter.Length);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                MainEditor.Text = before + cleaned + after;
+                MainEditor.CursorPosition = before.Length;
+                MainEditor.SelectionLength = cleaned.Length;
+            }
+            else
+            {
+                // If no selection, clean the entire field
+                var cleaned = System.Text.RegularExpressions.Regex.Replace(text, @"<[^>]+>", "");
+                MainEditor.Text = cleaned;
+                MainEditor.CursorPosition = Math.Min(cursor, cleaned.Length);
+            }
+            MainEditor.Focus();
+        }
+
+        private Color ParseHexColor(string hex)
+        {
+            if (string.IsNullOrWhiteSpace(hex)) return null;
+            hex = hex.Trim().Trim('"', '\'');
+            if (!hex.StartsWith("#"))
+            {
+                hex = "#" + hex;
+            }
+
+            try
+            {
+                if (hex.Length == 4) // #RGB
+                {
+                    char r = hex[1], g = hex[2], b = hex[3];
+                    hex = $"#{r}{r}{g}{g}{b}{b}";
+                }
+                else if (hex.Length == 5) // #RGBA
+                {
+                    char r = hex[1], g = hex[2], b = hex[3], a = hex[4];
+                    hex = $"#{a}{a}{r}{r}{g}{g}{b}{b}";
+                }
+                else if (hex.Length == 9) // #RRGGBBAA (Unity standard)
+                {
+                    // Unity is RGBA, MAUI is ARGB. Let's convert RRGGBBAA -> AARRGGBB
+                    string rr = hex.Substring(1, 2);
+                    string gg = hex.Substring(3, 2);
+                    string bb = hex.Substring(5, 2);
+                    string aa = hex.Substring(7, 2);
+                    hex = $"#{aa}{rr}{gg}{bb}";
+                }
+                return Color.FromArgb(hex);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private FormattedString ParseUnityTagsToFormattedString(string text)
+        {
+            var formattedString = new FormattedString();
+            if (string.IsNullOrEmpty(text)) return formattedString;
+
+            // Simple tag parsing using Regex. Split string into tags <...> and text segments
+            var matches = System.Text.RegularExpressions.Regex.Matches(text, @"(<[^>]+>|[^<]+)");
+
+            bool isBold = false;
+            bool isItalic = false;
+            bool isUnderline = false;
+            Color textColor = null;
+            Color bgColor = null;
+
+            // Stacks to track color and background nesting
+            var colorStack = new System.Collections.Generic.Stack<Color>();
+            var bgStack = new System.Collections.Generic.Stack<Color>();
+
+            foreach (System.Text.RegularExpressions.Match match in matches)
+            {
+                var token = match.Value;
+                if (token.StartsWith("<") && token.EndsWith(">"))
+                {
+                    var tag = token.ToLower().Trim('<', '>');
+                    if (tag == "b") isBold = true;
+                    else if (tag == "/b") isBold = false;
+                    else if (tag == "i") isItalic = true;
+                    else if (tag == "/i") isItalic = false;
+                    else if (tag == "u") isUnderline = true;
+                    else if (tag == "/u") isUnderline = false;
+                    else if (tag.StartsWith("color="))
+                    {
+                        var val = tag.Substring("color=".Length);
+                        var parsedColor = ParseHexColor(val);
+                        if (parsedColor != null)
+                        {
+                            colorStack.Push(parsedColor);
+                            textColor = parsedColor;
+                        }
+                    }
+                    else if (tag == "/color")
+                    {
+                        if (colorStack.Count > 0) colorStack.Pop();
+                        textColor = colorStack.Count > 0 ? colorStack.Peek() : null;
+                    }
+                    else if (tag.StartsWith("mark="))
+                    {
+                        var val = tag.Substring("mark=".Length);
+                        // If Unity mark hex does not have alpha (length 7: #RRGGBB), append '55' (33% opacity)
+                        // so that it renders beautifully translucent and doesn't obscure the text.
+                        if (val.StartsWith("#") && val.Length == 7)
+                        {
+                            val += "55";
+                        }
+                        var parsedColor = ParseHexColor(val);
+                        if (parsedColor != null)
+                        {
+                            bgStack.Push(parsedColor);
+                            bgColor = parsedColor;
+                        }
+                    }
+                    else if (tag == "/mark")
+                    {
+                        if (bgStack.Count > 0) bgStack.Pop();
+                        bgColor = bgStack.Count > 0 ? bgStack.Peek() : null;
+                    }
+                }
+                else
+                {
+                    // Text segment
+                    var span = new Span
+                    {
+                        Text = token,
+                        FontAttributes = (isBold ? FontAttributes.Bold : FontAttributes.None) | (isItalic ? FontAttributes.Italic : FontAttributes.None),
+                        TextDecorations = isUnderline ? TextDecorations.Underline : TextDecorations.None
+                    };
+                    if (textColor != null)
+                    {
+                        span.TextColor = textColor;
+                    }
+                    if (bgColor != null)
+                    {
+                        span.BackgroundColor = bgColor;
+                    }
+                    formattedString.Spans.Add(span);
+                }
+            }
+
+            return formattedString;
+        }
+
+        public void UpdateLivePreview(string text)
+        {
+            if (PreviewLabel != null)
+            {
+                PreviewLabel.FormattedText = ParseUnityTagsToFormattedString(text);
+            }
         }
     }
 }

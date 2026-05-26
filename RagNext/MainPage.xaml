@@ -5,35 +5,80 @@
              xmlns:controls="clr-namespace:RagNext.Views.Controls"
              x:Class="RagNext.MainPage"
              Title="Game Editor">
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="File" Clicked="OnFileMenuClicked" />
-        <ToolbarItem Text="Edit" Clicked="OnEditMenuClicked" />
-        <ToolbarItem Text="Settings" Clicked="OnSettingsMenuClicked" />
-        <ToolbarItem Text="Help" Clicked="OnHelpMenuClicked" />
-    </ContentPage.ToolbarItems>
+
 
     <Grid>
         <controls:RightPaneLayout>
             <controls:RightPaneLayout.Main>
                 <ScrollView>
                     <VerticalStackLayout Padding="30,20" Spacing="16">
-                        <Image Source="dotnet_bot.png" HeightRequest="140" Aspect="AspectFit"
-                               SemanticProperties.Description="dot net bot in a hovercraft number nine" />
-                        <Label Text="Edit Game" FontSize="20" HorizontalOptions="Center" />
+                        <!-- Prestigious RagNext Branding -->
+                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center" Margin="0,10,0,20">
+                            <Border StrokeShape="RoundRectangle 24" StrokeThickness="0" WidthRequest="90" HeightRequest="90">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#8E2DE2" Offset="0.0" />
+                                        <GradientStop Color="#4A00E0" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Shadow>
+                                    <Shadow Radius="10" Opacity="0.4" Brush="#4A00E0" Offset="0,4" />
+                                </Border.Shadow>
+                                <Label Text="RN" FontSize="38" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <Label Text="RAGNEXT" FontSize="28" FontAttributes="Bold" CharacterSpacing="3" TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" HorizontalOptions="Center" Margin="0,8,0,0" />
+                            <Label Text="PREMIUM STORY ENGINE &amp; RPG DESIGNER" FontSize="11" FontAttributes="Bold" CharacterSpacing="1" TextColor="Gray" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
 
-                        <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" Background="#FFF" Padding="12">
+                        <!-- Main Card Panel -->
+                        <Border StrokeShape="RoundRectangle 16" 
+                                StrokeThickness="1" 
+                                Stroke="{AppThemeBinding Light=#E5E8F0, Dark=#2A2A35}" 
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A22}" 
+                                Padding="24" 
+                                Margin="0,10,0,10">
                             <Border.Shadow>
-                                <Shadow Radius="8" Opacity="0.35" Brush="Black" Offset="0,4" />
+                                <Shadow Radius="16" Opacity="{AppThemeBinding Light=0.06, Dark=0.25}" Brush="Black" Offset="0,6" />
                             </Border.Shadow>
-                            <VerticalStackLayout Spacing="12">
-                                <Label Text="Title" />
-                                <Entry Text="{Binding GameTitle, Mode=TwoWay}" Placeholder="Enter game title" />
+                            <VerticalStackLayout Spacing="16">
+                                <!-- Title Field -->
+                                <VerticalStackLayout Spacing="6">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Label Text="📝" FontSize="14" VerticalTextAlignment="Center" />
+                                        <Label Text="Game Title" FontAttributes="Bold" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark=White}" />
+                                    </HorizontalStackLayout>
+                                    <Entry Text="{Binding GameTitle, Mode=TwoWay}" 
+                                           Placeholder="Enter game title"
+                                           HeightRequest="42"
+                                           FontSize="13"
+                                           Margin="0,2,0,0" />
+                                </VerticalStackLayout>
 
-                                <Label Text="Author" />
-                                <Entry Text="{Binding GameAuthor, Mode=TwoWay}" Placeholder="Enter author name" />
+                                <!-- Author Field -->
+                                <VerticalStackLayout Spacing="6">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Label Text="👤" FontSize="14" VerticalTextAlignment="Center" />
+                                        <Label Text="Author Name" FontAttributes="Bold" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark=White}" />
+                                    </HorizontalStackLayout>
+                                    <Entry Text="{Binding GameAuthor, Mode=TwoWay}" 
+                                           Placeholder="Enter author name"
+                                           HeightRequest="42"
+                                           FontSize="13"
+                                           Margin="0,2,0,0" />
+                                </VerticalStackLayout>
 
-                                <Label Text="Version" />
-                                <Entry Text="{Binding GameVersion, Mode=TwoWay}" Placeholder="e.g. 1.0.0" />
+                                <!-- Version Field -->
+                                <VerticalStackLayout Spacing="6">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Label Text="🏷️" FontSize="14" VerticalTextAlignment="Center" />
+                                        <Label Text="Game Version" FontAttributes="Bold" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark=White}" />
+                                    </HorizontalStackLayout>
+                                    <Entry Text="{Binding GameVersion, Mode=TwoWay}" 
+                                           Placeholder="e.g. 1.0.0"
+                                           HeightRequest="42"
+                                           FontSize="13"
+                                           Margin="0,2,0,0" />
+                                </VerticalStackLayout>
                             </VerticalStackLayout>
                         </Border>
 

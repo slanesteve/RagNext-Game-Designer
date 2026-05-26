@@ -48,6 +48,35 @@ namespace RagNextPlayer.Managers
             }
         }
 
+        private void Update()
+        {
+            if (ActiveGame == null || CurrentState != GameState.Playing) return;
+
+            // Tick active background timers
+            if (ActiveGame.Timers != null)
+            {
+                foreach (var timer in ActiveGame.Timers)
+                {
+                    if (!timer.IsActive) continue;
+
+                    timer.ElapsedSeconds += Time.deltaTime;
+                    if (timer.ElapsedSeconds >= timer.IntervalSeconds)
+                    {
+                        timer.ElapsedSeconds = 0f;
+                        if (!timer.IsRepeating) timer.IsActive = false;
+
+                        // Execute the timer nodes!
+                        var actionData = new ActionData { Nodes = timer.Nodes };
+                        var ctx = MakeContext();
+                        var sink = InteractionController.Instance?.GetComponent<CommandEffectRouter>();
+                        
+                        ActionExecutor.Execute(actionData, ctx, sink);
+                        UIManager.Instance?.RefreshEntityLists();
+                    }
+                }
+            }
+        }
+
         private async void Start()
         {
             await LoadGameAsync();

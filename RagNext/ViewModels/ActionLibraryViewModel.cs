@@ -224,6 +224,8 @@ namespace RagNext.ViewModels
         public Command AddCommandCommand { get; }
         public Command DeleteCommand { get; }
         public Command EditNodeCommand { get; }
+        public Command CopyCommand { get; }
+        public Command PasteCommand { get; }
 
         private readonly ObservableCollection<RagsCore.Models.Action> _actions;
 
@@ -238,6 +240,8 @@ namespace RagNext.ViewModels
             AddCommandCommand = new Command(async () => await AddCommandAsync());
             DeleteCommand = new Command(async () => await DeleteSelectedAsync());
             EditNodeCommand = new Command<object?>(o => { if (o is Node n) _ = EditNodeAsync(n); });
+            CopyCommand = new Command(async () => await CopySelectedAsync());
+            PasteCommand = new Command(async () => await PasteSelectedAsync());
             _ = InitializeCatalogsAsync();
             Rebuild();
         }
@@ -253,6 +257,8 @@ namespace RagNext.ViewModels
             AddCommandCommand = new Command(async () => await AddCommandAsync());
             DeleteCommand = new Command(async () => await DeleteSelectedAsync());
             EditNodeCommand = new Command<object?>(o => { if (o is Node n) _ = EditNodeAsync(n); });
+            CopyCommand = new Command(async () => await CopySelectedAsync());
+            PasteCommand = new Command(async () => await PasteSelectedAsync());
             _ = InitializeCatalogsAsync();
             Rebuild();
         }
@@ -276,6 +282,20 @@ namespace RagNext.ViewModels
             }
         }
 
+        public bool CanAddAction => HostElementType != "Function" && HostElementType != "Timer";
+
+        private void OnActionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(RagsCore.Models.Action.Name) && sender is RagsCore.Models.Action action)
+            {
+                var node = Roots.FirstOrDefault(r => ReferenceEquals(r.Model, action));
+                if (node != null)
+                {
+                    node.Name = action.Name;
+                }
+            }
+        }
+
         private void Rebuild(object? selectModelOverride = null)
         {
             if (_isRebuilding) return;
@@ -292,6 +312,9 @@ namespace RagNext.ViewModels
 
                 foreach (var action in _actions)
                 {
+                    action.PropertyChanged -= OnActionPropertyChanged;
+                    action.PropertyChanged += OnActionPropertyChanged;
+
                     var actionNode = new Node { Kind = NodeKind.Action, Name = action.Name, Model = action, Level = 0, IsExpanded = true };
                     foreach (var step in action.Nodes)
                     {
@@ -453,7 +476,7 @@ namespace RagNext.ViewModels
 
         private async Task AddCommandAsync()
         {
-            await InsertStepAsync(new SetVariableCommand());
+            await InsertStepAsync(new DisplayTextCommand { Text = "" });
         }
         
         private async Task InsertStepAsync(ActionStep step)
@@ -471,6 +494,11 @@ namespace RagNext.ViewModels
             if (Selected is null) return;
             if (Selected.Kind == NodeKind.Action && Selected.Model is RagsCore.Models.Action a)
             {
+                if (HostElementType == "Function" || HostElementType == "Timer")
+                {
+                    // The function/timer action itself cannot be deleted from the tree
+                    return;
+                }
                 _actions.Remove(a);
                 Rebuild();
                 if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
@@ -531,5 +559,38 @@ namespace RagNext.ViewModels
                 await (Application.Current.MainPage?.Navigation ?? Shell.Current.Navigation).PushModalAsync(page);
             });
         }
+
+        private async Task CopySelectedAsync()
+        {
+            if (Selected?.Model is null) return;
+            ActionClipboardService.Copy(Selected.Model);
+            OnPropertyChanged(nameof(CanPaste));
+            await Task.CompletedTask;
+        }
+
+        private async Task PasteSelectedAsync()
+        {
+            var pasted = ActionClipboardService.Paste();
+            if (pasted is null) return;
+
+            if (pasted is RagsCore.Models.Action pastedAction)
+            {
+                if (HostElementType == "Function" || HostElementType == "Timer")
+                {
+                    // Cannot paste a whole action root inside a function or timer
+                    return;
+                }
+                _actions.Add(pastedAction);
+                Rebuild(pastedAction);
+            }
+            else if (pasted is ActionStep pastedStep)
+            {
+                await InsertStepAsync(pastedStep);
+            }
+
+            if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+        }
+
+        public bool CanPaste => ActionClipboardService.CanPaste;
     }
 }

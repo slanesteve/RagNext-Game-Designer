@@ -5,45 +5,135 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:RagNext"
     xmlns:views="clr-namespace:RagNext.Views"
-    Title="RagNext">
+    Title="RagNext"
+    FlyoutBehavior="Locked"
+    FlyoutWidth="175"
+    FlyoutBackgroundColor="{AppThemeBinding Light=#F4F4F8, Dark=#1C1C22}">
+
+    <Shell.FlyoutContent>
+        <Grid Padding="12,12,6,12" BackgroundColor="{AppThemeBinding Light=#F4F4F8, Dark=#1C1C22}">
+            <Border StrokeShape="RoundRectangle 12"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E5E7EB, Dark=#2E2E3C}"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E28}"
+                    Padding="4,8"
+                    VerticalOptions="Fill">
+                <Border.Shadow>
+                    <Shadow Radius="4" Opacity="0.04" Brush="Black" Offset="0,1" />
+                </Border.Shadow>
+                
+                <CollectionView ItemsSource="{Binding Items, Source={RelativeSource AncestorType={x:Type Shell}}}"
+                                SelectedItem="{Binding CurrentItem, Source={RelativeSource AncestorType={x:Type Shell}}, Mode=TwoWay}"
+                                SelectionMode="Single">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="2" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="4,2">
+                                <Border StrokeShape="RoundRectangle 8"
+                                        StrokeThickness="0"
+                                        BackgroundColor="Transparent"
+                                        Padding="12,10">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroupList>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal" />
+                                                <VisualState x:Name="Selected">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E5E7EB, Dark=#2E2E3C}" />
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateGroupList>
+                                    </VisualStateManager.VisualStateGroups>
+                                    <Label Text="{Binding Title}" 
+                                           FontSize="13" 
+                                           FontAttributes="Bold" 
+                                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                                           VerticalOptions="Center" />
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Border>
+        </Grid>
+    </Shell.FlyoutContent>
 
     <Shell.TitleView>
-        <Grid ColumnDefinitions="*,Auto" Margin="0" HeightRequest="45" VerticalOptions="Center">
-            <!-- Left part: title -->
-            <Label Text="RagNext Designer" FontSize="18" FontAttributes="Bold" 
-                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                   VerticalOptions="Center" Grid.Column="0" Margin="10,0,0,0" />
+        <Border StrokeShape="RoundRectangle 8"
+                StrokeThickness="1"
+                Stroke="{AppThemeBinding Light=#E5E7EB, Dark=#2E2E3C}"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E28}"
+                Margin="6,8,12,8"
+                Padding="12,0"
+                HeightRequest="36"
+                VerticalOptions="Center">
+            <Border.Shadow>
+                <Shadow Radius="4" Opacity="0.04" Brush="Black" Offset="0,1" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                <!-- Left part: title -->
+                <Label Text="RagNext Designer" FontSize="14" FontAttributes="Bold" 
+                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                       VerticalOptions="Center" Grid.Column="0" />
 
-            <!-- Right part: AI Status / Model Selection -->
-            <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Grid.Column="1" Margin="0,0,16,0">
-                <Label Text="✨ AI:" 
-                       TextColor="{AppThemeBinding Light={StaticResource Magenta}, Dark={StaticResource SecondaryDarkText}}" 
-                       VerticalOptions="Center" FontSize="13" FontAttributes="Bold"/>
-                <Label x:Name="ProviderLabel" 
-                       Text="None" 
-                       TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" 
-                       VerticalOptions="Center" FontSize="13" FontAttributes="Bold"/>
-                
-                <Picker x:Name="ModelPicker" 
-                        WidthRequest="280" 
-                        HeightRequest="32" 
-                        FontSize="12" 
-                        TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                        TitleColor="Gray"
-                        VerticalOptions="Center" 
-                        SelectedIndexChanged="OnModelPickerSelectedIndexChanged" />
-            </HorizontalStackLayout>
-        </Grid>
+                <!-- Right part: AI Status / Model Selection -->
+                <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Grid.Column="1">
+                    <Label Text="✨ AI:" 
+                           TextColor="{AppThemeBinding Light={StaticResource Magenta}, Dark={StaticResource SecondaryDarkText}}" 
+                           VerticalOptions="Center" FontSize="12" FontAttributes="Bold"/>
+                    <Label x:Name="ProviderLabel" 
+                           Text="None" 
+                           TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" 
+                           VerticalOptions="Center" FontSize="12" FontAttributes="Bold"/>
+                    
+                    <Border StrokeShape="RoundRectangle 6"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                            Padding="8,0"
+                            HeightRequest="26"
+                            VerticalOptions="Center"
+                            Margin="0,0,4,0">
+                        <Picker x:Name="ModelPicker" 
+                                WidthRequest="200" 
+                                HeightRequest="26" 
+                                FontSize="11" 
+                                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                                BackgroundColor="Transparent"
+                                TitleColor="Gray"
+                                VerticalOptions="Center" 
+                                SelectedIndexChanged="OnModelPickerSelectedIndexChanged" />
+                    </Border>
+                </HorizontalStackLayout>
+            </Grid>
+        </Border>
     </Shell.TitleView>
 
-    <TabBar>
-        <ShellContent Title="Main" Route="main" ContentTemplate="{DataTemplate local:MainPage}" />
-        <ShellContent Title="Player" Route="player" ContentTemplate="{DataTemplate views:PlayerEditPage}" />
-        <ShellContent Title="Rooms" Route="rooms" ContentTemplate="{DataTemplate views:RoomsPage}" />
-        <ShellContent Title="Objects" Route="gameobjects" ContentTemplate="{DataTemplate views:GameObjectsPage}" />
-        <ShellContent Title="Characters" Route="characters" ContentTemplate="{DataTemplate views:CharactersPage}" />
-        <ShellContent Title="Variables" Route="variables" ContentTemplate="{DataTemplate views:GameVariablesPage}" />
-    </TabBar>
+    <FlyoutItem Title="Main" Route="main">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Player" Route="player">
+        <ShellContent ContentTemplate="{DataTemplate views:PlayerEditPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Rooms" Route="rooms">
+        <ShellContent ContentTemplate="{DataTemplate views:RoomsPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Objects" Route="gameobjects">
+        <ShellContent ContentTemplate="{DataTemplate views:GameObjectsPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Characters" Route="characters">
+        <ShellContent ContentTemplate="{DataTemplate views:CharactersPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Variables" Route="variables">
+        <ShellContent ContentTemplate="{DataTemplate views:GameVariablesPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Functions" Route="functions">
+        <ShellContent ContentTemplate="{DataTemplate views:GlobalFunctionsPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Timers" Route="timers">
+        <ShellContent ContentTemplate="{DataTemplate views:GameTimersPage}" />
+    </FlyoutItem>
 
 </Shell>

@@ -22,6 +22,20 @@ namespace RagNext.ViewModels
                     OnPropertyChanged(nameof(GameTitle));
                     OnPropertyChanged(nameof(GameAuthor));
                     OnPropertyChanged(nameof(GameVersion));
+                    OnPropertyChanged(nameof(GameIconPath));
+                }
+            }
+        }
+
+        public string GameIconPath
+        {
+            get => CurrentGame?.IconPath ?? string.Empty;
+            set
+            {
+                if (CurrentGame != null && CurrentGame.IconPath != value)
+                {
+                    CurrentGame.IconPath = value;
+                    OnPropertyChanged();
                 }
             }
         }

@@ -25,6 +25,7 @@ namespace RagNext.Views
         {
             InitializeComponent();
             _ai = MauiProgram.Services.GetService(typeof(IAIChatService)) as IAIChatService;
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
         }
 
         private async System.Threading.Tasks.Task SetObjectAsync(string? value)
@@ -529,6 +530,30 @@ namespace RagNext.Views
                     obj.ContainedObjectIds.Remove(item.Id);
                 }
             }
+        }
+
+        private void OnDetailsTabClicked(object sender, EventArgs e)
+        {
+            DetailsTabBorder.BackgroundColor = Color.FromArgb("#512BD4");
+            DetailsTabLabel.TextColor = Colors.White;
+
+            ActionsTabBorder.BackgroundColor = Colors.Transparent;
+            ActionsTabLabel.TextColor = Colors.Gray;
+
+            DetailsScrollView.IsVisible = true;
+            ActionsContainer.IsVisible = false;
+        }
+
+        private void OnActionsTabClicked(object sender, EventArgs e)
+        {
+            ActionsTabBorder.BackgroundColor = Color.FromArgb("#512BD4");
+            ActionsTabLabel.TextColor = Colors.White;
+
+            DetailsTabBorder.BackgroundColor = Colors.Transparent;
+            DetailsTabLabel.TextColor = Colors.Gray;
+
+            DetailsScrollView.IsVisible = false;
+            ActionsContainer.IsVisible = true;
         }
     }
 }

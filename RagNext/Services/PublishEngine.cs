@@ -112,6 +112,7 @@ namespace RagNext.Services
             // Inject game data
             string streamingDir = Path.Combine(outputDir, $"{title}_Data", "StreamingAssets");
             await InjectGameDataAsync(game, streamingDir);
+
         }
 
         // ── macOS ─────────────────────────────────────────────────────────────
@@ -143,6 +144,7 @@ namespace RagNext.Services
             // StreamingAssets lives under Contents/Resources/Data/
             string streamingDir = Path.Combine(appBundle, "Contents", "Resources", "Data", "StreamingAssets");
             await InjectGameDataAsync(game, streamingDir);
+
         }
 
         // ── Linux ─────────────────────────────────────────────────────────────
@@ -226,6 +228,7 @@ namespace RagNext.Services
                 }
             }
             Report($"  {copiedCount} media asset(s) copied.");
+
         }
 
         // ── Template Resolution ────────────────────────────────────────────────

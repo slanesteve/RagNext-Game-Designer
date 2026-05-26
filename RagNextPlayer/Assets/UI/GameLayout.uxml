@@ -204,5 +204,14 @@
       <ui:Button name="prompt-submit-btn" class="settings-toggle-btn" style="margin-top: 12px; width: auto;" text="✔ Submit" />
     </ui:VisualElement>
 
+    <!-- ══ SPLASH SCREEN OVERLAY ═════════════════════════════════════════════ -->
+    <ui:VisualElement name="splash-screen" class="splash-screen">
+      <ui:VisualElement class="splash-badge">
+        <ui:Label class="splash-badge-text" text="RN" />
+      </ui:VisualElement>
+      <ui:Label class="splash-title" text="RAGNEXT" />
+      <ui:Label class="splash-subtitle" text="PREMIUM STORY ENGINE &amp; RPG PLAYER" />
+    </ui:VisualElement>
+
   </ui:VisualElement>
 </ui:UXML>

@@ -14,6 +14,7 @@ namespace RagNext.Views
         {
             InitializeComponent();
             BindingContext = MauiProgram.Services.GetRequiredService<GameVariablesViewModel>();
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
         }
 
         private async void OnAddClicked(object sender, EventArgs e)

@@ -35,6 +35,10 @@ namespace RagNext
             builder.Services.AddSingleton<GameObjectsPage>();
             builder.Services.AddTransient<GameObjectEditPage>();
             builder.Services.AddTransient<PlayerEditPage>();
+            builder.Services.AddSingleton<GlobalFunctionsPage>();
+            builder.Services.AddTransient<GlobalFunctionEditPage>();
+            builder.Services.AddSingleton<GameTimersPage>();
+            builder.Services.AddTransient<GameTimerEditPage>();
             // Settings pages
             builder.Services.AddTransient<GeneralSettingsPage>();
 
@@ -44,6 +48,8 @@ namespace RagNext
             builder.Services.AddSingleton<GameObjectsViewModel>();
             builder.Services.AddSingleton<GameVariablesViewModel>();
             builder.Services.AddSingleton<CharactersViewModel>();
+            builder.Services.AddSingleton<GlobalFunctionsViewModel>();
+            builder.Services.AddSingleton<GameTimersViewModel>();
 
             builder.Services.AddSingleton<RagsCore.Services.IGameStorage, GameStorageAdapter>();
             builder.Services.AddSingleton<RagsCore.Services.IMediaPathProvider, RagNext.Services.MauiMediaPathProvider>();

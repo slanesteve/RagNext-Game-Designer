@@ -18,6 +18,8 @@ namespace RagNextPlayer.Runtime.Models
         public List<GameObjectData>       Characters  { get; set; } = new List<GameObjectData>();
         public List<GameVariableData>     Variables   { get; set; } = new List<GameVariableData>();
         public List<MediaAssetData>       MediaAssets { get; set; } = new List<MediaAssetData>();
+        public List<GlobalFunctionData>   Functions   { get; set; } = new List<GlobalFunctionData>();
+        public List<GameTimerData>        Timers      { get; set; } = new List<GameTimerData>();
     }
 
     // ── Player ────────────────────────────────────────────────────────────────
@@ -62,6 +64,7 @@ namespace RagNextPlayer.Runtime.Models
         public bool                        IsContainer        { get; set; }
         public bool                        ContainerOpen      { get; set; }
         public List<string>                ContainedObjectIds { get; set; } = new List<string>();
+        public string?                     StartingRoomId     { get; set; }
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -139,6 +142,27 @@ namespace RagNextPlayer.Runtime.Models
     public class PromptPlayerInputCommandData        : CommandData { public string PromptText { get; set; } = string.Empty; public string InputType { get; set; } = "Text"; public string CustomOptions { get; set; } = string.Empty; public string StoreVariableName { get; set; } = string.Empty; }
     public class OpenContainerCommandData            : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class CloseContainerCommandData           : CommandData { public string ObjectId { get; set; } = string.Empty; }
+    public class CallFunctionCommandData            : CommandData { public string FunctionId { get; set; } = string.Empty; }
+
+    public class GlobalFunctionData
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();
+    }
+
+    public class GameTimerData
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public double IntervalSeconds { get; set; } = 60.0;
+        public bool IsActive { get; set; } = true;
+        public bool IsRepeating { get; set; } = true;
+        public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();
+
+        [JsonIgnore]
+        public float ElapsedSeconds { get; set; }
+    }
 
     // ── Supporting ────────────────────────────────────────────────────────────
     public class GameVariableData

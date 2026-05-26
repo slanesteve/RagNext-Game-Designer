@@ -36,6 +36,9 @@ namespace RagsCore.Models
         private string _version = "1.0.0";
         public string Version { get => _version; set => SetProperty(ref _version, value); }
 
+        private string _iconPath = string.Empty;
+        public string IconPath { get => _iconPath; set => SetProperty(ref _iconPath, value); }
+
         public Player Player { get; set; } = new();
 
         // Make collections settable so System.Text.Json can assign them during deserialization.
@@ -46,6 +49,8 @@ namespace RagsCore.Models
         public ObservableCollection<GameObject> Objects { get; set; } = new();
         public ObservableCollection<Character> Characters { get; set; } = new();
         public ObservableCollection<GameVariable> Variables { get; set; } = new();
+        public ObservableCollection<GlobalFunction> Functions { get; set; } = new();
+        public ObservableCollection<GameTimer> Timers { get; set; } = new();
 
         public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 

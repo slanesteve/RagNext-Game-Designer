@@ -20,6 +20,7 @@ namespace RagNext
         {
             InitializeComponent();
             BindingContext = new MainViewModel();
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
             this.Loaded += MainPage_Loaded;
         }
 
@@ -52,11 +53,13 @@ namespace RagNext
 
             // Toggle visibility of the internal layout overlay safely.
             StartupOverlayView.IsVisible = true;
+            Shell.Current.FlyoutBehavior = FlyoutBehavior.Disabled;
         }
 
         private void CloseStartupOverlay()
         {
             StartupOverlayView.IsVisible = false;
+            Shell.Current.FlyoutBehavior = FlyoutBehavior.Locked;
         }
 
         private void OnBackgroundTapped(object? sender, EventArgs e)
@@ -423,5 +426,6 @@ namespace RagNext
         }
 
         private void ToolbarItem_Clicked(object sender, EventArgs e) { }
+
     }
 }

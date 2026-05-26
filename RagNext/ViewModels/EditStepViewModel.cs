@@ -137,7 +137,15 @@ namespace RagNext.ViewModels
 
                 if (valToSet != null && p.PropertyType != valToSet.GetType())
                 {
-                    if (p.PropertyType == typeof(Guid) && valToSet is string strGuid && Guid.TryParse(strGuid, out var g))
+                    if (p.PropertyType.IsEnum)
+                    {
+                        try
+                        {
+                            valToSet = Enum.Parse(p.PropertyType, valToSet.ToString()!, true);
+                        }
+                        catch {}
+                    }
+                    else if (p.PropertyType == typeof(Guid) && valToSet is string strGuid && Guid.TryParse(strGuid, out var g))
                     {
                         valToSet = g;
                     }
@@ -175,6 +183,14 @@ namespace RagNext.ViewModels
             {
                 SetModelValue(input.Label, input.Value);
                 _ = SaveAsync();
+
+                if (input.Label == "InputType" && _target is PromptPlayerInputCommand)
+                {
+                    Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        BuildInputsFromTarget();
+                    });
+                }
             }
         }
 
@@ -191,6 +207,11 @@ namespace RagNext.ViewModels
 
             foreach (var p in props)
             {
+                if (p.Name == "CustomOptions" && _target is PromptPlayerInputCommand cmd && cmd.InputType != PlayerInputType.Custom)
+                {
+                    continue;
+                }
+
                 var input = new InputDefinition
                 {
                     Label = p.Name,
@@ -208,7 +229,7 @@ namespace RagNext.ViewModels
         {
             if (p.PropertyType == typeof(bool)) return InputControlType.Checkbox;
             if (p.PropertyType == typeof(int) || p.PropertyType == typeof(double) || p.PropertyType == typeof(float)) return InputControlType.Number;
-            if (p.PropertyType == typeof(Guid) || p.Name.Contains("Id")) return InputControlType.ComboBox;
+            if (p.PropertyType.IsEnum || p.Name == "StoreVariableName" || p.Name == "InputType" || p.PropertyType == typeof(Guid) || p.Name.Contains("Id")) return InputControlType.ComboBox;
             if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName" || p.Name == "SourceName") && 
                 (p.DeclaringType != null && (p.DeclaringType.Name.Contains("Variable") || p.DeclaringType.Name.Contains("Random") || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType)))) 
                 return InputControlType.ComboBox; 
@@ -221,6 +242,7 @@ namespace RagNext.ViewModels
 
         private InputDataType GetDataType(PropertyInfo p)
         {
+            if (p.Name == "StoreVariableName") return InputDataType.Variable;
             if (p.Name.Equals("RoomId", StringComparison.OrdinalIgnoreCase) ||
                 p.Name.Equals("DestinationRoomId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Room;
             if (p.Name.Equals("ObjectId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("ContainerObjectId", StringComparison.OrdinalIgnoreCase)) return InputDataType.GameObject;
@@ -239,6 +261,21 @@ namespace RagNext.ViewModels
         {
             var game = App.CurrentGame;
             if (game is null || input.ControlType != InputControlType.ComboBox) return;
+
+            if (input.Label == "InputType" && _target is PromptPlayerInputCommand)
+            {
+                input.PickerSource = Enum.GetNames(typeof(PlayerInputType))
+                    .Select(name => new NamedOption { Name = name })
+                    .Cast<object>()
+                    .ToList();
+                if (input.Value != null)
+                {
+                    var valStr = input.Value.ToString();
+                    var match = input.PickerSource.Cast<NamedOption>().FirstOrDefault(x => string.Equals(x.Name, valStr, StringComparison.OrdinalIgnoreCase));
+                    if (match != null) input.Value = match;
+                }
+                return;
+            }
 
             input.PickerSource = input.DataType switch
             {

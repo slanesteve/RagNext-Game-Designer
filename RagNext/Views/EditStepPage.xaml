@@ -10,7 +10,7 @@
             <ScrollView.Behaviors>
                 <behaviors:ScrollAwareBehavior x:Name="ScrollAware"/>
             </ScrollView.Behaviors>
-            <VerticalStackLayout Padding="16" Spacing="12">
+            <VerticalStackLayout Padding="16,24,16,16" Spacing="12">
                 <Label Text="Select Type" FontAttributes="Bold"/>
                 <Picker x:Name="DefinitionPicker"
                         ItemsSource="{Binding Definitions}"
@@ -90,32 +90,5 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Top fade -->
-        <Border InputTransparent="True"
-                IsVisible="{Binding Source={x:Reference ScrollAware}, Path=HasMoreAbove}"
-                Background="{AppThemeBinding Light={StaticResource TopFadeLight}, Dark={StaticResource TopFadeDark}}"
-                HeightRequest="32"
-                HorizontalOptions="Fill"
-                VerticalOptions="Start">
-            <Label Text="▲"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"
-                   FontSize="12"
-                   Opacity="0.6"/>
-        </Border>
-
-        <!-- Bottom fade -->
-        <Border InputTransparent="True"
-                IsVisible="{Binding Source={x:Reference ScrollAware}, Path=HasMoreBelow}"
-                Background="{AppThemeBinding Light={StaticResource BottomFadeLight}, Dark={StaticResource BottomFadeDark}}"
-                HeightRequest="40"
-                HorizontalOptions="Fill"
-                VerticalOptions="End">
-            <Label Text="Scroll for more ▼"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"
-                   FontSize="12"
-                   Opacity="0.7"/>
-        </Border>
     </Grid>
 </ContentPage>

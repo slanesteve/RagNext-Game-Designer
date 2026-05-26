@@ -14,6 +14,9 @@ namespace RagsCore.Models
         private int _health = 100;
         public int Health { get => _health; set => SetProperty(ref _health, value); }
 
+        private Room? _startingRoom = null;
+        public Room? StartingRoom { get => _startingRoom; set => SetProperty(ref _startingRoom, value); }
+
         public ObservableCollection<GameObject> Inventory { get; set; } = new();
 
     }

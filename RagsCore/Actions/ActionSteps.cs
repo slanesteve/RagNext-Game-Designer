@@ -730,4 +730,34 @@ namespace RagsCore.Actions
             ctx.SetVariable($"obj.{resolved}.containerOpen", "false");
         }
     }
+
+    public sealed class CallFunctionCommand : GameCommand
+    {
+        public string FunctionId { get; set; } = string.Empty;
+        public override string TypeName => "General: Call Function";
+        public override void Execute(ActionContext ctx)
+        {
+            var target = ctx.Game?.Functions.FirstOrDefault(f => f.Id.ToString() == FunctionId || string.Equals(f.Name, FunctionId, StringComparison.OrdinalIgnoreCase));
+            if (target != null)
+            {
+                ExecuteSteps(target.Nodes, ctx);
+            }
+        }
+
+        private void ExecuteSteps(System.Collections.Generic.IEnumerable<ActionStep> steps, ActionContext ctx)
+        {
+            foreach (var step in steps)
+            {
+                if (step is GameCommand cmd)
+                {
+                    cmd.Execute(ctx);
+                }
+                else if (step is Condition cond)
+                {
+                    bool result = cond.Evaluate(ctx);
+                    ExecuteSteps(result ? cond.TrueBranch : cond.FalseBranch, ctx);
+                }
+            }
+        }
+    }
 }

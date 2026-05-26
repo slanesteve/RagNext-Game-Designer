@@ -46,6 +46,7 @@ namespace RagNextPlayer.Managers
         private Button         _closeSettingsBtn;
         private VisualElement  _playerPortrait;
         private Label          _scenePlaceholder;
+        private VisualElement  _splashScreen;
 
         // Game Over modal references
         private VisualElement  _gameOverMenu;
@@ -158,6 +159,7 @@ namespace RagNextPlayer.Managers
             _closeSettingsBtn       = _root.Q<Button>("close-settings-btn");
             _playerPortrait         = _root.Q<VisualElement>("player-portrait");
             _scenePlaceholder       = _root.Q<Label>("scene-placeholder");
+            _splashScreen           = _root.Q<VisualElement>("splash-screen");
 
             // Query Game Over menu elements
             _gameOverMenu        = _root.Q<VisualElement>("game-over-menu");
@@ -244,6 +246,34 @@ namespace RagNextPlayer.Managers
                 {
                     OnRoomEntered(GameManager.Instance.CurrentRoom);
                 }
+            }
+
+            if (_splashScreen is not null)
+            {
+                StartCoroutine(FadeOutSplashScreenRoutine());
+            }
+        }
+
+        private System.Collections.IEnumerator FadeOutSplashScreenRoutine()
+        {
+            yield return new UnityEngine.WaitForSeconds(1.8f);
+
+            float duration = 0.8f;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += UnityEngine.Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                if (_splashScreen is not null)
+                {
+                    _splashScreen.style.opacity = Mathf.Lerp(1f, 0f, t);
+                }
+                yield return null;
+            }
+
+            if (_splashScreen is not null)
+            {
+                _splashScreen.style.display = DisplayStyle.None;
             }
         }
 
@@ -388,8 +418,31 @@ namespace RagNextPlayer.Managers
 
             // Characters
             _charactersListContainer?.Clear();
-            foreach (var ch in game.Characters.FindAll(c => room.ObjectIds.Contains(c.Id)))
-                _charactersListContainer?.Add(CreateEntityRow(ch, false));
+            foreach (var ch in game.Characters)
+            {
+                // Check dynamic location variable first
+                var charRoomVar = game.Variables.Find(v => string.Equals(v.Name, $"char.{ch.Id}.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
+                bool isInThisRoom = false;
+
+                if (!string.IsNullOrWhiteSpace(charRoomVar))
+                {
+                    isInThisRoom = string.Equals(charRoomVar, room.Id, StringComparison.OrdinalIgnoreCase);
+                }
+                else if (!string.IsNullOrWhiteSpace(ch.StartingRoomId))
+                {
+                    isInThisRoom = string.Equals(ch.StartingRoomId, room.Id, StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    // Fallback to static ObjectIds
+                    isInThisRoom = room.ObjectIds.Contains(ch.Id);
+                }
+
+                if (isInThisRoom)
+                {
+                    _charactersListContainer?.Add(CreateEntityRow(ch, false));
+                }
+            }
 
             // Inventory
             _inventoryListContainer?.Clear();
@@ -1119,7 +1172,12 @@ namespace RagNextPlayer.Managers
             selScroll.style.display     = DisplayStyle.None;
             selScroll.Clear();
 
-            if (string.Equals(inputType, "Text", System.StringComparison.OrdinalIgnoreCase))
+            bool isText = string.Equals(inputType, "Text", System.StringComparison.OrdinalIgnoreCase) || inputType == "0";
+            bool isObjects = string.Equals(inputType, "Objects", System.StringComparison.OrdinalIgnoreCase) || inputType == "1";
+            bool isCharacters = string.Equals(inputType, "Characters", System.StringComparison.OrdinalIgnoreCase) || inputType == "2";
+            bool isCustom = string.Equals(inputType, "Custom", System.StringComparison.OrdinalIgnoreCase) || inputType == "3";
+
+            if (isText)
             {
                 textContainer.style.display = DisplayStyle.Flex;
                 if (_promptTextField is not null)
@@ -1127,13 +1185,18 @@ namespace RagNextPlayer.Managers
                     _promptTextField.value = string.Empty;
                     _promptTextField.Focus();
                 }
+                if (_promptSubmitBtn is not null)
+                    _promptSubmitBtn.style.display = DisplayStyle.Flex;
             }
             else
             {
                 selScroll.style.display = DisplayStyle.Flex;
+                if (_promptSubmitBtn is not null)
+                    _promptSubmitBtn.style.display = DisplayStyle.None;
+
                 List<string> options = new List<string>();
 
-                if (string.Equals(inputType, "Objects", System.StringComparison.OrdinalIgnoreCase))
+                if (isObjects)
                 {
                     var game = GameManager.Instance?.ActiveGame;
                     if (game is not null)
@@ -1142,7 +1205,7 @@ namespace RagNextPlayer.Managers
                             options.Add(obj.Name);
                     }
                 }
-                else if (string.Equals(inputType, "Characters", System.StringComparison.OrdinalIgnoreCase))
+                else if (isCharacters)
                 {
                     var game = GameManager.Instance?.ActiveGame;
                     if (game is not null)
@@ -1151,11 +1214,11 @@ namespace RagNextPlayer.Managers
                             options.Add(ch.Name);
                     }
                 }
-                else if (string.Equals(inputType, "Custom", System.StringComparison.OrdinalIgnoreCase))
+                else if (isCustom)
                 {
                     if (!string.IsNullOrWhiteSpace(customOptions))
                     {
-                        foreach (var opt in customOptions.Split(','))
+                        foreach (var opt in customOptions.Split(new[] { ',', ';' }, System.StringSplitOptions.RemoveEmptyEntries))
                             options.Add(opt.Trim());
                     }
                 }
@@ -1196,6 +1259,9 @@ namespace RagNextPlayer.Managers
             var currentRoom = GameManager.Instance.CurrentRoom;
             if (currentRoom is not null)
                 RenderRoom(currentRoom);
+
+            // Resume the action execution engine
+            ActionExecutor.ActiveRunner?.Resume();
         }
 
         private void SubmitPromptInput()

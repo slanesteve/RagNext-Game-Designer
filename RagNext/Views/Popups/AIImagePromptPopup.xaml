@@ -10,10 +10,20 @@
             <Label x:Name="TitleLabel" FontAttributes="Bold" FontSize="Medium" />
             
             <Label Text="Enter a prompt for the image:" FontSize="Small" TextColor="{DynamicResource Gray600}" />
-            <Editor x:Name="PromptEditor"
-                    AutoSize="TextChanges"
-                    Placeholder="Type your prompt..."
-                    HeightRequest="100" />
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                <Editor x:Name="PromptEditor"
+                        Grid.Column="0"
+                        AutoSize="TextChanges"
+                        Placeholder="Type your prompt..."
+                        HeightRequest="100" />
+                <Button Grid.Column="1"
+                        Text="✨"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        Padding="0"
+                        VerticalOptions="Center"
+                        Clicked="OnAskAIClicked" />
+            </Grid>
             
             <Label Text="Select Image Size:" FontSize="Small" TextColor="{DynamicResource Gray600}" />
             <Picker x:Name="SizePicker">

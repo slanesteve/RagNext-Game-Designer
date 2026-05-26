@@ -2,15 +2,40 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RagNext.SplashPage"
-             BackgroundColor="#512BD4"
+             BackgroundColor="#0B0914"
              NavigationPage.HasNavigationBar="False">
 
     <Grid Padding="24">
-        <!-- Replace splash_fancy.png with your fancy image later -->
-        <Image Source="splash_fancy.png"
-               Aspect="AspectFit"
-               HorizontalOptions="Center"
-               VerticalOptions="Center" />
+        <VerticalStackLayout Spacing="24" HorizontalOptions="Center" VerticalOptions="Center">
+            <!-- Glowing Badge -->
+            <Border StrokeShape="RoundRectangle 28" StrokeThickness="0" WidthRequest="110" HeightRequest="110" HorizontalOptions="Center">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#8E2DE2" Offset="0.0" />
+                        <GradientStop Color="#4A00E0" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border.Shadow>
+                    <Shadow Radius="20" Opacity="0.6" Brush="#8E2DE2" Offset="0,0" />
+                </Border.Shadow>
+                <Label Text="RN" FontSize="46" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+
+            <!-- Typography Header -->
+            <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                <Label Text="RAGNEXT" FontSize="36" FontAttributes="Bold" CharacterSpacing="5" TextColor="White" HorizontalOptions="Center" />
+                <Label Text="PREMIUM STORY ENGINE &amp; RPG DESIGNER" FontSize="11" FontAttributes="Bold" CharacterSpacing="2" TextColor="Gray" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <!-- Spinner and Dynamic Loading State -->
+            <VerticalStackLayout Spacing="12" HorizontalOptions="Center" Margin="0,20,0,0">
+                <ActivityIndicator IsRunning="True" Color="#8E2DE2" WidthRequest="32" HeightRequest="32" HorizontalOptions="Center" />
+                <Label Text="Initializing editor modules..." FontSize="12" TextColor="Gray" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- Version Label bottom aligned -->
+        <Label Text="Version 1.0.0" FontSize="11" TextColor="DimGray" HorizontalOptions="Center" VerticalOptions="End" Margin="0,0,0,10" />
     </Grid>
 
 </ContentPage>

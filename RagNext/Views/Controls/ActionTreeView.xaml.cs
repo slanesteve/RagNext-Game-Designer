@@ -26,6 +26,12 @@ namespace RagNext.Views.Controls
         public static readonly BindableProperty CharacterProperty =
             BindableProperty.Create(nameof(Character), typeof(Character), typeof(ActionTreeView), propertyChanged: OnContextChanged);
 
+        public static readonly BindableProperty ActionsProperty =
+            BindableProperty.Create(nameof(Actions), typeof(System.Collections.ObjectModel.ObservableCollection<RagsCore.Models.Action>), typeof(ActionTreeView), propertyChanged: OnContextChanged);
+
+        public static readonly BindableProperty HostElementTypeProperty =
+            BindableProperty.Create(nameof(HostElementType), typeof(string), typeof(ActionTreeView), defaultValue: "GameObject");
+
         public Player? Player
         {
             get => (Player?)GetValue(PlayerProperty);
@@ -50,13 +56,27 @@ namespace RagNext.Views.Controls
             set => SetValue(CharacterProperty, value);
         }
 
+        public System.Collections.ObjectModel.ObservableCollection<RagsCore.Models.Action>? Actions
+        {
+            get => (System.Collections.ObjectModel.ObservableCollection<RagsCore.Models.Action>?)GetValue(ActionsProperty);
+            set => SetValue(ActionsProperty, value);
+        }
+
+        public string HostElementType
+        {
+            get => (string)GetValue(HostElementTypeProperty);
+            set => SetValue(HostElementTypeProperty, value);
+        }
+
         private DateTime _lastContextChangedTime = DateTime.UtcNow;
 
         private static void OnContextChanged(BindableObject bindable, object oldValue, object newValue)
         {
             var self = (ActionTreeView)bindable;
             self._lastContextChangedTime = DateTime.UtcNow;
-            if (self.Player != null)
+            if (self.Actions != null)
+                self.BindingContext = new ActionLibraryViewModel(self.Actions, self.HostElementType);
+            else if (self.Player != null)
                 self.BindingContext = new ActionLibraryViewModel(self.Player);
             else if (self.Room != null)
                 self.BindingContext = new ActionLibraryViewModel(self.Room);
@@ -111,6 +131,34 @@ namespace RagNext.Views.Controls
                 parent = parent.Parent;
             }
             return null;
+        }
+        private double _startWidth = 280;
+
+        private void OnPanUpdated(object sender, PanUpdatedEventArgs e)
+        {
+            switch (e.StatusType)
+            {
+                case GestureStatus.Started:
+                    _startWidth = ParentGrid.ColumnDefinitions[0].Width.Value;
+                    break;
+                case GestureStatus.Running:
+                    double newWidth = _startWidth + e.TotalX;
+                    newWidth = System.Math.Clamp(newWidth, 180, 700);
+                    ParentGrid.ColumnDefinitions[0] = new ColumnDefinition(new GridLength(newWidth));
+                    break;
+            }
+        }
+
+        private void OnPointerEntered(object sender, PointerEventArgs e)
+        {
+            HoverSplitterLine.FadeTo(1, 100);
+            GripperBadge.ScaleTo(1.15, 100);
+        }
+
+        private void OnPointerExited(object sender, PointerEventArgs e)
+        {
+            HoverSplitterLine.FadeTo(0, 100);
+            GripperBadge.ScaleTo(1.0, 100);
         }
     }
 }

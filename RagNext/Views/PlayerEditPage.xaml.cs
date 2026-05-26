@@ -32,6 +32,7 @@ namespace RagNext.Views
             InitializeComponent();
             _ai = MauiProgram.Services.GetService(typeof(IAIChatService)) as IAIChatService;
             AssignPlayerActions();
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
             App.GameChanged += (game) => OnGameLoaded(this, game); // ensure repopulate after load
         }
 
@@ -89,7 +90,7 @@ namespace RagNext.Views
                 {
                     _suppressScroll = true; // prevent recursion
                     await MainThread.InvokeOnMainThreadAsync(async () =>
-                        await MainScroll.ScrollToAsync(0, _lastY, animated: false));
+                        await DetailsScrollView.ScrollToAsync(0, _lastY, animated: false));
                 }
                 finally
                 {
@@ -634,6 +635,30 @@ namespace RagNext.Views
                 }
             }
 #endif
+        }
+
+        private void OnDetailsTabClicked(object sender, EventArgs e)
+        {
+            DetailsTabBorder.BackgroundColor = Color.FromArgb("#512BD4");
+            DetailsTabLabel.TextColor = Colors.White;
+
+            ActionsTabBorder.BackgroundColor = Colors.Transparent;
+            ActionsTabLabel.TextColor = Colors.Gray;
+
+            DetailsScrollView.IsVisible = true;
+            ActionsContainer.IsVisible = false;
+        }
+
+        private void OnActionsTabClicked(object sender, EventArgs e)
+        {
+            ActionsTabBorder.BackgroundColor = Color.FromArgb("#512BD4");
+            ActionsTabLabel.TextColor = Colors.White;
+
+            DetailsTabBorder.BackgroundColor = Colors.Transparent;
+            DetailsTabLabel.TextColor = Colors.Gray;
+
+            DetailsScrollView.IsVisible = false;
+            ActionsContainer.IsVisible = true;
         }
     }
 
