@@ -945,9 +945,18 @@ namespace RagNextPlayer.Managers
             // Dialog container
             var dialog = new VisualElement();
             dialog.style.backgroundColor = new Color(0.12f, 0.12f, 0.14f, 0.95f);
-            dialog.style.borderWidth = 1;
-            dialog.style.borderColor = new Color(1f, 1f, 1f, 0.1f);
-            dialog.style.borderRadius = 12;
+            dialog.style.borderTopWidth = 1;
+            dialog.style.borderBottomWidth = 1;
+            dialog.style.borderLeftWidth = 1;
+            dialog.style.borderRightWidth = 1;
+            dialog.style.borderTopColor = new Color(1f, 1f, 1f, 0.1f);
+            dialog.style.borderBottomColor = new Color(1f, 1f, 1f, 0.1f);
+            dialog.style.borderLeftColor = new Color(1f, 1f, 1f, 0.1f);
+            dialog.style.borderRightColor = new Color(1f, 1f, 1f, 0.1f);
+            dialog.style.borderTopLeftRadius = 12;
+            dialog.style.borderTopRightRadius = 12;
+            dialog.style.borderBottomLeftRadius = 12;
+            dialog.style.borderBottomRightRadius = 12;
             dialog.style.paddingLeft = 24;
             dialog.style.paddingRight = 24;
             dialog.style.paddingTop = 24;
@@ -973,7 +982,7 @@ namespace RagNextPlayer.Managers
             // Buttons Container
             var buttonRow = new VisualElement();
             buttonRow.style.flexDirection = FlexDirection.Row;
-            buttonRow.style.justifyContent = Justify.End;
+            buttonRow.style.justifyContent = Justify.FlexEnd;
 
             // Cancel Button
             var cancelBtn = new Button(() => {
@@ -981,8 +990,14 @@ namespace RagNextPlayer.Managers
             }) { text = "Cancel" };
             cancelBtn.style.backgroundColor = new Color(0.2f, 0.2f, 0.22f);
             cancelBtn.style.color = Color.white;
-            cancelBtn.style.borderWidth = 0;
-            cancelBtn.style.borderRadius = 6;
+            cancelBtn.style.borderTopWidth = 0;
+            cancelBtn.style.borderBottomWidth = 0;
+            cancelBtn.style.borderLeftWidth = 0;
+            cancelBtn.style.borderRightWidth = 0;
+            cancelBtn.style.borderTopLeftRadius = 6;
+            cancelBtn.style.borderTopRightRadius = 6;
+            cancelBtn.style.borderBottomLeftRadius = 6;
+            cancelBtn.style.borderBottomRightRadius = 6;
             cancelBtn.style.paddingLeft = 16;
             cancelBtn.style.paddingRight = 16;
             cancelBtn.style.paddingTop = 8;
@@ -998,8 +1013,14 @@ namespace RagNextPlayer.Managers
             }) { text = "Yes, Overwrite" };
             overwriteBtn.style.backgroundColor = new Color(0.35f, 0.2f, 0.8f); // premium purple
             overwriteBtn.style.color = Color.white;
-            overwriteBtn.style.borderWidth = 0;
-            overwriteBtn.style.borderRadius = 6;
+            overwriteBtn.style.borderTopWidth = 0;
+            overwriteBtn.style.borderBottomWidth = 0;
+            overwriteBtn.style.borderLeftWidth = 0;
+            overwriteBtn.style.borderRightWidth = 0;
+            overwriteBtn.style.borderTopLeftRadius = 6;
+            overwriteBtn.style.borderTopRightRadius = 6;
+            overwriteBtn.style.borderBottomLeftRadius = 6;
+            overwriteBtn.style.borderBottomRightRadius = 6;
             overwriteBtn.style.paddingLeft = 16;
             overwriteBtn.style.paddingRight = 16;
             overwriteBtn.style.paddingTop = 8;
