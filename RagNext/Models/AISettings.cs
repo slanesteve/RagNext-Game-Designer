@@ -55,7 +55,19 @@ namespace RagNext.Models
         public string? ImageModel { get; set; } = "flux";
         public string? ImageHost { get; set; } = "https://image.pollinations.ai";
         public int ImagePort { get; set; } = 0;
-        public Uri ImageBaseUri => new($"{(ImageHost ?? "https://image.pollinations.ai").TrimEnd('/')}" + (ImagePort > 0 ? $":{ImagePort}" : ""));
+        public Uri ImageBaseUri
+        {
+            get
+            {
+                var host = (ImageHost ?? "https://image.pollinations.ai").TrimEnd('/');
+                var baseStr = ImagePort > 0 ? $"{host}:{ImagePort}" : host;
+                if (!baseStr.EndsWith("/"))
+                {
+                    baseStr += "/";
+                }
+                return new Uri(baseStr);
+            }
+        }
 
         // ComfyUI-specific settings
         public string? ComfyWorkflowPath { get; set; }

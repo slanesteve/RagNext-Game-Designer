@@ -189,6 +189,11 @@ namespace RagNext.Views
             await Navigation.PopModalAsync();
         }
 
+        private async void OnCancelClicked(object sender, EventArgs e)
+        {
+            await Navigation.PopModalAsync();
+        }
+
         private sealed class DisposeAction : IDisposable
         {
             private readonly Action _a;

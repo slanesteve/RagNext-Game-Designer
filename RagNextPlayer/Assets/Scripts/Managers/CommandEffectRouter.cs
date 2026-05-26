@@ -104,18 +104,24 @@ namespace RagNextPlayer.Managers
                 case DisplayMultimediaCommandData:
                     {
                         var mediaId  = ctx.GetVariable("media.lastDisplayedMediaId")?.Value;
-                        var asset    = ctx.Game.MediaAssets.Find(a => a.Id == mediaId);
-                        if (asset is not null)
-                            UIManager.Instance?.DisplaySceneImage(asset.RelativePath);
+                        if (!string.IsNullOrEmpty(mediaId))
+                        {
+                            var asset = ctx.Game.MediaAssets.Find(a => a.Id == mediaId);
+                            var path = asset is not null ? asset.RelativePath : mediaId;
+                            UIManager.Instance?.DisplaySceneImage(path);
+                        }
                     }
                     break;
 
                 case CharacterDisplayPortraitCommandData c:
                     {
                         var portId = ctx.GetVariable($"char.{ctx.Resolve(c.CharacterId)}.displayedPortraitId")?.Value;
-                        var asset  = ctx.Game.MediaAssets.Find(a => a.Id == portId);
-                        if (asset is not null)
-                            UIManager.Instance?.DisplaySceneImage(asset.RelativePath);
+                        if (!string.IsNullOrEmpty(portId))
+                        {
+                            var asset  = ctx.Game.MediaAssets.Find(a => a.Id == portId);
+                            var path = asset is not null ? asset.RelativePath : portId;
+                            UIManager.Instance?.DisplaySceneImage(path);
+                        }
                     }
                     break;
 

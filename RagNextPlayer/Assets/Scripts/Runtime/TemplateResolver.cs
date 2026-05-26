@@ -35,14 +35,14 @@ namespace RagNextPlayer.Runtime
             string?        text,
             GameData       game,
             RoomData?      currentRoom,
-            GameObjectData? focusObject)
+            object?        focusEntity)
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
             return _tokenRegex.Replace(text, match =>
             {
                 var path     = match.Groups[1].Value.Trim();
-                var resolved = ResolvePath(path, game, currentRoom, focusObject);
+                var resolved = ResolvePath(path, game, currentRoom, focusEntity);
                 return resolved ?? match.Value;   // leave unknown tokens unchanged
             });
         }
@@ -53,7 +53,7 @@ namespace RagNextPlayer.Runtime
             string         path,
             GameData       game,
             RoomData?      currentRoom,
-            GameObjectData? focusObject)
+            object?        focusEntity)
         {
             if (string.IsNullOrWhiteSpace(path)) return null;
 
@@ -70,6 +70,11 @@ namespace RagNextPlayer.Runtime
                         case "name":        return game.Player?.Name;
                         case "gender":      return game.Player?.Gender;
                         case "description": return game.Player?.Description;
+                        case "portrait":
+                        case "characterportrait":
+                        case "portraitimagepath":
+                        case "portraitimage":
+                            return game.Player?.PortraitImagePath;
                         default:            return null;
                     }
 
@@ -83,6 +88,11 @@ namespace RagNextPlayer.Runtime
                     {
                         case "name":        return room.Name;
                         case "description": return room.Description;
+                        case "portrait":
+                        case "characterportrait":
+                        case "portraitimagepath":
+                        case "portraitimage":
+                            return room.PortraitImagePath;
                         default:            return null;
                     }
                 }
@@ -91,21 +101,50 @@ namespace RagNextPlayer.Runtime
                 case "this":
                 case "focus":
                 {
-                    // Prefer focusObject; fall back to player if the action is on the player
-                    var entity = focusObject;
+                    var entity = focusEntity;
                     if (entity is null) return null;
-                    if (parts.Length < 2) return entity.Name;
+
+                    string? name = null;
+                    string? description = null;
+                    string? portraitImagePath = null;
+                    System.Collections.Generic.Dictionary<string, string>? properties = null;
+
+                    if (entity is GameObjectData go)
+                    {
+                        name = go.Name;
+                        description = go.Description;
+                        portraitImagePath = go.PortraitImagePath;
+                        properties = go.Properties;
+                    }
+                    else if (entity is PlayerData pl)
+                    {
+                        name = pl.Name;
+                        description = pl.Description;
+                        portraitImagePath = pl.PortraitImagePath;
+                    }
+                    else if (entity is RoomData rm)
+                    {
+                        name = rm.Name;
+                        description = rm.Description;
+                        portraitImagePath = rm.PortraitImagePath;
+                    }
+
+                    if (parts.Length < 2) return name;
                     switch (parts[1].Trim().ToLowerInvariant())
                     {
-                        case "name":        return entity.Name;
-                        case "description": return entity.Description;
+                        case "name":        return name;
+                        case "description": return description;
                         case "portrait":
+                        case "characterportrait":
                         case "portraitimagepath":
-                            return entity.PortraitImagePath;
+                        case "portraitimage":
+                            return portraitImagePath;
                         default:
-                            // Try Properties dictionary
-                            entity.Properties.TryGetValue(parts[1], out var prop);
-                            return prop;
+                            if (properties is not null && properties.TryGetValue(parts[1], out var prop))
+                            {
+                                return prop;
+                            }
+                            return null;
                     }
                 }
 

@@ -196,7 +196,7 @@ namespace RagNextPlayer.Managers
             HideMenu();
             var game = GameManager.Instance?.ActiveGame;
             if (game is null) return;
-            var ctx = new GameExecutionContext(game, room, null);
+            var ctx = new GameExecutionContext(game, room, null, room);
             var sink = GetComponent<CommandEffectRouter>();
             if (sink is not null)
             {
@@ -221,7 +221,7 @@ namespace RagNextPlayer.Managers
                 PortraitImagePath = player.PortraitImagePath,
             };
 
-            var ctx  = new GameExecutionContext(game, room, playerStub);
+            var ctx  = new GameExecutionContext(game, room, playerStub, player);
             var sink = GetComponent<CommandEffectRouter>();
             if (sink is not null)
             {

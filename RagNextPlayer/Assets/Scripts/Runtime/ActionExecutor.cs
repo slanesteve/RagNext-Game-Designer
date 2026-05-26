@@ -15,14 +15,16 @@ namespace RagNextPlayer.Runtime
         public GameData       Game        { get; }
         public RoomData?      CurrentRoom { get; set; }
         public GameObjectData? FocusObject{ get; }
+        public object?        FocusEntity { get; }
 
         public PlayerData Player => Game.Player;
 
-        public GameExecutionContext(GameData game, RoomData? currentRoom = null, GameObjectData? focusObject = null)
+        public GameExecutionContext(GameData game, RoomData? currentRoom = null, GameObjectData? focusObject = null, object? focusEntity = null)
         {
             Game        = game ?? throw new ArgumentNullException(nameof(game));
             CurrentRoom = currentRoom;
             FocusObject = focusObject;
+            FocusEntity = focusEntity ?? focusObject;
         }
 
         public GameVariableData? GetVariable(string name) =>
@@ -44,7 +46,7 @@ namespace RagNextPlayer.Runtime
 
         /// <summary>Returns the resolved text of {token} patterns in a string.</summary>
         public string Resolve(string? text) =>
-            TemplateResolver.Resolve(text, Game, CurrentRoom, FocusObject);
+            TemplateResolver.Resolve(text, Game, CurrentRoom, FocusEntity);
 
     }
 

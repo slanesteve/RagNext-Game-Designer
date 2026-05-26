@@ -9,6 +9,9 @@ using RagsCore.Services;
 using RagNext.Services;
 using System.Globalization;
 using Microsoft.Maui.Graphics.Converters;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
+using RagNext.Views.Popups;
 
 namespace RagNext.Views
 {
@@ -311,15 +314,11 @@ namespace RagNext.Views
                 return;
             }
 
-            var prompt = await DisplayPromptAsync("Generate Portrait", "Enter a prompt for the image:", "Generate", "Cancel", placeholder: "heroic adventurer portrait");
-            if (string.IsNullOrWhiteSpace(prompt)) return;
-
-            // Choose size
-            // Wrap the action sheet on the UI thread and ensure you're calling it from an active page
-            var sizeChoice = await MainThread.InvokeOnMainThreadAsync(async () =>
-                await DisplayActionSheet("Image Size", "Cancel", null, "480 x 480", "720 x 720", "1024 x 1024"));
-            if (string.IsNullOrWhiteSpace(sizeChoice) || sizeChoice == "Cancel") return;
-            int? size = sizeChoice.StartsWith("480") ? 480 : sizeChoice.StartsWith("720") ? 720 : 1024;
+            var popup = new AIImagePromptPopup("Generate Portrait", "heroic adventurer portrait");
+            await this.ShowPopupAsync(popup);
+            if (popup.IsCancelled || string.IsNullOrWhiteSpace(popup.PromptText)) return;
+            var prompt = popup.PromptText;
+            int? size = popup.SelectedSize;
 
             var imageService = MauiProgram.Services.GetService(typeof(IAIImageService)) as IAIImageService;
             if (imageService is null)
