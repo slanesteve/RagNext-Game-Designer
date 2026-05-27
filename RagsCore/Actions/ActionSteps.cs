@@ -58,12 +58,18 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(OpenContainerCommand), "general.openContainer")]
     [JsonDerivedType(typeof(CloseContainerCommand), "general.closeContainer")]
     [JsonDerivedType(typeof(CallFunctionCommand), "general.callFunction")]
+    [JsonDerivedType(typeof(StartDialogueCommand), "general.startDialogue")]
+    [JsonDerivedType(typeof(AddCustomChoiceCommand), "general.addCustomChoice")]
+    [JsonDerivedType(typeof(ClearCustomChoiceCommand), "general.clearCustomChoice")]
+    [JsonDerivedType(typeof(RemoveCustomChoiceCommand), "general.removeCustomChoice")]
     public abstract class ActionStep
     {
         public abstract ActionStepKind Kind { get; }
         // Optional user label common to both
         public string? Label { get; set; }
         public virtual string TypeName => GetType().Name;
+        public double X { get; set; }
+        public double Y { get; set; }
     }
 
     public abstract class Condition : ActionStep
@@ -878,6 +884,54 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             // Handled inside target environment runtime context updates.
+        }
+    }
+
+    public sealed class DialogueChoice
+    {
+        public string Text { get; set; } = string.Empty;
+        public string DestinationNodeId { get; set; } = string.Empty;
+        public ObservableCollection<ActionStep> Commands { get; set; } = new();
+    }
+
+    public sealed class StartDialogueCommand : GameCommand
+    {
+        public string DialogueId { get; set; } = string.Empty;
+        public string CharacterLines { get; set; } = string.Empty;
+        public ObservableCollection<DialogueChoice> Choices { get; set; } = new();
+        public override string TypeName => "Start Dialogue";
+        public override void Execute(ActionContext ctx)
+        {
+            // Handled by custom visual game dialogues system
+        }
+    }
+
+    public sealed class AddCustomChoiceCommand : GameCommand
+    {
+        public string ChoiceText { get; set; } = string.Empty;
+        public string VariableName { get; set; } = string.Empty;
+        public override string TypeName => "Action: Add Custom Choice";
+        public override void Execute(ActionContext ctx)
+        {
+            // Handled inside target environment runtime
+        }
+    }
+
+    public sealed class ClearCustomChoiceCommand : GameCommand
+    {
+        public override string TypeName => "Action: Clear Custom Choice";
+        public override void Execute(ActionContext ctx)
+        {
+            // Handled inside target environment runtime
+        }
+    }
+
+    public sealed class RemoveCustomChoiceCommand : GameCommand
+    {
+        public override string TypeName => "Action: Remove Custom Choice";
+        public override void Execute(ActionContext ctx)
+        {
+            // Handled inside target environment runtime
         }
     }
 }

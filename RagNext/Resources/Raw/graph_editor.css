@@ -75,6 +75,7 @@ body, html {
 .node {
     position: absolute;
     min-width: 240px;
+    max-width: 500px;
     background: var(--node-bg);
     border: 1px solid var(--node-border);
     border-radius: 12px;
@@ -130,7 +131,6 @@ body, html {
     color: var(--pin-false);
 }
 
-/* Ports System */
 .port-row {
     display: flex;
     justify-content: space-between;
@@ -139,6 +139,17 @@ body, html {
     font-size: 11px;
     color: var(--text-muted);
     position: relative;
+}
+
+.port-row.input {
+    justify-content: flex-start;
+    padding-left: 4px;
+}
+
+.port-row.output {
+    justify-content: flex-end;
+    padding-right: 4px;
+    text-align: right;
 }
 
 .pin {
@@ -189,7 +200,76 @@ textarea:focus, select:focus, input:focus {
 }
 
 textarea {
-    min-height: 50px;
+    min-height: 80px;
+    height: auto;
+}
+
+/* Glassmorphic Formatting toolbar */
+.formatting-toolbar {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.btn-format {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    width: auto !important;
+    transition: all 0.15s ease;
+}
+
+.btn-format:hover {
+    background: rgba(168, 85, 247, 0.3);
+    border-color: var(--node-selected);
+    color: #fff;
+}
+
+.btn-format.ai-glow {
+    background: linear-gradient(135deg, rgba(142, 45, 226, 0.25), rgba(74, 0, 224, 0.25));
+    border: 1px solid #8e2de2;
+    color: #d8b4fe;
+    box-shadow: 0 0 8px rgba(142, 45, 226, 0.2);
+}
+
+.btn-format.ai-glow:hover {
+    background: linear-gradient(135deg, rgba(142, 45, 226, 0.45), rgba(74, 0, 224, 0.45));
+    box-shadow: 0 0 12px rgba(142, 45, 226, 0.5);
+    color: #fff;
+}
+
+/* Premium rich-text live preview container */
+.live-preview-container {
+    margin-top: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    padding: 6px;
+}
+
+.live-preview-header {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    padding-bottom: 2px;
+}
+
+.live-preview-body {
+    font-size: 11px;
+    line-height: 1.4;
+    color: #e5e7eb;
+    word-break: break-word;
+    min-height: 20px;
 }
 
 button.add-choice-btn {

@@ -1,6 +1,6 @@
 /**
  * Rags Node Visual Graph Editor Engine
- * Handles dragging, panning, drawing connections, node events, and C# bridging.
+ * Handles dragging, panning, drawing connections, dynamic catalog parsing, parameter inputs, and C# serialization.
  */
 
 let nodes = [];
@@ -31,21 +31,173 @@ const nodesLayer = document.getElementById('nodes-layer');
 const svgLayer = document.getElementById('svg-layer');
 const contextMenu = document.getElementById('context-menu');
 
-// Preloaded commands & conditions catalogs for select dropdowns
-const AVAILABLE_COMMANDS = [
-    { type: "general.displayText", label: "Display Text" },
-    { type: "char.damage", label: "Damage / Heal Character" },
-    { type: "char.setState", label: "Set Character State" },
-    { type: "general.triggerTurnTick", label: "Trigger Turn Tick" },
-    { type: "media.playSound", label: "Play Sound Effect" },
-    { type: "player.moveTo", label: "Move Player" }
-];
+// Dynamic Database Catalogs and reflection lookup maps
+let catalogs = {};
+let nameToTypeMap = {};
+let typeToNameMap = {};
+let typeToInputsMap = {};
 
-const AVAILABLE_CONDITIONS = [
-    { type: "var.equals", label: "Variable Equals" },
-    { type: "item.heldByPlayer", label: "Item Held by Player" },
-    { type: "player.inRoom", label: "Player in Room" }
-];
+let AVAILABLE_COMMANDS = [];
+let AVAILABLE_CONDITIONS = [];
+
+// Debounced auto-saving on the fly
+let autoSaveTimeout = null;
+function triggerAutoSave() {
+    if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        saveAndSyncCsharp();
+    }, 400); // 400ms debounce
+}
+
+// Comprehensive fallback map of friendly names to C# polymorphic type discriminators
+const fallbackDiscriminators = {
+    "actionaddcustomchoice": "general.addCustomChoice",
+    "actionclearcustomchoice": "general.clearCustomChoice",
+    "actionremovecustomchoice": "general.removeCustomChoice",
+    "characterdisplaydescription": "char.displayDescription",
+    "characterdisplayportrait": "char.displayPortrait",
+    "charactermovetoroom": "char.moveToRoom",
+    "charactermoveinventorytoplayer": "char.moveInventoryToPlayer",
+    "charactermovetoobject": "char.moveToObject",
+    "charactersetportraitmedia": "char.setPortraitMedia",
+    "charactersetactiontoactiveinactive": "char.setActionActive",
+    "charactersetcustomproperty": "char.setCustomProperty",
+    "charactersetcustompropertyjavascript": "char.setCustomPropertyJs",
+    "charactersetdescription": "char.setDescription",
+    "charactersetgender": "char.setGender",
+    "charactersetdisplayname": "char.setDisplayName",
+    "addacomment": "general.addComment",
+    "debugtext": "general.debugText",
+    "setragsdatawithjavascript": "general.setRagsDataJs",
+    "displaytext": "general.displayText",
+    "mediadisplaylayeredpicture": "media.displayLayeredPicture",
+    "mediadisplaymultimedia": "media.displayMultimedia",
+    "mediasetbackgroundmusic": "media.setBackgroundMusic",
+    "mediastopbackgroundmusic": "media.stopBackgroundMusic",
+    "mediaplaysoundeffect": "media.playSound",
+    "mediasetmaincompasspicture": "media.setMainCompassPicture",
+    "mediasetupdowncompasspicture": "media.setUpDownCompassPicture",
+    "imageaddlayeredimage": "image.addLayeredImage",
+    "imageclearlayeredimages": "image.clearLayeredImages",
+    "imageremovelayeredimage": "image.removeLayeredImage",
+    "imagereplacelayeredimage": "image.replaceLayeredImage",
+    "itemdisplaydescription": "item.displayDescription",
+    "itemlayeredremove": "item.layeredRemove",
+    "itemlayeredwear": "item.layeredWear",
+    "itemmovetocharacter": "item.moveToChar",
+    "itemmovetoinventory": "item.moveToInventory",
+    "itemmoveinsideobject": "item.moveInsideObject",
+    "itemmovetoroom": "item.inRoom",
+    "playerdisplaydescription": "player.displayDescription",
+    "playersetlayeredportrait": "player.setLayeredPortrait",
+    "playermoveinventorytocharacter": "player.moveInventoryToChar",
+    "playermoveinventorytoroom": "player.moveInventoryToRoom",
+    "playermovetoroom": "player.moveTo",
+    "playermovetocharacter": "player.moveToChar",
+    "playermovetoobject": "player.moveToObject",
+    "playersetcustomproperty": "player.setCustomProperty",
+    "playersetdescription": "player.setDescription",
+    "playersetname": "player.setName",
+    "playersetgender": "player.setGender",
+    "playersetportraitmedia": "player.setPortraitMedia",
+    "roomdisplaydescription": "room.displayDescription",
+    "roomdisplaypicture": "room.displayPicture",
+    "roommoveitemstoplayer": "room.moveItemsToPlayer",
+    "roomsetdescription": "room.setDescription",
+    "roomsetpicture": "room.setPicture",
+    "statusbarsetvisibleinvisible": "ui.setStatusBarVisible",
+    "timerexecutetimer": "timer.executeTimer",
+    "timerresettimer": "timer.resetTimer",
+    "timersetcustomproperty": "timer.setCustomProperty",
+    "timersettimertoactiveinactive": "timer.setTimerActive",
+    "variabledisplaydata": "var.displayData",
+    "variableset": "var.set",
+    "variablesetbyuserinput": "general.promptInput",
+    "promptplayerinput": "general.promptInput",
+    "variablesetnumericrandomly": "var.setRandom",
+    "endthegame": "general.endGame",
+    "itemopencontainer": "general.openContainer",
+    "itemclosecontainer": "general.closeContainer",
+    "additionaldatacheck": "general.additionalDataCheck",
+    "charactercustompropertycheck": "char.customPropertyCheck",
+    "charactergender": "char.gender",
+    "characterinroom": "char.inRoom",
+    "characterinroomgroup": "char.inRoomGroup",
+    "itemcustompropertycheck": "item.customPropertyCheck",
+    "itemingroup": "item.inGroup",
+    "itemheldbycharacter": "item.heldByChar",
+    "itemheldbyplayer": "item.heldByPlayer",
+    "iteminobject": "item.inObject",
+    "iteminroom": "item.inRoom",
+    "iteminroomgroup": "item.inRoomGroup",
+    "itemnotheldbyplayer": "item.notHeldByPlayer",
+    "itemnotinobject": "item.notInObject",
+    "itemstatecheck": "item.stateCheck",
+    "playercustompropertycheck": "player.customPropertyCheck",
+    "playergender": "player.gender",
+    "playerinroom": "player.inRoom",
+    "playerinroomgroup": "player.inRoomGroup",
+    "playerinsameroomas": "player.sameRoom",
+    "playermovingindirection": "player.movingInDirection",
+    "roomcustompropertycheck": "room.customPropertyCheck",
+    "timercustompropertycheck": "timer.customPropertyCheck",
+    "variablecomparison": "var.compare",
+    "variablecomparisontovariable": "var.compareVar",
+    "variablecustompropertycheck": "var.customPropertyCheck"
+};
+
+const propertyMappings = {
+    "Character": ["CharacterId", "characterId", "Character"],
+    "Destination Room": ["RoomId", "roomId", "DestinationRoom", "destinationRoom"],
+    "Room": ["RoomId", "roomId", "Room"],
+    "Media File": ["MediaId", "mediaId", "MediaFile", "mediaFile"],
+    "Portrait Media": ["PortraitId", "portraitId", "PortraitMedia", "portraitMedia", "MediaId"],
+    "Object": ["ObjectId", "objectId", "Object"],
+    "Choice Text": ["ChoiceText", "choiceText", "Text", "text"],
+    "Target Variable": ["VariableName", "variableName", "Name", "name", "TargetVariable", "targetVariable"],
+    "Variable": ["VariableName", "variableName", "Name", "name", "Variable", "variable"],
+    "Text": ["Text", "text"],
+    "Amount": ["Amount", "amount"],
+    "Direction": ["Direction", "direction"]
+};
+
+function getPropertyValue(nodeData, label) {
+    if (nodeData[label] !== undefined) return nodeData[label];
+    
+    const aliases = propertyMappings[label] || [];
+    for (let alias of aliases) {
+        if (nodeData[alias] !== undefined) {
+            return nodeData[alias];
+        }
+    }
+    
+    const normalizedLabel = label.toLowerCase().replace(/[^a-z]/g, '');
+    for (let key of Object.keys(nodeData)) {
+        const normalizedKey = key.toLowerCase().replace(/[^a-z]/g, '');
+        if (normalizedKey === normalizedLabel || 
+            normalizedKey === normalizedLabel + 'id' || 
+            normalizedLabel === normalizedKey + 'id') {
+            return nodeData[key];
+        }
+    }
+    return "";
+}
+
+function getNodeIdFromPinId(pinId) {
+    if (!pinId) return null;
+    if (pinId.startsWith('choice_')) {
+        const choiceId = parseInt(pinId.split('_')[1]);
+        const parentNode = nodes.find(n => n.choices && n.choices.some(ch => ch.id === choiceId));
+        if (parentNode) return parentNode.id;
+    }
+    const lastUnderscore = pinId.lastIndexOf('_');
+    return lastUnderscore !== -1 ? pinId.substring(0, lastUnderscore) : pinId;
+}
+
+function normalize(str) {
+    if (!str) return "";
+    return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
 
 // Initialize Canvas Panning, Zooming, and Input Listeners
 function initGraph() {
@@ -133,7 +285,6 @@ function deselectAllNodes() {
 
 // Draw/Redraw SVG Connections
 function redrawConnections() {
-    // Clear old lines
     while (svgLayer.lastChild && svgLayer.lastChild.tagName === 'path') {
         svgLayer.removeChild(svgLayer.lastChild);
     }
@@ -144,6 +295,13 @@ function redrawConnections() {
         if (!fromPin || !toPin) return;
 
         const path = drawBezierCurve(fromPin, toPin, conn.type);
+        path.style.cursor = 'pointer';
+        path.addEventListener('click', (e) => {
+            e.stopPropagation();
+            connections = connections.filter(c => c !== conn);
+            redrawConnections();
+            triggerAutoSave();
+        });
         svgLayer.appendChild(path);
     });
 
@@ -171,7 +329,6 @@ function drawBezierCurve(fromPin, toPin, type) {
 }
 
 function drawTemporaryConnection() {
-    // Remove old active temp line
     let tempPath = document.getElementById('temp-path');
     if (tempPath) tempPath.remove();
 
@@ -195,17 +352,202 @@ function drawTemporaryConnection() {
     svgLayer.appendChild(tempPath);
 }
 
+// Renders dynamic live previews of Rags tags
+function renderRichTextPreview(text) {
+    if (!text) return '<span style="color: var(--text-muted); font-style: italic;">No preview text...</span>';
+    let html = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    html = html
+        .replace(/&lt;b&gt;/gi, "<strong>")
+        .replace(/&lt;\/b&gt;/gi, "</strong>")
+        .replace(/&lt;i&gt;/gi, "<em>")
+        .replace(/&lt;\/i&gt;/gi, "</em>")
+        .replace(/&lt;u&gt;/gi, "<u>")
+        .replace(/&lt;\/u&gt;/gi, "</u>");
+
+    let colorRegex = /&lt;color=(#[a-f0-9]{6})&gt;(.*?)&lt;\/color&gt;/gi;
+    html = html.replace(colorRegex, '<span style="color: $1;">$2</span>');
+
+    let markRegex = /&lt;mark=(#[a-f0-9]{8}|#[a-f0-9]{6})&gt;(.*?)&lt;\/mark&gt;/gi;
+    html = html.replace(markRegex, '<span style="background-color: $2; padding: 2px 4px; border-radius: 4px;">$3</span>');
+    html = html.replace(/&lt;mark=(#[a-f0-9]{6}|#[a-f0-9]{8})&gt;(.*?)&lt;\/mark&gt;/gi, '<span style="background-color: $1; padding: 2px 4px; border-radius: 4px;">$2</span>');
+
+    html = html.replace(/\n/g, "<br>");
+    return html;
+}
+
+function updateLivePreview(textarea, previewElement) {
+    if (previewElement) {
+        previewElement.innerHTML = renderRichTextPreview(textarea.value);
+    }
+}
+
+// Rich Text formatting Toolbar Helper
+function insertTextDecorator(textarea, before, after, previewElement) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+    const replacement = before + selected + after;
+    textarea.value = text.substring(0, start) + replacement + text.substring(end);
+    textarea.focus();
+    textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+    
+    updateLivePreview(textarea, previewElement);
+
+    const event = new Event('change');
+    textarea.dispatchEvent(event);
+}
+
+function clearSelectionFormatting(textarea, previewElement) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+    const cleaned = selected.replace(/<\/?[^>]+(>|$)/g, "");
+    textarea.value = text.substring(0, start) + cleaned + text.substring(end);
+    textarea.focus();
+    textarea.setSelectionRange(start, start + cleaned.length);
+    
+    updateLivePreview(textarea, previewElement);
+
+    const event = new Event('change');
+    textarea.dispatchEvent(event);
+}
+
+function createFormattingToolbar(textarea, previewElement, fieldName, node) {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'formatting-toolbar';
+    toolbar.style.display = 'flex';
+    toolbar.style.gap = '4px';
+    toolbar.style.marginBottom = '6px';
+    toolbar.style.alignItems = 'center';
+
+    const btnB = document.createElement('button');
+    btnB.innerText = 'B';
+    btnB.className = 'btn-format';
+    btnB.style.fontWeight = 'bold';
+    btnB.onclick = (e) => { e.preventDefault(); insertTextDecorator(textarea, '<b>', '</b>', previewElement); };
+    toolbar.appendChild(btnB);
+
+    const btnI = document.createElement('button');
+    btnI.innerText = 'I';
+    btnI.className = 'btn-format';
+    btnI.style.fontStyle = 'italic';
+    btnI.onclick = (e) => { e.preventDefault(); insertTextDecorator(textarea, '<i>', '</i>', previewElement); };
+    toolbar.appendChild(btnI);
+
+    const btnU = document.createElement('button');
+    btnU.innerText = 'U';
+    btnU.className = 'btn-format';
+    btnU.style.textDecoration = 'underline';
+    btnU.onclick = (e) => { e.preventDefault(); insertTextDecorator(textarea, '<u>', '</u>', previewElement); };
+    toolbar.appendChild(btnU);
+
+    // Color Selector Trigger with hidden color selector
+    const colorPickerContainer = document.createElement('div');
+    colorPickerContainer.style.position = 'relative';
+    colorPickerContainer.style.display = 'inline-block';
+
+    const btnColor = document.createElement('button');
+    btnColor.innerHTML = '🎨 Color';
+    btnColor.className = 'btn-format';
+    btnColor.style.fontSize = '10px';
+
+    const nativePicker = document.createElement('input');
+    nativePicker.type = 'color';
+    nativePicker.value = '#a855f7';
+    nativePicker.style.position = 'absolute';
+    nativePicker.style.left = '0';
+    nativePicker.style.top = '0';
+    nativePicker.style.opacity = '0';
+    nativePicker.style.width = '100%';
+    nativePicker.style.height = '100%';
+    nativePicker.style.cursor = 'pointer';
+    nativePicker.addEventListener('change', (e) => {
+        insertTextDecorator(textarea, `<color=${nativePicker.value}>`, '</color>', previewElement);
+    });
+
+    colorPickerContainer.appendChild(btnColor);
+    colorPickerContainer.appendChild(nativePicker);
+    toolbar.appendChild(colorPickerContainer);
+
+    // Highlight text selector
+    const btnHighlight = document.createElement('button');
+    btnHighlight.innerHTML = '🖊️ Highlight';
+    btnHighlight.className = 'btn-format';
+    btnHighlight.style.fontSize = '10px';
+    btnHighlight.onclick = (e) => { 
+        e.preventDefault(); 
+        insertTextDecorator(textarea, '<mark=#FFFF0055>', '</mark>', previewElement); 
+    };
+    toolbar.appendChild(btnHighlight);
+
+    // Clear tag formatting selector
+    const btnClear = document.createElement('button');
+    btnClear.innerHTML = '✕ Clear';
+    btnClear.className = 'btn-format';
+    btnClear.style.fontSize = '10px';
+    btnClear.onclick = (e) => { 
+        e.preventDefault(); 
+        clearSelectionFormatting(textarea, previewElement); 
+    };
+    toolbar.appendChild(btnClear);
+
+    // Glowing ✨ AI dialogue trigger calling native C# DI chat service co-author bridge
+    const btnAI = document.createElement('button');
+    btnAI.innerHTML = '✨ AI dialogue';
+    btnAI.className = 'btn-format ai-glow';
+    btnAI.style.marginLeft = 'auto';
+    btnAI.onclick = (e) => {
+        e.preventDefault();
+        const currentText = textarea.value;
+        window.location.href = "rags-action://ai?nodeId=" + node.id + "&fieldName=" + fieldName + "&currentText=" + encodeURIComponent(currentText);
+    };
+    toolbar.appendChild(btnAI);
+
+    return toolbar;
+}
+
+function createLivePreviewContainer(textarea) {
+    const container = document.createElement('div');
+    container.className = 'live-preview-container';
+
+    const header = document.createElement('div');
+    header.className = 'live-preview-header';
+    header.innerHTML = '<span>👁️ Live Preview</span>';
+    container.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'live-preview-body';
+    body.innerHTML = renderRichTextPreview(textarea.value);
+    container.appendChild(body);
+
+    textarea.addEventListener('input', () => updateLivePreview(textarea, body));
+    textarea.addEventListener('change', () => updateLivePreview(textarea, body));
+
+    return { container, body };
+}
+
 // Node Engine Creation Methods
 function createBaseNode(id, type, title, x, y) {
     const el = document.createElement('div');
-    el.className = 'node';
+    el.className = `node ${type}`;
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
     el.id = id;
 
     const header = document.createElement('div');
     header.className = `node-header ${type}`;
-    header.innerHTML = `<span>${title}</span><span class="node-delete" onclick="deleteNode('${id}')">✕</span>`;
+    
+    if (type === 'start') {
+        header.innerHTML = `<span>${title}</span>`;
+    } else {
+        header.innerHTML = `<span>${title}</span><span class="node-delete" onclick="deleteNode('${id}')">✕</span>`;
+    }
     el.appendChild(header);
 
     const body = document.createElement('div');
@@ -214,7 +556,6 @@ function createBaseNode(id, type, title, x, y) {
 
     nodesLayer.appendChild(el);
 
-    // Make node draggable
     makeDraggable(el);
 
     const nodeObj = {
@@ -225,7 +566,8 @@ function createBaseNode(id, type, title, x, y) {
         element: el,
         bodyElement: body,
         choices: [],
-        data: {}
+        data: {},
+        inputs: []
     };
     nodes.push(nodeObj);
     return nodeObj;
@@ -236,7 +578,7 @@ function makeDraggable(el) {
     let offsetOffsetY = 0;
 
     el.addEventListener('mousedown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.classList.contains('pin') || e.target.classList.contains('node-delete')) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.classList.contains('pin') || e.target.classList.contains('node-delete') || e.target.classList.contains('btn-format')) {
             return;
         }
         e.stopPropagation();
@@ -266,6 +608,7 @@ function makeDraggable(el) {
         const onMouseUp = () => {
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
+            triggerAutoSave(); // Auto-save coordinates on drag end!
         };
 
         window.addEventListener('mousemove', onMouseMove);
@@ -276,7 +619,7 @@ function makeDraggable(el) {
 // Port Configuration Helper
 function addPin(node, direction, type, name, pinId) {
     const row = document.createElement('div');
-    row.className = 'port-row';
+    row.className = `port-row ${direction}`;
     row.style.textAlign = direction === 'input' ? 'left' : 'right';
     row.innerText = name;
 
@@ -284,26 +627,25 @@ function addPin(node, direction, type, name, pinId) {
     pin.className = `pin ${direction} ${type}`;
     pin.id = pinId;
     
-    // Wire pin connection events
+    // Fix closure capture renaming bug: dynamically query pin.id inside events
     pin.addEventListener('mousedown', (e) => {
         e.stopPropagation();
-        activeDrawingPin = { id: pinId, direction, type, node };
+        activeDrawingPin = { id: pin.id, direction, type, node };
     });
 
     pin.addEventListener('mouseup', (e) => {
         e.stopPropagation();
-        if (activeDrawingPin && activeDrawingPin.id !== pinId && activeDrawingPin.direction !== direction) {
-            // Establish Connection
-            const from = direction === 'input' ? activeDrawingPin.id : pinId;
-            const to = direction === 'input' ? pinId : activeDrawingPin.id;
+        if (activeDrawingPin && activeDrawingPin.id !== pin.id && activeDrawingPin.direction !== direction) {
+            const from = direction === 'input' ? activeDrawingPin.id : pin.id;
+            const to = direction === 'input' ? pin.id : activeDrawingPin.id;
             
-            // Avoid duplicate links
             if (!connections.some(c => c.fromPinId === from && c.toPinId === to)) {
                 connections.push({
                     fromPinId: from,
                     toPinId: to,
                     type: activeDrawingPin.type
                 });
+                triggerAutoSave(); // Auto-save on link creation!
             }
         }
         activeDrawingPin = null;
@@ -314,14 +656,23 @@ function addPin(node, direction, type, name, pinId) {
     node.bodyElement.appendChild(row);
 }
 
-// Custom Dialogue Nodes
+// Create the permanently fixed Start node
+function createStartNode() {
+    let startNode = nodes.find(n => n.id === 'start');
+    if (startNode) return startNode;
+
+    const node = createBaseNode('start', 'start', '🚀 Action Start', 50, 150);
+    addPin(node, 'output', 'exec', 'Trigger', 'start_out');
+    return node;
+}
+
+// Custom Dialogue Nodes (Auto-generates clean unique IDs directly at creation, fixing child input resolution)
 function addNewDialogueNode(x = 100, y = 100) {
-    const id = 'dialogue_' + Date.now();
+    const id = 'dialogue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     const node = createBaseNode(id, 'dialogue', '💬 NPC Dialogue', x, y);
 
     addPin(node, 'input', 'exec', 'Entry', `${id}_in`);
 
-    // Dialogue Prompt Text Area
     const promptLabel = document.createElement('label');
     promptLabel.innerText = "Character Lines:";
     promptLabel.style.fontSize = "10px";
@@ -330,10 +681,16 @@ function addNewDialogueNode(x = 100, y = 100) {
 
     const txt = document.createElement('textarea');
     txt.placeholder = "\"What the character says...\"";
-    txt.addEventListener('change', () => { node.data.characterLines = txt.value; });
-    node.bodyElement.appendChild(txt);
+    txt.addEventListener('input', () => { 
+        node.data.characterLines = txt.value; 
+        triggerAutoSave(); // Auto-save on keystroke/input
+    });
 
-    // Dynamic Choice List Container
+    const preview = createLivePreviewContainer(txt);
+    node.bodyElement.appendChild(createFormattingToolbar(txt, preview.body, 'characterLines', node));
+    node.bodyElement.appendChild(txt);
+    node.bodyElement.appendChild(preview.container);
+
     const choicesList = document.createElement('div');
     choicesList.id = `${id}_choices_container`;
     node.bodyElement.appendChild(choicesList);
@@ -341,7 +698,10 @@ function addNewDialogueNode(x = 100, y = 100) {
     const btn = document.createElement('button');
     btn.className = 'add-choice-btn';
     btn.innerText = "+ Add Choice";
-    btn.onclick = () => addDialogueChoiceRow(node, choicesList, "", Date.now());
+    btn.onclick = () => {
+        addDialogueChoiceRow(node, choicesList, "", Date.now());
+        triggerAutoSave();
+    };
     node.bodyElement.appendChild(btn);
 
     return node;
@@ -353,12 +713,16 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
     row.style.display = 'flex';
     row.style.gap = '4px';
     row.style.alignItems = 'center';
+    row.style.marginBottom = '6px';
     row.id = rowId;
 
     const inp = document.createElement('input');
     inp.value = initialText || "";
     inp.placeholder = "\"Player choice...\"";
     inp.style.flex = "1";
+    inp.addEventListener('input', () => {
+        triggerAutoSave();
+    });
     row.appendChild(inp);
 
     const del = document.createElement('span');
@@ -368,17 +732,17 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
     del.style.color = "var(--pin-false)";
     del.onclick = () => {
         row.remove();
-        // Clean connections from this choice pin
         connections = connections.filter(c => c.fromPinId !== `${rowId}_out`);
         node.choices = node.choices.filter(c => c.id !== choiceId);
         redrawConnections();
+        triggerAutoSave();
     };
     row.appendChild(del);
 
-    // Choice output execution pin
     const pin = document.createElement('div');
     pin.className = 'pin output dialogue-choice';
     pin.id = `${rowId}_out`;
+    
     pin.addEventListener('mousedown', (e) => {
         e.stopPropagation();
         activeDrawingPin = { id: pin.id, direction: 'output', type: 'dialogue-choice', node };
@@ -387,6 +751,7 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
         e.stopPropagation();
         if (activeDrawingPin && activeDrawingPin.id !== pin.id && activeDrawingPin.direction === 'input') {
             connections.push({ fromPinId: pin.id, toPinId: activeDrawingPin.id, type: 'dialogue-choice' });
+            triggerAutoSave();
         }
         activeDrawingPin = null;
         redrawConnections();
@@ -401,7 +766,7 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
 
 // Custom Command Nodes
 function addNewCommandNode(x = 100, y = 100) {
-    const id = 'command_' + Date.now();
+    const id = 'command_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     const node = createBaseNode(id, 'command', '➡️ Execute Command', x, y);
 
     addPin(node, 'input', 'exec', 'In', `${id}_in`);
@@ -414,49 +779,28 @@ function addNewCommandNode(x = 100, y = 100) {
         opt.innerText = cmd.label;
         select.appendChild(opt);
     });
-    select.addEventListener('change', () => { node.data.commandType = select.value; refreshCommandFields(node); });
+    select.addEventListener('change', () => { 
+        node.data.commandType = select.value; 
+        refreshCommandFields(node); 
+        triggerAutoSave();
+    });
     node.bodyElement.appendChild(select);
 
     const fieldContainer = document.createElement('div');
     fieldContainer.id = `${id}_fields`;
     node.bodyElement.appendChild(fieldContainer);
 
-    node.data.commandType = AVAILABLE_COMMANDS[0].type;
-    refreshCommandFields(node);
+    if (AVAILABLE_COMMANDS.length > 0) {
+        node.data.commandType = AVAILABLE_COMMANDS[0].type;
+        refreshCommandFields(node);
+    }
 
     return node;
 }
 
-function refreshCommandFields(node) {
-    const container = document.getElementById(`${node.id}_fields`);
-    if (!container) return;
-    container.innerHTML = "";
-
-    if (node.data.commandType === "general.displayText") {
-        const inp = document.createElement('input');
-        inp.placeholder = "Lines to display";
-        inp.value = node.data.text || "";
-        inp.addEventListener('change', () => { node.data.text = inp.value; });
-        container.appendChild(inp);
-    } else if (node.data.commandType === "char.damage") {
-        const cInp = document.createElement('input');
-        cInp.placeholder = "Character ID";
-        cInp.value = node.data.characterId || "";
-        cInp.addEventListener('change', () => { node.data.characterId = cInp.value; });
-        container.appendChild(cInp);
-
-        const aInp = document.createElement('input');
-        aInp.type = "number";
-        aInp.placeholder = "Amount (e.g. -10)";
-        aInp.value = node.data.amount || "";
-        aInp.addEventListener('change', () => { node.data.amount = parseInt(aInp.value) || 0; });
-        container.appendChild(aInp);
-    }
-}
-
-// Custom Condition Nodes
+// Custom Condition Nodes (Auto-generates clean unique IDs directly at creation, fixing child input resolution)
 function addNewConditionNode(x = 100, y = 100) {
-    const id = 'cond_' + Date.now();
+    const id = 'cond_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     const node = createBaseNode(id, 'condition', '🔀 Branch Condition', x, y);
 
     addPin(node, 'input', 'exec', 'In', `${id}_in`);
@@ -470,33 +814,244 @@ function addNewConditionNode(x = 100, y = 100) {
         opt.innerText = c.label;
         select.appendChild(opt);
     });
-    select.addEventListener('change', () => { node.data.conditionType = select.value; });
+    select.addEventListener('change', () => { 
+        node.data.conditionType = select.value; 
+        refreshCommandFields(node); 
+        triggerAutoSave();
+    });
     node.bodyElement.appendChild(select);
 
-    const valInp = document.createElement('input');
-    valInp.placeholder = "Check value / parameters";
-    valInp.addEventListener('change', () => { node.data.value = valInp.value; });
-    node.bodyElement.appendChild(valInp);
+    const fieldContainer = document.createElement('div');
+    fieldContainer.id = `${id}_fields`;
+    node.bodyElement.appendChild(fieldContainer);
 
-    node.data.conditionType = AVAILABLE_CONDITIONS[0].type;
+    if (AVAILABLE_CONDITIONS.length > 0) {
+        node.data.conditionType = AVAILABLE_CONDITIONS[0].type;
+        refreshCommandFields(node);
+    }
+
     return node;
 }
 
+function refreshCommandFields(node) {
+    const fieldsContainer = document.getElementById(`${node.id}_fields`);
+    if (!fieldsContainer) return;
+    fieldsContainer.innerHTML = "";
+
+    const type = node.type === 'command' ? node.data.commandType : node.data.conditionType;
+    const schema = typeToInputsMap[type];
+    node.inputs = [];
+
+    if (!schema || !schema.inputs) {
+        // Fallback standard text input if no schema found
+        const row = document.createElement('div');
+        row.className = 'field-row';
+        row.style.marginBottom = '6px';
+        
+        const label = document.createElement('label');
+        label.innerText = "Text Parameter:";
+        row.appendChild(label);
+        
+        const inp = document.createElement('input');
+        inp.placeholder = "Parameters / Details";
+        inp.value = node.data.text || "";
+        inp.addEventListener('input', () => {
+            node.data.text = inp.value;
+            triggerAutoSave();
+        });
+        row.appendChild(inp);
+        fieldsContainer.appendChild(row);
+
+        node.inputs.push({ label: 'text', element: inp });
+        return;
+    }
+
+    schema.inputs.forEach(inputSchema => {
+        const row = document.createElement('div');
+        row.className = 'field-row';
+        row.style.marginBottom = '6px';
+        row.style.display = 'flex';
+        row.style.flexDirection = 'column';
+        row.style.gap = '2px';
+
+        const label = document.createElement('label');
+        label.innerText = inputSchema.label + ":";
+        label.style.fontSize = '10px';
+        label.style.color = 'var(--text-muted)';
+        row.appendChild(label);
+
+        let inputElement;
+        const initialVal = getPropertyValue(node.data, inputSchema.label);
+
+        if (inputSchema.controlType === 'ComboBox' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer') {
+            // Container for both controls
+            const fieldWrapper = document.createElement('div');
+            fieldWrapper.className = 'toggle-field-wrapper';
+            fieldWrapper.style.display = 'flex';
+            fieldWrapper.style.flexDirection = 'column';
+            fieldWrapper.style.gap = '4px';
+
+            const pickerSelect = document.createElement('select');
+            pickerSelect.style.width = "100%";
+            
+            const blankOpt = document.createElement('option');
+            blankOpt.value = "";
+            blankOpt.innerText = "-- Select --";
+            pickerSelect.appendChild(blankOpt);
+
+            let optionsList = [];
+            if (inputSchema.dataType === 'Room') optionsList = catalogs.Rooms || [];
+            else if (inputSchema.dataType === 'GameObject') optionsList = catalogs.GameObjects || [];
+            else if (inputSchema.dataType === 'Character') optionsList = catalogs.Characters || [];
+            else if (inputSchema.dataType === 'Variable') optionsList = catalogs.Variables || [];
+            else if (inputSchema.dataType === 'Media') optionsList = catalogs.Media || [];
+            else if (inputSchema.dataType === 'Function') optionsList = catalogs.Functions || [];
+            else if (inputSchema.dataType === 'Timer') optionsList = catalogs.Timers || [];
+
+            optionsList.forEach(opt => {
+                const o = document.createElement('option');
+                if (inputSchema.dataType === 'Variable') {
+                    o.value = opt.Name;
+                    o.innerText = opt.Name;
+                } else {
+                    o.value = opt.Id;
+                    o.innerText = opt.Name;
+                }
+                pickerSelect.appendChild(o);
+            });
+
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.placeholder = `Enter expression / {this.name}...`;
+            textInput.style.width = "100%";
+
+            const existsInOptions = optionsList.some(opt => 
+                inputSchema.dataType === 'Variable' ? opt.Name === initialVal : opt.Id === initialVal
+            );
+            let isExprMode = (initialVal && (initialVal.includes('{') || initialVal.includes('}') || !existsInOptions));
+
+            pickerSelect.style.display = isExprMode ? 'none' : 'block';
+            textInput.style.display = isExprMode ? 'block' : 'none';
+
+            label.style.display = 'flex';
+            label.style.justifyContent = 'space-between';
+            label.style.alignItems = 'center';
+
+            const toggleLink = document.createElement('span');
+            toggleLink.className = 'field-toggle-mode';
+            toggleLink.style.fontSize = '9px';
+            toggleLink.style.cursor = 'pointer';
+            toggleLink.style.textDecoration = 'underline';
+            toggleLink.style.color = '#a855f7';
+            toggleLink.style.marginLeft = 'auto';
+            toggleLink.innerText = isExprMode ? "👁️ Dropdown" : "📝 Text Mode";
+
+            toggleLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                isExprMode = !isExprMode;
+                if (isExprMode) {
+                    textInput.style.display = 'block';
+                    pickerSelect.style.display = 'none';
+                    toggleLink.innerText = "👁️ Dropdown";
+                    textInput.value = pickerSelect.value;
+                } else {
+                    textInput.style.display = 'none';
+                    pickerSelect.style.display = 'block';
+                    toggleLink.innerText = "📝 Text Mode";
+                    pickerSelect.value = textInput.value;
+                }
+            });
+            label.appendChild(toggleLink);
+
+            pickerSelect.value = existsInOptions ? initialVal : "";
+            textInput.value = initialVal || "";
+
+            pickerSelect.addEventListener('change', () => {
+                textInput.value = pickerSelect.value;
+                node.data[inputSchema.label] = pickerSelect.value;
+                const aliases = propertyMappings[inputSchema.label] || [];
+                aliases.forEach(alias => {
+                    node.data[alias] = pickerSelect.value;
+                });
+                triggerAutoSave();
+            });
+
+            textInput.addEventListener('input', () => {
+                pickerSelect.value = textInput.value;
+                node.data[inputSchema.label] = textInput.value;
+                const aliases = propertyMappings[inputSchema.label] || [];
+                aliases.forEach(alias => {
+                    node.data[alias] = textInput.value;
+                });
+                triggerAutoSave();
+            });
+
+            fieldWrapper.appendChild(pickerSelect);
+            fieldWrapper.appendChild(textInput);
+            inputElement = fieldWrapper;
+        } else if (inputSchema.controlType === 'TextArea' || inputSchema.label.toLowerCase().includes('text') || inputSchema.label.toLowerCase().includes('lines') || inputSchema.label.toLowerCase().includes('description') || inputSchema.label.toLowerCase().includes('dialogue')) {
+            // Multi-line rich text editor with Live Preview and AI dialogue bridge!
+            inputElement = document.createElement('textarea');
+            inputElement.placeholder = `Enter ${inputSchema.label}...`;
+            inputElement.value = initialVal;
+            inputElement.style.width = "100%";
+            inputElement.addEventListener('input', () => {
+                node.data[inputSchema.label] = inputElement.value;
+                const aliases = propertyMappings[inputSchema.label] || [];
+                aliases.forEach(alias => {
+                    node.data[alias] = inputElement.value;
+                });
+                triggerAutoSave();
+            });
+
+            const preview = createLivePreviewContainer(inputElement);
+            row.appendChild(createFormattingToolbar(inputElement, preview.body, inputSchema.label, node));
+            row.appendChild(inputElement);
+            row.appendChild(preview.container);
+        } else {
+            // Standard Text / Input field
+            inputElement = document.createElement('input');
+            inputElement.type = inputSchema.dataType === 'Integer' || inputSchema.dataType === 'Number' ? 'number' : 'text';
+            inputElement.placeholder = `Enter ${inputSchema.label}...`;
+            inputElement.value = initialVal;
+            inputElement.style.width = "100%";
+            inputElement.addEventListener('input', () => {
+                node.data[inputSchema.label] = inputElement.value;
+                const aliases = propertyMappings[inputSchema.label] || [];
+                aliases.forEach(alias => {
+                    node.data[alias] = inputElement.value;
+                });
+                triggerAutoSave();
+            });
+            row.appendChild(inputElement);
+        }
+
+        if (inputSchema.controlType !== 'TextArea' && !inputSchema.label.toLowerCase().includes('text') && !inputSchema.label.toLowerCase().includes('lines') && !inputSchema.label.toLowerCase().includes('description') && !inputSchema.label.toLowerCase().includes('dialogue')) {
+            row.appendChild(inputElement);
+        }
+
+        fieldsContainer.appendChild(row);
+        node.inputs.push({ label: inputSchema.label, element: inputElement });
+    });
+}
+
 // Node Position Context shortcuts
-function addNewDialogueNodeAtCursor() { addNewDialogueNode(contextCursorX, contextCursorY); hideContextMenu(); }
-function addNewCommandNodeAtCursor() { addNewCommandNode(contextCursorX, contextCursorY); hideContextMenu(); }
-function addNewConditionNodeAtCursor() { addNewConditionNode(contextCursorX, contextCursorY); hideContextMenu(); }
+function addNewDialogueNodeAtCursor() { addNewDialogueNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
+function addNewCommandNodeAtCursor() { addNewCommandNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
+function addNewConditionNodeAtCursor() { addNewConditionNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
 
 function deleteNode(id) {
+    if (id === 'start') return;
+
     const node = nodes.find(n => n.id === id);
     if (!node) return;
 
     node.element.remove();
     nodes = nodes.filter(n => n.id !== id);
 
-    // Clean connections
     connections = connections.filter(c => !c.fromPinId.startsWith(id) && !c.toPinId.startsWith(id));
     redrawConnections();
+    triggerAutoSave(); // Auto-save on node deletion!
 }
 
 function clearSelectedNode() {
@@ -508,45 +1063,61 @@ function clearSelectedNode() {
 
 // Bidirectional Sync back to C#
 function saveAndSyncCsharp() {
-    // Generate unified JSON
     const actionDto = serializeGraph();
     const json = JSON.stringify(actionDto);
-    // Base64 encode to prevent URL parsing issues
     const base64 = btoa(unescape(encodeURIComponent(json)));
     window.location.href = "rags-action://sync?data=" + base64;
+    return base64;
 }
 
 function serializeGraph() {
-    // Build root action object
-    const rootNodes = [];
-    
-    // Find entry dialogue/command node (typically with no inputs)
-    nodes.forEach(node => {
-        const hasInputs = connections.some(c => c.toPinId === `${node.id}_in`);
-        if (!hasInputs) {
-            rootNodes.push(buildNodeJson(node));
-        }
-    });
+    const startConn = connections.find(c => c.fromPinId === "start_out");
+    const startNode = startConn ? nodes.find(n => n.id === getNodeIdFromPinId(startConn.toPinId)) : null;
+
+    const rootNodes = startNode ? buildFlatSequence(startNode) : [];
 
     return {
         Name: activeActionName,
         Trigger: "UserClicked",
-        Nodes: rootNodes.filter(n => n !== null)
+        Nodes: rootNodes
     };
 }
 
-function buildNodeJson(node) {
+// Generate flat sequence of steps connected in a straight line
+function buildFlatSequence(startNode) {
+    const list = [];
+    let current = startNode;
+    const visited = new Set();
+
+    while (current && !visited.has(current.id)) {
+        visited.add(current.id);
+        
+        const nodeJson = buildNodeJsonWithoutNext(current);
+        if (nodeJson) {
+            list.push(nodeJson);
+        }
+
+        if (current.type === 'command') {
+            const nextPin = connections.find(c => c.fromPinId === `${current.id}_out`);
+            current = nextPin ? nodes.find(n => n.id === getNodeIdFromPinId(nextPin.toPinId)) : null;
+        } else {
+            current = null;
+        }
+    }
+    return list;
+}
+
+function buildNodeJsonWithoutNext(node) {
     if (!node) return null;
 
     if (node.type === 'dialogue') {
         const choiceDtos = node.choices.map(c => {
             const destPin = connections.find(conn => conn.fromPinId === `${c.rowId}_out`);
-            const destNode = destPin ? nodes.find(n => n.id === destPin.toPinId.split('_')[0]) : null;
+            const destNode = destPin ? nodes.find(n => n.id === getNodeIdFromPinId(destPin.toPinId)) : null;
             return {
                 text: c.textElement.value,
                 destinationNodeId: destNode ? destNode.id : "",
-                // We recursively build child branches!
-                commands: destNode ? [buildNodeJson(destNode)].filter(n => n !== null) : []
+                commands: destNode ? buildFlatSequence(destNode) : []
             };
         });
 
@@ -554,65 +1125,202 @@ function buildNodeJson(node) {
             "$type": "general.startDialogue",
             "dialogueId": node.id,
             "characterLines": node.data.characterLines || "",
-            "choices": choiceDtos
+            "choices": choiceDtos,
+            "X": node.x,
+            "Y": node.y
         };
     } else if (node.type === 'command') {
-        const nextPin = connections.find(c => c.fromPinId === `${node.id}_out`);
-        const nextNode = nextPin ? nodes.find(n => n.id === nextPin.toPinId.split('_')[0]) : null;
-
-        return {
+        const commandJson = {
             "$type": node.data.commandType,
-            "text": node.data.text || "",
-            "characterId": node.data.characterId || "",
-            "amount": node.data.amount || 0,
-            "nextStep": nextNode ? buildNodeJson(nextNode) : null
+            "Label": node.data.label || "",
+            "X": node.x,
+            "Y": node.y
         };
+        if (node.inputs) {
+            node.inputs.forEach(inp => {
+                let val = node.data[inp.label];
+                if (val === undefined) val = "";
+                
+                // Map to primary C# property name
+                const aliases = propertyMappings[inp.label] || [];
+                const primaryCsharpProp = aliases[0] || inp.label;
+                commandJson[primaryCsharpProp] = val;
+                
+                // Keep original label for JS graph canvas reload consistency
+                commandJson[inp.label] = val;
+            });
+        } else {
+            commandJson.text = node.data.text || "";
+            commandJson.characterId = node.data.characterId || "";
+            commandJson.amount = node.data.amount || 0;
+        }
+        return commandJson;
     } else if (node.type === 'condition') {
         const truePin = connections.find(c => c.fromPinId === `${node.id}_true`);
         const falsePin = connections.find(c => c.fromPinId === `${node.id}_false`);
 
-        const trueNode = truePin ? nodes.find(n => n.id === truePin.toPinId.split('_')[0]) : null;
-        const falseNode = falsePin ? nodes.find(n => n.id === falsePin.toPinId.split('_')[0]) : null;
+        const trueNode = truePin ? nodes.find(n => n.id === getNodeIdFromPinId(truePin.toPinId)) : null;
+        const falseNode = falsePin ? nodes.find(n => n.id === getNodeIdFromPinId(falsePin.toPinId)) : null;
 
-        return {
+        const conditionJson = {
             "$type": node.data.conditionType,
-            "value": node.data.value || "",
-            "trueBranch": trueNode ? [buildNodeJson(trueNode)].filter(n => n !== null) : [],
-            "falseBranch": falseNode ? [buildNodeJson(falseNode)].filter(n => n !== null) : []
+            "Label": node.data.label || "",
+            "trueBranch": trueNode ? buildFlatSequence(trueNode) : [],
+            "falseBranch": falseNode ? buildFlatSequence(falseNode) : [],
+            "X": node.x,
+            "Y": node.y
         };
+
+        if (node.inputs) {
+            node.inputs.forEach(inp => {
+                let val = node.data[inp.label];
+                if (val === undefined) val = "";
+                
+                // Map to primary C# property name
+                const aliases = propertyMappings[inp.label] || [];
+                const primaryCsharpProp = aliases[0] || inp.label;
+                conditionJson[primaryCsharpProp] = val;
+                
+                // Keep original label for JS graph canvas reload consistency
+                conditionJson[inp.label] = val;
+            });
+        } else {
+            conditionJson.value = node.data.value || "";
+        }
+        return conditionJson;
     }
     return null;
 }
 
-// C# Hook to populate existing JSON action trees
-window.loadActionGraph = function(actionJson) {
-    // Clear existing canvas
+// C# Hook to populate existing JSON action trees and databases
+window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogsDb, typesMap) {
     nodesLayer.innerHTML = "";
     nodes = [];
     connections = [];
 
-    // Dynamically set header title
+    // Store dynamic databases
+    catalogs = catalogsDb || {};
+    nameToTypeMap = {};
+    typeToNameMap = {};
+    typeToInputsMap = {};
+
+    // Build C# type maps
+    if (typesMap) {
+        typesMap.forEach(tm => {
+            nameToTypeMap[tm.TypeName] = tm.Discriminator;
+            nameToTypeMap[normalize(tm.TypeName)] = tm.Discriminator;
+            typeToNameMap[tm.Discriminator] = tm.TypeName;
+        });
+    }
+
+    // Map Inputs Schema
+    if (commandsDb && commandsDb.commands) {
+        commandsDb.commands.forEach(cmd => {
+            let type = nameToTypeMap[cmd.name] || nameToTypeMap[normalize(cmd.name)] || fallbackDiscriminators[normalize(cmd.name)];
+            if (!type) {
+                const combined = cmd.category + ": " + cmd.name;
+                type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
+            }
+            if (type) {
+                typeToInputsMap[type] = cmd;
+            }
+        });
+    }
+
+    if (conditionsDb && conditionsDb.conditions) {
+        conditionsDb.conditions.forEach(cond => {
+            let type = nameToTypeMap[cond.name] || nameToTypeMap[normalize(cond.name)] || fallbackDiscriminators[normalize(cond.name)];
+            if (!type) {
+                const combined = cond.category + ": " + cond.name;
+                type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
+            }
+            if (type) {
+                typeToInputsMap[type] = cond;
+            }
+        });
+    }
+
+    AVAILABLE_COMMANDS = [];
+    if (commandsDb && commandsDb.commands) {
+        commandsDb.commands.forEach(cmd => {
+            let type = nameToTypeMap[cmd.name] || nameToTypeMap[normalize(cmd.name)] || fallbackDiscriminators[normalize(cmd.name)];
+            if (!type) {
+                const combined = cmd.category + ": " + cmd.name;
+                type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
+            }
+            if (type) {
+                AVAILABLE_COMMANDS.push({ type: type, label: cmd.name });
+            }
+        });
+    }
+    AVAILABLE_COMMANDS.sort((a, b) => a.label.localeCompare(b.label));
+
+    AVAILABLE_CONDITIONS = [];
+    if (conditionsDb && conditionsDb.conditions) {
+        conditionsDb.conditions.forEach(cond => {
+            let type = nameToTypeMap[cond.name] || nameToTypeMap[normalize(cond.name)] || fallbackDiscriminators[normalize(cond.name)];
+            if (!type) {
+                const combined = cond.category + ": " + cond.name;
+                type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
+            }
+            if (type) {
+                AVAILABLE_CONDITIONS.push({ type: type, label: cond.name });
+            }
+        });
+    }
+    AVAILABLE_CONDITIONS.sort((a, b) => a.label.localeCompare(b.label));
+
+    // Dynamic header title update
     activeActionName = actionJson?.Name || "Visual Action Node";
     const titleEl = document.getElementById("editor-title");
     if (titleEl) {
         titleEl.innerText = "Editing Action: " + activeActionName;
     }
 
+    // Always create the permanent Start Node at (50, 150)
+    createStartNode();
+
     if (!actionJson || !actionJson.Nodes || actionJson.Nodes.length === 0) {
-        // Create a default Dialogue Start Node to greet the designer!
-        addNewDialogueNode(150, 150);
         updateTransform();
         return;
     }
 
-    // Populate nodes recursively
-    let startX = 100;
-    actionJson.Nodes.forEach((nodeData, idx) => {
-        parseAndCreateNode(nodeData, startX, 150 + idx * 180);
-    });
+    // Render the sequential node-graph connected list starting from Start Node
+    const firstNode = parseFlatSequence(actionJson.Nodes, 250, 150);
+    if (firstNode) {
+        connections.push({
+            fromPinId: "start_out",
+            toPinId: `${firstNode.id}_in`,
+            type: 'exec'
+        });
+    }
 
     updateTransform();
 };
+
+// Generate a sequence of nodes drawn connected sequentially
+function parseFlatSequence(nodeList, x, y) {
+    if (!nodeList || nodeList.length === 0) return null;
+
+    let firstNode = null;
+    let prevNode = null;
+
+    nodeList.forEach((stepData, idx) => {
+        const currNode = parseAndCreateNode(stepData, stepData.X || x + idx * 360, stepData.Y || y);
+        if (!firstNode) firstNode = currNode;
+
+        if (prevNode && currNode) {
+            connections.push({
+                fromPinId: `${prevNode.id}_out`,
+                toPinId: `${currNode.id}_in`,
+                type: 'exec'
+            });
+        }
+        prevNode = currNode;
+    });
+
+    return firstNode;
+}
 
 function parseAndCreateNode(data, x, y) {
     if (!data) return null;
@@ -623,17 +1331,18 @@ function parseAndCreateNode(data, x, y) {
         const textarea = node.element.querySelector('textarea');
         if (textarea) textarea.value = node.data.characterLines;
 
+        const previewBody = node.element.querySelector('.live-preview-body');
+        updateLivePreview(textarea, previewBody);
+
         if (data.choices) {
             data.choices.forEach((choice, idx) => {
                 const choiceId = Date.now() + idx;
                 const container = document.getElementById(`${node.id}_choices_container`);
                 addDialogueChoiceRow(node, container, choice.text, choiceId);
                 
-                // If this choice connects to a sub-node, parse it!
                 if (choice.commands && choice.commands.length > 0) {
-                    const child = parseAndCreateNode(choice.commands[0], x + 350, y + idx * 220);
+                    const child = parseFlatSequence(choice.commands, x + 380, y + idx * 240);
                     if (child) {
-                        // Connect choice output to child input
                         connections.push({
                             fromPinId: `choice_${choiceId}_out`,
                             toPinId: `${child.id}_in`,
@@ -655,13 +1364,19 @@ function parseAndCreateNode(data, x, y) {
 
         if (isCondition) {
             if (!AVAILABLE_CONDITIONS.some(c => c.type === data["$type"])) {
-                let label = data["$type"].replace('.', ': ');
+                let label = typeToNameMap[data["$type"]] || data["$type"].replace('.', ': ');
                 AVAILABLE_CONDITIONS.push({ type: data["$type"], label: label });
             }
             const node = addNewConditionNode(x, y);
             node.data.conditionType = data["$type"];
-            node.data.value = data.value || "";
             
+            // Populate parameters data
+            Object.keys(data).forEach(key => {
+                if (key !== "trueBranch" && key !== "falseBranch") {
+                    node.data[key] = data[key];
+                }
+            });
+
             const select = node.element.querySelector('select');
             if (select) {
                 select.innerHTML = "";
@@ -674,11 +1389,10 @@ function parseAndCreateNode(data, x, y) {
                 select.value = data["$type"];
             }
 
-            const inp = node.element.querySelector('input');
-            if (inp) inp.value = data.value || "";
+            refreshCommandFields(node);
 
             if (data.trueBranch && data.trueBranch.length > 0) {
-                const child = parseAndCreateNode(data.trueBranch[0], x + 300, y - 100);
+                const child = parseFlatSequence(data.trueBranch, x + 350, y - 120);
                 if (child) {
                     connections.push({
                         fromPinId: `${node.id}_true`,
@@ -689,7 +1403,7 @@ function parseAndCreateNode(data, x, y) {
             }
 
             if (data.falseBranch && data.falseBranch.length > 0) {
-                const child = parseAndCreateNode(data.falseBranch[0], x + 300, y + 100);
+                const child = parseFlatSequence(data.falseBranch, x + 350, y + 120);
                 if (child) {
                     connections.push({
                         fromPinId: `${node.id}_false`,
@@ -700,14 +1414,20 @@ function parseAndCreateNode(data, x, y) {
             }
             return node;
         } else {
-            // Must be a Command Node
+            // Command Node
             if (!AVAILABLE_COMMANDS.some(c => c.type === data["$type"])) {
-                let label = data["$type"].replace('.', ': ');
+                let label = typeToNameMap[data["$type"]] || data["$type"].replace('.', ': ');
                 AVAILABLE_COMMANDS.push({ type: data["$type"], label: label });
             }
             const node = addNewCommandNode(x, y);
             node.data.commandType = data["$type"];
             
+            Object.keys(data).forEach(key => {
+                if (key !== "nextStep") {
+                    node.data[key] = data[key];
+                }
+            });
+
             const select = node.element.querySelector('select');
             if (select) {
                 select.innerHTML = "";
@@ -720,47 +1440,409 @@ function parseAndCreateNode(data, x, y) {
                 select.value = data["$type"];
             }
 
-            if (data["$type"] === "general.displayText") {
-                node.data.text = data.text || "";
-            } else if (data["$type"] === "char.damage") {
-                node.data.characterId = data.characterId || "";
-                node.data.amount = data.amount || 0;
-            } else {
-                node.data.text = data.text || data.commentText || data.value || "";
-                node.data.characterId = data.characterId || data.roomId || data.objectId || "";
-            }
-
             refreshCommandFields(node);
-
-            // Populate standard custom inputs if not display/damage
-            if (data["$type"] !== "general.displayText" && data["$type"] !== "char.damage") {
-                const fieldsContainer = document.getElementById(`${node.id}_fields`);
-                if (fieldsContainer) {
-                    fieldsContainer.innerHTML = "";
-                    const inp = document.createElement('input');
-                    inp.placeholder = "Parameters / Details";
-                    inp.value = node.data.text || "";
-                    inp.addEventListener('change', () => { node.data.text = inp.value; });
-                    fieldsContainer.appendChild(inp);
-                }
-            }
-
-            if (data.nextStep) {
-                const child = parseAndCreateNode(data.nextStep, x + 300, y);
-                if (child) {
-                    connections.push({
-                        fromPinId: `${node.id}_out`,
-                        toPinId: `${child.id}_in`,
-                        type: 'exec'
-                    });
-                }
-            }
             return node;
         }
     }
     return null;
 }
 
+window.showNodeAISpinner = function(nodeId, fieldName, show) {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    const aiBtn = node.element.querySelector('.btn-format.ai-glow');
+    if (aiBtn) {
+        if (show) {
+            aiBtn.innerHTML = "⟳ Generating...";
+            aiBtn.classList.add('spinning');
+            aiBtn.disabled = true;
+        } else {
+            aiBtn.innerHTML = "✨ AI dialogue";
+            aiBtn.classList.remove('spinning');
+            aiBtn.disabled = false;
+        }
+    }
+};
+
+window.updateNodeAIResult = function(nodeId, fieldName, resultText) {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    let txt = null;
+    if (node.type === 'dialogue') {
+        txt = node.element.querySelector('textarea');
+    } else {
+        if (node.inputs) {
+            const inp = node.inputs.find(i => i.label === fieldName);
+            if (inp && inp.element && inp.element.tagName === 'TEXTAREA') {
+                txt = inp.element;
+            }
+        }
+    }
+
+    if (txt) {
+        txt.value = resultText;
+        const previewBody = node.element.querySelector('.live-preview-body');
+        if (previewBody) {
+            previewBody.innerHTML = renderRichTextPreview(resultText);
+        }
+        node.data[fieldName || 'characterLines'] = resultText;
+        triggerAutoSave();
+    }
+};
+
+window.checkUnconnectedNodes = function() {
+    const reached = new Set(['start']);
+    const queue = ['start'];
+    
+    while (queue.length > 0) {
+        const currId = queue.shift();
+        
+        connections.forEach(c => {
+            let matchedFromId = null;
+            if (c.fromPinId.startsWith('choice_')) {
+                const choiceId = parseInt(c.fromPinId.split('_')[1]);
+                const parentNode = nodes.find(n => n.choices && n.choices.some(ch => ch.id === choiceId));
+                if (parentNode) matchedFromId = parentNode.id;
+            } else {
+                matchedFromId = getNodeIdFromPinId(c.fromPinId);
+            }
+            
+            if (matchedFromId === currId) {
+                const toNodeId = getNodeIdFromPinId(c.toPinId);
+                if (toNodeId && !reached.has(toNodeId)) {
+                    reached.add(toNodeId);
+                    queue.push(toNodeId);
+                }
+            }
+        });
+    }
+    
+    const unconnected = nodes.filter(n => !reached.has(n.id));
+    return unconnected.length > 0;
+};
+
 // Start visual scripting canvas on page load
 initGraph();
+createStartNode();
 updateTransform();
+
+// Global Dynamic Autocomplete Engine for template braces { and [
+let activeAutocomplete = {
+    targetInput: null,
+    triggerChar: null,
+    bracketIndex: -1,
+    suggestions: [],
+    activeIndex: 0
+};
+
+function getAutocompleteSuggestions(triggerChar) {
+    const list = [];
+    if (triggerChar === '{') {
+        // Current Object Property (this.*)
+        list.push({ token: "this.Name", typeName: "Current Object Property", desc: "Name of this object." });
+        list.push({ token: "this.Description", typeName: "Current Object Property", desc: "Description of this object." });
+        list.push({ token: "this.portrait", typeName: "Current Object Property", desc: "Portrait or image path." });
+        
+        if (catalogs.GameObjects && catalogs.GameObjects.length > 0) {
+            list.push({ token: "this.attributes.health", typeName: "Current Object Attribute", desc: "Custom health attribute." });
+        }
+
+        // Player
+        list.push({ token: "player.Name", typeName: "Player Property", desc: "Name of the protagonist." });
+        list.push({ token: "player.Description", typeName: "Player Property", desc: "Description of the protagonist." });
+        list.push({ token: "player.Gender", typeName: "Player Property", desc: "Gender of the protagonist." });
+        list.push({ token: "player.portrait", typeName: "Player Property", desc: "Protagonist image portrait path." });
+
+        // Room
+        list.push({ token: "room.Name", typeName: "Room Property", desc: "Name of current room." });
+        list.push({ token: "room.Description", typeName: "Room Property", desc: "Description of current room." });
+        list.push({ token: "room.portrait", typeName: "Room Property", desc: "Image path of current room." });
+
+        // Focus / Object
+        list.push({ token: "focus.Name", typeName: "Focus Object Property", desc: "Name of current focus object." });
+        list.push({ token: "focus.Description", typeName: "Focus Object Property", desc: "Description of current focus object." });
+        list.push({ token: "focus.portrait", typeName: "Focus Object Property", desc: "Image of current focus object." });
+
+        // Variables
+        if (catalogs.Variables) {
+            catalogs.Variables.forEach(v => {
+                list.push({ token: `variables.${v.Name}`, typeName: "Global Variable", desc: `State variable. Current: ${v.Value || '0'}` });
+            });
+        }
+
+        // Characters
+        if (catalogs.Characters) {
+            catalogs.Characters.forEach(c => {
+                const nameClean = c.Name.replace(/\s+/g, "");
+                list.push({ token: `characters.${nameClean}.Name`, typeName: "Character Property", desc: `Name of character '${c.Name}'.` });
+                list.push({ token: `characters.${nameClean}.Description`, typeName: "Character Property", desc: `Description of character '${c.Name}'.` });
+                list.push({ token: `characters.${nameClean}.Health`, typeName: "Character Property", desc: `Health of character '${c.Name}'.` });
+                list.push({ token: `characters.${nameClean}.portrait`, typeName: "Character Property", desc: `Portrait of character '${c.Name}'.` });
+            });
+        }
+
+        // GameObjects
+        if (catalogs.GameObjects) {
+            catalogs.GameObjects.forEach(o => {
+                const nameClean = o.Name.replace(/\s+/g, "");
+                list.push({ token: `objects.${nameClean}.Name`, typeName: "Object Property", desc: `Name of object '${o.Name}'.` });
+                list.push({ token: `objects.${nameClean}.Description`, typeName: "Object Property", desc: `Description of object '${o.Name}'.` });
+                list.push({ token: `objects.${nameClean}.portrait`, typeName: "Object Property", desc: `Portrait of object '${o.Name}'.` });
+            });
+        }
+    } else if (triggerChar === '[') {
+        // Inline linking entity suggestions
+        const directions = ["North", "South", "East", "West", "Up", "Down", "In", "Out"];
+        directions.forEach(dir => {
+            list.push({ token: dir, typeName: "Exit Direction", desc: "Clickable exit shortcut in player navigation." });
+        });
+
+        if (catalogs.GameObjects) {
+            catalogs.GameObjects.forEach(o => {
+                list.push({ token: o.Name, typeName: "Game Object", desc: `Interactive inline link to object '${o.Name}'.` });
+            });
+        }
+        if (catalogs.Characters) {
+            catalogs.Characters.forEach(c => {
+                list.push({ token: c.Name, typeName: "Character", desc: `Interactive inline link to character '${c.Name}'.` });
+            });
+        }
+        if (catalogs.Rooms) {
+            catalogs.Rooms.forEach(r => {
+                list.push({ token: r.Name, typeName: "Room", desc: `Navigation/travel link to room '${r.Name}'.` });
+            });
+        }
+    }
+    return list;
+}
+
+function showAutocompletePopup(input, triggerChar, index) {
+    activeAutocomplete.targetInput = input;
+    activeAutocomplete.triggerChar = triggerChar;
+    activeAutocomplete.bracketIndex = index;
+    activeAutocomplete.suggestions = getAutocompleteSuggestions(triggerChar);
+    activeAutocomplete.activeIndex = 0;
+
+    let popup = document.getElementById('autocomplete-popup');
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'autocomplete-popup';
+        popup.className = 'glass-dropdown';
+        popup.style.cssText = `
+            position: absolute;
+            z-index: 10000;
+            max-height: 220px;
+            overflow-y: auto;
+            min-width: 280px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(22, 22, 30, 0.96);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 4px;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 12px;
+            color: #f1f5f9;
+            display: none;
+            cursor: pointer;
+        `;
+        document.body.appendChild(popup);
+    }
+
+    renderAutocompleteItems("");
+}
+
+function hideAutocompletePopup() {
+    activeAutocomplete.targetInput = null;
+    activeAutocomplete.triggerChar = null;
+    activeAutocomplete.bracketIndex = -1;
+    const popup = document.getElementById('autocomplete-popup');
+    if (popup) popup.style.display = 'none';
+}
+
+function renderAutocompleteItems(query) {
+    const popup = document.getElementById('autocomplete-popup');
+    if (!popup || !activeAutocomplete.targetInput) return;
+
+    const filtered = activeAutocomplete.suggestions.filter(s => 
+        s.token.toLowerCase().includes(query.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+        popup.style.display = 'none';
+        return;
+    }
+
+    popup.innerHTML = '';
+    filtered.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.style.cssText = `
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            transition: background 0.15s;
+            margin-bottom: 2px;
+        `;
+        if (idx === activeAutocomplete.activeIndex) {
+            div.style.background = 'rgba(142, 45, 226, 0.35)';
+            div.style.borderLeft = '3px solid #a855f7';
+        } else {
+            div.style.borderLeft = '3px solid transparent';
+        }
+
+        const tokenSpan = document.createElement('span');
+        tokenSpan.style.fontWeight = 'bold';
+        tokenSpan.style.color = '#fff';
+        tokenSpan.textContent = (activeAutocomplete.triggerChar === '{' ? '{' : '[') + item.token + (activeAutocomplete.triggerChar === '{' ? '}' : ']');
+
+        const typeSpan = document.createElement('span');
+        typeSpan.style.fontSize = '10px';
+        typeSpan.style.color = '#a855f7';
+        typeSpan.textContent = item.typeName;
+
+        const descSpan = document.createElement('span');
+        descSpan.style.fontSize = '10px';
+        descSpan.style.color = '#94a3b8';
+        descSpan.textContent = item.desc;
+
+        div.appendChild(tokenSpan);
+        div.appendChild(typeSpan);
+        div.appendChild(descSpan);
+
+        div.addEventListener('mouseenter', () => {
+            activeAutocomplete.activeIndex = idx;
+            const children = popup.children;
+            for (let i = 0; i < children.length; i++) {
+                if (i === idx) {
+                    children[i].style.background = 'rgba(142, 45, 226, 0.35)';
+                    children[i].style.borderLeft = '3px solid #a855f7';
+                } else {
+                    children[i].style.background = 'transparent';
+                    children[i].style.borderLeft = '3px solid transparent';
+                }
+            }
+        });
+
+        div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            applyAutocompleteChoice(item);
+        });
+
+        popup.appendChild(div);
+    });
+
+    const rect = activeAutocomplete.targetInput.getBoundingClientRect();
+    popup.style.left = `${rect.left + window.scrollX}px`;
+    
+    const popupHeight = Math.min(220, filtered.length * 48 + 8);
+    if (rect.bottom + popupHeight > window.innerHeight) {
+        popup.style.top = `${rect.top + window.scrollY - popupHeight - 4}px`;
+    } else {
+        popup.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    }
+    
+    popup.style.display = 'block';
+}
+
+function applyAutocompleteChoice(item) {
+    const input = activeAutocomplete.targetInput;
+    if (!input) return;
+
+    const val = input.value;
+    const bracketIndex = activeAutocomplete.bracketIndex;
+    const cursor = input.selectionStart;
+
+    const before = val.substring(0, bracketIndex);
+    const after = val.substring(cursor);
+    const insertion = activeAutocomplete.triggerChar === '{' ? `{${item.token}}` : `[${item.token}]`;
+
+    input.value = before + insertion + after;
+    
+    const newCursorPos = before.length + insertion.length;
+    input.setSelectionRange(newCursorPos, newCursorPos);
+    
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    hideAutocompletePopup();
+    input.focus();
+}
+
+document.addEventListener('input', (e) => {
+    const target = e.target;
+    if (target.tagName !== 'TEXTAREA' && (target.tagName !== 'INPUT' || target.type !== 'text')) {
+        return;
+    }
+
+    const val = target.value;
+    const cursor = target.selectionStart;
+
+    if (cursor > 0) {
+        const lastChar = val[cursor - 1];
+        if (lastChar === '{' || lastChar === '[') {
+            showAutocompletePopup(target, lastChar, cursor - 1);
+            return;
+        }
+    }
+
+    if (activeAutocomplete.targetInput === target) {
+        const bracketIndex = activeAutocomplete.bracketIndex;
+        if (cursor <= bracketIndex || cursor > val.length) {
+            hideAutocompletePopup();
+            return;
+        }
+
+        const query = val.substring(bracketIndex + 1, cursor);
+        const closingBracket = activeAutocomplete.triggerChar === '{' ? '}' : ']';
+
+        if ((activeAutocomplete.triggerChar === '{' && query.includes(' ')) || query.includes(closingBracket)) {
+            hideAutocompletePopup();
+            return;
+        }
+
+        renderAutocompleteItems(query);
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (!activeAutocomplete.targetInput) return;
+
+    const popup = document.getElementById('autocomplete-popup');
+    if (!popup || popup.style.display === 'none') return;
+
+    const filtered = activeAutocomplete.suggestions.filter(s => {
+        const val = activeAutocomplete.targetInput.value;
+        const query = val.substring(activeAutocomplete.bracketIndex + 1, activeAutocomplete.targetInput.selectionStart);
+        return s.token.toLowerCase().includes(query.toLowerCase());
+    });
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeAutocomplete.activeIndex = (activeAutocomplete.activeIndex + 1) % filtered.length;
+        renderAutocompleteItems(activeAutocomplete.targetInput.value.substring(activeAutocomplete.bracketIndex + 1, activeAutocomplete.targetInput.selectionStart));
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeAutocomplete.activeIndex = (activeAutocomplete.activeIndex - 1 + filtered.length) % filtered.length;
+        renderAutocompleteItems(activeAutocomplete.targetInput.value.substring(activeAutocomplete.bracketIndex + 1, activeAutocomplete.targetInput.selectionStart));
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const selected = filtered[activeAutocomplete.activeIndex];
+        if (selected) {
+            applyAutocompleteChoice(selected);
+        }
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        hideAutocompletePopup();
+    }
+});
+
+document.addEventListener('click', (e) => {
+    const popup = document.getElementById('autocomplete-popup');
+    if (popup && !popup.contains(e.target) && (!activeAutocomplete.targetInput || e.target !== activeAutocomplete.targetInput)) {
+        hideAutocompletePopup();
+    }
+});
+
