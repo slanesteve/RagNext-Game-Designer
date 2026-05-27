@@ -722,6 +722,9 @@ namespace RagNextPlayer.Managers
             foreach (var exit in room.Exits)
             {
                 string key = exit.Key;
+                if (room.LockedExits.TryGetValue(key, out var isLocked) && isLocked)
+                    continue;
+
                 if (_compassButtons.TryGetValue(key, out var btn) && btn is not null)
                 {
                     btn.RemoveFromClassList("compass-btn--inactive");
@@ -816,8 +819,83 @@ namespace RagNextPlayer.Managers
             });
         }
 
+        private RenderTexture _videoTexture;
+        private UnityEngine.Video.VideoPlayer _videoPlayer;
+
+        private void PlayVideo(string path)
+        {
+            if (_videoTexture == null)
+            {
+                _videoTexture = new RenderTexture(1280, 720, 16, RenderTextureFormat.ARGB32);
+                _videoTexture.Create();
+            }
+
+            if (_videoPlayer == null)
+            {
+                _videoPlayer = gameObject.GetComponent<UnityEngine.Video.VideoPlayer>();
+                if (_videoPlayer == null)
+                {
+                    _videoPlayer = gameObject.AddComponent<UnityEngine.Video.VideoPlayer>();
+                }
+            }
+
+            _videoPlayer.playOnAwake = false;
+            _videoPlayer.isLooping = true;
+            _videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.RenderTexture;
+            _videoPlayer.targetTexture = _videoTexture;
+
+            string url = FormatLocalPathForWeb(path);
+            // Standalone fallback: URL might need standard path format instead of file:// for Unity's VideoPlayer on Windows
+            if (url.StartsWith("file:///"))
+            {
+                _videoPlayer.url = url.Substring(8);
+            }
+            else if (url.StartsWith("file://"))
+            {
+                _videoPlayer.url = url.Substring(7);
+            }
+            else
+            {
+                _videoPlayer.url = url;
+            }
+
+            var elem = _root?.Q<VisualElement>("scene-image");
+            if (elem is not null)
+            {
+                elem.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
+                if (_scenePlaceholder is not null)
+                {
+                    _scenePlaceholder.style.display = DisplayStyle.None;
+                }
+            }
+
+            _videoPlayer.Play();
+            Debug.Log($"[UIManager] Started video playback for '{path}' from URL '{_videoPlayer.url}'");
+        }
+
+        private void StopVideo()
+        {
+            if (_videoPlayer != null && _videoPlayer.isPlaying)
+            {
+                _videoPlayer.Stop();
+            }
+        }
+
         private void LoadAndDisplayImage(string path, string elementName)
         {
+            if (elementName == "scene-image")
+            {
+                string ext = System.IO.Path.GetExtension(path).ToLower();
+                if (ext == ".mp4" || ext == ".webm" || ext == ".mov")
+                {
+                    PlayVideo(path);
+                    return;
+                }
+                else
+                {
+                    StopVideo();
+                }
+            }
             StartCoroutine(LoadImageCoroutine(path, elementName));
         }
 

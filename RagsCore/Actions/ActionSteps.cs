@@ -25,6 +25,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(ItemNotHeldByPlayerCondition), "item.notHeldByPlayer")]
     [JsonDerivedType(typeof(ItemNotInObjectCondition), "item.notInObject")]
     [JsonDerivedType(typeof(VariableComparisonToVariableCondition), "var.compareVar")]
+    [JsonDerivedType(typeof(IsRoomExitLockedCondition), "room.isExitLocked")]
     // Commands
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
@@ -47,10 +48,16 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(VariableSetToVariableCommand), "var.setToVar")]
     [JsonDerivedType(typeof(SetRoomExitCommand), "room.setExit")]
     [JsonDerivedType(typeof(DisableRoomExitCommand), "room.disableExit")]
+    [JsonDerivedType(typeof(LockRoomExitCommand), "room.lockExit")]
+    [JsonDerivedType(typeof(UnlockRoomExitCommand), "room.unlockExit")]
+    [JsonDerivedType(typeof(DamageCharacterCommand), "char.damage")]
+    [JsonDerivedType(typeof(SetCharacterStateCommand), "char.setState")]
+    [JsonDerivedType(typeof(TriggerTurnTickCommand), "general.triggerTurnTick")]
     [JsonDerivedType(typeof(EndGameCommand), "general.endGame")]
     [JsonDerivedType(typeof(PromptPlayerInputCommand), "general.promptInput")]
     [JsonDerivedType(typeof(OpenContainerCommand), "general.openContainer")]
     [JsonDerivedType(typeof(CloseContainerCommand), "general.closeContainer")]
+    [JsonDerivedType(typeof(CallFunctionCommand), "general.callFunction")]
     public abstract class ActionStep
     {
         public abstract ActionStepKind Kind { get; }
@@ -758,6 +765,119 @@ namespace RagsCore.Actions
                     ExecuteSteps(result ? cond.TrueBranch : cond.FalseBranch, ctx);
                 }
             }
+        }
+    }
+
+    public sealed class IsRoomExitLockedCondition : Condition
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public string Direction { get; set; } = string.Empty;
+        public override string TypeName => "Room: Exit Is Locked";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedDir = RagsCore.Services.TemplateResolver.Resolve(Direction, ctx);
+
+            var rId = Guid.TryParse(resolvedRoom, out var g) ? g : ctx.CurrentRoom?.Id;
+            if (rId == null || rId == Guid.Empty || string.IsNullOrWhiteSpace(resolvedDir)) return false;
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId.Value);
+            return room != null && room.LockedExits.TryGetValue(resolvedDir, out var isLocked) && isLocked;
+        }
+    }
+
+    public sealed class LockRoomExitCommand : GameCommand
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public string Direction { get; set; } = string.Empty;
+        public override string TypeName => "Room: Lock Exit";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedDir = RagsCore.Services.TemplateResolver.Resolve(Direction, ctx);
+
+            var rId = Guid.TryParse(resolvedRoom, out var g) ? g : ctx.CurrentRoom?.Id;
+            if (rId == null || rId == Guid.Empty || string.IsNullOrWhiteSpace(resolvedDir)) return;
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId.Value);
+            if (room is not null)
+            {
+                room.LockedExits[resolvedDir] = true;
+            }
+        }
+    }
+
+    public sealed class UnlockRoomExitCommand : GameCommand
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public string Direction { get; set; } = string.Empty;
+        public override string TypeName => "Room: Unlock Exit";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedDir = RagsCore.Services.TemplateResolver.Resolve(Direction, ctx);
+
+            var rId = Guid.TryParse(resolvedRoom, out var g) ? g : ctx.CurrentRoom?.Id;
+            if (rId == null || rId == Guid.Empty || string.IsNullOrWhiteSpace(resolvedDir)) return;
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId.Value);
+            if (room is not null)
+            {
+                room.LockedExits[resolvedDir] = false;
+            }
+        }
+    }
+
+    public sealed class DamageCharacterCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public int Amount { get; set; } = 0;
+        public override string TypeName => "Character: Damage / Heal";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var charId)) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+            if (character is not null)
+            {
+                character.Properties.TryGetValue("Health", out var hpStr);
+                int hp = int.TryParse(hpStr, out var val) ? val : 100;
+                hp += Amount;
+                character.Properties["Health"] = hp.ToString();
+
+                if (hp <= 0)
+                {
+                    character.Properties["State"] = "Dead";
+                }
+            }
+        }
+    }
+
+    public sealed class SetCharacterStateCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string State { get; set; } = "Alive";
+        public override string TypeName => "Character: Set State";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var charId)) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+            if (character is not null)
+            {
+                character.Properties["State"] = State;
+            }
+        }
+    }
+
+    public sealed class TriggerTurnTickCommand : GameCommand
+    {
+        public override string TypeName => "Game: Trigger Turn Tick";
+        public override void Execute(ActionContext ctx)
+        {
+            // Handled inside target environment runtime context updates.
         }
     }
 }

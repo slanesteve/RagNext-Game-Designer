@@ -30,6 +30,39 @@ namespace RagNext.Views
             }
         }
 
+        private async void OnDeleteClicked(object sender, EventArgs e)
+        {
+            if (sender is ImageButton b && b.CommandParameter is Room room)
+            {
+                var game = App.CurrentGame;
+                if (game is null) return;
+
+                var refs = ValidationEngine.TraceReferences(game, room.Id, room.Name);
+                string refWarning = refs.Count > 0
+                    ? $"\n\n⚠️ WARNING: Active references to this room were found:\n• " + string.Join("\n• ", refs.Take(5)) + (refs.Count > 5 ? $"\n...and {refs.Count - 5} more." : "") + "\n\nDeleting this room will break these references!"
+                    : "\n\nNo active references to this room were found.";
+
+                var confirm = await DisplayAlert("Delete Room",
+                    $"Are you sure you want to delete room '{room.Name}'?{refWarning}",
+                    "Delete", "Cancel");
+
+                if (!confirm) return;
+
+                if (game.Rooms is not null)
+                {
+                    game.Rooms.Remove(room);
+                    try
+                    {
+                        await GameStorage.SaveAsync(game);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        await DisplayAlert("Error", $"Failed to auto-save after delete: {ex.Message}", "OK");
+                    }
+                }
+            }
+        }
+
         private async void OnSaveClicked(object sender, EventArgs e)
         {
             var game = App.CurrentGame;

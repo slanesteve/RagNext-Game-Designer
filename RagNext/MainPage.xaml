@@ -6,6 +6,11 @@
              x:Class="RagNext.MainPage"
              Title="Game Editor">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Save" Clicked="OnSaveClicked" />
+    </ContentPage.ToolbarItems>
+
+
 
     <Grid>
         <controls:RightPaneLayout>

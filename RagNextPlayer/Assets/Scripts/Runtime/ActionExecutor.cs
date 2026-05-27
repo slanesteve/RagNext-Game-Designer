@@ -272,6 +272,32 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case LockRoomExitCommandData c:
+                    {
+                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var resolvedDir  = ctx.Resolve(c.Direction);
+                        var rId = string.IsNullOrWhiteSpace(resolvedRoom) ? ctx.CurrentRoom?.Id : resolvedRoom;
+                        var room = ctx.Game.Rooms.Find(r => r.Id == rId);
+                        if (room is not null && !string.IsNullOrWhiteSpace(resolvedDir))
+                        {
+                            room.LockedExits[resolvedDir] = true;
+                        }
+                    }
+                    break;
+
+                case UnlockRoomExitCommandData c:
+                    {
+                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var resolvedDir  = ctx.Resolve(c.Direction);
+                        var rId = string.IsNullOrWhiteSpace(resolvedRoom) ? ctx.CurrentRoom?.Id : resolvedRoom;
+                        var room = ctx.Game.Rooms.Find(r => r.Id == rId);
+                        if (room is not null && !string.IsNullOrWhiteSpace(resolvedDir))
+                        {
+                            room.LockedExits[resolvedDir] = false;
+                        }
+                    }
+                    break;
+
                 case PlayerSetNameCommandData c:
                     ctx.Player.Name = c.Name;
                     break;
@@ -352,6 +378,103 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case DamageCharacterCommandData c:
+                    {
+                        var resolvedChar = ctx.Resolve(c.CharacterId);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
+                        if (character == null)
+                        {
+                            character = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (character is not null)
+                        {
+                            character.Properties.TryGetValue("Health", out var hpStr);
+                            int hp = int.TryParse(hpStr, out var val) ? val : 100;
+                            hp += c.Amount;
+                            character.Properties["Health"] = hp.ToString();
+                            ctx.SetVariable($"char.{character.Id}.Health", hp.ToString());
+
+                            if (hp <= 0)
+                            {
+                                character.Properties["State"] = "Dead";
+                                ctx.SetVariable($"char.{character.Id}.State", "Dead");
+                                var gm = RagNextPlayer.Managers.GameManager.Instance;
+                                if (gm != null)
+                                {
+                                    foreach (var action in character.Actions)
+                                    {
+                                        if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            ActionExecutor.Execute(action, gm.MakeContext(character), gm.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case SetCharacterStateCommandData c:
+                    {
+                        var resolvedChar = ctx.Resolve(c.CharacterId);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
+                        if (character == null)
+                        {
+                            character = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (character is not null)
+                        {
+                            character.Properties["State"] = c.State;
+                            ctx.SetVariable($"char.{character.Id}.State", c.State);
+                            if (string.Equals(c.State, "Dead", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var gm = RagNextPlayer.Managers.GameManager.Instance;
+                                if (gm != null)
+                                {
+                                    foreach (var action in character.Actions)
+                                    {
+                                        if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            ActionExecutor.Execute(action, gm.MakeContext(character), gm.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case TriggerTurnTickCommandData:
+                    {
+                        var gm = RagNextPlayer.Managers.GameManager.Instance;
+                        if (gm != null)
+                        {
+                            // Run global OnTurnTick actions on the Player
+                            if (gm.ActiveGame?.Player?.Actions != null)
+                            {
+                                foreach (var action in gm.ActiveGame.Player.Actions)
+                                {
+                                    if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        ActionExecutor.Execute(action, gm.MakeContext(), gm.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>());
+                                    }
+                                }
+                            }
+                            // Run OnRoomTick on the current room
+                            if (gm.CurrentRoom?.Actions != null)
+                            {
+                                foreach (var action in gm.CurrentRoom.Actions)
+                                {
+                                    if (string.Equals(action.Trigger, "OnRoomTick", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        ActionExecutor.Execute(action, gm.MakeContext(), gm.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
                 default:
                     Debug.LogWarning($"[ActionExecutor] Unhandled command type: {cmd.Type}");
                     break;
@@ -414,6 +537,10 @@ namespace RagNextPlayer.Runtime
 
                 PlayerGenderConditionData c =>
                     string.Equals(ctx.Player.Gender, c.Gender, StringComparison.OrdinalIgnoreCase),
+
+                IsRoomExitLockedConditionData c =>
+                    (ctx.Game.Rooms.Find(r => r.Id == (string.IsNullOrWhiteSpace(c.RoomId) ? ctx.CurrentRoom?.Id : ctx.Resolve(c.RoomId)))
+                        ?.LockedExits.TryGetValue(ctx.Resolve(c.Direction), out var isLocked) ?? false) && isLocked,
 
                 _ => false
             };

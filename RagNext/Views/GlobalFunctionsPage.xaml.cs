@@ -66,5 +66,38 @@ namespace RagNext.Views
                 ["functionId"] = func.Id.ToString()
             });
         }
+
+        private async void OnDeleteClicked(object sender, EventArgs e)
+        {
+            if (sender is ImageButton b && b.CommandParameter is GlobalFunction func)
+            {
+                var game = App.CurrentGame;
+                if (game is null) return;
+
+                var refs = ValidationEngine.TraceReferences(game, func.Id, func.Name);
+                string refWarning = refs.Count > 0
+                    ? $"\n\n⚠️ WARNING: Active references to this function were found:\n• " + string.Join("\n• ", refs.Take(5)) + (refs.Count > 5 ? $"\n...and {refs.Count - 5} more." : "") + "\n\nDeleting this function will break these references!"
+                    : "\n\nNo active references to this function were found.";
+
+                var confirm = await DisplayAlert("Delete Function",
+                    $"Are you sure you want to delete function '{func.Name}'?{refWarning}",
+                    "Delete", "Cancel");
+
+                if (!confirm) return;
+
+                if (game.Functions is not null)
+                {
+                    game.Functions.Remove(func);
+                    try
+                    {
+                        await GameStorage.SaveAsync(game);
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Error", $"Failed to auto-save after delete: {ex.Message}", "OK");
+                    }
+                }
+            }
+        }
     }
 }

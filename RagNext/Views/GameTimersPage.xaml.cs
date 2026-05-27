@@ -66,5 +66,38 @@ namespace RagNext.Views
                 ["timerId"] = timer.Id.ToString()
             });
         }
+
+        private async void OnDeleteClicked(object sender, EventArgs e)
+        {
+            if (sender is ImageButton b && b.CommandParameter is GameTimer timer)
+            {
+                var game = App.CurrentGame;
+                if (game is null) return;
+
+                var refs = ValidationEngine.TraceReferences(game, timer.Id, timer.Name);
+                string refWarning = refs.Count > 0
+                    ? $"\n\n⚠️ WARNING: Active references to this timer were found:\n• " + string.Join("\n• ", refs.Take(5)) + (refs.Count > 5 ? $"\n...and {refs.Count - 5} more." : "") + "\n\nDeleting this timer will break these references!"
+                    : "\n\nNo active references to this timer were found.";
+
+                var confirm = await DisplayAlert("Delete Timer",
+                    $"Are you sure you want to delete timer '{timer.Name}'?{refWarning}",
+                    "Delete", "Cancel");
+
+                if (!confirm) return;
+
+                if (game.Timers is not null)
+                {
+                    game.Timers.Remove(timer);
+                    try
+                    {
+                        await GameStorage.SaveAsync(game);
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Error", $"Failed to auto-save after delete: {ex.Message}", "OK");
+                    }
+                }
+            }
+        }
     }
 }

@@ -109,6 +109,42 @@ namespace RagNext.ViewModels
 
         public string HostElementType { get; } = "GameObject";
 
+        public List<ActionTrigger> AvailableTriggers => HostElementType switch
+        {
+            "Player" => new List<ActionTrigger>
+            {
+                ActionTrigger.UserClicked,
+                ActionTrigger.OnGameStart,
+                ActionTrigger.OnGameLoad,
+                ActionTrigger.OnTurnTick
+            },
+            "Room" => new List<ActionTrigger>
+            {
+                ActionTrigger.UserClicked,
+                ActionTrigger.OnPlayerEnter,
+                ActionTrigger.OnPlayerExit,
+                ActionTrigger.OnCharacterEnter,
+                ActionTrigger.OnCharacterExit,
+                ActionTrigger.OnRoomTick
+            },
+            "Character" => new List<ActionTrigger>
+            {
+                ActionTrigger.UserClicked,
+                ActionTrigger.OnInteract,
+                ActionTrigger.OnCharacterTick,
+                ActionTrigger.OnCharacterKilled
+            },
+            "GameObject" => new List<ActionTrigger>
+            {
+                ActionTrigger.UserClicked,
+                ActionTrigger.OnInteract,
+                ActionTrigger.OnObjectExamined,
+                ActionTrigger.OnObjectTaken,
+                ActionTrigger.OnObjectDropped
+            },
+            _ => new List<ActionTrigger> { ActionTrigger.UserClicked }
+        };
+
         public sealed class EditActionViewModel : BindableObject
         {
             private readonly RagsCore.Models.Action _action;
@@ -136,6 +172,23 @@ namespace RagNext.ViewModels
                     if (_action.InitallyActive == value) return;
                     _action.InitallyActive = value;
                     OnPropertyChanged();
+                }
+            }
+
+            public ActionTrigger Trigger
+            {
+                get => _action.Trigger;
+                set
+                {
+                    if (_action.Trigger == value) return;
+                    _action.Trigger = value;
+                    OnPropertyChanged();
+                    
+                    // Trigger dynamic auto-save to ensure designer instantly updates file state
+                    if (App.CurrentGame != null)
+                    {
+                        _ = GameStorage.SaveAsync(App.CurrentGame);
+                    }
                 }
             }
         }
@@ -283,6 +336,7 @@ namespace RagNext.ViewModels
         }
 
         public bool CanAddAction => HostElementType != "Function" && HostElementType != "Timer";
+        public bool IsInitiallyActiveVisible => HostElementType != "Function" && HostElementType != "Timer";
 
         private void OnActionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {

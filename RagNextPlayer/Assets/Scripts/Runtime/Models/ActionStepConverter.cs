@@ -58,6 +58,7 @@ namespace RagNextPlayer.Runtime.Models
                 "char.inRoom"       => typeof(CharacterInRoomConditionData),
                 "char.gender"       => typeof(CharacterGenderConditionData),
                 "player.gender"     => typeof(PlayerGenderConditionData),
+                "room.isExitLocked" => typeof(IsRoomExitLockedConditionData),
 
                 // ── Commands ───────────────────────────────────────────────
                 "general.displayText"    => typeof(DisplayTextCommandData),
@@ -72,6 +73,8 @@ namespace RagNextPlayer.Runtime.Models
                 "room.removeObject"      => typeof(RemoveObjectFromRoomCommandData),
                 "room.setExit"           => typeof(SetRoomExitCommandData),
                 "room.disableExit"       => typeof(DisableRoomExitCommandData),
+                "room.lockExit"          => typeof(LockRoomExitCommandData),
+                "room.unlockExit"        => typeof(UnlockRoomExitCommandData),
                 "player.setName"         => typeof(PlayerSetNameCommandData),
                 "player.setDescription"  => typeof(PlayerSetDescriptionCommandData),
                 "player.setGender"       => typeof(PlayerSetGenderCommandData),
@@ -86,6 +89,9 @@ namespace RagNextPlayer.Runtime.Models
                 "general.openContainer"  => typeof(OpenContainerCommandData),
                 "general.closeContainer" => typeof(CloseContainerCommandData),
                 "general.callFunction"   => typeof(CallFunctionCommandData),
+                "char.damage"            => typeof(DamageCharacterCommandData),
+                "char.setState"          => typeof(SetCharacterStateCommandData),
+                "general.triggerTurnTick"=> typeof(TriggerTurnTickCommandData),
 
                 _ => throw new JsonSerializationException($"Unknown ActionStep $type: '{typeName}'")
             };

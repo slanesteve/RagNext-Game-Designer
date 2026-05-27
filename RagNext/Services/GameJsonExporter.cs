@@ -67,7 +67,23 @@ namespace RagNext.Services
                 Id           = m.Id.ToString(),
                 m.Name,
                 m.RelativePath,
-                MediaType    = m.ContentType
+                MediaType    = m.ContentType,
+                m.OriginalFileName
+            }).ToList(),
+            Functions  = game.Functions.Select(f => new
+            {
+                Id    = f.Id.ToString(),
+                f.Name,
+                Nodes = f.Nodes.ToList()
+            }).ToList(),
+            Timers     = game.Timers.Select(t => new
+            {
+                Id              = t.Id.ToString(),
+                t.Name,
+                t.IntervalSeconds,
+                t.IsActive,
+                t.IsRepeating,
+                Nodes           = t.Nodes.ToList()
             }).ToList()
         };
 
@@ -96,8 +112,8 @@ namespace RagNext.Services
             r.Name,
             Description       = NormalizeNewlines(r.Description),
             PortraitImagePath = r.PortraitImagePath,
-            // Exits: Dictionary<string, Guid> → Dictionary<string, string>
             Exits             = r.Exits.ToDictionary(k => k.Key, v => v.Value.ToString()),
+            LockedExits       = r.LockedExits.ToDictionary(k => k.Key, v => v.Value),
             ObjectIds         = r.ObjectIds.Select(id => id.ToString()).ToList(),
             Actions           = r.Actions.Select(a => BuildActionDto(a)).ToList()
         };
@@ -123,6 +139,7 @@ namespace RagNext.Services
             Id           = a.Id.ToString(),
             a.Name,
             a.InitallyActive,
+            Trigger      = a.Trigger.ToString(),
             // ActionSteps are already serializable via StepDefinitionBaseJsonConverter
             Nodes        = a.Nodes.ToList()
         };

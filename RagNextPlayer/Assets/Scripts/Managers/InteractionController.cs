@@ -63,7 +63,7 @@ namespace RagNextPlayer.Managers
 
             foreach (var act in entity.Actions)
             {
-                if (act.InitallyActive)
+                if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
                 {
                     var captured = act;
                     options.Add((act.Name, () => ExecuteCustomAction(entity, captured)));
@@ -97,7 +97,7 @@ namespace RagNextPlayer.Managers
             var options = new List<(string Label, System.Action Handler)>();
             foreach (var act in room.Actions)
             {
-                if (act.InitallyActive)
+                if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
                 {
                     var captured = act;
                     options.Add((act.Name, () => ExecuteRoomAction(room, captured)));
@@ -121,7 +121,7 @@ namespace RagNextPlayer.Managers
             var options = new List<(string Label, System.Action Handler)>();
             foreach (var act in player.Actions)
             {
-                if (act.InitallyActive)
+                if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
                 {
                     var captured = act;
                     options.Add((act.Name, () => ExecutePlayerAction(player, captured)));
@@ -135,7 +135,16 @@ namespace RagNextPlayer.Managers
             panel.BringToFront();
         }
 
-
+        private bool TryExecuteInteract(GameObjectData entity)
+        {
+            var interactAct = entity.Actions.Find(a => a.InitallyActive && string.Equals(a.Trigger, "OnInteract", System.StringComparison.OrdinalIgnoreCase));
+            if (interactAct != null)
+            {
+                ExecuteCustomAction(entity, interactAct);
+                return true;
+            }
+            return false;
+        }
 
         public void HandleInlineClick(string name)
         {
@@ -147,20 +156,37 @@ namespace RagNextPlayer.Managers
             var ch = game.Characters.Find(c =>
                 room.ObjectIds.Contains(c.Id) &&
                 string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase));
-            if (ch is not null) { ShowMenu(ch, false); return; }
+            if (ch is not null)
+            {
+                if (!TryExecuteInteract(ch)) ShowMenu(ch, false);
+                return;
+            }
 
             var obj = game.Objects.Find(o =>
                 room.ObjectIds.Contains(o.Id) &&
                 string.Equals(o.Name, name, System.StringComparison.OrdinalIgnoreCase));
-            if (obj is not null) { ShowMenu(obj, false); return; }
+            if (obj is not null)
+            {
+                if (!TryExecuteInteract(obj)) ShowMenu(obj, false);
+                return;
+            }
 
             var invObj = game.Player.Inventory.Find(o =>
                 string.Equals(o.Name, name, System.StringComparison.OrdinalIgnoreCase));
-            if (invObj is not null) { ShowMenu(invObj, true); return; }
+            if (invObj is not null)
+            {
+                if (!TryExecuteInteract(invObj)) ShowMenu(invObj, true);
+                return;
+            }
 
             // Try exit
             if (room.Exits.TryGetValue(name, out var exitId))
             {
+                if (room.LockedExits.TryGetValue(name, out var isLocked) && isLocked)
+                {
+                    UIManager.Instance?.AppendNarrativeText($"\nThe exit to the {name} is locked.");
+                    return;
+                }
                 GameManager.Instance?.MovePlayerToRoom(exitId);
                 return;
             }
@@ -168,12 +194,20 @@ namespace RagNextPlayer.Managers
             // Global fallback for objects
             var globalObj = game.Objects.Find(o =>
                 string.Equals(o.Name, name, System.StringComparison.OrdinalIgnoreCase));
-            if (globalObj is not null) { ShowMenu(globalObj, false); return; }
+            if (globalObj is not null)
+            {
+                if (!TryExecuteInteract(globalObj)) ShowMenu(globalObj, false);
+                return;
+            }
 
             // Global fallback for characters
             var globalChar = game.Characters.Find(c =>
                 string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase));
-            if (globalChar is not null) { ShowMenu(globalChar, false); return; }
+            if (globalChar is not null)
+            {
+                if (!TryExecuteInteract(globalChar)) ShowMenu(globalChar, false);
+                return;
+            }
         }
 
 

@@ -46,8 +46,8 @@ namespace RagNext.Views
                 ["Out"]   = "In",
             };
 
-        // One entry per direction: (picker, oneWayCheckbox, directionKey)
-        private record ExitControl(Picker Picker, CheckBox OneWay, string Direction);
+        // One entry per direction: (picker, oneWayCheckbox, lockedCheckbox, directionKey)
+        private record ExitControl(Picker Picker, CheckBox OneWay, CheckBox Locked, string Direction);
         private List<ExitControl>? _exitControls;
         private bool _suppressExitEvents;
 
@@ -157,18 +157,18 @@ namespace RagNext.Views
             // Build control list once
             _exitControls ??= new List<ExitControl>
             {
-                new(NorthPicker, NorthOneWay, "North"),
-                new(SouthPicker, SouthOneWay, "South"),
-                new(EastPicker,  EastOneWay,  "East"),
-                new(WestPicker,  WestOneWay,  "West"),
-                new(NorthWestPicker, NorthWestOneWay, "NorthWest"),
-                new(NorthEastPicker, NorthEastOneWay, "NorthEast"),
-                new(SouthWestPicker, SouthWestOneWay, "SouthWest"),
-                new(SouthEastPicker, SouthEastOneWay, "SouthEast"),
-                new(UpPicker,    UpOneWay,    "Up"),
-                new(DownPicker,  DownOneWay,  "Down"),
-                new(InPicker,    InOneWay,    "In"),
-                new(OutPicker,   OutOneWay,   "Out"),
+                new(NorthPicker, NorthOneWay, NorthLocked, "North"),
+                new(SouthPicker, SouthOneWay, SouthLocked, "South"),
+                new(EastPicker,  EastOneWay,  EastLocked,  "East"),
+                new(WestPicker,  WestOneWay,  WestLocked,  "West"),
+                new(NorthWestPicker, NorthWestOneWay, NorthWestLocked, "NorthWest"),
+                new(NorthEastPicker, NorthEastOneWay, NorthEastLocked, "NorthEast"),
+                new(SouthWestPicker, SouthWestOneWay, SouthWestLocked, "SouthWest"),
+                new(SouthEastPicker, SouthEastOneWay, SouthEastLocked, "SouthEast"),
+                new(UpPicker,    UpOneWay,    UpLocked,    "Up"),
+                new(DownPicker,  DownOneWay,  DownLocked,  "Down"),
+                new(InPicker,    InOneWay,    InLocked,    "In"),
+                new(OutPicker,   OutOneWay,   OutLocked,   "Out"),
             };
 
             _suppressExitEvents = true;
@@ -179,6 +179,7 @@ namespace RagNext.Views
                     // Detach old handlers before re-populating
                     ec.Picker.SelectedIndexChanged -= OnExitPickerChanged;
                     ec.OneWay.CheckedChanged       -= OnExitOneWayChanged;
+                    ec.Locked.CheckedChanged       -= OnExitLockedChanged;
 
                     // Populate picker items
                     ec.Picker.ItemsSource = allRooms;
@@ -201,16 +202,21 @@ namespace RagNext.Views
                         {
                             ec.OneWay.IsChecked = false;
                         }
+
+                        // Load locked status
+                        ec.Locked.IsChecked = room.LockedExits.TryGetValue(ec.Direction, out var isLocked) && isLocked;
                     }
                     else
                     {
                         ec.Picker.SelectedItem = null;
                         ec.OneWay.IsChecked    = false;
+                        ec.Locked.IsChecked    = false;
                     }
 
                     // Re-attach handlers
                     ec.Picker.SelectedIndexChanged += OnExitPickerChanged;
                     ec.OneWay.CheckedChanged       += OnExitOneWayChanged;
+                    ec.Locked.CheckedChanged       += OnExitLockedChanged;
                 }
             }
             finally
@@ -240,7 +246,9 @@ namespace RagNext.Views
                 {
                     // Clear the exit
                     room.Exits.Remove(ec.Direction);
+                    room.LockedExits.Remove(ec.Direction);
                     ec.OneWay.IsChecked = false;
+                    ec.Locked.IsChecked = false;
 
                     // Clear the back-link from any room that was pointing back at us via the opposite direction
                     if (_opposites.TryGetValue(ec.Direction, out var opp))
@@ -248,7 +256,10 @@ namespace RagNext.Views
                         foreach (var r in game.Rooms)
                         {
                             if (r.Exits.TryGetValue(opp, out var backId) && backId == room.Id)
+                            {
                                 r.Exits.Remove(opp);
+                                r.LockedExits.Remove(opp);
+                            }
                         }
                     }
                 }
@@ -298,6 +309,7 @@ namespace RagNext.Views
                 if (e.Value) // checked → one-way: remove the back-link
                 {
                     destRoom.Exits.Remove(opposite);
+                    destRoom.LockedExits.Remove(opposite);
                 }
                 else // unchecked → bidirectional: restore the back-link
                 {
@@ -308,6 +320,18 @@ namespace RagNext.Views
             {
                 _suppressExitEvents = false;
             }
+        }
+
+        private void OnExitLockedChanged(object? sender, CheckedChangedEventArgs e)
+        {
+            if (_suppressExitEvents) return;
+            if (sender is not CheckBox cb) return;
+            if (BindingContext is not Room room) return;
+
+            var ec = _exitControls?.FirstOrDefault(x => x.Locked == cb);
+            if (ec is null) return;
+
+            room.LockedExits[ec.Direction] = e.Value;
         }
 
         private async void OnSaveClicked(object sender, EventArgs e)

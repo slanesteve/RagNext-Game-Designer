@@ -251,6 +251,8 @@ namespace RagNext.ViewModels
             if (p.Name.Equals("SoundId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("PortraitId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("MediaId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Media;
             if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputDataType.Operator;
             if (p.Name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return InputDataType.Direction;
+            if (p.Name.Equals("FunctionId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Function;
+            if (p.Name.Equals("TimerId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Timer;
             if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName" || p.Name == "SourceName") && 
                 (p.DeclaringType != null && (p.DeclaringType.Name.Contains("Variable") || p.DeclaringType.Name.Contains("Random") || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType)))) 
                 return InputDataType.Variable;
@@ -283,7 +285,9 @@ namespace RagNext.ViewModels
                 InputDataType.GameObject or InputDataType.Item => game.Objects.Cast<object>().ToList(),
                 InputDataType.Character => game.Characters.Cast<object>().ToList(),
                 InputDataType.Variable => game.Variables.Cast<object>().ToList(),
-                InputDataType.Media => game.MediaAssets.Cast<object>().ToList(),
+                InputDataType.Media => FilterMediaAssets(game, input.Label, _target),
+                InputDataType.Function => game.Functions.Cast<object>().ToList(),
+                InputDataType.Timer => game.Timers.Cast<object>().ToList(),
                 InputDataType.Operator => new List<object>
                 {
                     new NamedOption { Name = "=" },
@@ -437,6 +441,39 @@ namespace RagNext.ViewModels
             {
                 _isSaving = false;
             }
+        }
+        private System.Collections.Generic.List<object> FilterMediaAssets(Game game, string label, ActionStep target)
+        {
+            var assets = game.MediaAssets;
+            
+            if (label.Equals("SoundId", StringComparison.OrdinalIgnoreCase) || 
+                label.Equals("SoundIdB", StringComparison.OrdinalIgnoreCase) ||
+                label.Equals("SoundFile", StringComparison.OrdinalIgnoreCase) || 
+                label.Equals("MusicFile", StringComparison.OrdinalIgnoreCase) ||
+                target is PlaySoundEffectCommand)
+            {
+                return assets.Where(m => m.Kind == MediaKind.Audio).Cast<object>().ToList();
+            }
+            
+            if (label.Equals("PortraitId", StringComparison.OrdinalIgnoreCase) || 
+                label.Equals("PortraitMedia", StringComparison.OrdinalIgnoreCase) || 
+                label.Equals("ImageFile", StringComparison.OrdinalIgnoreCase) || 
+                label.Equals("Picture", StringComparison.OrdinalIgnoreCase) || 
+                label.Equals("PictureFile", StringComparison.OrdinalIgnoreCase) ||
+                target is CharacterSetPortraitMediaCommand ||
+                target is PlayerSetPortraitMediaCommand ||
+                target is CharacterDisplayPortraitCommand)
+            {
+                return assets.Where(m => m.Kind == MediaKind.Image).Cast<object>().ToList();
+            }
+            
+            if (label.Equals("VideoFile", StringComparison.OrdinalIgnoreCase) || 
+                label.Equals("VideoId", StringComparison.OrdinalIgnoreCase))
+            {
+                return assets.Where(m => m.Kind == MediaKind.Video).Cast<object>().ToList();
+            }
+            
+            return assets.Cast<object>().ToList();
         }
     }
 }

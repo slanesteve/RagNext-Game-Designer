@@ -13,7 +13,7 @@ namespace RagsCore.Actions
     public enum InputDataType
     {
         String, Bool, Number, Variable, GameObject, Room, Media, Character,
-        Item, RoomGroup, Group, Timer, Operator, Direction, None
+        Item, RoomGroup, Group, Timer, Operator, Direction, Function, None
     }
 
     public class InputDefinition : INotifyPropertyChanged

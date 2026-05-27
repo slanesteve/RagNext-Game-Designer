@@ -152,8 +152,10 @@ namespace RagNext.Services
                     return;
                 }
 
-                string choice = await page.DisplayActionSheet("Select Saved Game to Load", "Cancel", null, saves);
-                if (string.IsNullOrEmpty(choice) || choice == "Cancel")
+                var popup = new Views.Popups.LoadGamePopup(saves);
+                await page.ShowPopupAsync(popup);
+                string? choice = await popup.Result;
+                if (string.IsNullOrEmpty(choice))
                     return;
 
                 var loaded = await GameStorage.LoadAsync(choice);

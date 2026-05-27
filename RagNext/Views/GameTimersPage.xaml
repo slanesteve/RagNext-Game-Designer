@@ -32,7 +32,20 @@
                                 <Label Text="{Binding Name}" FontAttributes="Bold" />
                                 <Label Text="{Binding IntervalSeconds, StringFormat='Ticks every {0}s'}" TextColor="Gray" FontSize="12" />
                             </StackLayout>
-                            <Label Grid.Column="1" Text="Active" TextColor="Green" FontAttributes="Bold" IsVisible="{Binding IsActive}" VerticalOptions="Center" />
+                            <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+                                <Label Text="Active" TextColor="Green" FontAttributes="Bold" IsVisible="{Binding IsActive}" VerticalOptions="Center" />
+                                <ImageButton WidthRequest="36"
+                                             HeightRequest="36"
+                                             Padding="6"
+                                             VerticalOptions="Center"
+                                             BackgroundColor="Transparent"
+                                             Clicked="OnDeleteClicked"
+                                             CommandParameter="{Binding .}">
+                                    <ImageButton.Source>
+                                        <FontImageSource Glyph="🗑️" Color="#E05B5B" />
+                                    </ImageButton.Source>
+                                </ImageButton>
+                            </HorizontalStackLayout>
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

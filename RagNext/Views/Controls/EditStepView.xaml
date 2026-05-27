@@ -9,6 +9,7 @@
     <ContentView.Resources>
         <ResourceDictionary>
             <converters:ControlTypeEqualsConverter x:Key="ControlTypeEqualsConverter" />
+            <converters:DataTypeEqualsConverter x:Key="DataTypeEqualsConverter" />
             <converters:StringEqualsConverter x:Key="StringEqualsConverter" />
             <converters:StringNotEqualsConverter x:Key="StringNotEqualsConverter" />
             <converters:CustomOptionsToListConverter x:Key="CustomOptionsToListConverter" />
@@ -70,7 +71,7 @@
                                         CommandParameter="{x:Reference TextAreaEditor}" />
                             </Grid>
                             <Grid IsVisible="{Binding ControlType, Converter={StaticResource ControlTypeEqualsConverter}, ConverterParameter=ComboBox}"
-                                  ColumnDefinitions="*, Auto"
+                                  ColumnDefinitions="*, Auto, Auto"
                                   ColumnSpacing="8">
                                 <Grid Grid.Column="0">
                                     <Picker xmlns:behaviors="clr-namespace:RagNext.Behaviors"
@@ -85,6 +86,19 @@
                                            UnfocusedEvent="OnEntryUnfocused" />
                                 </Grid>
                                 <Button Grid.Column="1"
+                                        Text="?"
+                                        WidthRequest="24"
+                                        HeightRequest="24"
+                                        CornerRadius="12"
+                                        Padding="0"
+                                        FontSize="11"
+                                        VerticalOptions="Center"
+                                        BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2A2A35}"
+                                        TextColor="{AppThemeBinding Light=#111111, Dark=#FFFFFF}"
+                                        FontAttributes="Bold"
+                                        IsVisible="{Binding DataType, Converter={StaticResource DataTypeEqualsConverter}, ConverterParameter=Media}"
+                                        Clicked="OnMediaHelpClicked" />
+                                <Button Grid.Column="2"
                                         Text="{Binding ToggleButtonText}"
                                         Clicked="OnToggleManualMode"
                                         WidthRequest="70"

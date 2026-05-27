@@ -308,5 +308,32 @@ namespace RagNext.Views.Controls
                 System.Diagnostics.Debug.WriteLine($"Failed to setup video player: {ex.Message}");
             }
         }
+        private void OnHelpClicked(object sender, EventArgs e)
+        {
+            Element? current = this;
+            while (current != null && current is not Page)
+            {
+                current = current.Parent;
+            }
+            if (current is Page page)
+            {
+                page.DisplayAlert(
+                    "Recommended Unity Media Formats",
+                    "For optimal rendering in Unity and cross-platform RAGS clients, please use the following formats:\n\n" +
+                    "🖼️ IMAGES (Room Pictures, Portraits):\n" +
+                    "• .png (lossless, supports transparency - Recommended)\n" +
+                    "• .jpg / .jpeg (efficient for photographs)\n\n" +
+                    "🔊 AUDIO (Sound Effects, Background Music):\n" +
+                    "• .mp3 (high compatibility - Recommended for music)\n" +
+                    "• .wav (uncompressed PCM - Recommended for short SFX)\n" +
+                    "• .ogg (highly efficient open audio format)\n\n" +
+                    "🎬 VIDEO (Cutscenes, Multimedia):\n" +
+                    "• .mp4 (highly recommended, standard H.264)\n" +
+                    "• .webm (efficient open web format)\n\n" +
+                    "⚠️ Note: Avoid legacy Windows-only formats like .bmp, .wma, or .wmv, which may fail to play on non-Windows players.",
+                    "OK"
+                );
+            }
+        }
     }
 }

@@ -206,8 +206,18 @@
                     <VerticalStackLayout BindingContext="{Binding ActionEditor}" Spacing="8">
                         <Label Text="Edit Action" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#111111, Dark=#F0F0F4}" />
                         <Entry Text="{Binding Name, Mode=TwoWay}" Placeholder="Action name" />
-                        <HorizontalStackLayout Spacing="8">
-                            <Label Text="Initially Active" VerticalTextAlignment="Center" TextColor="{AppThemeBinding Light=#111111, Dark=#F0F0F4}" />
+                        
+                        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                            <Label Text="Trigger Event" VerticalTextAlignment="Center" TextColor="{AppThemeBinding Light=#111111, Dark=#F0F0F4}" WidthRequest="100" />
+                            <Picker ItemsSource="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.AvailableTriggers}"
+                                    SelectedItem="{Binding Trigger, Mode=TwoWay}"
+                                    TextColor="{AppThemeBinding Light=#111111, Dark=#F0F0F4}"
+                                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#353545}"
+                                    WidthRequest="220" />
+                        </HorizontalStackLayout>
+
+                        <HorizontalStackLayout Spacing="8" IsVisible="{Binding Source={x:Reference ActionTreeRoot}, Path=BindingContext.IsInitiallyActiveVisible}">
+                            <Label Text="Initially Active" VerticalTextAlignment="Center" TextColor="{AppThemeBinding Light=#111111, Dark=#F0F0F4}" WidthRequest="100" />
                             <CheckBox IsChecked="{Binding InitiallyActive, Mode=TwoWay}" />
                         </HorizontalStackLayout>
                     </VerticalStackLayout>

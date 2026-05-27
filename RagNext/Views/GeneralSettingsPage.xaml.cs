@@ -116,5 +116,10 @@ namespace RagNext.Views
             await DisplayAlert("Saved", "General settings saved.", "OK");
             await Navigation.PopModalAsync();
         }
+
+        private async void OnCancelClicked(object sender, EventArgs e)
+        {
+            await Navigation.PopModalAsync();
+        }
     }
 }

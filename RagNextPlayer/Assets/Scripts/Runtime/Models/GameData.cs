@@ -45,6 +45,7 @@ namespace RagNextPlayer.Runtime.Models
         public string  Description        { get; set; } = string.Empty;
         public string? PortraitImagePath  { get; set; }
         public Dictionary<string, string> Exits     { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, bool>   LockedExits { get; set; } = new Dictionary<string, bool>();
         public List<string>               ObjectIds { get; set; } = new List<string>();
         public List<ActionData>           Actions   { get; set; } = new List<ActionData>();
     }
@@ -73,6 +74,7 @@ namespace RagNextPlayer.Runtime.Models
         public string Id             { get; set; } = string.Empty;
         public string Name           { get; set; } = string.Empty;
         public bool   InitallyActive { get; set; } = true;
+        public string Trigger        { get; set; } = "UserClicked";
 
         [JsonConverter(typeof(ActionStepListConverter))]
         public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();
@@ -115,6 +117,7 @@ namespace RagNextPlayer.Runtime.Models
     public class CharacterInRoomConditionData             : ConditionData { public string CharacterId { get; set; } = string.Empty; public string RoomId { get; set; } = string.Empty; }
     public class CharacterGenderConditionData             : ConditionData { public string CharacterId { get; set; } = string.Empty; public string Gender { get; set; } = "Male"; }
     public class PlayerGenderConditionData                : ConditionData { public string Gender { get; set; } = "Male"; }
+    public class IsRoomExitLockedConditionData            : ConditionData { public string RoomId { get; set; } = string.Empty; public string Direction { get; set; } = string.Empty; }
 
     // ── Concrete Commands ─────────────────────────────────────────────────────
     public class DisplayTextCommandData              : CommandData { public string Text { get; set; } = string.Empty; }
@@ -129,6 +132,8 @@ namespace RagNextPlayer.Runtime.Models
     public class RemoveObjectFromRoomCommandData     : CommandData { public string RoomId { get; set; } = string.Empty; public string ObjectId { get; set; } = string.Empty; }
     public class SetRoomExitCommandData              : CommandData { public string RoomId { get; set; } = string.Empty; public string Direction { get; set; } = string.Empty; public string DestinationRoomId { get; set; } = string.Empty; }
     public class DisableRoomExitCommandData          : CommandData { public string RoomId { get; set; } = string.Empty; public string Direction { get; set; } = string.Empty; }
+    public class LockRoomExitCommandData             : CommandData { public string RoomId { get; set; } = string.Empty; public string Direction { get; set; } = string.Empty; }
+    public class UnlockRoomExitCommandData           : CommandData { public string RoomId { get; set; } = string.Empty; public string Direction { get; set; } = string.Empty; }
     public class PlayerSetNameCommandData            : CommandData { public string Name { get; set; } = string.Empty; }
     public class PlayerSetDescriptionCommandData     : CommandData { public string Description { get; set; } = string.Empty; }
     public class PlayerSetGenderCommandData          : CommandData { public string Gender { get; set; } = "Male"; }
@@ -143,11 +148,16 @@ namespace RagNextPlayer.Runtime.Models
     public class OpenContainerCommandData            : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class CloseContainerCommandData           : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class CallFunctionCommandData            : CommandData { public string FunctionId { get; set; } = string.Empty; }
+    public class DamageCharacterCommandData         : CommandData { public string CharacterId { get; set; } = string.Empty; public int Amount { get; set; } }
+    public class SetCharacterStateCommandData        : CommandData { public string CharacterId { get; set; } = string.Empty; public string State { get; set; } = "Alive"; }
+    public class TriggerTurnTickCommandData         : CommandData { }
 
     public class GlobalFunctionData
     {
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(ActionStepListConverter))]
         public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();
     }
 
@@ -158,6 +168,8 @@ namespace RagNextPlayer.Runtime.Models
         public double IntervalSeconds { get; set; } = 60.0;
         public bool IsActive { get; set; } = true;
         public bool IsRepeating { get; set; } = true;
+
+        [JsonConverter(typeof(ActionStepListConverter))]
         public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();
 
         [JsonIgnore]
@@ -173,9 +185,10 @@ namespace RagNextPlayer.Runtime.Models
 
     public class MediaAssetData
     {
-        public string Id           { get; set; } = string.Empty;
-        public string Name         { get; set; } = string.Empty;
-        public string RelativePath { get; set; } = string.Empty;
-        public string MediaType    { get; set; } = string.Empty;
+        public string Id               { get; set; } = string.Empty;
+        public string Name             { get; set; } = string.Empty;
+        public string RelativePath     { get; set; } = string.Empty;
+        public string MediaType        { get; set; } = string.Empty;
+        public string OriginalFileName { get; set; } = string.Empty;
     }
 }

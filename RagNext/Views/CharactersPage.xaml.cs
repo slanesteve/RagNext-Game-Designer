@@ -66,5 +66,38 @@ namespace RagNext.Views
                 ["characterId"] = ch.Id.ToString()
             });
         }
+
+        private async void OnDeleteClicked(object sender, EventArgs e)
+        {
+            if (sender is ImageButton b && b.CommandParameter is Character ch)
+            {
+                var game = App.CurrentGame;
+                if (game is null) return;
+
+                var refs = ValidationEngine.TraceReferences(game, ch.Id, ch.Name);
+                string refWarning = refs.Count > 0
+                    ? $"\n\n⚠️ WARNING: Active references to this character were found:\n• " + string.Join("\n• ", refs.Take(5)) + (refs.Count > 5 ? $"\n...and {refs.Count - 5} more." : "") + "\n\nDeleting this character will break these references!"
+                    : "\n\nNo active references to this character were found.";
+
+                var confirm = await DisplayAlert("Delete Character",
+                    $"Are you sure you want to delete character '{ch.Name}'?{refWarning}",
+                    "Delete", "Cancel");
+
+                if (!confirm) return;
+
+                if (game.Characters is not null)
+                {
+                    game.Characters.Remove(ch);
+                    try
+                    {
+                        await GameStorage.SaveAsync(game);
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Error", $"Failed to auto-save after delete: {ex.Message}", "OK");
+                    }
+                }
+            }
+        }
     }
 }

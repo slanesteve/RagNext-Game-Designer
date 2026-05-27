@@ -27,9 +27,23 @@
                             Margin="0">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Grid Padding="8" RowDefinitions="Auto,Auto">
-                            <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" />
-                            <Label Grid.Row="1" Text="Global Function" TextColor="Gray" FontSize="12" />
+                        <Grid Padding="8" ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                <Label Text="Global Function" TextColor="Gray" FontSize="12" />
+                            </VerticalStackLayout>
+                            <ImageButton Grid.Column="1"
+                                         WidthRequest="36"
+                                         HeightRequest="36"
+                                         Padding="6"
+                                         VerticalOptions="Center"
+                                         BackgroundColor="Transparent"
+                                         Clicked="OnDeleteClicked"
+                                         CommandParameter="{Binding .}">
+                                <ImageButton.Source>
+                                    <FontImageSource Glyph="🗑️" Color="#E05B5B" />
+                                </ImageButton.Source>
+                            </ImageButton>
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

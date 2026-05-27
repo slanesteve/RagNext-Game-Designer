@@ -162,6 +162,36 @@ namespace RagNextPlayer.Managers
                 // 3. Notify UI
                 OnRoomEntered?.Invoke(room);
 
+                // Run room's OnPlayerEnter actions
+                foreach (var action in room.Actions)
+                {
+                    if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ActionExecutor.Execute(action, MakeContext(), InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                    }
+                }
+
+                // Run Player's OnTurnTick actions
+                if (ActiveGame?.Player?.Actions != null)
+                {
+                    foreach (var action in ActiveGame.Player.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, MakeContext(), InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                        }
+                    }
+                }
+
+                // Run Room's OnRoomTick actions
+                foreach (var action in room.Actions)
+                {
+                    if (string.Equals(action.Trigger, "OnRoomTick", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ActionExecutor.Execute(action, MakeContext(), InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                    }
+                }
+
                 // 4. Fade in
                 if (UIManager.Instance is not null)
                     await UIManager.Instance.FadeNarrativeAsync(1f, 300);

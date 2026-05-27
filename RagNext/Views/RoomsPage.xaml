@@ -33,12 +33,24 @@
                                 <Label Text="{Binding Name}" FontAttributes="Bold" />
                                 <Label Text="{Binding Description}" LineBreakMode="TailTruncation" MaxLines="1" />
                             </StackLayout>
-                            <Button
-                                Grid.Column="1"
-                                Text="Edit"
-                                Clicked="OnEditClicked"
-                                CommandParameter="{Binding .}"
-                                VerticalOptions="Center" />
+                            <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                                <Button
+                                    Text="Edit"
+                                    Clicked="OnEditClicked"
+                                    CommandParameter="{Binding .}"
+                                    HeightRequest="36" />
+                                <ImageButton
+                                    WidthRequest="36"
+                                    HeightRequest="36"
+                                    Padding="6"
+                                    BackgroundColor="Transparent"
+                                    Clicked="OnDeleteClicked"
+                                    CommandParameter="{Binding .}">
+                                    <ImageButton.Source>
+                                        <FontImageSource Glyph="🗑️" Color="#E05B5B" />
+                                    </ImageButton.Source>
+                                </ImageButton>
+                            </HorizontalStackLayout>
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

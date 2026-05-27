@@ -125,6 +125,7 @@ namespace RagNext.Views
 
         private void SetComfyUiVisibility(bool visible)
         {
+            ComfyPanelBorder.IsVisible = visible;
             ComfyWorkflowLabel.IsVisible = visible;
             ComfyWorkflowEntry.IsVisible = visible;
             ComfyPositiveLabel.IsVisible = visible;

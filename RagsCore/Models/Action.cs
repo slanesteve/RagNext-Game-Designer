@@ -15,6 +15,9 @@ namespace RagsCore.Models
         private bool _initiallyactive = true;
         public bool InitallyActive { get => _initiallyactive; set => SetProperty(ref _initiallyactive, value); }
 
+        private ActionTrigger _trigger = ActionTrigger.UserClicked;
+        public ActionTrigger Trigger { get => _trigger; set => SetProperty(ref _trigger, value); }
+
         private string _type = "string";
         /// <summary>Friendly type name, e.g. "int", "bool", "string".</summary>
         public string Type { get => _type; set => SetProperty(ref _type, value); }

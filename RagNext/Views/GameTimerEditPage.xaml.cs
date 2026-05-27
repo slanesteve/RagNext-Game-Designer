@@ -47,6 +47,10 @@ namespace RagNext.Views
 
             SingleTimerCollection.Clear();
             SingleTimerCollection.Add(timer);
+
+            // Re-assign to force OnContextChanged to rebuild ActionTreeView VM
+            TimerTreeView.Actions = null;
+            TimerTreeView.Actions = SingleTimerCollection;
         }
 
         private async void OnSaveClicked(object sender, EventArgs e)

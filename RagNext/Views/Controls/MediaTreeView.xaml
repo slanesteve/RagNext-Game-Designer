@@ -95,13 +95,27 @@
         <!-- Headless cross-platform audio player engine -->
         <toolkit:MediaElement x:Name="MediaPlaybackEngine" ShouldAutoPlay="False" WidthRequest="1" HeightRequest="1" Opacity="0" InputTransparent="True" />
 
-        <!-- Toolbar -->
-        <HorizontalStackLayout Grid.Row="0" Spacing="8" Margin="0,0,0,6">
-            <Button Text="+ Folder" Padding="10,6" Command="{Binding AddFolderCommand}" />
-            <Button Text="Import..." Padding="10,6" Command="{Binding ImportFilesCommand}" />
-            <Button Text="Rename" Padding="10,6" Command="{Binding RenameCommand}" />
-            <Button Text="Delete" Padding="10,6" Command="{Binding DeleteCommand}" />
-        </HorizontalStackLayout>
+        <!-- Toolbar Grid -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,6" VerticalOptions="Center">
+            <HorizontalStackLayout Grid.Column="0" Spacing="6" HorizontalOptions="Start" VerticalOptions="Center">
+                <Button Text="+ Folder" Padding="8,6" FontSize="12" HeightRequest="32" Command="{Binding AddFolderCommand}" />
+                <Button Text="Import..." Padding="8,6" FontSize="12" HeightRequest="32" Command="{Binding ImportFilesCommand}" />
+                <Button Text="Rename" Padding="8,6" FontSize="12" HeightRequest="32" Command="{Binding RenameCommand}" />
+                <Button Text="Delete" Padding="8,6" FontSize="12" HeightRequest="32" Command="{Binding DeleteCommand}" />
+            </HorizontalStackLayout>
+            <Button Grid.Column="1"
+                    Text="❓" 
+                    Padding="0" 
+                    WidthRequest="32" 
+                    HeightRequest="32" 
+                    CornerRadius="16" 
+                    HorizontalOptions="End"
+                    VerticalOptions="Center"
+                    BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#333344}" 
+                    TextColor="{AppThemeBinding Light=#111111, Dark=#FFFFFF}"
+                    FontAttributes="Bold"
+                    Clicked="OnHelpClicked" />
+        </Grid>
 
         <!-- Scrollable Tree view area -->
         <ScrollView Grid.Row="1">

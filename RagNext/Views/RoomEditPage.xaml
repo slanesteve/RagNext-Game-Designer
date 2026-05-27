@@ -108,133 +108,145 @@
                                     <!-- North (row 0 col 0) -->
                                     <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
                                         <Label Text="North →" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="NorthPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
                                             <CheckBox x:Name="NorthOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="NorthLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- South (row 0 col 1) -->
                                     <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2">
                                         <Label Text="South ←" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="SouthPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="SouthOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="SouthOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="SouthLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- East (row 1 col 0) -->
                                     <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="2">
                                         <Label Text="East ↴" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="EastPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="EastOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="EastOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="EastLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- West (row 1 col 1) -->
                                     <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="2">
                                         <Label Text="West ↳" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="WestPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="WestOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="WestOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="WestLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- Northwest (row 2 col 0) -->
                                     <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="2">
                                         <Label Text="Northwest ↖" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="NorthWestPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="NorthWestOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="NorthWestOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="NorthWestLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- Northeast (row 2 col 1) -->
                                     <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="2">
                                         <Label Text="Northeast ↗" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="NorthEastPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="NorthEastOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="NorthEastOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="NorthEastLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- Southwest (row 3 col 0) -->
                                     <VerticalStackLayout Grid.Row="3" Grid.Column="0" Spacing="2">
                                         <Label Text="Southwest ↙" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="SouthWestPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="SouthWestOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="SouthWestOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="SouthWestLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- Southeast (row 3 col 1) -->
                                     <VerticalStackLayout Grid.Row="3" Grid.Column="1" Spacing="2">
                                         <Label Text="Southeast ↘" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="SouthEastPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="SouthEastOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="SouthEastOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="SouthEastLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- Up (row 4 col 0) -->
                                     <VerticalStackLayout Grid.Row="4" Grid.Column="0" Spacing="2">
                                         <Label Text="Up ▲" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="UpPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="UpOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="UpOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="UpLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- Down (row 4 col 1) -->
                                     <VerticalStackLayout Grid.Row="4" Grid.Column="1" Spacing="2">
                                         <Label Text="Down ▼" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="DownPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="DownOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="DownOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="DownLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- In (row 5 col 0) -->
                                     <VerticalStackLayout Grid.Row="5" Grid.Column="0" Spacing="2">
                                         <Label Text="In ↩" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="InPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="InOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="InOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="InLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
 
                                     <!-- Out (row 5 col 1) -->
                                     <VerticalStackLayout Grid.Row="5" Grid.Column="1" Spacing="2">
                                         <Label Text="Out ↪" FontSize="12" TextColor="{DynamicResource Gray500}" />
-                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
                                             <Picker x:Name="OutPicker" Title="(none)" Grid.Column="0"
                                                     ItemDisplayBinding="{Binding Name}" />
-                                            <CheckBox x:Name="OutOneWay" Grid.Column="1" />
+                                            <CheckBox x:Name="OutOneWay" Grid.Column="1" ToolTipProperties.Text="One Way" />
+                                            <CheckBox x:Name="OutLocked" Grid.Column="2" ToolTipProperties.Text="Locked" />
                                         </Grid>
-                                        <Label Text="One Way" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
+                                        <Label Text="One Way / Locked" FontSize="10" TextColor="{DynamicResource Gray400}" HorizontalOptions="End" />
                                     </VerticalStackLayout>
                                 </Grid>
                             </toolkit:Expander.Content>

@@ -16,6 +16,7 @@ namespace RagsCore.Models
 
         public ObservableCollection<Guid> ObjectIds { get; set; } = new();
         public Dictionary<string, Guid> Exits { get; set; } = new();
+        public Dictionary<string, bool> LockedExits { get; set; } = new();
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
         public ObservableCollection<Action> Actions { get; set; } = new(); // was internal
 

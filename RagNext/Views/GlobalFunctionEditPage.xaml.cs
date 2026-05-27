@@ -47,6 +47,10 @@ namespace RagNext.Views
 
             SingleFunctionCollection.Clear();
             SingleFunctionCollection.Add(func);
+
+            // Re-assign to force OnContextChanged to rebuild ActionTreeView VM
+            FunctionTreeView.Actions = null;
+            FunctionTreeView.Actions = SingleFunctionCollection;
         }
 
         private async void OnSaveClicked(object sender, EventArgs e)
