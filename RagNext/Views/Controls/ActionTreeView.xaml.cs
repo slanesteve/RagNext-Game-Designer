@@ -4,6 +4,7 @@ using RagsCore.Models;
 using RagNext.Converters;
 using CommunityToolkit.Maui.Core;
 using System;
+using System.Text.Json;
 
 namespace RagNext.Views.Controls
 {
@@ -159,6 +160,111 @@ namespace RagNext.Views.Controls
         {
             HoverSplitterLine.FadeTo(0, 100);
             GripperBadge.ScaleTo(1.0, 100);
+        }
+
+        private bool _isGraphMode = false;
+
+        private void OnToggleModeClicked(object sender, EventArgs e)
+        {
+            _isGraphMode = !_isGraphMode;
+            if (_isGraphMode)
+            {
+                ToggleModeBtn.Text = "📝 List Tree View";
+                TreeScrollView.IsVisible = false;
+                SplitterBar.IsVisible = false;
+                EditorScrollView.IsVisible = false;
+                GraphWebView.IsVisible = true;
+
+                // Sync current Action JSON into WebView
+                LoadActionIntoWebView();
+            }
+            else
+            {
+                ToggleModeBtn.Text = "🎨 Visual Graph Editor";
+                TreeScrollView.IsVisible = true;
+                SplitterBar.IsVisible = true;
+                EditorScrollView.IsVisible = true;
+                GraphWebView.IsVisible = false;
+            }
+        }
+
+        private async void LoadActionIntoWebView()
+        {
+            if (BindingContext is not ActionLibraryViewModel vm || vm.ActionEditor == null)
+            {
+                // No active action selected, load empty/default canvas
+                await GraphWebView.EvaluateJavaScriptAsync("loadActionGraph(null)");
+                return;
+            }
+
+            var action = vm.ActionEditor.GetUnderlyingAction();
+            if (action != null)
+            {
+                var settings = new System.Text.Json.JsonSerializerOptions
+                {
+                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
+                string json = System.Text.Json.JsonSerializer.Serialize(action, settings);
+                var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+                string base64 = Convert.ToBase64String(bytes);
+                await GraphWebView.EvaluateJavaScriptAsync($"loadActionGraph(JSON.parse(atob('{base64}')))");
+            }
+        }
+
+        private void OnGraphWebViewNavigating(object sender, WebNavigatingEventArgs e)
+        {
+            if (e.Url.StartsWith("rags-action://sync"))
+            {
+                e.Cancel = true; // Block actual browser navigation
+                try
+                {
+                    var uri = new Uri(e.Url);
+                    var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                    string base64 = query["data"];
+                    if (!string.IsNullOrEmpty(base64))
+                    {
+                        var bytes = Convert.FromBase64String(base64);
+                        string json = System.Text.Encoding.UTF8.GetString(bytes);
+
+                        var settings = new System.Text.Json.JsonSerializerOptions
+                        {
+                            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+                            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                        };
+                        var imported = System.Text.Json.JsonSerializer.Deserialize<RagsCore.Models.Action>(json, settings);
+
+                        if (imported != null && BindingContext is ActionLibraryViewModel vm && vm.ActionEditor != null)
+                        {
+                            var target = vm.ActionEditor.GetUnderlyingAction();
+                            if (target != null)
+                            {
+                                // Sync properties back
+                                target.Name = imported.Name;
+                                target.Trigger = imported.Trigger;
+                                target.Nodes.Clear();
+                                foreach (var node in imported.Nodes)
+                                {
+                                    target.Nodes.Add(node);
+                                }
+
+                                // Force rebuild tree view to reflect newly saved visual node-graph structural changes
+                                vm.RebuildTree();
+                                
+                                // Force save game
+                                if (App.CurrentGame != null)
+                                {
+                                    _ = Services.GameStorage.SaveAsync(App.CurrentGame);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ActionTreeView] WebView message parsing failed: {ex.Message}");
+                }
+            }
         }
     }
 }

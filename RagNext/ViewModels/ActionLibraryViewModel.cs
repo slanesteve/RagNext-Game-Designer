@@ -153,6 +153,8 @@ namespace RagNext.ViewModels
                 _action = action;
             }
 
+            public RagsCore.Models.Action GetUnderlyingAction() => _action;
+
             public string Name
             {
                 get => _action.Name;
@@ -348,6 +350,11 @@ namespace RagNext.ViewModels
                     node.Name = action.Name;
                 }
             }
+        }
+
+        public void RebuildTree()
+        {
+            Rebuild();
         }
 
         private void Rebuild(object? selectModelOverride = null)

@@ -157,10 +157,12 @@
             <Button Text="Delete" Command="{Binding DeleteCommand}" />
             <Button Text="Copy" Command="{Binding CopyCommand}" />
             <Button Text="Paste" Command="{Binding PasteCommand}" />
+            <Button x:Name="ToggleModeBtn" Text="🎨 Visual Graph Editor" Clicked="OnToggleModeClicked" WidthRequest="180" BackgroundColor="#8E2DE2" TextColor="White" />
         </HorizontalStackLayout>
 
         <!-- Left: Tree -->
-        <ScrollView Grid.Row="1"
+        <ScrollView x:Name="TreeScrollView"
+                    Grid.Row="1"
                     Grid.Column="0"
                     VerticalScrollBarVisibility="Default">
             <VerticalStackLayout Spacing="0"
@@ -188,7 +190,8 @@
         </Grid>
 
         <!-- Right: Editor for selected step -->
-        <ScrollView Grid.Row="1"
+        <ScrollView x:Name="EditorScrollView"
+                    Grid.Row="1"
                     Grid.Column="2"
                     VerticalScrollBarVisibility="Default">
             <VerticalStackLayout Spacing="12"
@@ -224,5 +227,14 @@
                 </Border>
             </VerticalStackLayout>
         </ScrollView>
+
+        <!-- Visual Node Graph Canvas WebView overlay -->
+        <WebView x:Name="GraphWebView"
+                 Grid.Row="1"
+                 Grid.Column="0"
+                 Grid.ColumnSpan="3"
+                 Source="graph_editor.html"
+                 IsVisible="False"
+                 Navigating="OnGraphWebViewNavigating" />
     </Grid>
 </ContentView>

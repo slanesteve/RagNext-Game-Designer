@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rags Node Visual Graph Editor</title>
+    <link rel="stylesheet" href="graph_editor.css">
+</head>
+<body>
+    <!-- Top Bar Navigation controls -->
+    <div id="editor-header">
+        <button class="btn primary" onclick="addNewDialogueNode()">+ Dialogue Node</button>
+        <button class="btn" onclick="addNewCommandNode()">+ Command Node</button>
+        <button class="btn" onclick="addNewConditionNode()">+ Condition Node</button>
+        <button class="btn" onclick="saveAndSyncCsharp()">💾 Save & Sync</button>
+        <span id="editor-title" style="margin-left: 20px; font-size: 13px; font-weight: 600; color: var(--text-muted); align-self: center; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--node-border);">Editing Action: ...</span>
+    </div>
+
+    <!-- The Infinite Graph Canvas -->
+    <div id="canvas-container">
+        <!-- SVG Connections layer -->
+        <svg id="svg-layer">
+            <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="rgba(255,255,255,0.4)" />
+                </marker>
+            </defs>
+        </svg>
+
+        <!-- Div-based Node Layout Layer -->
+        <div id="nodes-layer"></div>
+    </div>
+
+    <!-- Right-click Custom Context Menu -->
+    <div id="context-menu">
+        <div class="context-item" onclick="addNewDialogueNodeAtCursor()">+ Add Dialogue Node</div>
+        <div class="context-item" onclick="addNewCommandNodeAtCursor()">+ Add Command Node</div>
+        <div class="context-item" onclick="addNewConditionNodeAtCursor()">+ Add Condition Node</div>
+        <hr style="border-color: rgba(255,255,255,0.08); margin: 4px 0;">
+        <div class="context-item" style="color: #ef4444;" onclick="clearSelectedNode()">Delete Selected Node</div>
+    </div>
+
+    <script src="graph_editor.js"></script>
+</body>
+</html>
