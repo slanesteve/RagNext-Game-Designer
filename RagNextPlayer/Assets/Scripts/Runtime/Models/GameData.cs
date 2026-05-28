@@ -151,6 +151,21 @@ namespace RagNextPlayer.Runtime.Models
     public class DamageCharacterCommandData         : CommandData { public string CharacterId { get; set; } = string.Empty; public int Amount { get; set; } }
     public class SetCharacterStateCommandData        : CommandData { public string CharacterId { get; set; } = string.Empty; public string State { get; set; } = "Alive"; }
     public class TriggerTurnTickCommandData         : CommandData { }
+    
+    public class DialogueChoiceData
+    {
+        public string Text { get; set; } = string.Empty;
+        public string DestinationNodeId { get; set; } = string.Empty;
+        [JsonConverter(typeof(ActionStepListConverter))]
+        public List<ActionStepData> Commands { get; set; } = new List<ActionStepData>();
+    }
+
+    public class StartDialogueCommandData : CommandData
+    {
+        public string DialogueId { get; set; } = string.Empty;
+        public string CharacterLines { get; set; } = string.Empty;
+        public List<DialogueChoiceData> Choices { get; set; } = new List<DialogueChoiceData>();
+    }
 
     public class GlobalFunctionData
     {

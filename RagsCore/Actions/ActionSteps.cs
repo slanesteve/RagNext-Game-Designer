@@ -70,6 +70,8 @@ namespace RagsCore.Actions
         public virtual string TypeName => GetType().Name;
         public double X { get; set; }
         public double Y { get; set; }
+        public double? Width { get; set; }
+        public double? Height { get; set; }
     }
 
     public abstract class Condition : ActionStep
@@ -211,12 +213,14 @@ namespace RagsCore.Actions
     {
         public string SoundId { get; set; } = string.Empty;
         public double Volume { get; set; } = 100.0;
+        public bool Loop { get; set; } = false;
         public override string TypeName => "Media: Play Sound Effect";
         public override void Execute(ActionContext ctx)
         {
             var resolved = RagsCore.Services.TemplateResolver.Resolve(SoundId, ctx);
             ctx.SetVariable("media.lastSoundId", resolved);
             ctx.SetVariable("media.lastSoundVolume", Volume.ToString());
+            ctx.SetVariable("media.lastSoundLoop", Loop.ToString().ToLower());
         }
     }
 

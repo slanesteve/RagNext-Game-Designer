@@ -92,6 +92,7 @@ namespace RagNextPlayer.Runtime.Models
                 "char.damage"            => typeof(DamageCharacterCommandData),
                 "char.setState"          => typeof(SetCharacterStateCommandData),
                 "general.triggerTurnTick"=> typeof(TriggerTurnTickCommandData),
+                "general.startDialogue"  => typeof(StartDialogueCommandData),
 
                 _ => throw new JsonSerializationException($"Unknown ActionStep $type: '{typeName}'")
             };

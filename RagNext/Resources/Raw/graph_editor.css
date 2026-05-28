@@ -75,7 +75,7 @@ body, html {
 .node {
     position: absolute;
     min-width: 240px;
-    max-width: 500px;
+    max-width: 1000px;
     background: var(--node-bg);
     border: 1px solid var(--node-border);
     border-radius: 12px;
@@ -373,4 +373,23 @@ button.add-choice-btn:hover {
 .context-item:hover {
     background: rgba(168, 85, 247, 0.25);
     color: #fff;
+}
+
+/* Node Resizer Sizing Handles */
+.node-resizer {
+    width: 14px;
+    height: 14px;
+    background: transparent;
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    cursor: nwse-resize;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    opacity: 0.4;
+    transition: opacity 0.15s ease;
+    z-index: 10;
+}
+.node-resizer:hover {
+    opacity: 1;
 }

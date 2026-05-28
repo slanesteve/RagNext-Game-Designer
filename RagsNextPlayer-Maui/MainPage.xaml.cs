@@ -134,6 +134,7 @@ namespace RagsNextPlayer
                 }
 
                 RefreshRoomContext();
+                FireStartupTriggers();
 
                 // Display where the game save file was loaded from in narrative pane
                 AppendStatusMessage($"Loaded game data from: {loadedFrom}");
@@ -212,6 +213,13 @@ namespace RagsNextPlayer
 
             // 5. Populate Room Objects & Characters lists
             PopulateRoomLists();
+
+            // 6. Fire Room OnPlayerEnter actions
+            var enterContext = new ActionContext(_game, _currentRoom);
+            foreach (var action in _currentRoom.Actions.Where(a => a.Trigger == ActionTrigger.OnPlayerEnter))
+            {
+                ActionExecutor.Execute(action, enterContext, this);
+            }
         }
 
         private bool _hasMovedOnce = false;
@@ -219,6 +227,16 @@ namespace RagsNextPlayer
         private void MovePlayerToRoom(Guid targetRoomId)
         {
             if (_game is null) return;
+
+            // Fire OnPlayerExit actions for the current room before leaving
+            if (_currentRoom is not null)
+            {
+                var exitContext = new ActionContext(_game, _currentRoom);
+                foreach (var action in _currentRoom.Actions.Where(a => a.Trigger == ActionTrigger.OnPlayerExit))
+                {
+                    ActionExecutor.Execute(action, exitContext, this);
+                }
+            }
 
             var roomVar = _game.Variables.FirstOrDefault(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
             if (roomVar is not null)
@@ -819,6 +837,7 @@ namespace RagsNextPlayer
                         }
 
                         RefreshRoomContext();
+                        FireStartupTriggers();
                         await DisplayAlert("Loaded", $"'{_game.Title}' loaded successfully!", "OK");
                     }
                     else
@@ -892,6 +911,42 @@ namespace RagsNextPlayer
             }
             
             return null;
+        }
+
+        private void FireStartupTriggers()
+        {
+            if (_game is null) return;
+            var startupContext = new ActionContext(_game, _currentRoom);
+            
+            // 1. Player actions
+            foreach (var action in _game.Player.Actions.Where(a => a.Trigger == ActionTrigger.OnGameStart))
+            {
+                ActionExecutor.Execute(action, startupContext, this);
+            }
+            // 2. Room actions
+            foreach (var room in _game.Rooms)
+            {
+                foreach (var action in room.Actions.Where(a => a.Trigger == ActionTrigger.OnGameStart))
+                {
+                    ActionExecutor.Execute(action, startupContext, this);
+                }
+            }
+            // 3. GameObject actions
+            foreach (var obj in _game.Objects)
+            {
+                foreach (var action in obj.Actions.Where(a => a.Trigger == ActionTrigger.OnGameStart))
+                {
+                    ActionExecutor.Execute(action, startupContext, this);
+                }
+            }
+            // 4. Character actions
+            foreach (var ch in _game.Characters)
+            {
+                foreach (var action in ch.Actions.Where(a => a.Trigger == ActionTrigger.OnGameStart))
+                {
+                    ActionExecutor.Execute(action, startupContext, this);
+                }
+            }
         }
     }
 }

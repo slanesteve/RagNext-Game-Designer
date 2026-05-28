@@ -415,6 +415,20 @@ namespace RagNext.ViewModels
                 foreach (var nested in cond.FalseBranch) { var childNode = BuildStepNode(nested, level + 2); childNode.Parent = falseNode; falseNode.Children.Add(childNode); }
                 node.Children.Add(falseNode);
             }
+            else if (step is RagsCore.Actions.StartDialogueCommand dial)
+            {
+                foreach (var choice in dial.Choices)
+                {
+                    var choiceNode = new Node { Kind = NodeKind.Condition, Name = $"Choice: {choice.Text}", Model = choice.Commands, Level = level + 1, Parent = node, IsExpanded = true };
+                    foreach (var nested in choice.Commands)
+                    {
+                        var childNode = BuildStepNode(nested, level + 2);
+                        childNode.Parent = choiceNode;
+                        choiceNode.Children.Add(childNode);
+                    }
+                    node.Children.Add(choiceNode);
+                }
+            }
             return node;
         }
 

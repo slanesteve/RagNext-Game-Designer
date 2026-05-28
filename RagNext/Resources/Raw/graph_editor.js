@@ -7,6 +7,8 @@ let nodes = [];
 let connections = [];
 let selectedNode = null;
 let activeActionName = "Visual Action Node";
+let activeActionTrigger = "UserClicked";
+let activeActionInitallyActive = true;
 
 // Infinite Canvas Transform State
 let panX = 0;
@@ -249,23 +251,98 @@ function initGraph() {
 
         updateTransform();
     });
-
-    // Custom Right-Click Menu
-    window.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        const bounds = container.getBoundingClientRect();
-        contextCursorX = (e.clientX - bounds.left - panX) / zoom;
-        contextCursorY = (e.clientY - bounds.top - panY) / zoom;
-
-        contextMenu.style.display = 'block';
-        contextMenu.style.left = `${e.clientX}px`;
-        contextMenu.style.top = `${e.clientY}px`;
-    });
-
-    window.addEventListener('click', () => {
-        hideContextMenu();
-    });
 }
+
+let jsActionClipboard = null;
+
+function getViewportCenterCoordinates() {
+    const editorEl = document.getElementById('canvas-container') || document.body;
+    const width = editorEl.clientWidth || 800;
+    const height = editorEl.clientHeight || 600;
+    const x = (width / 2 - panX) / zoom;
+    const y = (height / 2 - panY) / zoom;
+    return { x, y };
+}
+
+function copyNodeAtCursor() {
+    if (selectedNode) {
+        const nodeJson = buildNodeJsonWithoutNext(selectedNode);
+        jsActionClipboard = JSON.parse(JSON.stringify(nodeJson));
+    }
+    hideContextMenu();
+}
+
+function pasteNodeAtCursor() {
+    if (!jsActionClipboard) return;
+    const data = JSON.parse(JSON.stringify(jsActionClipboard));
+    
+    // Position pasted element at right-clicked cursor coordinate
+    data.X = contextCursorX;
+    data.Y = contextCursorY;
+    
+    // Assign clean unique IDs recursively so pasting doesn't share instance mappings
+    if (data["dialogueId"]) {
+        data.dialogueId = 'dialogue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    }
+    
+    parseAndCreateNode(data, contextCursorX, contextCursorY);
+    redrawConnections();
+    triggerAutoSave();
+    hideContextMenu();
+}
+
+// Custom Right-Click Menu
+window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const bounds = container.getBoundingClientRect();
+    contextCursorX = (e.clientX - bounds.left - panX) / zoom;
+    contextCursorY = (e.clientY - bounds.top - panY) / zoom;
+
+    const clickedNodeEl = e.target.closest('.node');
+    if (clickedNodeEl) {
+        const clickedNode = nodes.find(n => n.element === clickedNodeEl);
+        if (clickedNode && clickedNode.type !== 'start') {
+            deselectAllNodes();
+            clickedNode.element.classList.add('selected');
+            selectedNode = clickedNode;
+        }
+        
+        document.getElementById('menu-add-dialogue').style.display = 'none';
+        document.getElementById('menu-add-command').style.display = 'none';
+        document.getElementById('menu-add-condition').style.display = 'none';
+        document.getElementById('menu-paste').style.display = 'none';
+        
+        const isStart = clickedNode && clickedNode.type === 'start';
+        document.getElementById('menu-sep').style.display = isStart ? 'none' : 'block';
+        document.getElementById('menu-copy').style.display = isStart ? 'none' : 'block';
+        document.getElementById('menu-delete').style.display = isStart ? 'none' : 'block';
+    } else {
+        document.getElementById('menu-add-dialogue').style.display = 'block';
+        document.getElementById('menu-add-command').style.display = 'block';
+        document.getElementById('menu-add-condition').style.display = 'block';
+        
+        const pasteEl = document.getElementById('menu-paste');
+        if (jsActionClipboard) {
+            pasteEl.style.display = 'block';
+            pasteEl.style.opacity = '1';
+            pasteEl.style.pointerEvents = 'auto';
+        } else {
+            pasteEl.style.display = 'none';
+        }
+        
+        document.getElementById('menu-sep').style.display = 'none';
+        document.getElementById('menu-copy').style.display = 'none';
+        document.getElementById('menu-delete').style.display = 'none';
+    }
+
+    contextMenu.style.display = 'block';
+    contextMenu.style.left = `${e.clientX}px`;
+    contextMenu.style.top = `${e.clientY}px`;
+});
+
+window.addEventListener('click', () => {
+    hideContextMenu();
+});
 
 function updateTransform() {
     nodesLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
@@ -563,12 +640,51 @@ function createBaseNode(id, type, title, x, y) {
         type,
         x,
         y,
+        width: 320,
+        height: null,
         element: el,
         bodyElement: body,
         choices: [],
         data: {},
         inputs: []
     };
+
+    // Add drag resizing handle for nodes
+    const resizer = document.createElement('div');
+    resizer.className = 'node-resizer';
+    el.appendChild(resizer);
+
+    resizer.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        const startWidth = el.offsetWidth;
+        const startHeight = el.offsetHeight;
+        const startX = e.clientX;
+        const startY = e.clientY;
+
+        const onMouseMove = (ev) => {
+            const newWidth = Math.max(200, startWidth + (ev.clientX - startX) / zoom);
+            const newHeight = Math.max(80, startHeight + (ev.clientY - startY) / zoom);
+
+            el.style.width = `${newWidth}px`;
+            el.style.height = `${newHeight}px`;
+
+            nodeObj.width = newWidth;
+            nodeObj.height = newHeight;
+            redrawConnections();
+        };
+
+        const onMouseUp = () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            triggerAutoSave();
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    });
+
     nodes.push(nodeObj);
     return nodeObj;
 }
@@ -639,6 +755,9 @@ function addPin(node, direction, type, name, pinId) {
             const from = direction === 'input' ? activeDrawingPin.id : pin.id;
             const to = direction === 'input' ? pin.id : activeDrawingPin.id;
             
+            // Limit output pins to only a single connection to enforce standard sequential execution flows
+            connections = connections.filter(c => c.fromPinId !== from);
+
             if (!connections.some(c => c.fromPinId === from && c.toPinId === to)) {
                 connections.push({
                     fromPinId: from,
@@ -662,12 +781,118 @@ function createStartNode() {
     if (startNode) return startNode;
 
     const node = createBaseNode('start', 'start', '🚀 Action Start', 50, 150);
+    
+    // Action Name Input
+    const nameLabel = document.createElement('label');
+    nameLabel.innerText = "Action Name:";
+    nameLabel.style.fontSize = "10px";
+    nameLabel.style.color = "var(--text-muted)";
+    nameLabel.style.marginTop = "4px";
+    nameLabel.style.display = "block";
+    node.bodyElement.appendChild(nameLabel);
+
+    const nameInp = document.createElement('input');
+    nameInp.type = 'text';
+    nameInp.value = activeActionName;
+    nameInp.style.width = "90%";
+    nameInp.style.marginBottom = "8px";
+    nameInp.addEventListener('input', () => {
+        activeActionName = nameInp.value;
+        const titleEl = document.getElementById("editor-title");
+        if (titleEl) {
+            titleEl.innerText = "Editing Action: " + activeActionName;
+        }
+        triggerAutoSave();
+    });
+    node.bodyElement.appendChild(nameInp);
+
+    // Trigger Event Dropdown
+    const triggerLabel = document.createElement('label');
+    triggerLabel.innerText = "Trigger Event:";
+    triggerLabel.style.fontSize = "10px";
+    triggerLabel.style.color = "var(--text-muted)";
+    triggerLabel.style.display = "block";
+    node.bodyElement.appendChild(triggerLabel);
+
+    const triggerSelect = document.createElement('select');
+    triggerSelect.style.width = "95%";
+    triggerSelect.style.marginBottom = "8px";
+    triggerSelect.style.backgroundColor = "#2a2a2a";
+    triggerSelect.style.color = "#ffffff";
+    triggerSelect.style.border = "1px solid #444";
+    triggerSelect.style.borderRadius = "4px";
+    triggerSelect.style.padding = "4px";
+
+    const triggers = [
+        { val: "UserClicked", label: "User Clicked" },
+        { val: "OnGameStart", label: "On Game Start" },
+        { val: "OnGameLoad", label: "On Game Load" },
+        { val: "OnTurnTick", label: "On Turn Tick" },
+        { val: "OnPlayerEnter", label: "On Player Enter" },
+        { val: "OnPlayerExit", label: "On Player Exit" },
+        { val: "OnCharacterEnter", label: "On Character Enter" },
+        { val: "OnCharacterExit", label: "On Character Exit" },
+        { val: "OnRoomTick", label: "On Room Tick" },
+        { val: "OnInteract", label: "On Interact" },
+        { val: "OnCharacterTick", label: "On Character Tick" },
+        { val: "OnCharacterKilled", label: "On Character Killed" },
+        { val: "OnObjectExamined", label: "On Object Examined" },
+        { val: "OnObjectTaken", label: "On Object Taken" },
+        { val: "OnObjectDropped", label: "On Object Dropped" }
+    ];
+
+    triggers.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.val;
+        opt.innerText = t.label;
+        if (t.val === activeActionTrigger) {
+            opt.selected = true;
+        }
+        triggerSelect.appendChild(opt);
+    });
+
+    triggerSelect.addEventListener('change', () => {
+        activeActionTrigger = triggerSelect.value;
+        triggerAutoSave();
+    });
+    node.bodyElement.appendChild(triggerSelect);
+
+    // Initially Active Checkbox
+    const activeRow = document.createElement('div');
+    activeRow.style.display = 'flex';
+    activeRow.style.alignItems = 'center';
+    activeRow.style.gap = '8px';
+    activeRow.style.marginTop = '4px';
+    activeRow.style.marginBottom = '8px';
+
+    const activeChk = document.createElement('input');
+    activeChk.type = 'checkbox';
+    activeChk.checked = activeActionInitallyActive;
+    activeChk.addEventListener('change', () => {
+        activeActionInitallyActive = activeChk.checked;
+        triggerAutoSave();
+    });
+
+    const activeLabel = document.createElement('label');
+    activeLabel.innerText = "Initially Active";
+    activeLabel.style.fontSize = "10px";
+    activeLabel.style.color = "var(--text-muted)";
+
+    activeRow.appendChild(activeChk);
+    activeRow.appendChild(activeLabel);
+    node.bodyElement.appendChild(activeRow);
+
     addPin(node, 'output', 'exec', 'Trigger', 'start_out');
     return node;
 }
 
 // Custom Dialogue Nodes (Auto-generates clean unique IDs directly at creation, fixing child input resolution)
-function addNewDialogueNode(x = 100, y = 100) {
+function addNewDialogueNode(x = null, y = null) {
+    if (x === null || y === null) {
+        const center = getViewportCenterCoordinates();
+        x = center.x - 160;
+        y = center.y - 120;
+    }
     const id = 'dialogue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     const node = createBaseNode(id, 'dialogue', '💬 NPC Dialogue', x, y);
 
@@ -750,6 +975,8 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
     pin.addEventListener('mouseup', (e) => {
         e.stopPropagation();
         if (activeDrawingPin && activeDrawingPin.id !== pin.id && activeDrawingPin.direction === 'input') {
+            // Limit choice output pin to only a single connection to enforce standard sequential execution flows
+            connections = connections.filter(c => c.fromPinId !== pin.id);
             connections.push({ fromPinId: pin.id, toPinId: activeDrawingPin.id, type: 'dialogue-choice' });
             triggerAutoSave();
         }
@@ -765,7 +992,12 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
 }
 
 // Custom Command Nodes
-function addNewCommandNode(x = 100, y = 100) {
+function addNewCommandNode(x = null, y = null) {
+    if (x === null || y === null) {
+        const center = getViewportCenterCoordinates();
+        x = center.x - 160;
+        y = center.y - 100;
+    }
     const id = 'command_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     const node = createBaseNode(id, 'command', '➡️ Execute Command', x, y);
 
@@ -799,7 +1031,12 @@ function addNewCommandNode(x = 100, y = 100) {
 }
 
 // Custom Condition Nodes (Auto-generates clean unique IDs directly at creation, fixing child input resolution)
-function addNewConditionNode(x = 100, y = 100) {
+function addNewConditionNode(x = null, y = null) {
+    if (x === null || y === null) {
+        const center = getViewportCenterCoordinates();
+        x = center.x - 160;
+        y = center.y - 100;
+    }
     const id = 'cond_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     const node = createBaseNode(id, 'condition', '🔀 Branch Condition', x, y);
 
@@ -1078,7 +1315,8 @@ function serializeGraph() {
 
     return {
         Name: activeActionName,
-        Trigger: "UserClicked",
+        Trigger: activeActionTrigger,
+        InitallyActive: activeActionInitallyActive,
         Nodes: rootNodes
     };
 }
@@ -1127,14 +1365,18 @@ function buildNodeJsonWithoutNext(node) {
             "characterLines": node.data.characterLines || "",
             "choices": choiceDtos,
             "X": node.x,
-            "Y": node.y
+            "Y": node.y,
+            "Width": node.width || null,
+            "Height": node.height || null
         };
     } else if (node.type === 'command') {
         const commandJson = {
             "$type": node.data.commandType,
             "Label": node.data.label || "",
             "X": node.x,
-            "Y": node.y
+            "Y": node.y,
+            "Width": node.width || null,
+            "Height": node.height || null
         };
         if (node.inputs) {
             node.inputs.forEach(inp => {
@@ -1168,7 +1410,9 @@ function buildNodeJsonWithoutNext(node) {
             "trueBranch": trueNode ? buildFlatSequence(trueNode) : [],
             "falseBranch": falseNode ? buildFlatSequence(falseNode) : [],
             "X": node.x,
-            "Y": node.y
+            "Y": node.y,
+            "Width": node.width || null,
+            "Height": node.height || null
         };
 
         if (node.inputs) {
@@ -1272,6 +1516,9 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
 
     // Dynamic header title update
     activeActionName = actionJson?.Name || "Visual Action Node";
+    activeActionTrigger = actionJson?.Trigger || "UserClicked";
+    activeActionInitallyActive = (actionJson?.InitallyActive !== undefined) ? actionJson.InitallyActive : true;
+
     const titleEl = document.getElementById("editor-title");
     if (titleEl) {
         titleEl.innerText = "Editing Action: " + activeActionName;
@@ -1327,21 +1574,24 @@ function parseAndCreateNode(data, x, y) {
 
     if (data["$type"] === "general.startDialogue") {
         const node = addNewDialogueNode(x, y);
-        node.data.characterLines = data.characterLines || "";
+        node.data.characterLines = data.CharacterLines !== undefined ? data.CharacterLines : (data.characterLines || "");
         const textarea = node.element.querySelector('textarea');
         if (textarea) textarea.value = node.data.characterLines;
 
         const previewBody = node.element.querySelector('.live-preview-body');
         updateLivePreview(textarea, previewBody);
 
-        if (data.choices) {
-            data.choices.forEach((choice, idx) => {
+        const dialogueChoices = data.Choices || data.choices;
+        if (dialogueChoices) {
+            dialogueChoices.forEach((choice, idx) => {
                 const choiceId = Date.now() + idx;
                 const container = document.getElementById(`${node.id}_choices_container`);
-                addDialogueChoiceRow(node, container, choice.text, choiceId);
+                const choiceText = choice.Text !== undefined ? choice.Text : (choice.text || "");
+                addDialogueChoiceRow(node, container, choiceText, choiceId);
                 
-                if (choice.commands && choice.commands.length > 0) {
-                    const child = parseFlatSequence(choice.commands, x + 380, y + idx * 240);
+                const choiceCmds = choice.Commands || choice.commands;
+                if (choiceCmds && choiceCmds.length > 0) {
+                    const child = parseFlatSequence(choiceCmds, x + 380, y + idx * 240);
                     if (child) {
                         connections.push({
                             fromPinId: `choice_${choiceId}_out`,
@@ -1351,6 +1601,16 @@ function parseAndCreateNode(data, x, y) {
                     }
                 }
             });
+        }
+        if (node) {
+            if (data.Width) {
+                node.width = data.Width;
+                node.element.style.width = `${data.Width}px`;
+            }
+            if (data.Height) {
+                node.height = data.Height;
+                node.element.style.height = `${data.Height}px`;
+            }
         }
         return node;
     } else {
@@ -1412,6 +1672,16 @@ function parseAndCreateNode(data, x, y) {
                     });
                 }
             }
+            if (node) {
+                if (data.Width) {
+                    node.width = data.Width;
+                    node.element.style.width = `${data.Width}px`;
+                }
+                if (data.Height) {
+                    node.height = data.Height;
+                    node.element.style.height = `${data.Height}px`;
+                }
+            }
             return node;
         } else {
             // Command Node
@@ -1441,6 +1711,16 @@ function parseAndCreateNode(data, x, y) {
             }
 
             refreshCommandFields(node);
+            if (node) {
+                if (data.Width) {
+                    node.width = data.Width;
+                    node.element.style.width = `${data.Width}px`;
+                }
+                if (data.Height) {
+                    node.height = data.Height;
+                    node.element.style.height = `${data.Height}px`;
+                }
+            }
             return node;
         }
     }

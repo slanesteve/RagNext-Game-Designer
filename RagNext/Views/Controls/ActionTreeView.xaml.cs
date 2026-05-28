@@ -223,6 +223,7 @@ namespace RagNext.Views.Controls
                             {
                                 target.Name = imported.Name;
                                 target.Trigger = imported.Trigger;
+                                target.InitallyActive = imported.InitallyActive;
                                 target.Nodes.Clear();
                                 foreach (var node in imported.Nodes)
                                 {
@@ -255,6 +256,7 @@ namespace RagNext.Views.Controls
 
                 _isGraphMode = false;
                 ToggleModeBtn.Text = "🎨 Visual Graph Editor";
+                TreeViewToolbar.IsVisible = true;
                 TreeScrollView.IsVisible = true;
                 SplitterBar.IsVisible = true;
                 EditorScrollView.IsVisible = true;
@@ -264,6 +266,7 @@ namespace RagNext.Views.Controls
             {
                 _isGraphMode = true;
                 ToggleModeBtn.Text = "📝 List Tree View";
+                TreeViewToolbar.IsVisible = false;
                 TreeScrollView.IsVisible = false;
                 SplitterBar.IsVisible = false;
                 EditorScrollView.IsVisible = false;
@@ -303,6 +306,7 @@ namespace RagNext.Views.Controls
                             {
                                 target.Name = imported.Name;
                                 target.Trigger = imported.Trigger;
+                                target.InitallyActive = imported.InitallyActive;
                                 target.Nodes.Clear();
                                 foreach (var node in imported.Nodes)
                                 {
@@ -533,6 +537,7 @@ namespace RagNext.Views.Controls
                                 // Sync properties back
                                 target.Name = imported.Name;
                                 target.Trigger = imported.Trigger;
+                                target.InitallyActive = imported.InitallyActive;
                                 target.Nodes.Clear();
                                 foreach (var node in imported.Nodes)
                                 {
@@ -610,7 +615,16 @@ namespace RagNext.Views.Controls
                     var instance = (RagsCore.Actions.ActionStep)Activator.CreateInstance(attr.DerivedType)!;
                     
                     var props = attr.DerivedType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                        .Where(p => p.CanWrite && p.Name != "Label" && p.Name != "TrueBranch" && p.Name != "FalseBranch" && p.Name != "X" && p.Name != "Y")
+                        .Where(p => p.CanWrite && 
+                                    p.Name != "Label" && 
+                                    p.Name != "DialogueId" && 
+                                    p.Name != "TrueBranch" && 
+                                    p.Name != "FalseBranch" && 
+                                    p.Name != "X" && 
+                                    p.Name != "Y" &&
+                                    p.Name != "Width" &&
+                                    p.Name != "Height" &&
+                                    !(p.PropertyType != typeof(string) && typeof(System.Collections.IEnumerable).IsAssignableFrom(p.PropertyType)))
                         .Select(p => {
                             string controlType = GetPropertyControlType(p);
                             string dataType = GetPropertyDataType(p);

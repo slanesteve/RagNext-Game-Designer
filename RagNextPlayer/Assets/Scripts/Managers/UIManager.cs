@@ -1349,5 +1349,49 @@ namespace RagNextPlayer.Managers
             SubmitPromptSelection(valueEntered);
         }
 
+        public void ShowDialogueScreen(StartDialogueCommandData cmd, GameExecutionContext ctx)
+        {
+            if (_promptInputMessage is not null)
+                _promptInputMessage.text = ctx.Resolve(cmd.CharacterLines);
+
+            var textContainer = _root.Q<VisualElement>("prompt-text-container");
+            var selScroll = _promptSelectionScroll;
+
+            if (textContainer is null || selScroll is null) return;
+
+            textContainer.style.display = DisplayStyle.None;
+            selScroll.style.display     = DisplayStyle.Flex;
+            selScroll.Clear();
+
+            if (_promptSubmitBtn is not null)
+                _promptSubmitBtn.style.display = DisplayStyle.None;
+
+            foreach (var choice in cmd.Choices)
+            {
+                var resolvedChoiceText = ctx.Resolve(choice.Text);
+                var btn = new Button(() => {
+                    if (_promptInputMenu is not null)
+                        _promptInputMenu.style.display = DisplayStyle.None;
+
+                    // Execute choice sub-commands
+                    if (choice.Commands != null && choice.Commands.Count > 0)
+                    {
+                        var actionData = new ActionData
+                        {
+                            Id = "choice_action",
+                            Name = "Choice Action",
+                            Nodes = choice.Commands
+                        };
+                        ActionExecutor.Execute(actionData, ctx, GetComponent<CommandEffectRouter>());
+                    }
+                }) { text = resolvedChoiceText };
+                btn.AddToClassList("prompt-choice-btn");
+                selScroll.Add(btn);
+            }
+
+            if (_promptInputMenu is not null)
+                _promptInputMenu.style.display = DisplayStyle.Flex;
+        }
+
     }
 }

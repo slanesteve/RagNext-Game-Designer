@@ -151,12 +151,14 @@
                                Grid.Row="0"
                                Grid.Column="0"
                                Grid.ColumnSpan="3">
-            <Button Text="+ Action" Command="{Binding AddActionCommand}" IsVisible="{Binding CanAddAction}" />
-            <Button Text="+ Condition" Command="{Binding AddConditionCommand}" />
-            <Button Text="+ Command" Command="{Binding AddCommandCommand}" />
-            <Button Text="Delete" Command="{Binding DeleteCommand}" />
-            <Button Text="Copy" Command="{Binding CopyCommand}" />
-            <Button Text="Paste" Command="{Binding PasteCommand}" />
+            <HorizontalStackLayout x:Name="TreeViewToolbar" Spacing="8">
+                <Button Text="+ Action" Command="{Binding AddActionCommand}" IsVisible="{Binding CanAddAction}" />
+                <Button Text="+ Condition" Command="{Binding AddConditionCommand}" />
+                <Button Text="+ Command" Command="{Binding AddCommandCommand}" />
+                <Button Text="Delete" Command="{Binding DeleteCommand}" />
+                <Button Text="Copy" Command="{Binding CopyCommand}" />
+                <Button Text="Paste" Command="{Binding PasteCommand}" />
+            </HorizontalStackLayout>
             <Button x:Name="ToggleModeBtn" Text="🎨 Visual Graph Editor" Clicked="OnToggleModeClicked" WidthRequest="180" BackgroundColor="#8E2DE2" TextColor="White" />
         </HorizontalStackLayout>
 

@@ -354,6 +354,9 @@ namespace RagNextPlayer.Runtime
                     ctx.SetVariable("system.prompt.active", "true");
                     break;
 
+                case StartDialogueCommandData c:
+                    break;
+
                 case OpenContainerCommandData c:
                     {
                         var id = ctx.Resolve(c.ObjectId);

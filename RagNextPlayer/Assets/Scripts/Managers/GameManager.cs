@@ -109,6 +109,9 @@ namespace RagNextPlayer.Managers
 
             CurrentState = GameState.Playing;
             OnGameLoaded?.Invoke(ActiveGame);
+            
+            // Execute all OnGameStart actions globally
+            FireStartupTriggers();
 
             // Navigate to the starting room
             var startId = ActiveGame.Player.StartingRoomId
@@ -116,6 +119,70 @@ namespace RagNextPlayer.Managers
 
             if (startId is not null)
                 await TransitionToRoomAsync(startId);
+        }
+
+        private void FireStartupTriggers()
+        {
+            if (ActiveGame is null) return;
+            var ctx = MakeContext();
+            var sink = InteractionController.Instance?.GetComponent<CommandEffectRouter>();
+
+            // 1. Player actions
+            if (ActiveGame.Player.Actions != null)
+            {
+                foreach (var action in ActiveGame.Player.Actions)
+                {
+                    if (string.Equals(action.Trigger, "OnGameStart", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ActionExecutor.Execute(action, ctx, sink);
+                    }
+                }
+            }
+
+            // 2. Room actions
+            foreach (var room in ActiveGame.Rooms)
+            {
+                if (room.Actions != null)
+                {
+                    foreach (var action in room.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnGameStart", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, ctx, sink);
+                        }
+                    }
+                }
+            }
+
+            // 3. GameObject actions
+            foreach (var obj in ActiveGame.Objects)
+            {
+                if (obj.Actions != null)
+                {
+                    foreach (var action in obj.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnGameStart", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, ctx, sink);
+                        }
+                    }
+                }
+            }
+
+            // 4. Character actions
+            foreach (var ch in ActiveGame.Characters)
+            {
+                if (ch.Actions != null)
+                {
+                    foreach (var action in ch.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnGameStart", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, ctx, sink);
+                        }
+                    }
+                }
+            }
         }
 
 

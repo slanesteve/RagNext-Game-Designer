@@ -33,11 +33,13 @@
 
     <!-- Right-click Custom Context Menu -->
     <div id="context-menu">
-        <div class="context-item" onclick="addNewDialogueNodeAtCursor()">+ Add Dialogue Node</div>
-        <div class="context-item" onclick="addNewCommandNodeAtCursor()">+ Add Command Node</div>
-        <div class="context-item" onclick="addNewConditionNodeAtCursor()">+ Add Condition Node</div>
-        <hr style="border-color: rgba(255,255,255,0.08); margin: 4px 0;">
-        <div class="context-item" style="color: #ef4444;" onclick="clearSelectedNode()">Delete Selected Node</div>
+        <div class="context-item" id="menu-add-dialogue" onclick="addNewDialogueNodeAtCursor()">+ Add Dialogue Node</div>
+        <div class="context-item" id="menu-add-command" onclick="addNewCommandNodeAtCursor()">+ Add Command Node</div>
+        <div class="context-item" id="menu-add-condition" onclick="addNewConditionNodeAtCursor()">+ Add Condition Node</div>
+        <div class="context-item" id="menu-paste" onclick="pasteNodeAtCursor()">📋 Paste Node</div>
+        <hr id="menu-sep" style="border-color: rgba(255,255,255,0.08); margin: 4px 0;">
+        <div class="context-item" id="menu-copy" onclick="copyNodeAtCursor()">📄 Copy Selected Node</div>
+        <div class="context-item" id="menu-delete" style="color: #ef4444;" onclick="clearSelectedNode()">Delete Selected Node</div>
     </div>
 
     <script src="graph_editor.js"></script>

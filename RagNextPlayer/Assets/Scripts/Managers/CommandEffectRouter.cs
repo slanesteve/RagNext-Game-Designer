@@ -144,6 +144,10 @@ namespace RagNextPlayer.Managers
                         c.StoreVariableName
                     );
                     break;
+
+                case StartDialogueCommandData c:
+                    UIManager.Instance?.ShowDialogueScreen(c, ctx);
+                    break;
             }
         }
     }

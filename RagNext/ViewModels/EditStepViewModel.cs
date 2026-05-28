@@ -203,7 +203,16 @@ namespace RagNext.ViewModels
 
             EditableInputs.Clear();
             var props = _target.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanWrite && p.Name != "Label" && p.Name != "TrueBranch" && p.Name != "FalseBranch" && p.Name != "X" && p.Name != "Y");
+                .Where(p => p.CanWrite && 
+                            p.Name != "Label" && 
+                            p.Name != "DialogueId" && 
+                            p.Name != "TrueBranch" && 
+                            p.Name != "FalseBranch" && 
+                            p.Name != "X" && 
+                            p.Name != "Y" &&
+                            p.Name != "Width" &&
+                            p.Name != "Height" &&
+                            !(p.PropertyType != typeof(string) && typeof(System.Collections.IEnumerable).IsAssignableFrom(p.PropertyType)));
 
             foreach (var p in props)
             {

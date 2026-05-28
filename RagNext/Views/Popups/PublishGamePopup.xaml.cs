@@ -170,6 +170,38 @@ namespace RagNext.Views.Popups
                 return;
             }
 
+            // Warn and clear destination directory if it already exists and is not empty
+            if (Directory.Exists(destination) && Directory.GetFileSystemEntries(destination).Length > 0)
+            {
+                bool clearDir = await Shell.Current.DisplayAlert(
+                    "Overwrite Warning",
+                    "The destination folder is not empty. To prevent mixing game assets or loading outdated configurations, it is highly recommended to clear this folder.\n\nDo you want to delete its contents before publishing?",
+                    "Clear & Continue",
+                    "Cancel");
+
+                if (!clearDir)
+                {
+                    return;
+                }
+
+                try
+                {
+                    foreach (var file in Directory.GetFiles(destination))
+                    {
+                        File.Delete(file);
+                    }
+                    foreach (var dir in Directory.GetDirectories(destination))
+                    {
+                        Directory.Delete(dir, true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await Shell.Current.DisplayAlert("Error", $"Could not clear folder: {ex.Message}", "OK");
+                    return;
+                }
+            }
+
             // Update game metadata
             _game.Title   = title;
             _game.Author  = AuthorEntry.Text?.Trim() ?? string.Empty;
