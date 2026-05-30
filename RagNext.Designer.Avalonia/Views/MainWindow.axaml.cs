@@ -68,6 +68,14 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                 };
 
+                vm.Media.PropertyChanged += (s, ev) =>
+                {
+                    if (ev.PropertyName == nameof(MediaLibraryViewModel.SelectedFilePath))
+                    {
+                        UpdateMediaPreview(vm.Media);
+                    }
+                };
+
                 // Splash screen 3.5 seconds timer transition
                 if (vm.ShowWelcomeOverlay)
                 {
@@ -765,6 +773,79 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 // Ingest files to the currently selected folder in media catalog
                 await vm.Media.ImportFilesFromPathsAsync(paths);
+            }
+        }
+
+        private void UpdateMediaPreview(MediaLibraryViewModel mediaVm)
+        {
+            try
+            {
+                if (PreviewWebView == null) return;
+
+                if ((mediaVm.IsSelectedAudio || mediaVm.IsSelectedVideo) && !string.IsNullOrEmpty(mediaVm.SelectedFilePath))
+                {
+                    var filePath = mediaVm.SelectedFilePath;
+                    
+                    var tempHtmlDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WebAssets");
+                    if (!Directory.Exists(tempHtmlDir))
+                    {
+                        Directory.CreateDirectory(tempHtmlDir);
+                    }
+                    var tempHtmlPath = Path.Combine(tempHtmlDir, "media_player.html");
+
+                    var fileUri = new Uri(filePath).AbsoluteUri;
+                    
+                    string tag = mediaVm.IsSelectedAudio 
+                        ? $"<audio src=\"{fileUri}\" controls autoplay style=\"width: 100%; outline: none;\"></audio>" 
+                        : $"<video src=\"{fileUri}\" controls autoplay style=\"width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);\"></video>";
+
+                    string htmlContent = $@"<!DOCTYPE html>
+<html>
+<head>
+<meta charset=""utf-8"">
+<style>
+  body {{
+    background-color: #13131F;
+    color: #F0F0F4;
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    margin: 0;
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 16px);
+    overflow: hidden;
+  }}
+  .player-container {{
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }}
+</style>
+</head>
+<body>
+  <div class=""player-container"">
+    {tag}
+  </div>
+</body>
+</html>";
+
+                    File.WriteAllText(tempHtmlPath, htmlContent, Encoding.UTF8);
+                    PreviewWebView.Source = new Uri(tempHtmlPath);
+                    PreviewWebView.IsVisible = true;
+                }
+                else
+                {
+                    PreviewWebView.IsVisible = false;
+                    PreviewWebView.Source = new Uri("about:blank");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to update media preview: {ex.Message}");
             }
         }
     }
