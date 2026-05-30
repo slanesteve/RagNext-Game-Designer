@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+             x:Class="RagNext.Designer.Avalonia.Views.SmartDialogControl">
+
+    <Grid>
+        <TextBox x:Name="DialogTextBox" 
+                 AcceptsReturn="True" 
+                 TextWrapping="Wrap" 
+                 Background="#13131F" 
+                 BorderBrush="#33334A" 
+                 Foreground="White"
+                 Padding="10"
+                 VerticalAlignment="Stretch"
+                 HorizontalAlignment="Stretch"
+                 PlaceholderText="Type your story dialogue here... Press { for variables or [ for entities."/>
+        
+        <Popup x:Name="AutocompletePopup" 
+               IsOpen="False" 
+               Placement="Bottom"
+               PlacementTarget="{Binding #DialogTextBox}">
+            <Border Background="#1C1C28" 
+                    BorderBrush="#8E2DE2" 
+                    BorderThickness="1" 
+                    CornerRadius="8" 
+                    Width="240" 
+                    MaxHeight="200" 
+                    BoxShadow="0 4 20 0 #40000000">
+                <ListBox x:Name="AutocompleteList" 
+                         Background="Transparent" 
+                         BorderThickness="0"
+                         Foreground="White"/>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

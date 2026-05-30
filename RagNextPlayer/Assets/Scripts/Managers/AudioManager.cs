@@ -33,7 +33,9 @@ namespace RagNextPlayer.Managers
             }
         }
 
-        public void PlaySound(string soundId, float volume = 1f)
+        private readonly Dictionary<AudioSource, string> _sourcePaths = new();
+
+        public void PlaySound(string soundId, float volume = 1f, bool loop = false)
         {
             if (string.IsNullOrWhiteSpace(soundId)) return;
 
@@ -53,25 +55,78 @@ namespace RagNextPlayer.Managers
 
             if (_cache.TryGetValue(path, out var clip))
             {
-                PlayClip(clip, volume);
+                PlayClip(clip, volume, loop, path);
             }
             else
             {
-                StartCoroutine(LoadAndPlayAudioRoutine(path, volume));
+                StartCoroutine(LoadAndPlayAudioRoutine(path, volume, loop));
             }
         }
 
-        private void PlayClip(AudioClip clip, float volume)
+        private void PlayClip(AudioClip clip, float volume, bool loop, string path)
         {
             var src = GetFreeSource();
             if (src is null) return;
 
             src.clip   = clip;
             src.volume = Mathf.Clamp01(volume);
+            src.loop   = loop;
             src.Play();
+            _sourcePaths[src] = path;
         }
 
-        private System.Collections.IEnumerator LoadAndPlayAudioRoutine(string path, float volume)
+        public void StopSound(string soundId)
+        {
+            if (string.IsNullOrWhiteSpace(soundId)) return;
+
+            string path = soundId;
+            var game = GameManager.Instance?.ActiveGame;
+            if (game != null)
+            {
+                var asset = game.MediaAssets.Find(a => 
+                    string.Equals(a.Id, soundId, StringComparison.OrdinalIgnoreCase) || 
+                    string.Equals(a.OriginalFileName, soundId, StringComparison.OrdinalIgnoreCase));
+                if (asset != null)
+                {
+                    path = asset.RelativePath;
+                }
+            }
+
+            foreach (var src in _pool)
+            {
+                if (src.isPlaying && _sourcePaths.TryGetValue(src, out var p) && string.Equals(p, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    src.Stop();
+                    src.clip = null;
+                    src.loop = false;
+                }
+            }
+        }
+
+        public void StopAllLoopingSounds()
+        {
+            foreach (var src in _pool)
+            {
+                if (src.isPlaying && src.loop)
+                {
+                    src.Stop();
+                    src.clip = null;
+                    src.loop = false;
+                }
+            }
+        }
+
+        public void StopAllSounds()
+        {
+            foreach (var src in _pool)
+            {
+                src.Stop();
+                src.clip = null;
+                src.loop = false;
+            }
+        }
+
+        private System.Collections.IEnumerator LoadAndPlayAudioRoutine(string path, float volume, bool loop)
         {
             string url = FormatLocalPathForWeb(path);
             if (string.IsNullOrEmpty(url)) yield break;
@@ -92,7 +147,7 @@ namespace RagNextPlayer.Managers
                 if (clip != null)
                 {
                     _cache[path] = clip;
-                    PlayClip(clip, volume);
+                    PlayClip(clip, volume, loop, path);
                     Debug.Log($"[AudioManager] Successfully loaded and played dynamic audio clip: '{path}'");
                 }
             }
@@ -103,7 +158,7 @@ namespace RagNextPlayer.Managers
                 if (clip != null)
                 {
                     _cache[path] = clip;
-                    PlayClip(clip, volume);
+                    PlayClip(clip, volume, loop, path);
                 }
                 else
                 {

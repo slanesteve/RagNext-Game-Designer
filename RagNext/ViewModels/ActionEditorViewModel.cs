@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
@@ -14,7 +14,11 @@ namespace RagNext.ViewModels
         public GameObject? FocusObject { get; }
         public GameAction Action { get; }
         public ObservableCollection<string> AvailableSteps { get; } =
-            new(["var.equals", "player.inRoom", "room.hasObject", "var.set", "player.moveTo", "room.addObject", "room.removeObject"]);
+            new([
+                "var.equals", "player.inRoom", "room.hasObject", 
+                "var.set", "player.moveTo", "room.addObject", "room.removeObject",
+                "object.displayDescription", "object.moveToCharacter", "object.moveToInventory", "object.moveInsideObject"
+            ]);
 
         private string? _selectedStepKey;
         public string? SelectedStepKey { get => _selectedStepKey; set => SetProperty(ref _selectedStepKey, value); }
@@ -85,6 +89,10 @@ namespace RagNext.ViewModels
             "player.moveTo" => new MovePlayerToRoomCommand(),
             "room.addObject" => new AddObjectToRoomCommand(),
             "room.removeObject" => new RemoveObjectFromRoomCommand(),
+            "object.displayDescription" => new ObjectDisplayDescriptionCommand(),
+            "object.moveToCharacter" => new ObjectMoveToCharacterCommand(),
+            "object.moveToInventory" => new ObjectMoveToInventoryCommand(),
+            "object.moveInsideObject" => new ObjectMoveInsideObjectCommand(),
             _ => throw new NotSupportedException(key)
         };
     }

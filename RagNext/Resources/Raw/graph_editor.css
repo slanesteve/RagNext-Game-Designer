@@ -118,6 +118,8 @@ body, html {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .node-delete {
@@ -202,6 +204,7 @@ textarea:focus, select:focus, input:focus {
 textarea {
     min-height: 80px;
     height: auto;
+    flex: 1 1 80px;
 }
 
 /* Glassmorphic Formatting toolbar */
@@ -251,6 +254,10 @@ textarea {
     background: rgba(0, 0, 0, 0.15);
     border-radius: 6px;
     padding: 6px;
+    flex: 1 1 60px;
+    display: flex;
+    flex-direction: column;
+    min-height: 50px;
 }
 
 .live-preview-header {
@@ -269,6 +276,8 @@ textarea {
     line-height: 1.4;
     color: #e5e7eb;
     word-break: break-word;
+    flex: 1;
+    overflow-y: auto;
     min-height: 20px;
 }
 

@@ -12,6 +12,15 @@ namespace RagNext
 {
     public partial class AppShell : Shell
     {
+        public static readonly BindableProperty IsFlyoutEnabledProperty =
+            BindableProperty.Create(nameof(IsFlyoutEnabled), typeof(bool), typeof(AppShell), true);
+
+        public bool IsFlyoutEnabled
+        {
+            get => (bool)GetValue(IsFlyoutEnabledProperty);
+            set => SetValue(IsFlyoutEnabledProperty, value);
+        }
+
         private readonly IAISettingsService? _settingsService;
         private bool _isUpdating;
 

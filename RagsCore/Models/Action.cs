@@ -23,6 +23,20 @@ namespace RagsCore.Models
         public string Type { get => _type; set => SetProperty(ref _type, value); }
 
         // Steps can be any ActionStep (commands, or conditions that hold other ActionSteps).
-        public ObservableCollection<ActionStep> Nodes { get; set; } = new();
+        private ObservableCollection<ActionStep> _nodes = new();
+        public ObservableCollection<ActionStep> Nodes { get => _nodes; set => SetProperty(ref _nodes, value); }
+
+        // Backward compatibility fallback for older games storing actions in 'Steps'
+        public ObservableCollection<ActionStep>? Steps
+        {
+            get => Nodes;
+            set
+            {
+                if (value != null)
+                {
+                    Nodes = value;
+                }
+            }
+        }
     }
 }

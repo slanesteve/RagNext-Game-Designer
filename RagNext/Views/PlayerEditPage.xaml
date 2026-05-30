@@ -19,7 +19,7 @@
             <Grid RowDefinitions="Auto, *">
                 <!-- Segmented Tab Selection -->
                 <Grid Grid.Row="0" ColumnDefinitions="*, *" ColumnSpacing="0" Margin="12,12,12,0" HeightRequest="40" BackgroundColor="{AppThemeBinding Light=#E5E7EB, Dark=#1F1F29}">
-                    <Border x:Name="DetailsTabBorder" Grid.Column="0" BackgroundColor="#512BD4" StrokeShape="RoundRectangle 4" StrokeThickness="0">
+                    <Border x:Name="DetailsTabBorder" Grid.Column="0" BackgroundColor="{DynamicResource Primary}" StrokeShape="RoundRectangle 4" StrokeThickness="0">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnDetailsTabClicked" />
                         </Border.GestureRecognizers>

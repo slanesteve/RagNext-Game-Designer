@@ -13,8 +13,8 @@
     <Grid BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#111116}">
         <Border StrokeShape="RoundRectangle 12"
                 StrokeThickness="1"
-                Stroke="{AppThemeBinding Light=#E5E7EB, Dark=#2E2E3C}"
-                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E28}"
+                Stroke="{AppThemeBinding Light=#E5E7EB, Dark={DynamicResource Gray900}}"
+                BackgroundColor="{AppThemeBinding Light=White, Dark={DynamicResource OffBlack}}"
                 Margin="12"
                 Padding="8">
             <Border.Shadow>

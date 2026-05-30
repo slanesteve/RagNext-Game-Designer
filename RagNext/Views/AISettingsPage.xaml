@@ -10,7 +10,7 @@
             <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="12" Margin="0,0,0,20" VerticalOptions="Center">
                 <Label Text="AI Co-Author Settings" FontSize="22" FontAttributes="Bold" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#1A202C, Dark=#F7FAFC}" />
                 <Button Grid.Column="1" Text="Cancel" Clicked="OnCancelClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#1E293B}" TextColor="{AppThemeBinding Light=#4A5568, Dark=#E2E8F0}" HeightRequest="40" Padding="16,0" CornerRadius="8" FontAttributes="Bold" />
-                <Button Grid.Column="2" Text="Save" Clicked="OnSaveClicked" BackgroundColor="{AppThemeBinding Light=#512BD4, Dark=#7752FE}" TextColor="White" HeightRequest="40" Padding="16,0" CornerRadius="8" FontAttributes="Bold" />
+                <Button Grid.Column="2" Text="Save" Clicked="OnSaveClicked" BackgroundColor="{DynamicResource Primary}" TextColor="White" HeightRequest="40" Padding="16,0" CornerRadius="8" FontAttributes="Bold" />
             </Grid>
 
             <!-- Bento Card 1: AI Provider -->
@@ -56,7 +56,7 @@
                                     HeightRequest="36"
                                     Padding="12,0"
                                     HorizontalOptions="Start"
-                                    BackgroundColor="{AppThemeBinding Light=#512BD4, Dark=#7752FE}"
+                                    BackgroundColor="{DynamicResource Primary}"
                                     TextColor="White" />
                         </VerticalStackLayout>
                     </Border>

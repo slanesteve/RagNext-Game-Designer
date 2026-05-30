@@ -10,6 +10,7 @@ namespace RagNext.Views
     {
         private readonly IGeneralSettingsService _service;
         private GeneralSettings _settings = new();
+        private bool _isApplyingSelection = false;
 
         public GeneralSettingsPage()
         {
@@ -25,7 +26,36 @@ namespace RagNext.Views
 
             combinedThemePicker.SelectedIndexChanged += (_, __) =>
             {
-                ApplySelection(combinedThemePicker.SelectedIndex);
+                int currentIdx = combinedThemePicker.SelectedIndex;
+                System.Diagnostics.Debug.WriteLine($"[Picker] SelectedIndexChanged: {currentIdx}, _isApplyingSelection={_isApplyingSelection}");
+                if (_isApplyingSelection) return;
+                
+                int selectedIndex = combinedThemePicker.SelectedIndex;
+                if (selectedIndex < 0) return;
+
+                // Postpone selection application asynchronously to let the picker dropdown fully close
+                // before we trigger a theme/layout redraw.
+                Dispatcher.Dispatch(async () =>
+                {
+                    await Task.Delay(100); // Wait for the native dropdown popover to fully dismiss
+                    if (_isApplyingSelection) return;
+                    try
+                    {
+                        _isApplyingSelection = true;
+                        ApplySelection(selectedIndex);
+
+                        // Asynchronously restore/confirm the selected index to keep UI in perfect sync
+                        if (combinedThemePicker.SelectedIndex != selectedIndex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[Picker] Restoring SelectedIndex to {selectedIndex}");
+                            combinedThemePicker.SelectedIndex = selectedIndex;
+                        }
+                    }
+                    finally
+                    {
+                        _isApplyingSelection = false;
+                    }
+                });
             };
         }
 
@@ -38,15 +68,8 @@ namespace RagNext.Views
                 {
                     PaletteTheme.Nord => 3,
                     PaletteTheme.Dracula => 4,
-                    PaletteTheme.SolarizedDark => 5,
-                    PaletteTheme.SolarizedLight => 6,
-                    PaletteTheme.OneDark => 7,
-                    PaletteTheme.Monokai => 8,
-                    PaletteTheme.GruvboxDark => 9,
-                    PaletteTheme.GruvboxLight => 10,
-                    PaletteTheme.TrueBlack => 11,
-                    PaletteTheme.HighContrast => 12,
-                    PaletteTheme.Sepia => 13,
+                    PaletteTheme.OneDark => 5,
+                    PaletteTheme.Sepia => 6,
                     _ => 0
                 };
             }
@@ -63,9 +86,33 @@ namespace RagNext.Views
 
         private void ApplySelection(int index)
         {
+            if (index < 0) return;
             var (designerTheme, palette) = IndexToSelection(index);
-            ApplyTheme(designerTheme);
+            System.Diagnostics.Debug.WriteLine($"[ApplySelection] index={index}, targetTheme={designerTheme}, targetPalette={palette}");
+
+            // 1. Always apply the palette colors in real-time for instant, safe preview!
             ApplyPalette(palette);
+
+            // 2. Only apply theme changes immediately if it matches the current theme (no-op)
+            // to prevent WinUI 3 modal layout sweep deadlocks.
+            if (Application.Current is Application app)
+            {
+                var targetAppTheme = designerTheme switch
+                {
+                    DesignerTheme.Light => AppTheme.Light,
+                    DesignerTheme.Dark => AppTheme.Dark,
+                    _ => AppTheme.Unspecified
+                };
+
+                if (app.UserAppTheme == targetAppTheme)
+                {
+                    ApplyTheme(designerTheme);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ApplySelection] Postponing cross-theme change ({app.UserAppTheme} -> {targetAppTheme}) until modal closes.");
+                }
+            }
         }
 
         private static (DesignerTheme theme, PaletteTheme palette) IndexToSelection(int index) => index switch
@@ -75,33 +122,60 @@ namespace RagNext.Views
             2 => (DesignerTheme.Dark,       PaletteTheme.Default),
             3 => (DesignerTheme.Dark,       PaletteTheme.Nord),
             4 => (DesignerTheme.Dark,       PaletteTheme.Dracula),
-            5 => (DesignerTheme.Dark,       PaletteTheme.SolarizedDark),
-            6 => (DesignerTheme.Light,      PaletteTheme.SolarizedLight),
-            7 => (DesignerTheme.Dark,       PaletteTheme.OneDark),
-            8 => (DesignerTheme.Dark,       PaletteTheme.Monokai),
-            9 => (DesignerTheme.Dark,       PaletteTheme.GruvboxDark),
-            10 => (DesignerTheme.Light,     PaletteTheme.GruvboxLight),
-            11 => (DesignerTheme.Dark,      PaletteTheme.TrueBlack),
-            12 => (DesignerTheme.System,    PaletteTheme.HighContrast),
-            13 => (DesignerTheme.Light,     PaletteTheme.Sepia),
+            5 => (DesignerTheme.Dark,       PaletteTheme.OneDark),
+            6 => (DesignerTheme.Light,      PaletteTheme.Sepia),
             _ => (DesignerTheme.System,     PaletteTheme.Default)
         };
 
         private static void ApplyTheme(DesignerTheme theme)
         {
+            System.Diagnostics.Debug.WriteLine($"[ApplyTheme] theme={theme}");
             if (Application.Current is Application app)
             {
-                app.UserAppTheme = theme switch
+                var appTheme = theme switch
                 {
                     DesignerTheme.Light => AppTheme.Light,
                     DesignerTheme.Dark => AppTheme.Dark,
                     _ => AppTheme.Unspecified
                 };
+
+#if WINDOWS
+                try
+                {
+                    var window = app.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+                    if (window?.Content is Microsoft.UI.Xaml.FrameworkElement element)
+                    {
+                        var targetElementTheme = appTheme switch
+                        {
+                            AppTheme.Light => Microsoft.UI.Xaml.ElementTheme.Light,
+                            AppTheme.Dark => Microsoft.UI.Xaml.ElementTheme.Dark,
+                            _ => Microsoft.UI.Xaml.ElementTheme.Default
+                        };
+                        System.Diagnostics.Debug.WriteLine($"[ApplyTheme] Setting native WinUI 3 RequestedTheme to {targetElementTheme}");
+                        element.RequestedTheme = targetElementTheme;
+                    }
+                    ThemeService.UpdateWindowTitleBarColors(appTheme);
+                    
+                    // Set app.UserAppTheme safely so that AppThemeBindings on all pages redraw correctly
+                    if (app.UserAppTheme != appTheme)
+                    {
+                        app.UserAppTheme = appTheme;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ApplyTheme] Native error: {ex.Message}");
+                }
+#else
+                System.Diagnostics.Debug.WriteLine($"[ApplyTheme] app.UserAppTheme={app.UserAppTheme} -> setting to {appTheme}");
+                app.UserAppTheme = appTheme;
+#endif
             }
         }
 
         private static void ApplyPalette(PaletteTheme palette)
         {
+            System.Diagnostics.Debug.WriteLine($"[ApplyPalette] palette={palette}");
             ThemeService.ApplyPalette(palette);
         }
 
@@ -111,15 +185,28 @@ namespace RagNext.Views
             _settings.DesignerTheme = designerTheme;
             _settings.Palette = palette;
             _service.Save(_settings);
-            ApplyTheme(_settings.DesignerTheme);
-            ApplyPalette(_settings.Palette);
-            await DisplayAlert("Saved", "General settings saved.", "OK");
+            
+            // Pop the modal first so the WinUI modal host is removed from the visual tree
             await Navigation.PopModalAsync();
+
+            // Safely apply the main application theme shift on the next UI tick
+            Dispatcher.Dispatch(() =>
+            {
+                ApplyTheme(designerTheme);
+            });
         }
 
         private async void OnCancelClicked(object sender, EventArgs e)
         {
+            var originalSettings = _service.Load();
+            ApplyPalette(originalSettings.Palette);
+            
             await Navigation.PopModalAsync();
+            
+            Dispatcher.Dispatch(() =>
+            {
+                ApplyTheme(originalSettings.DesignerTheme);
+            });
         }
     }
 }

@@ -114,8 +114,7 @@
                         <Label Text="Welcome to RagNext Designer" FontSize="22" FontAttributes="Bold" HorizontalTextAlignment="Center" Margin="0,0,0,10"/>
                         <Button Text="Create New Game" Clicked="OnOverlayCreateClicked" BackgroundColor="#512BD4" TextColor="White" HeightRequest="45" WidthRequest="250"/>
                         <Button Text="Load Saved Game" Clicked="OnOverlayLoadClicked" BackgroundColor="#512BD4" TextColor="White" HeightRequest="45" WidthRequest="250"/>
-                        <Button Text="Load Last Workspace" Clicked="OnOverlayDefaultClicked" BackgroundColor="#E0E0E0" TextColor="Black" HeightRequest="45" WidthRequest="250"/>
-                        <Button Text="Cancel" Clicked="OnCancelOverlayClicked" BackgroundColor="#7f8c8d" TextColor="White" HeightRequest="45" WidthRequest="250"/>
+                        <Button Text="Load Last Workspace" Clicked="OnOverlayDefaultClicked" BackgroundColor="#512BD4" TextColor="White" HeightRequest="45" WidthRequest="250"/>
                     </VerticalStackLayout>
 
                     <VerticalStackLayout x:Name="InlineSavePickerView" Spacing="16" HorizontalOptions="Center" IsVisible="False">

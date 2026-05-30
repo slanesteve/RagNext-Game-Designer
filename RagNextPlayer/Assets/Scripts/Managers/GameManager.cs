@@ -84,6 +84,7 @@ namespace RagNextPlayer.Managers
 
         public void RestartGame()
         {
+            AudioManager.Instance?.StopAllSounds();
             _ = LoadGameAsync();
         }
 
@@ -106,6 +107,12 @@ namespace RagNextPlayer.Managers
 
             // Dynamically populate room ObjectIds from description hotlinks if empty
             PopulateRoomObjectIdsFromDescription(ActiveGame);
+
+            // Wait for splash screen sequence to complete if one is playing
+            while (UIManager.Instance == null || !UIManager.Instance.IsSplashFinished)
+            {
+                await Task.Yield();
+            }
 
             CurrentState = GameState.Playing;
             OnGameLoaded?.Invoke(ActiveGame);
@@ -330,12 +337,33 @@ namespace RagNextPlayer.Managers
         // ── Save / Load System ────────────────────────────────────────────────
         public string GetSaveFilePath(int slot)
         {
-            return System.IO.Path.Combine(Application.persistentDataPath, $"save_slot_{slot}.json");
+            string folder = Application.persistentDataPath;
+            if (ActiveGame != null)
+            {
+                string gameFolder = string.IsNullOrEmpty(ActiveGame.Title) ? "DefaultGame" : ActiveGame.Title;
+                foreach (char c in System.IO.Path.GetInvalidFileNameChars())
+                {
+                    gameFolder = gameFolder.Replace(c, '_');
+                }
+                folder = System.IO.Path.Combine(folder, "Saves", gameFolder);
+            }
+            if (!System.IO.Directory.Exists(folder))
+            {
+                System.IO.Directory.CreateDirectory(folder);
+            }
+            return System.IO.Path.Combine(folder, $"save_slot_{slot}.json");
         }
 
         public bool HasSaveFile(int slot)
         {
-            return System.IO.File.Exists(GetSaveFilePath(slot));
+            try
+            {
+                return System.IO.File.Exists(GetSaveFilePath(slot));
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private Newtonsoft.Json.JsonSerializerSettings GetSaveLoadSettings()
@@ -382,6 +410,7 @@ namespace RagNextPlayer.Managers
         public async Task LoadGameAsync(int slot)
         {
             if (!HasSaveFile(slot)) return;
+            AudioManager.Instance?.StopAllSounds();
             try
             {
                 var path = GetSaveFilePath(slot);

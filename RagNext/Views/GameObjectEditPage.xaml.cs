@@ -534,26 +534,44 @@ namespace RagNext.Views
 
         private void OnDetailsTabClicked(object sender, EventArgs e)
         {
-            DetailsTabBorder.BackgroundColor = Color.FromArgb("#512BD4");
+            DetailsTabBorder.BackgroundColor = RagNext.Services.ThemeService.GetPrimaryColor();
             DetailsTabLabel.TextColor = Colors.White;
-
+ 
             ActionsTabBorder.BackgroundColor = Colors.Transparent;
             ActionsTabLabel.TextColor = Colors.Gray;
-
+ 
             DetailsScrollView.IsVisible = true;
             ActionsContainer.IsVisible = false;
         }
-
+ 
         private void OnActionsTabClicked(object sender, EventArgs e)
         {
-            ActionsTabBorder.BackgroundColor = Color.FromArgb("#512BD4");
+            ActionsTabBorder.BackgroundColor = RagNext.Services.ThemeService.GetPrimaryColor();
             ActionsTabLabel.TextColor = Colors.White;
-
+ 
             DetailsTabBorder.BackgroundColor = Colors.Transparent;
             DetailsTabLabel.TextColor = Colors.Gray;
-
+ 
             DetailsScrollView.IsVisible = false;
             ActionsContainer.IsVisible = true;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await System.Threading.Tasks.Task.Delay(100);
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
+
+            if (DetailsScrollView.IsVisible)
+            {
+                DetailsTabBorder.BackgroundColor = RagNext.Services.ThemeService.GetPrimaryColor();
+                ActionsTabBorder.BackgroundColor = Colors.Transparent;
+            }
+            else
+            {
+                ActionsTabBorder.BackgroundColor = RagNext.Services.ThemeService.GetPrimaryColor();
+                DetailsTabBorder.BackgroundColor = Colors.Transparent;
+            }
         }
     }
 }

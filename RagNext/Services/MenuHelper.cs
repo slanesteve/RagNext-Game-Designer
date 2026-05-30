@@ -13,65 +13,72 @@ namespace RagNext.Services
     {
         public static void PopulateMenuBar(ContentPage page)
         {
-            page.MenuBarItems.Clear();
+            try
+            {
+                page.MenuBarItems.Clear();
 
-            // File Menu
-            var fileMenu = new MenuBarItem { Text = "File" };
+                // File Menu
+                var fileMenu = new MenuBarItem { Text = "File" };
 
-            var newItem = new MenuFlyoutItem { Text = "New Game" };
-            newItem.Clicked += async (s, e) => await CreateNewGameFlowAsync(page);
+                var newItem = new MenuFlyoutItem { Text = "New Game" };
+                newItem.Clicked += async (s, e) => await CreateNewGameFlowAsync(page);
 
-            var saveItem = new MenuFlyoutItem { Text = "Save Game" };
-            saveItem.Clicked += async (s, e) => await SaveGameFlowAsync(page);
+                var saveItem = new MenuFlyoutItem { Text = "Save Game" };
+                saveItem.Clicked += async (s, e) => await SaveGameFlowAsync(page);
 
-            var loadItem = new MenuFlyoutItem { Text = "Load Saved Game" };
-            loadItem.Clicked += async (s, e) => await LoadGameFlowAsync(page);
+                var loadItem = new MenuFlyoutItem { Text = "Load Saved Game" };
+                loadItem.Clicked += async (s, e) => await LoadGameFlowAsync(page);
 
-            var publishItem = new MenuFlyoutItem { Text = "Publish Game" };
-            publishItem.Clicked += async (s, e) => await PublishGameFlowAsync(page);
+                var publishItem = new MenuFlyoutItem { Text = "Publish Game" };
+                publishItem.Clicked += async (s, e) => await PublishGameFlowAsync(page);
 
-            var exitItem = new MenuFlyoutItem { Text = "Exit" };
-            exitItem.Clicked += (s, e) => System.Environment.Exit(0);
+                var exitItem = new MenuFlyoutItem { Text = "Exit" };
+                exitItem.Clicked += (s, e) => System.Environment.Exit(0);
 
-            fileMenu.Add(newItem);
-            fileMenu.Add(saveItem);
-            fileMenu.Add(loadItem);
-            fileMenu.Add(new MenuFlyoutSeparator());
-            fileMenu.Add(publishItem);
-            fileMenu.Add(new MenuFlyoutSeparator());
-            fileMenu.Add(exitItem);
+                fileMenu.Add(newItem);
+                fileMenu.Add(saveItem);
+                fileMenu.Add(loadItem);
+                fileMenu.Add(new MenuFlyoutSeparator());
+                fileMenu.Add(publishItem);
+                fileMenu.Add(new MenuFlyoutSeparator());
+                fileMenu.Add(exitItem);
 
-            // Edit Menu
-            var editMenu = new MenuBarItem { Text = "Edit" };
-            var undoItem = new MenuFlyoutItem { Text = "Undo" };
-            undoItem.Clicked += async (s, e) => await page.DisplayAlert("Edit", "Undo not implemented.", "OK");
-            var redoItem = new MenuFlyoutItem { Text = "Redo" };
-            redoItem.Clicked += async (s, e) => await page.DisplayAlert("Edit", "Redo not implemented.", "OK");
-            editMenu.Add(undoItem);
-            editMenu.Add(redoItem);
+                // Edit Menu
+                var editMenu = new MenuBarItem { Text = "Edit" };
+                var undoItem = new MenuFlyoutItem { Text = "Undo" };
+                undoItem.Clicked += async (s, e) => await page.DisplayAlert("Edit", "Undo not implemented.", "OK");
+                var redoItem = new MenuFlyoutItem { Text = "Redo" };
+                redoItem.Clicked += async (s, e) => await page.DisplayAlert("Edit", "Redo not implemented.", "OK");
+                editMenu.Add(undoItem);
+                editMenu.Add(redoItem);
 
-            // Settings Menu
-            var settingsMenu = new MenuBarItem { Text = "Settings" };
-            var generalSettingsItem = new MenuFlyoutItem { Text = "General Settings" };
-            generalSettingsItem.Clicked += async (s, e) => await page.Navigation.PushModalAsync(new Views.GeneralSettingsPage());
-            var textAISettingsItem = new MenuFlyoutItem { Text = "Text AI Settings" };
-            textAISettingsItem.Clicked += async (s, e) => await page.Navigation.PushModalAsync(new Views.AISettingsPage());
-            var imageAISettingsItem = new MenuFlyoutItem { Text = "Image AI Settings" };
-            imageAISettingsItem.Clicked += async (s, e) => await page.Navigation.PushModalAsync(new Views.ImageAISettingsPage());
-            settingsMenu.Add(generalSettingsItem);
-            settingsMenu.Add(textAISettingsItem);
-            settingsMenu.Add(imageAISettingsItem);
+                // Settings Menu
+                var settingsMenu = new MenuBarItem { Text = "Settings" };
+                var generalSettingsItem = new MenuFlyoutItem { Text = "General Settings" };
+                generalSettingsItem.Clicked += async (s, e) => await page.Navigation.PushModalAsync(new Views.GeneralSettingsPage());
+                var textAISettingsItem = new MenuFlyoutItem { Text = "Text AI Settings" };
+                textAISettingsItem.Clicked += async (s, e) => await page.Navigation.PushModalAsync(new Views.AISettingsPage());
+                var imageAISettingsItem = new MenuFlyoutItem { Text = "Image AI Settings" };
+                imageAISettingsItem.Clicked += async (s, e) => await page.Navigation.PushModalAsync(new Views.ImageAISettingsPage());
+                settingsMenu.Add(generalSettingsItem);
+                settingsMenu.Add(textAISettingsItem);
+                settingsMenu.Add(imageAISettingsItem);
 
-            // Help Menu
-            var helpMenu = new MenuBarItem { Text = "Help" };
-            var aboutItem = new MenuFlyoutItem { Text = "About RagNext" };
-            aboutItem.Clicked += async (s, e) => await page.DisplayAlert("About", "RagNext - Premium Story Engine & RPG Designer\nVersion 1.0\nPowered by Gemini API.", "OK");
-            helpMenu.Add(aboutItem);
+                // Help Menu
+                var helpMenu = new MenuBarItem { Text = "Help" };
+                var aboutItem = new MenuFlyoutItem { Text = "About RagNext" };
+                aboutItem.Clicked += async (s, e) => await page.DisplayAlert("About", "RagNext - Premium Story Engine & RPG Designer\nVersion 1.0\nPowered by Gemini API.", "OK");
+                helpMenu.Add(aboutItem);
 
-            page.MenuBarItems.Add(fileMenu);
-            page.MenuBarItems.Add(editMenu);
-            page.MenuBarItems.Add(settingsMenu);
-            page.MenuBarItems.Add(helpMenu);
+                page.MenuBarItems.Add(fileMenu);
+                page.MenuBarItems.Add(editMenu);
+                page.MenuBarItems.Add(settingsMenu);
+                page.MenuBarItems.Add(helpMenu);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MenuHelper] Silent fail during PopulateMenuBar: {ex.Message}");
+            }
         }
 
         private static async Task CreateNewGameFlowAsync(ContentPage page)

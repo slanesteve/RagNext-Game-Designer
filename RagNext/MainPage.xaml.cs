@@ -53,28 +53,39 @@ namespace RagNext
 
             // Toggle visibility of the internal layout overlay safely.
             StartupOverlayView.IsVisible = true;
-            Shell.Current.FlyoutBehavior = FlyoutBehavior.Disabled;
+            if (Shell.Current is AppShell appShell)
+            {
+                appShell.IsFlyoutEnabled = false;
+            }
+            SetMenuBarEnabled(false);
+        }
+
+        private void SetMenuBarEnabled(bool enabled)
+        {
+            foreach (var item in MenuBarItems)
+            {
+                item.IsEnabled = enabled;
+            }
         }
 
         private void CloseStartupOverlay()
         {
             StartupOverlayView.IsVisible = false;
-            Shell.Current.FlyoutBehavior = FlyoutBehavior.Locked;
+            if (Shell.Current is AppShell appShell)
+            {
+                appShell.IsFlyoutEnabled = true;
+            }
+            SetMenuBarEnabled(true);
         }
 
         private void OnBackgroundTapped(object? sender, EventArgs e)
         {
-            CloseStartupOverlay();
+            // Do not dismiss the startup overlay when tapping the background to prevent uninitialized state
         }
 
         private void OnDialogTapped(object? sender, EventArgs e)
         {
             // Swallow tap event on the dialog card to prevent background click-off
-        }
-
-        private void OnCancelOverlayClicked(object sender, EventArgs e)
-        {
-            CloseStartupOverlay();
         }
 
         private async void OnOverlayCreateClicked(object sender, EventArgs e)
@@ -116,7 +127,14 @@ namespace RagNext
 
             string? selectedSave = e.CurrentSelection[0] as string;
 
-            ((CollectionView)sender).SelectedItem = null;
+            try
+            {
+                ((CollectionView)sender).SelectedItem = null;
+            }
+            catch (Exception)
+            {
+                // Swallow platform-specific exceptions that can be thrown on WinUI during SelectionChanged deselect
+            }
 
             if (string.IsNullOrEmpty(selectedSave))
                 return;
@@ -235,6 +253,11 @@ namespace RagNext
                     WelcomeOptionsView.IsVisible = false;
                     InlineSavePickerView.IsVisible = true;
                     StartupOverlayView.IsVisible = true;
+                    if (Shell.Current is AppShell appShell)
+                    {
+                        appShell.IsFlyoutEnabled = false;
+                    }
+                    SetMenuBarEnabled(false);
                     SavesCollectionView.ItemsSource = saves;
                 }
             }
@@ -423,6 +446,13 @@ namespace RagNext
         private async void EditRoom(Guid roomId)
         {
             await Shell.Current.GoToAsync($"RoomEdit?roomId={roomId}");
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await Task.Delay(100); // Give WinUI time to propagate the theme change
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
         }
 
         private void ToolbarItem_Clicked(object sender, EventArgs e) { }

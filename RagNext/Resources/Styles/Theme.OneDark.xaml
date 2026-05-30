@@ -8,6 +8,12 @@
     <Color x:Key="Secondary">#98C379</Color>
     <Color x:Key="Tertiary">#E06C75</Color>
 
+    <!-- Semantic colors -->
+    <Color x:Key="ColorBackground">#1F2329</Color>
+    <Color x:Key="ColorSurface">#282C34</Color>
+    <Color x:Key="ColorOnBackground">#E6E6E6</Color>
+    <Color x:Key="ColorOnSurface">#9DA5B4</Color>
+
     <Color x:Key="White">#E6E6E6</Color>
     <Color x:Key="Black">#1F2329</Color>
     <Color x:Key="OffBlack">#282C34</Color>

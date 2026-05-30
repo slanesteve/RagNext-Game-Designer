@@ -95,5 +95,11 @@ namespace RagNext.Views
 
             await AIAssistHelper.HandleAskAIAsync(this, btn, btn.CommandParameter, _ai);
         }
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await System.Threading.Tasks.Task.Delay(100);
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
+        }
     }
 }

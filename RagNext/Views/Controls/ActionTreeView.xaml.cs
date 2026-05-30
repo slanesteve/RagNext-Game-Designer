@@ -664,33 +664,84 @@ namespace RagNext.Views.Controls
         {
             if (p.PropertyType == typeof(bool)) return "Checkbox";
             if (p.PropertyType == typeof(int) || p.PropertyType == typeof(double) || p.PropertyType == typeof(float)) return "Number";
-            if (p.PropertyType.IsEnum || p.Name == "StoreVariableName" || p.Name == "InputType" || p.PropertyType == typeof(Guid) || p.Name.Contains("Id")) return "ComboBox";
-            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName" || p.Name == "SourceName") && 
+            
+            var name = p.Name;
+            if (p.PropertyType.IsEnum || 
+                name.Equals("StoreVariableName", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("InputType", StringComparison.OrdinalIgnoreCase) || 
+                p.PropertyType == typeof(Guid) || 
+                name.EndsWith("Id", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Room", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Object", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Item", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Character", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Media", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Function", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Timer", StringComparison.OrdinalIgnoreCase)) 
+                return "ComboBox";
+
+            if ((name.Equals("Name", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("NameA", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("NameB", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("VariableName", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("SourceName", StringComparison.OrdinalIgnoreCase)) && 
                 (p.DeclaringType != null && (p.DeclaringType.Name.Contains("Variable") || p.DeclaringType.Name.Contains("Random") || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType)))) 
                 return "ComboBox"; 
-            if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return "ComboBox";
-            if (p.Name.Equals("Gender", StringComparison.OrdinalIgnoreCase)) return "ComboBox";
-            if (p.Name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return "ComboBox";
-            if (p.Name.Contains("Text", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("Description", StringComparison.OrdinalIgnoreCase)) return "TextArea";
+
+            if (name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return "ComboBox";
+            if (name.Equals("Gender", StringComparison.OrdinalIgnoreCase)) return "ComboBox";
+            if (name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return "ComboBox";
+            if (name.Contains("Text", StringComparison.OrdinalIgnoreCase) || name.Contains("Description", StringComparison.OrdinalIgnoreCase)) return "TextArea";
             return "Text";
         }
 
         private static string GetPropertyDataType(System.Reflection.PropertyInfo p)
         {
-            if (p.Name == "StoreVariableName") return "Variable";
-            if (p.Name.Equals("RoomId", StringComparison.OrdinalIgnoreCase) ||
-                p.Name.Equals("DestinationRoomId", StringComparison.OrdinalIgnoreCase)) return "Room";
-            if (p.Name.Equals("ObjectId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("ContainerObjectId", StringComparison.OrdinalIgnoreCase)) return "GameObject";
-            if (p.Name.Equals("CharacterId", StringComparison.OrdinalIgnoreCase)) return "Character";
-            if (p.Name.Equals("ItemId", StringComparison.OrdinalIgnoreCase)) return "Item";
-            if (p.Name.Equals("SoundId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("PortraitId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("MediaId", StringComparison.OrdinalIgnoreCase)) return "Media";
-            if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return "Operator";
-            if (p.Name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return "Direction";
-            if (p.Name.Equals("FunctionId", StringComparison.OrdinalIgnoreCase)) return "Function";
-            if (p.Name.Equals("TimerId", StringComparison.OrdinalIgnoreCase)) return "Timer";
-            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName" || p.Name == "SourceName") && 
+            var name = p.Name;
+            if (name.Equals("StoreVariableName", StringComparison.OrdinalIgnoreCase)) return "Variable";
+
+            if (name.EndsWith("RoomId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Room", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("DestinationRoomId", StringComparison.OrdinalIgnoreCase)) 
+                return "Room";
+
+            if (name.EndsWith("ObjectId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Object", StringComparison.OrdinalIgnoreCase)) 
+                return "GameObject";
+
+            if (name.EndsWith("CharacterId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Character", StringComparison.OrdinalIgnoreCase)) 
+                return "Character";
+
+            if (name.EndsWith("ItemId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Item", StringComparison.OrdinalIgnoreCase)) 
+                return "Item";
+
+            if (name.EndsWith("SoundId", StringComparison.OrdinalIgnoreCase) || 
+                name.EndsWith("PortraitId", StringComparison.OrdinalIgnoreCase) || 
+                name.EndsWith("MediaId", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Media", StringComparison.OrdinalIgnoreCase)) 
+                return "Media";
+
+            if (name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return "Operator";
+            if (name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return "Direction";
+
+            if (name.EndsWith("FunctionId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Function", StringComparison.OrdinalIgnoreCase)) 
+                return "Function";
+
+            if (name.EndsWith("TimerId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Timer", StringComparison.OrdinalIgnoreCase)) 
+                return "Timer";
+
+            if ((name.Equals("Name", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("NameA", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("NameB", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("VariableName", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("SourceName", StringComparison.OrdinalIgnoreCase)) && 
                 (p.DeclaringType != null && (p.DeclaringType.Name.Contains("Variable") || p.DeclaringType.Name.Contains("Random") || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType)))) 
                 return "Variable";
+
             return "String";
         }
     }

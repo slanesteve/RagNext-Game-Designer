@@ -36,7 +36,7 @@ namespace RagNext.Views
             App.GameChanged += (game) => OnGameLoaded(this, game); // ensure repopulate after load
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
 
@@ -45,6 +45,20 @@ namespace RagNext.Views
 
             // Set image exclusively in code-behind to avoid binding race
             UpdatePortraitImage(player?.PortraitImagePath);
+
+            await System.Threading.Tasks.Task.Delay(100);
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
+
+            if (DetailsScrollView.IsVisible)
+            {
+                DetailsTabBorder.BackgroundColor = RagNext.Services.ThemeService.GetPrimaryColor();
+                ActionsTabBorder.BackgroundColor = Colors.Transparent;
+            }
+            else
+            {
+                ActionsTabBorder.BackgroundColor = RagNext.Services.ThemeService.GetPrimaryColor();
+                DetailsTabBorder.BackgroundColor = Colors.Transparent;
+            }
 
             if (player is not null)
             {
@@ -639,7 +653,7 @@ namespace RagNext.Views
 
         private void OnDetailsTabClicked(object sender, EventArgs e)
         {
-            DetailsTabBorder.BackgroundColor = Color.FromArgb("#512BD4");
+            DetailsTabBorder.BackgroundColor = RagNext.Services.ThemeService.GetPrimaryColor();
             DetailsTabLabel.TextColor = Colors.White;
 
             ActionsTabBorder.BackgroundColor = Colors.Transparent;
@@ -651,7 +665,7 @@ namespace RagNext.Views
 
         private void OnActionsTabClicked(object sender, EventArgs e)
         {
-            ActionsTabBorder.BackgroundColor = Color.FromArgb("#512BD4");
+            ActionsTabBorder.BackgroundColor = RagNext.Services.ThemeService.GetPrimaryColor();
             ActionsTabLabel.TextColor = Colors.White;
 
             DetailsTabBorder.BackgroundColor = Colors.Transparent;

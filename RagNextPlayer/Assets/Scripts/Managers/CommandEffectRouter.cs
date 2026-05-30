@@ -72,7 +72,27 @@ namespace RagNextPlayer.Managers
                 case RemoveObjectFromRoomCommandData:
                 case OpenContainerCommandData:
                 case CloseContainerCommandData:
+                case ObjectMoveToInventoryCommandData:
+                case ObjectMoveToCharacterCommandData:
+                case ObjectMoveInsideObjectCommandData:
                     UIManager.Instance?.RefreshEntityLists();
+                    break;
+
+                case ObjectDisplayDescriptionCommandData:
+                    {
+                        var text = ctx.GetVariable("system.lastDisplayedText")?.Value;
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            UIManager.Instance?.AppendNarrativeText(text);
+                        }
+                    }
+                    break;
+
+                case SetRoomExitCommandData:
+                case DisableRoomExitCommandData:
+                case LockRoomExitCommandData:
+                case UnlockRoomExitCommandData:
+                    UIManager.Instance?.RefreshExits();
                     break;
 
                 case SetVariableCommandData c:
@@ -128,7 +148,21 @@ namespace RagNextPlayer.Managers
                 case PlaySoundEffectCommandData c:
                     {
                         var soundId = ctx.Resolve(c.SoundId);
-                        AudioManager.Instance?.PlaySound(soundId, (float)(c.Volume / 100.0));
+                        AudioManager.Instance?.PlaySound(soundId, (float)(c.Volume / 100.0), c.Loop);
+                    }
+                    break;
+
+                case StopSoundEffectCommandData c:
+                    {
+                        if (c.StopAllLooping)
+                        {
+                            AudioManager.Instance?.StopAllLoopingSounds();
+                        }
+                        else
+                        {
+                            var soundId = ctx.Resolve(c.SoundId);
+                            AudioManager.Instance?.StopSound(soundId);
+                        }
                     }
                     break;
 
@@ -138,6 +172,7 @@ namespace RagNextPlayer.Managers
 
                 case PromptPlayerInputCommandData c:
                     UIManager.Instance?.ShowPromptInputScreen(
+                        ctx.Resolve(c.PromptName),
                         ctx.Resolve(c.PromptText),
                         c.InputType,
                         c.CustomOptions,
@@ -147,6 +182,11 @@ namespace RagNextPlayer.Managers
 
                 case StartDialogueCommandData c:
                     UIManager.Instance?.ShowDialogueScreen(c, ctx);
+                    break;
+
+                case AddCustomChoiceCommandData:
+                case ClearCustomChoiceCommandData:
+                case RemoveCustomChoiceCommandData:
                     break;
             }
         }

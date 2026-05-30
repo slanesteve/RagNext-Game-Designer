@@ -52,6 +52,8 @@ namespace RagsCore.Models
         public ObservableCollection<GlobalFunction> Functions { get; set; } = new();
         public ObservableCollection<GameTimer> Timers { get; set; } = new();
 
+        public SplashScreenSettings SplashScreen { get; set; } = new();
+
         public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 
         public Game() { }

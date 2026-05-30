@@ -1,0 +1,505 @@
+{
+  "$id": "1",
+  "id": "0d3432a9-aee8-4966-b60b-519ad4b6700f",
+  "title": "googletest-asdf",
+  "author": "steve1asdfasdf",
+  "version": "1.0.01111",
+  "player": {
+    "$id": "2",
+    "genders": {
+      "$id": "3",
+      "$values": [
+        "Male",
+        "Female",
+        "Non-binary",
+        "Other"
+      ]
+    },
+    "id": "1a21dc92-3cf8-4e6e-b23f-6294046d61dd",
+    "name": "Joe Bilbo",
+    "description": "You glance down at your paws, noting the fluffy pink slippers nestled between them. A soft sigh escapes your lips.  Maybe carrots aren\u0027t *so* bad after all. You adjust the frilly, cerulean-blue apron tied around your waist, its tiny pockets bulging slightly with stray carrot tops and parsley sprigs. Your ears are adorned with a jaunty red ribbon that matches the bow perched atop your head. The oversized pink dress swishes as you hop forward, its layers of tulle rustling like delicate spring leaves. It\u0027s definitely not your usual ensemble, but something tells you this \u0027Bunny Bake-Off\u0027 is going to be more than just a carrot cake competition. \r\r\r",
+    "bPromptForName": false,
+    "gender": "Male",
+    "startingRoom": null,
+    "inventory": {
+      "$id": "4",
+      "$values": [
+        {
+          "$id": "5",
+          "attributes": {
+            "$id": "6",
+            "$values": [
+              {
+                "$id": "7",
+                "name": "WornOnce",
+                "value": "False"
+              }
+            ]
+          },
+          "media": {
+            "$id": "8",
+            "$values": []
+          },
+          "actions": {
+            "$id": "9",
+            "$values": []
+          },
+          "id": "a5722547-8535-4700-bb47-5ca69fb0abcc",
+          "name": "A Ring",
+          "description": "You hold a thin, circular band of gold between your fingers. The metal is unadorned, lacking any engravings, gems, or intricate filigree. Its polished surface catches the light in simple, muted reflections, revealing a smooth and unbroken surface. As you turn it over, the ring feels surprisingly lightweight and cool against your skin, a starkly minimalist piece of jewelry.",
+          "isCollectible": true,
+          "properties": {
+            "$id": "10"
+          },
+          "portraitImagePath": "C:\\Users\\steve\\AppData\\Local\\Packages\\com.companyname.ragnext_vy9pdc8qvq4t2\\LocalState\\0d3432a9aee84966b60b519ad4b6700f\\Assets\\4d8f4152f9035fdb7d9331edc7bf386e89484a793f4214c8c6892d1aace49726.png",
+          "portraitImageFileName": "4d8f4152f9035fdb7d9331edc7bf386e89484a793f4214c8c6892d1aace49726.png"
+        }
+      ]
+    },
+    "attributes": {
+      "$id": "11",
+      "$values": [
+        {
+          "$id": "12",
+          "name": "Health",
+          "value": "100"
+        }
+      ]
+    },
+    "actions": {
+      "$id": "13",
+      "$values": [
+        {
+          "$id": "14",
+          "id": "feec808a-d981-422d-b4fb-c8dede00ac63",
+          "name": "Examine",
+          "initallyActive": true,
+          "type": "string",
+          "nodes": {
+            "$id": "15",
+            "$values": [
+              {
+                "$id": "16",
+                "$type": "general.displayText",
+                "text": "Your name is {this.Name} and your description is: {this.Description}",
+                "typeName": "Display Text",
+                "kind": 1,
+                "label": null
+              },
+              {
+                "$id": "17",
+                "$type": "player.inRoom",
+                "roomId": "2d82da22-e68f-402e-b118-89ad609d85e4",
+                "typeName": "Player in room",
+                "kind": 0,
+                "trueBranch": {
+                  "$id": "18",
+                  "$values": [
+                    {
+                      "$id": "19",
+                      "$type": "general.displayText",
+                      "text": "you are in the bedroom",
+                      "typeName": "Display Text",
+                      "kind": 1,
+                      "label": null
+                    }
+                  ]
+                },
+                "falseBranch": {
+                  "$id": "20",
+                  "$values": [
+                    {
+                      "$id": "21",
+                      "$type": "general.displayText",
+                      "text": "You are NOT in the bedroom",
+                      "typeName": "Display Text",
+                      "kind": 1,
+                      "label": null
+                    }
+                  ]
+                },
+                "label": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "portraitImagePath": "C:\\Users\\steve\\AppData\\Local\\Packages\\com.companyname.ragnext_vy9pdc8qvq4t2\\LocalState\\0d3432a9aee84966b60b519ad4b6700f\\Assets\\9e42846d6d8b736f822e1ac4d9cb72fa1fb4c95349eac6bfa0391b3e761a559a.jpg",
+    "portraitImageFileName": "9e42846d6d8b736f822e1ac4d9cb72fa1fb4c95349eac6bfa0391b3e761a559a.jpg"
+  },
+  "mediaAssets": {
+    "$id": "22",
+    "$values": [
+      {
+        "$id": "23",
+        "id": "3eb5edb4-0bb2-4007-807e-b3e25457c8b8",
+        "originalFileName": "game-green.png",
+        "relativePath": "Assets\\ca1216c24294224f3fd0a3ace0fa3ef63ecd1512f7af1009df8038f5a56bbfad.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "ca1216c24294224f3fd0a3ace0fa3ef63ecd1512f7af1009df8038f5a56bbfad",
+        "addedAtUtc": "2026-05-21T13:14:57.6376233Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "24",
+        "id": "26615de8-f4be-4043-9ecf-f2b1bcd8cdbe",
+        "originalFileName": "AA1vLk6Z.jpg",
+        "relativePath": "Assets\\9430ba3e70d98183d9ee061088fbeca24846c27aa81f86dc32e53ca213525df1.jpg",
+        "contentType": "image/jpeg",
+        "kind": 0,
+        "sha256": "9430ba3e70d98183d9ee061088fbeca24846c27aa81f86dc32e53ca213525df1",
+        "addedAtUtc": "2026-05-21T13:15:35.7778534Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "25",
+        "id": "3e7397af-d003-4067-9ccd-7a3da97b57ac",
+        "originalFileName": "portrait_20260521_165654_3b6b3a7c4d504218ade413c190ea96bb.png",
+        "relativePath": "Assets\\a6015b513e475ba84ce50a9c7e8cc246bd4cb0db5e1d96356ff8ef549db53d87.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "a6015b513e475ba84ce50a9c7e8cc246bd4cb0db5e1d96356ff8ef549db53d87",
+        "addedAtUtc": "2026-05-21T16:56:54.8956653Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "26",
+        "id": "f43e2845-63e1-4d52-a33c-f26113e93a52",
+        "originalFileName": "portrait_20260521_170147_e60b054e0ede46fa8143866a9f1030d2.png",
+        "relativePath": "Assets\\207f9c3149bf2e1fd8d4dc3d59cf2af8285b1dd51fa28fcc04af5c39f4e5fcfe.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "207f9c3149bf2e1fd8d4dc3d59cf2af8285b1dd51fa28fcc04af5c39f4e5fcfe",
+        "addedAtUtc": "2026-05-21T17:01:47.7304819Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "27",
+        "id": "aca64e07-2491-465b-b59b-0118781875a5",
+        "originalFileName": "portrait_20260521_170208_12f6bb37e9394a9a96b3d74118988ffc.png",
+        "relativePath": "Assets\\4d8f4152f9035fdb7d9331edc7bf386e89484a793f4214c8c6892d1aace49726.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "4d8f4152f9035fdb7d9331edc7bf386e89484a793f4214c8c6892d1aace49726",
+        "addedAtUtc": "2026-05-21T17:02:08.5646984Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "28",
+        "id": "a82fe05a-bbe1-48a2-aec4-eecbe2f33bab",
+        "originalFileName": "FY8IFb1WIAA3axQ.jpg",
+        "relativePath": "Assets\\9e42846d6d8b736f822e1ac4d9cb72fa1fb4c95349eac6bfa0391b3e761a559a.jpg",
+        "contentType": "image/jpeg",
+        "kind": 0,
+        "sha256": "9e42846d6d8b736f822e1ac4d9cb72fa1fb4c95349eac6bfa0391b3e761a559a",
+        "addedAtUtc": "2026-05-21T17:12:12.8227761Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "29",
+        "id": "fffd9702-16ef-4d7b-8107-688878f119dc",
+        "originalFileName": "portrait_20260521_171547_3ed33a60c45a4c75bddfeb412d6f6950.png",
+        "relativePath": "Assets\\3c1fb0cc012ca64c9bf7e12339585cbbf62e8de250b91e182c84640f12fc7e13.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "3c1fb0cc012ca64c9bf7e12339585cbbf62e8de250b91e182c84640f12fc7e13",
+        "addedAtUtc": "2026-05-21T17:15:47.4120125Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "30",
+        "id": "37587825-8fb7-43d6-93b0-7af9eec5b25a",
+        "originalFileName": "mortal_kombat.mp3",
+        "relativePath": "Assets\\a9cbeca32d11cfbf613137946753b90febb5541d1db808894de90b8c79585330.mp3",
+        "contentType": "audio/mpeg",
+        "kind": 2,
+        "sha256": "a9cbeca32d11cfbf613137946753b90febb5541d1db808894de90b8c79585330",
+        "addedAtUtc": "2026-05-21T17:34:38.4045125Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "31",
+        "id": "79db4855-d812-4c6b-b4ad-b76f15e0ab73",
+        "originalFileName": "portrait_20260521_195305_4128a7f0c1eb40899849899815707772.png",
+        "relativePath": "Assets\\a16df59824dba9f9dd794349acd4e02a44aac98d7080d70c854dd5ca4e47c449.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "a16df59824dba9f9dd794349acd4e02a44aac98d7080d70c854dd5ca4e47c449",
+        "addedAtUtc": "2026-05-21T19:53:05.604937Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      },
+      {
+        "$id": "32",
+        "id": "251b5684-ede3-467c-82eb-36e57fdf3a83",
+        "originalFileName": "portrait_20260522_125556_10dfc4ae19f241efabf38445466cf69b.png",
+        "relativePath": "Assets\\3cc1cf4a3a9210e692c84b9af6fd052f2568f81cf0b3b9e10ea5be1d4cecea48.png",
+        "contentType": "image/png",
+        "kind": 0,
+        "sha256": "3cc1cf4a3a9210e692c84b9af6fd052f2568f81cf0b3b9e10ea5be1d4cecea48",
+        "addedAtUtc": "2026-05-22T12:55:56.8395977Z",
+        "width": null,
+        "height": null,
+        "duration": null
+      }
+    ]
+  },
+  "rooms": {
+    "$id": "33",
+    "$values": [
+      {
+        "$id": "34",
+        "id": "2d82da22-e68f-402e-b118-89ad609d85e4",
+        "name": "Your Bedroom",
+        "description": " You step into the warmth of a cozy bedroom, its soft light flickering from the fire burning low in the stone fireplace. The room is filled with the comforting scent of woodsmoke and lavender candles, creating an inviting atmosphere that wraps around you like a blanket. Against one wall rests a plush king-sized bed, adorned with luxurious linens and fluffy pillows, beckoning you to sink into its depths. The sound of crackling wood and the gentle creaking of the old house are the only noises that break the silence, as you take in this snug retreat. [A Ring]  [Jane]",
+        "objectIds": {
+          "$id": "35",
+          "$values": []
+        },
+        "exits": {
+          "$id": "36",
+          "North": "81fea9f1-f7b9-48e2-a30c-b2b96bdae85e"
+        },
+        "attributes": {
+          "$id": "37",
+          "$values": [
+            {
+              "$id": "38",
+              "name": "Entered",
+              "value": "False"
+            }
+          ]
+        },
+        "actions": {
+          "$id": "39",
+          "$values": [
+            {
+              "$id": "40",
+              "id": "feb1f61f-6411-4bf8-8c3e-e5d26660341d",
+              "name": "examine",
+              "initallyActive": true,
+              "type": "string",
+              "nodes": {
+                "$id": "41",
+                "$values": [
+                  {
+                    "$id": "42",
+                    "$type": "general.displayText",
+                    "text": "the bedroom desc",
+                    "typeName": "Display Text",
+                    "kind": 1,
+                    "label": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "portraitImagePath": "C:\\Users\\steve\\AppData\\Local\\Packages\\com.companyname.ragnext_vy9pdc8qvq4t2\\LocalState\\0d3432a9aee84966b60b519ad4b6700f\\Assets\\207f9c3149bf2e1fd8d4dc3d59cf2af8285b1dd51fa28fcc04af5c39f4e5fcfe.png",
+        "portraitImageFileName": "207f9c3149bf2e1fd8d4dc3d59cf2af8285b1dd51fa28fcc04af5c39f4e5fcfe.png"
+      },
+      {
+        "$id": "43",
+        "id": "81fea9f1-f7b9-48e2-a30c-b2b96bdae85e",
+        "name": "Northroom",
+        "description": " As you step inside the Northroom, you are greeted by a burst of frigid air that sends shivers down your spine. The walls are adorned with intricately carved ice sculptures depicting scenes from frozen tundras and icy mountains. A large pile of snow in the corner looks inviting for a snowball fight, but beware - it might not melt anytime soon! In one corner sits a cozy igloo made entirely out of ice blocks, complete with flickering candles providing warm light within. The floor is covered in soft white fur, making you wonder if perhaps some of Santa\u0027s elves have been here before you? On the far end of the room stands an enormous Christmas tree adorned with sparkling icicles and glittering ornaments, casting a magical glow across the entire space.",
+        "objectIds": {
+          "$id": "44",
+          "$values": []
+        },
+        "exits": {
+          "$id": "45",
+          "South": "2d82da22-e68f-402e-b118-89ad609d85e4"
+        },
+        "attributes": {
+          "$id": "46",
+          "$values": []
+        },
+        "actions": {
+          "$id": "47",
+          "$values": [
+            {
+              "$id": "48",
+              "id": "07943841-4144-4306-b4dd-c97c4a9f21fa",
+              "name": "Examine",
+              "initallyActive": true,
+              "type": "string",
+              "nodes": {
+                "$id": "49",
+                "$values": [
+                  {
+                    "$id": "50",
+                    "$type": "general.displayText",
+                    "text": "{this.Description}",
+                    "typeName": "Display Text",
+                    "kind": 1,
+                    "label": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "portraitImagePath": "C:\\Users\\steve\\AppData\\Local\\Packages\\com.companyname.ragnext_vy9pdc8qvq4t2\\LocalState\\0d3432a9aee84966b60b519ad4b6700f\\Assets\\3cc1cf4a3a9210e692c84b9af6fd052f2568f81cf0b3b9e10ea5be1d4cecea48.png",
+        "portraitImageFileName": "3cc1cf4a3a9210e692c84b9af6fd052f2568f81cf0b3b9e10ea5be1d4cecea48.png"
+      }
+    ]
+  },
+  "objects": {
+    "$id": "51",
+    "$values": [
+      {
+        "$ref": "5"
+      }
+    ]
+  },
+  "characters": {
+    "$id": "52",
+    "$values": [
+      {
+        "$id": "53",
+        "isHostile": false,
+        "health": 100,
+        "inventory": {
+          "$id": "54",
+          "$values": []
+        },
+        "attributes": {
+          "$id": "55",
+          "$values": [
+            {
+              "$id": "56",
+              "name": "test char att",
+              "value": "1"
+            }
+          ]
+        },
+        "media": {
+          "$id": "57",
+          "$values": []
+        },
+        "actions": {
+          "$id": "58",
+          "$values": [
+            {
+              "$id": "59",
+              "id": "71e03123-7ac0-49e7-a636-1e06d652d230",
+              "name": "Examine",
+              "initallyActive": true,
+              "type": "string",
+              "nodes": {
+                "$id": "60",
+                "$values": [
+                  {
+                    "$id": "61",
+                    "$type": "media.displayMultimedia",
+                    "mediaId": "{this.portrait}",
+                    "typeName": "Media: Display Multimedia",
+                    "kind": 1,
+                    "label": null
+                  },
+                  {
+                    "$id": "62",
+                    "$type": "var.setRandom",
+                    "name": "",
+                    "minimum": 0,
+                    "maximum": 0,
+                    "typeName": "Variable: Set Numeric Randomly",
+                    "kind": 1,
+                    "label": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "id": "1f66626a-8736-4285-936c-ec51de0d2ea7",
+        "name": "Jane",
+        "description": " As you enter the room, your gaze is immediately drawn to the beautiful woman standing by the window. She\u0027s in her mid-20s, wearing a short, black and white striped skirt that hugs her curves. Her legs are adorned with sheer white stockings that reach up to her mid-thigh. On her feet, she has a pair of sky-high red high heels which make an audible \u0027click-clack\u0027 sound as she moves around the room.\r\rHer blonde hair is pulled back into a ponytail, revealing a pair of striking blue eyes that sparkle with mischief and playfulness. She turns to face you, flashing a dazzling smile which seems to light up the entire room. Her body language exudes confidence and she appears to be in control of any situation she finds herself in.\r\rYou notice that there\u0027s an air of flirtation about her as well - subtle flicks of her wrist, coy glances over her shoulder, and an occasional giggle that seems to come out of nowhere. Despite this playful attitude, there\u0027s also something sincere and genuine in the way she interacts with others.\r\rOverall, this woman exudes an irresistible charm that makes it impossible not to be drawn towards her. She carries herself with a sense of style and grace, making every move look effortlessly chic and fun.",
+        "isCollectible": true,
+        "properties": {
+          "$id": "63"
+        },
+        "portraitImagePath": "C:\\Users\\steve\\AppData\\Local\\Packages\\com.companyname.ragnext_vy9pdc8qvq4t2\\LocalState\\0d3432a9aee84966b60b519ad4b6700f\\Assets\\3c1fb0cc012ca64c9bf7e12339585cbbf62e8de250b91e182c84640f12fc7e13.png",
+        "portraitImageFileName": "3c1fb0cc012ca64c9bf7e12339585cbbf62e8de250b91e182c84640f12fc7e13.png"
+      },
+      {
+        "$id": "64",
+        "isHostile": false,
+        "health": 100,
+        "inventory": {
+          "$id": "65",
+          "$values": []
+        },
+        "attributes": {
+          "$id": "66",
+          "$values": []
+        },
+        "media": {
+          "$id": "67",
+          "$values": []
+        },
+        "actions": {
+          "$id": "68",
+          "$values": []
+        },
+        "id": "4a316160-1e45-40da-9275-e1a954b59e98",
+        "name": "Doe",
+        "description": "An anthro doe with a unique cybernetic body that blends seamlessly into your furry form. Your antlers and doe tai give you a distinctly animal appearance, while your green hair adds a touch of color to your otherwise earthy palette. Despite being covered in fur, there are hints of your technological enhancements peeking through - the gleaming eyes that hint at advanced optics, the joints in your legs visible underneath your plush coat.\r\rAs part of your anthrofemale form, you have large breasts which give off an air of femininity despite the overall animalistic vibe you exude. Your cyborg body is sleek and futuristic; it\u0027s clear that technology has played a significant role in shaping who you are.\r\rYour kimono is made from black fabric accented by sharp green lines, drawing attention to your hourglass figure without being overly revealing - after all, discretion is key when dealing with such personal matters as intimate apparel choices for one\u0027s cyborg body! The bedroom around you has a shrine theme running through it; there are small statues of komainu (lion-dog guardians) placed strategically about, adding to the sacred atmosphere.\r\rIt\u0027s clear that technology and spirituality walk hand in hand within this space - creating an environment perfect for honoring both sides of who you are: the anthro doe with a technologically enhanced body, and the cybernetic being capable of feeling deep emotions and connecting on a spiritual level.",
+        "isCollectible": true,
+        "properties": {
+          "$id": "69"
+        },
+        "portraitImagePath": "C:\\Users\\steve\\AppData\\Local\\Packages\\com.companyname.ragnext_vy9pdc8qvq4t2\\LocalState\\0d3432a9aee84966b60b519ad4b6700f\\Assets\\a16df59824dba9f9dd794349acd4e02a44aac98d7080d70c854dd5ca4e47c449.png",
+        "portraitImageFileName": "a16df59824dba9f9dd794349acd4e02a44aac98d7080d70c854dd5ca4e47c449.png"
+      }
+    ]
+  },
+  "variables": {
+    "$id": "70",
+    "$values": [
+      {
+        "$id": "71",
+        "id": "b2518b73-5e27-45b0-9b9b-dad7cc4d7702",
+        "name": "TimesTriggered",
+        "value": "0",
+        "type": "string",
+        "attributes": {
+          "$id": "72",
+          "$values": []
+        }
+      },
+      {
+        "$id": "73",
+        "id": "45976363-0db0-4926-a223-df4c25a9d401",
+        "name": "var2",
+        "value": "fffffff",
+        "type": "string",
+        "attributes": {
+          "$id": "74",
+          "$values": []
+        }
+      }
+    ]
+  },
+  "createdAt": "2026-05-20T13:41:44.932684Z"
+}

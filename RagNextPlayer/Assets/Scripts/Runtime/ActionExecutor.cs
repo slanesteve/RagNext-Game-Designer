@@ -331,6 +331,15 @@ namespace RagNextPlayer.Runtime
                         var resolved = ctx.Resolve(c.SoundId);
                         ctx.SetVariable("media.lastSoundId", resolved);
                         ctx.SetVariable("media.lastSoundVolume", c.Volume.ToString());
+                        ctx.SetVariable("media.lastSoundLoop", c.Loop.ToString().ToLower());
+                    }
+                    break;
+
+                case StopSoundEffectCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.SoundId);
+                        ctx.SetVariable("media.stopSoundId", resolved);
+                        ctx.SetVariable("media.stopAllLooping", c.StopAllLooping.ToString().ToLower());
                     }
                     break;
 
@@ -347,11 +356,36 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case PromptPlayerInputCommandData c:
+                    ctx.SetVariable("system.prompt.name", ctx.Resolve(c.PromptName));
                     ctx.SetVariable("system.prompt.text", ctx.Resolve(c.PromptText));
                     ctx.SetVariable("system.prompt.type", c.InputType);
                     ctx.SetVariable("system.prompt.options", c.CustomOptions);
                     ctx.SetVariable("system.prompt.targetVar", c.StoreVariableName);
                     ctx.SetVariable("system.prompt.active", "true");
+                    break;
+
+                case AddCustomChoiceCommandData c:
+                    {
+                        var promptName = ctx.Resolve(c.PromptName);
+                        var choiceText = ctx.Resolve(c.ChoiceText);
+                        var varName = ctx.Resolve(c.VariableName);
+                        ctx.Game.CustomChoices.Add(new RuntimeCustomChoice { PromptName = promptName, ChoiceText = choiceText, VariableName = varName });
+                    }
+                    break;
+
+                case ClearCustomChoiceCommandData c:
+                    {
+                        var promptName = ctx.Resolve(c.PromptName);
+                        ctx.Game.CustomChoices.RemoveAll(ch => string.Equals(ch.PromptName, promptName, System.StringComparison.OrdinalIgnoreCase));
+                    }
+                    break;
+
+                case RemoveCustomChoiceCommandData c:
+                    {
+                        var promptName = ctx.Resolve(c.PromptName);
+                        var choiceText = ctx.Resolve(c.ChoiceText);
+                        ctx.Game.CustomChoices.RemoveAll(ch => string.Equals(ch.PromptName, promptName, System.StringComparison.OrdinalIgnoreCase) && string.Equals(ch.ChoiceText, choiceText, System.StringComparison.OrdinalIgnoreCase));
+                    }
                     break;
 
                 case StartDialogueCommandData c:
@@ -478,6 +512,62 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case ObjectDisplayDescriptionCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.ObjectId);
+                        var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolved, StringComparison.OrdinalIgnoreCase));
+                        if (obj != null)
+                        {
+                            ctx.SetVariable("system.lastDisplayedText", ctx.Resolve(obj.Description));
+                        }
+                    }
+                    break;
+
+                case ObjectMoveToCharacterCommandData c:
+                    {
+                        var resolvedObj = ctx.Resolve(c.ObjectId);
+                        var resolvedChar = ctx.Resolve(c.CharacterId);
+                        RemoveObjectFromEverywhere(resolvedObj, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
+                        if (character == null)
+                        {
+                            character = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (character != null && !character.Inventory.Exists(i => string.Equals(i.Id, resolvedObj, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedObj, StringComparison.OrdinalIgnoreCase));
+                            if (obj != null)
+                                character.Inventory.Add(obj);
+                        }
+                    }
+                    break;
+
+                case ObjectMoveToInventoryCommandData c:
+                    {
+                        var resolvedObj = ctx.Resolve(c.ObjectId);
+                        RemoveObjectFromEverywhere(resolvedObj, ctx);
+                        if (!ctx.Player.Inventory.Exists(i => string.Equals(i.Id, resolvedObj, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedObj, StringComparison.OrdinalIgnoreCase));
+                            if (obj != null)
+                                ctx.Player.Inventory.Add(obj);
+                        }
+                    }
+                    break;
+
+                case ObjectMoveInsideObjectCommandData c:
+                    {
+                        var resolvedObj = ctx.Resolve(c.ObjectId);
+                        var resolvedContainer = ctx.Resolve(c.ContainerObjectId);
+                        RemoveObjectFromEverywhere(resolvedObj, ctx);
+                        var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedObj, StringComparison.OrdinalIgnoreCase));
+                        if (obj != null)
+                        {
+                            obj.Properties["ParentContainerId"] = resolvedContainer;
+                        }
+                    }
+                    break;
+
                 default:
                     Debug.LogWarning($"[ActionExecutor] Unhandled command type: {cmd.Type}");
                     break;
@@ -547,6 +637,25 @@ namespace RagNextPlayer.Runtime
 
                 _ => false
             };
+        }
+
+        private static void RemoveObjectFromEverywhere(string oId, GameExecutionContext ctx)
+        {
+            foreach (var r in ctx.Game.Rooms)
+            {
+                r.ObjectIds.Remove(oId);
+            }
+            foreach (var ch in ctx.Game.Characters)
+            {
+                ch.Inventory.RemoveAll(i => string.Equals(i.Id, oId, StringComparison.OrdinalIgnoreCase));
+            }
+            ctx.Player.Inventory.RemoveAll(i => string.Equals(i.Id, oId, StringComparison.OrdinalIgnoreCase));
+            
+            var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, oId, StringComparison.OrdinalIgnoreCase));
+            if (obj != null)
+            {
+                obj.Properties.Remove("ParentContainerId");
+            }
         }
 
         private static bool CompareValues(string a, string b, string op)

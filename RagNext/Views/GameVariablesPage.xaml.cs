@@ -66,5 +66,11 @@ namespace RagNext.Views
                 ["variableId"] = variable.Id.ToString()
             });
         }
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await System.Threading.Tasks.Task.Delay(100);
+            RagNext.Services.MenuHelper.PopulateMenuBar(this);
+        }
     }
 }

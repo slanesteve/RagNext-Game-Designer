@@ -96,6 +96,23 @@ namespace RagNext
             var aiService = MauiProgram.Services.GetService(typeof(IAISettingsService)) as IAISettingsService;
             if (aiService is not null)
                 CurrentAISettings = aiService.Load();
+
+            // Load and apply the saved theme and color palette at startup
+            var generalSettingsService = MauiProgram.Services.GetService(typeof(IGeneralSettingsService)) as IGeneralSettingsService;
+            if (generalSettingsService is not null)
+            {
+                var settings = generalSettingsService.Load();
+                if (settings is not null)
+                {
+                    UserAppTheme = settings.DesignerTheme switch
+                    {
+                        DesignerTheme.Light => AppTheme.Light,
+                        DesignerTheme.Dark => AppTheme.Dark,
+                        _ => AppTheme.Unspecified
+                    };
+                    ThemeService.ApplyPalette(settings.Palette);
+                }
+            }
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
@@ -106,7 +123,11 @@ namespace RagNext
                 Height = 800,
                 MinimumWidth = 1024,
                 MinimumHeight = 700,
+#if WINDOWS
+                Title = "" // Clear window title on Windows to prevent redundant and buggy OS title rendering
+#else
                 Title = "RagNext Designer"
+#endif
             };
 
 #if WINDOWS
@@ -128,6 +149,7 @@ namespace RagNext
                     var y = area.Y + (area.Height - h) / 2;
 
                     appWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, w, h));
+                    ThemeService.UpdateWindowTitleBarColors(UserAppTheme);
                 }
                 catch { /* ignore centering errors */ }
             };

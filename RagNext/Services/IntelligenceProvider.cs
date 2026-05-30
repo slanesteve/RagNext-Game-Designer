@@ -14,6 +14,13 @@ namespace RagNext.Services
             // 0. This (Intuitive self-referencing keyword)
             list.Add(new SuggestionItem
             {
+                Token = "this",
+                DisplayText = "this",
+                TypeName = "Current Object ID",
+                Description = "ID reference of this object."
+            });
+            list.Add(new SuggestionItem
+            {
                 Token = "this.Name",
                 DisplayText = "this.Name",
                 TypeName = "Current Object Property",
@@ -101,6 +108,13 @@ namespace RagNext.Services
             // 2. Room
             list.Add(new SuggestionItem
             {
+                Token = "room",
+                DisplayText = "room",
+                TypeName = "Room ID",
+                Description = "ID reference of the current room."
+            });
+            list.Add(new SuggestionItem
+            {
                 Token = "room.Name",
                 DisplayText = "room.Name",
                 TypeName = "Room Property",
@@ -142,6 +156,13 @@ namespace RagNext.Services
             }
 
             // 3. Focus / Object
+            list.Add(new SuggestionItem
+            {
+                Token = "focus",
+                DisplayText = "focus",
+                TypeName = "Focus Object ID",
+                Description = "ID reference of the current focus object."
+            });
             list.Add(new SuggestionItem
             {
                 Token = "focus.Name",
@@ -206,6 +227,13 @@ namespace RagNext.Services
                     var nameClean = character.Name.Replace(" ", "");
                     list.Add(new SuggestionItem
                     {
+                        Token = $"characters.{nameClean}",
+                        DisplayText = $"characters.{nameClean}",
+                        TypeName = "Character ID Reference",
+                        Description = $"Direct ID reference to character '{character.Name}'."
+                    });
+                    list.Add(new SuggestionItem
+                    {
                         Token = $"characters.{nameClean}.Name",
                         DisplayText = $"characters.{nameClean}.Name",
                         TypeName = "Character Property",
@@ -252,6 +280,13 @@ namespace RagNext.Services
                 foreach (var obj in game.Objects.Where(o => !string.IsNullOrWhiteSpace(o.Name)))
                 {
                     var nameClean = obj.Name.Replace(" ", "");
+                    list.Add(new SuggestionItem
+                    {
+                        Token = $"objects.{nameClean}",
+                        DisplayText = $"objects.{nameClean}",
+                        TypeName = "Object ID Reference",
+                        Description = $"Direct ID reference to object '{obj.Name}'."
+                    });
                     list.Add(new SuggestionItem
                     {
                         Token = $"objects.{nameClean}.Name",

@@ -47,6 +47,7 @@ namespace RagNextPlayer.Managers
         private VisualElement  _playerPortrait;
         private Label          _scenePlaceholder;
         private VisualElement  _splashScreen;
+        public bool IsSplashFinished { get; private set; } = false;
 
         // Game Over modal references
         private VisualElement  _gameOverMenu;
@@ -62,6 +63,7 @@ namespace RagNextPlayer.Managers
         private ScrollView     _promptSelectionScroll;
         private Button         _promptSubmitBtn;
         private string         _promptTargetVarName = string.Empty;
+        private string         _promptName = string.Empty;
 
         // ── Typewriter effect ─────────────────────────────────────────────────
         [Header("Narrative Settings")]
@@ -229,6 +231,11 @@ namespace RagNextPlayer.Managers
             }
 
             SubscribeEvents();
+
+            if (_splashScreen is not null)
+            {
+                SetGameplayUIVisible(false);
+            }
         }
 
         private bool _firstRoomRendered = false;
@@ -250,28 +257,504 @@ namespace RagNextPlayer.Managers
 
             if (_splashScreen is not null)
             {
-                StartCoroutine(FadeOutSplashScreenRoutine());
+                StartCoroutine(PlaySplashScreenSequenceRoutine());
             }
         }
-
-        private System.Collections.IEnumerator FadeOutSplashScreenRoutine()
+ 
+        private System.Collections.IEnumerator PlaySplashScreenSequenceRoutine()
         {
-            yield return new UnityEngine.WaitForSeconds(1.8f);
+            var game = GameManager.Instance?.ActiveGame;
+            var settings = game?.SplashScreen;
 
-            float duration = 0.8f;
-            float elapsed = 0f;
-            while (elapsed < duration)
+            // ── PART 1: PLAY ENGINE SPLASH SCREEN FIRST ──
+            if (_splashScreen != null)
             {
-                elapsed += UnityEngine.Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
-                if (_splashScreen is not null)
+                _splashScreen.style.display = DisplayStyle.Flex;
+                _splashScreen.style.opacity = 1f;
+
+                var badge = _splashScreen.Q<VisualElement>(className: "splash-badge");
+                var title = _splashScreen.Q<Label>(className: "splash-title");
+                var subt = _splashScreen.Q<Label>(className: "splash-subtitle");
+
+                // Initialize standard engine logo state
+                if (badge != null)
+                {
+                    badge.style.display = DisplayStyle.Flex;
+                    badge.style.opacity = 0f;
+                    badge.style.scale = new StyleScale(new Scale(new Vector3(0.4f, 0.4f, 1f)));
+                }
+                if (title != null)
+                {
+                    title.text = "RAGNEXT";
+                    title.style.display = DisplayStyle.Flex;
+                    title.style.position = Position.Relative;
+                    title.style.opacity = 0f;
+                    title.style.translate = new StyleTranslate(new Translate(0, 30));
+                    // Reset styling in case custom changes it later
+                    title.style.left = StyleKeyword.Null;
+                    title.style.top = StyleKeyword.Null;
+                    title.style.fontSize = StyleKeyword.Null;
+                    title.style.color = StyleKeyword.Null;
+                }
+                if (subt != null)
+                {
+                    subt.style.display = DisplayStyle.Flex;
+                    subt.style.opacity = 0f;
+                    subt.style.translate = new StyleTranslate(new Translate(0, 20));
+                }
+
+                // Animate engine splash in
+                float introDuration = 0.95f;
+                float elapsed = 0f;
+                while (elapsed < introDuration)
+                {
+                    elapsed += UnityEngine.Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsed / introDuration);
+                    float springT = EasingSpring(t);
+
+                    if (badge != null)
+                    {
+                        badge.style.opacity = t;
+                        badge.style.scale = new StyleScale(new Scale(new Vector3(
+                            Mathf.Lerp(0.4f, 1.0f, springT),
+                            Mathf.Lerp(0.4f, 1.0f, springT),
+                            1f
+                        )));
+                    }
+
+                    if (title != null && t > 0.2f)
+                    {
+                        float titleT = Mathf.Clamp01((t - 0.2f) / 0.8f);
+                        title.style.opacity = titleT;
+                        title.style.translate = new StyleTranslate(new Translate(0, Mathf.Lerp(30f, 0f, titleT)));
+                    }
+
+                    if (subt != null && t > 0.4f)
+                    {
+                        float subtT = Mathf.Clamp01((t - 0.4f) / 0.6f);
+                        subt.style.opacity = subtT;
+                        subt.style.translate = new StyleTranslate(new Translate(0, Mathf.Lerp(20f, 0f, subtT)));
+                    }
+
+                    yield return null;
+                }
+
+                // Hold engine splash
+                yield return new UnityEngine.WaitForSeconds(1.0f);
+
+                // Fade out engine splash elements
+                float fadeOutEngineDuration = 0.4f;
+                float elapsedOut = 0f;
+                while (elapsedOut < fadeOutEngineDuration)
+                {
+                    elapsedOut += UnityEngine.Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsedOut / fadeOutEngineDuration);
+                    float opp = Mathf.Lerp(1f, 0f, t);
+                    
+                    if (badge != null) badge.style.opacity = opp;
+                    if (title != null) title.style.opacity = opp;
+                    if (subt != null) subt.style.opacity = opp;
+
+                    yield return null;
+                }
+
+                // Hide engine components
+                if (badge != null) badge.style.display = DisplayStyle.None;
+                if (subt != null) subt.style.display = DisplayStyle.None;
+            }
+
+            // ── PART 2: TRANSITION TO CUSTOM SPLASH IF ENABLED ──
+            while (GameManager.Instance == null || GameManager.Instance.ActiveGame == null)
+            {
+                yield return null;
+            }
+
+            game = GameManager.Instance.ActiveGame;
+            settings = game?.SplashScreen;
+
+            if (game == null || settings == null || !settings.Enabled)
+            {
+                // Just fade out container completely and finish
+                float fadeContainerDuration = 0.4f;
+                float elapsedOut = 0f;
+                while (elapsedOut < fadeContainerDuration)
+                {
+                    elapsedOut += UnityEngine.Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsedOut / fadeContainerDuration);
+                    if (_splashScreen != null)
+                    {
+                        _splashScreen.style.opacity = Mathf.Lerp(1f, 0f, t);
+                    }
+                    yield return null;
+                }
+
+                if (_splashScreen != null)
+                {
+                    _splashScreen.style.display = DisplayStyle.None;
+                }
+                SetGameplayUIVisible(true);
+                IsSplashFinished = true;
+                yield break;
+            }
+
+            // Setup Custom Splash settings
+            if (_splashScreen != null)
+            {
+                _splashScreen.style.opacity = 0f;
+            }
+
+            var titleLabel = _splashScreen?.Q<Label>(className: "splash-title");
+
+            if (settings.Mode == "Video")
+            {
+                // ── VIDEO PLAYBACK MODE ──
+                var asset = game.MediaAssets.Find(a => 
+                    string.Equals(a.Id, settings.VideoAssetId, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(a.OriginalFileName, settings.VideoAssetId, StringComparison.OrdinalIgnoreCase));
+                
+                if (asset != null)
+                {
+                    if (_videoTexture == null)
+                    {
+                        _videoTexture = new RenderTexture(1280, 720, 16, RenderTextureFormat.ARGB32);
+                        _videoTexture.Create();
+                    }
+
+                    if (_videoPlayer == null)
+                    {
+                        _videoPlayer = gameObject.GetComponent<UnityEngine.Video.VideoPlayer>();
+                        if (_videoPlayer == null)
+                            _videoPlayer = gameObject.AddComponent<UnityEngine.Video.VideoPlayer>();
+                    }
+
+                    _videoPlayer.playOnAwake = false;
+                    _videoPlayer.isLooping = false;
+                    _videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.RenderTexture;
+                    _videoPlayer.targetTexture = _videoTexture;
+
+                    string url = FormatLocalPathForWeb(asset.RelativePath);
+                    if (url.StartsWith("file:///")) _videoPlayer.url = url.Substring(8);
+                    else if (url.StartsWith("file://")) _videoPlayer.url = url.Substring(7);
+                    else _videoPlayer.url = url;
+
+                    _splashScreen.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
+                    if (titleLabel != null) titleLabel.style.display = DisplayStyle.None;
+
+                    _splashScreen.style.opacity = 1f;
+                    _videoPlayer.Play();
+
+                    // Wait until video starts and then finishes
+                    yield return new UnityEngine.WaitForSeconds(0.5f);
+                    while (_videoPlayer.isPlaying)
+                    {
+                        yield return null;
+                    }
+                    _videoPlayer.Stop();
+                }
+            }
+            else
+            {
+                // ── IMAGE & TEXT CUSTOM MODE ──
+                // Load Custom Background Image
+                var asset = game.MediaAssets.Find(a => 
+                    string.Equals(a.Id, settings.ImageAssetId, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(a.OriginalFileName, settings.ImageAssetId, StringComparison.OrdinalIgnoreCase));
+                
+                if (asset != null)
+                {
+                    yield return StartCoroutine(LoadImageCoroutine(asset.RelativePath, "splash-screen"));
+                }
+                else
+                {
+                    // Fallback to pure black
+                    if (_splashScreen != null)
+                    {
+                        _splashScreen.style.backgroundImage = null;
+                        _splashScreen.style.backgroundColor = Color.black;
+                    }
+                }
+
+                // Customize Overlay Text block
+                if (titleLabel != null)
+                {
+                    titleLabel.text = settings.Text;
+                    titleLabel.style.display = DisplayStyle.Flex;
+                    titleLabel.style.position = Position.Absolute;
+                    titleLabel.style.opacity = 1f;
+                    titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+
+                    // Absolute Positioning from percentages
+                    titleLabel.style.left = Length.Percent((float)settings.TextX);
+                    titleLabel.style.top = Length.Percent((float)settings.TextY);
+
+                    if (double.TryParse(settings.FontSize.ToString(), out var sizeVal))
+                    {
+                        titleLabel.style.fontSize = (float)sizeVal;
+                    }
+
+                    if (ColorUtility.TryParseHtmlString(settings.FontColor, out var clr))
+                    {
+                        titleLabel.style.color = clr;
+                    }
+                    else
+                    {
+                        titleLabel.style.color = Color.white;
+                    }
+                }
+
+                // Play custom dramatic sound effect if configured
+                if (!string.IsNullOrEmpty(settings.SoundAssetId) && AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySound(settings.SoundAssetId, 1f, false);
+                }
+
+                // Play the chosen cinematic Transition In sequence
+                float elapsed = 0f;
+                float fadeInDuration = (float)settings.FadeInDuration;
+                if (fadeInDuration < 0.1f) fadeInDuration = 0.1f;
+
+                // Handle Rise / Cinematic / Glitch / Exposure setup
+                if (titleLabel != null)
+                {
+                    if (settings.TransitionStyle == "Rise")
+                    {
+                        titleLabel.style.translate = new StyleTranslate(new Translate(0, 60));
+                    }
+                    else if (settings.TransitionStyle == "Cinematic")
+                    {
+                        if (_splashScreen != null)
+                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                    }
+                    else if (settings.TransitionStyle == "Exposure")
+                    {
+                        titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1.5f, 1.5f, 1f)));
+                    }
+                }
+
+                while (elapsed < fadeInDuration)
+                {
+                    elapsed += UnityEngine.Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsed / fadeInDuration);
+                    if (_splashScreen != null)
+                    {
+                        if (settings.TransitionStyle == "Exposure")
+                        {
+                            float expT = Mathf.Pow(t, 0.4f);
+                            _splashScreen.style.opacity = expT;
+                        }
+                        else
+                        {
+                            _splashScreen.style.opacity = t;
+                        }
+
+                        if (settings.TransitionStyle == "Cinematic")
+                        {
+                            float curScale = Mathf.Lerp(1f, 1.02f, t);
+                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                        }
+                    }
+
+                    if (titleLabel != null)
+                    {
+                        if (settings.TransitionStyle == "Rise")
+                        {
+                            float yOffset = Mathf.Lerp(60f, 0f, EasingSpring(t));
+                            titleLabel.style.translate = new StyleTranslate(new Translate(0, yOffset));
+                        }
+                        else if (settings.TransitionStyle == "Exposure")
+                        {
+                            float scaleVal = Mathf.Lerp(1.5f, 1f, t);
+                            titleLabel.style.scale = new StyleScale(new Scale(new Vector3(scaleVal, scaleVal, 1f)));
+                        }
+                        else if (settings.TransitionStyle == "Glitch")
+                        {
+                            if (UnityEngine.Random.value < 0.15f)
+                            {
+                                titleLabel.style.opacity = UnityEngine.Random.Range(0.2f, 0.7f);
+                                titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-10f, 10f), UnityEngine.Random.Range(-5f, 5f)));
+                            }
+                            else
+                            {
+                                titleLabel.style.opacity = t;
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                            }
+                        }
+                    }
+                    yield return null;
+                }
+
+                if (_splashScreen != null)
+                {
+                    _splashScreen.style.opacity = 1f;
+                }
+                if (titleLabel != null)
+                {
+                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                    titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                    titleLabel.style.opacity = 1f;
+                }
+
+                // Hold duration loop (with real-time animations for Cinematic/Glitch)
+                float holdDuration = (float)settings.DisplayDuration;
+                float elapsedHold = 0f;
+                while (elapsedHold < holdDuration)
+                {
+                    elapsedHold += UnityEngine.Time.deltaTime;
+                    float progress = elapsedHold / holdDuration;
+
+                    if (_splashScreen != null && settings.TransitionStyle == "Cinematic")
+                    {
+                        float curScale = Mathf.Lerp(1.02f, 1.05f, progress);
+                        _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                    }
+
+                    if (titleLabel != null && settings.TransitionStyle == "Glitch")
+                    {
+                        if (UnityEngine.Random.value < 0.08f)
+                        {
+                            titleLabel.style.opacity = UnityEngine.Random.Range(0.3f, 0.9f);
+                            titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-15f, 15f), UnityEngine.Random.Range(-8f, 8f)));
+                        }
+                        else
+                        {
+                            titleLabel.style.opacity = 1f;
+                            titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                        }
+                    }
+                    yield return null;
+                }
+            }
+
+            // Cinematic fade-out of custom overlay
+            float elapsedOutCustom = 0f;
+            float fadeOutDuration = (float)settings.FadeOutDuration;
+            if (fadeOutDuration < 0.1f) fadeOutDuration = 0.1f;
+
+            while (elapsedOutCustom < fadeOutDuration)
+            {
+                elapsedOutCustom += UnityEngine.Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedOutCustom / fadeOutDuration);
+                if (_splashScreen != null)
                 {
                     _splashScreen.style.opacity = Mathf.Lerp(1f, 0f, t);
+                    if (settings != null && settings.TransitionStyle == "Cinematic")
+                    {
+                        float curScale = Mathf.Lerp(1.05f, 1.07f, t);
+                        _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                    }
                 }
                 yield return null;
             }
 
-            if (_splashScreen is not null)
+            if (_splashScreen != null)
+            {
+                _splashScreen.style.display = DisplayStyle.None;
+            }
+
+            // Stop splash screen audio when done
+            if (settings != null && !string.IsNullOrEmpty(settings.SoundAssetId) && AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopSound(settings.SoundAssetId);
+            }
+
+            SetGameplayUIVisible(true);
+            IsSplashFinished = true;
+        }
+
+        private float EasingSpring(float t)
+        {
+            float c4 = (2f * Mathf.PI) / 3f;
+            return t == 0f ? 0f : t == 1f ? 1f : Mathf.Pow(2f, -10f * t) * Mathf.Sin((t * 10f - 0.75f) * c4) + 1f;
+        }
+
+        private System.Collections.IEnumerator FadeOutSplashScreenRoutine()
+        {
+            var badge = _splashScreen?.Q<VisualElement>(className: "splash-badge");
+            var title = _splashScreen?.Q<Label>(className: "splash-title");
+            var subt = _splashScreen?.Q<Label>(className: "splash-subtitle");
+
+            if (badge != null)
+            {
+                badge.style.opacity = 0f;
+                badge.style.scale = new StyleScale(new Scale(new Vector3(0.4f, 0.4f, 1f)));
+            }
+            if (title != null)
+            {
+                title.style.opacity = 0f;
+                title.style.translate = new StyleTranslate(new Translate(0, 30));
+            }
+            if (subt != null)
+            {
+                subt.style.opacity = 0f;
+                subt.style.translate = new StyleTranslate(new Translate(0, 20));
+            }
+
+            if (_splashScreen != null)
+            {
+                _splashScreen.style.opacity = 1f;
+            }
+
+            float introDuration = 0.95f;
+            float elapsed = 0f;
+            while (elapsed < introDuration)
+            {
+                elapsed += UnityEngine.Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / introDuration);
+                float springT = EasingSpring(t);
+
+                if (badge != null)
+                {
+                    badge.style.opacity = t;
+                    badge.style.scale = new StyleScale(new Scale(new Vector3(
+                        Mathf.Lerp(0.4f, 1.0f, springT),
+                        Mathf.Lerp(0.4f, 1.0f, springT),
+                        1f
+                    )));
+                }
+
+                if (title != null && t > 0.2f)
+                {
+                    float titleT = Mathf.Clamp01((t - 0.2f) / 0.8f);
+                    title.style.opacity = titleT;
+                    title.style.translate = new StyleTranslate(new Translate(0, Mathf.Lerp(30f, 0f, titleT)));
+                }
+
+                if (subt != null && t > 0.4f)
+                {
+                    float subtT = Mathf.Clamp01((t - 0.4f) / 0.6f);
+                    subt.style.opacity = subtT;
+                    subt.style.translate = new StyleTranslate(new Translate(0, Mathf.Lerp(20f, 0f, subtT)));
+                }
+
+                yield return null;
+            }
+
+            yield return new UnityEngine.WaitForSeconds(1.0f);
+
+            float fadeOutDuration = 0.6f;
+            float elapsedOut = 0f;
+            while (elapsedOut < fadeOutDuration)
+            {
+                elapsedOut += UnityEngine.Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedOut / fadeOutDuration);
+                if (_splashScreen != null)
+                {
+                    _splashScreen.style.opacity = Mathf.Lerp(1f, 0f, t);
+                }
+
+                if (badge != null)
+                {
+                    badge.style.scale = new StyleScale(new Scale(new Vector3(
+                        Mathf.Lerp(1.0f, 0.85f, t),
+                        Mathf.Lerp(1.0f, 0.85f, t),
+                        1f
+                    )));
+                }
+                yield return null;
+            }
+
+            if (_splashScreen != null)
             {
                 _splashScreen.style.display = DisplayStyle.None;
             }
@@ -398,6 +881,10 @@ namespace RagNextPlayer.Managers
                     foreach (var cId in o.ContainedObjectIds)
                         containedIds.Add(cId);
                 }
+                if (o.Properties.TryGetValue("ParentContainerId", out var pId) && !string.IsNullOrEmpty(pId))
+                {
+                    containedIds.Add(o.Id);
+                }
             }
 
             // Objects
@@ -405,13 +892,16 @@ namespace RagNextPlayer.Managers
             foreach (var obj in game.Objects.FindAll(o => room.ObjectIds.Contains(o.Id) && !o.IsCharacter && !containedIds.Contains(o.Id)))
             {
                 _objectsListContainer?.Add(CreateEntityRow(obj, false));
-                if (obj.IsContainer && obj.ContainerOpen && obj.ContainedObjectIds is not null)
+                if (obj.IsContainer && obj.ContainerOpen)
                 {
-                    foreach (var childId in obj.ContainedObjectIds)
+                    var children = game.Objects.FindAll(o => 
+                        (obj.ContainedObjectIds != null && obj.ContainedObjectIds.Contains(o.Id)) ||
+                        (o.Properties.TryGetValue("ParentContainerId", out var pId) && string.Equals(pId, obj.Id, StringComparison.OrdinalIgnoreCase))
+                    );
+
+                    foreach (var childObj in children)
                     {
-                        var childObj = game.Objects.Find(o => string.Equals(o.Id, childId, StringComparison.OrdinalIgnoreCase));
-                        if (childObj is not null)
-                            _objectsListContainer?.Add(CreateNestedEntityRow(childObj, false));
+                        _objectsListContainer?.Add(CreateNestedEntityRow(childObj, false));
                     }
                 }
             }
@@ -449,13 +939,16 @@ namespace RagNextPlayer.Managers
             foreach (var item in game.Player.Inventory.FindAll(i => !containedIds.Contains(i.Id)))
             {
                 _inventoryListContainer?.Add(CreateEntityRow(item, true));
-                if (item.IsContainer && item.ContainerOpen && item.ContainedObjectIds is not null)
+                if (item.IsContainer && item.ContainerOpen)
                 {
-                    foreach (var childId in item.ContainedObjectIds)
+                    var children = game.Objects.FindAll(o => 
+                        (item.ContainedObjectIds != null && item.ContainedObjectIds.Contains(o.Id)) ||
+                        (o.Properties.TryGetValue("ParentContainerId", out var pId) && string.Equals(pId, item.Id, StringComparison.OrdinalIgnoreCase))
+                    );
+
+                    foreach (var childObj in children)
                     {
-                        var childObj = game.Objects.Find(o => string.Equals(o.Id, childId, StringComparison.OrdinalIgnoreCase));
-                        if (childObj is not null)
-                            _inventoryListContainer?.Add(CreateNestedEntityRow(childObj, true));
+                        _inventoryListContainer?.Add(CreateNestedEntityRow(childObj, true));
                     }
                 }
             }
@@ -1233,8 +1726,9 @@ namespace RagNextPlayer.Managers
 
         // ── Player Prompt Input Modal HUD Methods ─────────────────────────────
 
-        public void ShowPromptInputScreen(string promptText, string inputType, string customOptions, string storeVariableName)
+        public void ShowPromptInputScreen(string promptName, string promptText, string inputType, string customOptions, string storeVariableName)
         {
+            _promptName = promptName;
             _promptTargetVarName = storeVariableName;
 
             if (_promptInputMessage is not null)
@@ -1261,6 +1755,7 @@ namespace RagNextPlayer.Managers
                 if (_promptTextField is not null)
                 {
                     _promptTextField.value = string.Empty;
+                    _promptTextField.style.display = DisplayStyle.Flex;
                     _promptTextField.Focus();
                 }
                 if (_promptSubmitBtn is not null)
@@ -1269,6 +1764,9 @@ namespace RagNextPlayer.Managers
             else
             {
                 selScroll.style.display = DisplayStyle.Flex;
+                if (_promptTextField is not null)
+                    _promptTextField.style.display = DisplayStyle.None;
+
                 if (_promptSubmitBtn is not null)
                     _promptSubmitBtn.style.display = DisplayStyle.None;
 
@@ -1298,6 +1796,16 @@ namespace RagNextPlayer.Managers
                     {
                         foreach (var opt in customOptions.Split(new[] { ',', ';' }, System.StringSplitOptions.RemoveEmptyEntries))
                             options.Add(opt.Trim());
+                    }
+
+                    var game = GameManager.Instance?.ActiveGame;
+                    if (game is not null && game.CustomChoices is not null)
+                    {
+                        foreach (var ch in game.CustomChoices)
+                        {
+                            if (string.Equals(ch.PromptName, _promptName, System.StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(ch.ChoiceText))
+                                options.Add(ch.ChoiceText);
+                        }
                     }
                 }
 
@@ -1329,6 +1837,24 @@ namespace RagNextPlayer.Managers
             else
             {
                 targetVar.Value = value;
+            }
+
+            var game = GameManager.Instance?.ActiveGame;
+            if (game is not null && game.CustomChoices is not null)
+            {
+                var customChoice = game.CustomChoices.Find(c => string.Equals(c.PromptName, _promptName, System.StringComparison.OrdinalIgnoreCase) && string.Equals(c.ChoiceText, value, System.StringComparison.OrdinalIgnoreCase));
+                if (customChoice is not null && !string.IsNullOrWhiteSpace(customChoice.VariableName))
+                {
+                    var customVar = vars.Find(v => string.Equals(v.Name, customChoice.VariableName, System.StringComparison.OrdinalIgnoreCase));
+                    if (customVar is null)
+                    {
+                        vars.Add(new GameVariableData { Name = customChoice.VariableName, Value = value });
+                    }
+                    else
+                    {
+                        customVar.Value = value;
+                    }
+                }
             }
 
             if (_promptInputMenu is not null)
@@ -1393,5 +1919,23 @@ namespace RagNextPlayer.Managers
                 _promptInputMenu.style.display = DisplayStyle.Flex;
         }
 
+        public void RefreshExits()
+        {
+            var room = GameManager.Instance?.CurrentRoom;
+            if (room is not null)
+            {
+                BuildExitButtons(room);
+            }
+        }
+
+        private void SetGameplayUIVisible(bool visible)
+        {
+            if (_root == null) return;
+            var topBar = _root.Q<VisualElement>("top-bar");
+            var mainSplitter = _root.Q<VisualElement>("main-splitter");
+            var display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            if (topBar != null) topBar.style.display = display;
+            if (mainSplitter != null) mainSplitter.style.display = display;
+        }
     }
 }

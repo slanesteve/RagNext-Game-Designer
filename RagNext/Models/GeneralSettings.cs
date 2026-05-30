@@ -15,14 +15,7 @@ namespace RagNext.Models
         Default,        // Use built-in Colors.xaml only
         Nord,
         Dracula,
-        SolarizedDark,
-        SolarizedLight,
         OneDark,
-        Monokai,
-        GruvboxDark,
-        GruvboxLight,
-        TrueBlack,
-        HighContrast,
         Sepia
     }
 

@@ -463,36 +463,269 @@ function updateLivePreview(textarea, previewElement) {
 }
 
 // Rich Text formatting Toolbar Helper
-function insertTextDecorator(textarea, before, after, previewElement) {
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+function wrapSelection(textarea, startTag, endTag, previewElement) {
+    const cursor = textarea.selectionStart;
+    const selectionLength = textarea.selectionEnd - cursor;
     const text = textarea.value;
-    const selected = text.substring(start, end);
-    const replacement = before + selected + after;
-    textarea.value = text.substring(0, start) + replacement + text.substring(end);
-    textarea.focus();
-    textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
-    
+
+    if (selectionLength > 0 && cursor >= 0 && cursor + selectionLength <= text.length) {
+        const before = text.substring(0, cursor);
+        const selected = text.substring(cursor, cursor + selectionLength);
+        const after = text.substring(cursor + selectionLength);
+
+        // Case A: Selected text is already wrapped in the tags (e.g., "<b>hello</b>")
+        if (selected.startsWith(startTag) && selected.endsWith(endTag)) {
+            const unwrapped = selected.substring(startTag.length, selected.length - endTag.length);
+            textarea.value = before + unwrapped + after;
+            textarea.focus();
+            textarea.setSelectionRange(cursor, cursor + unwrapped.length);
+        }
+        // Case B: Selection is immediately bordered by the tags (e.g., "<b>" + "hello" + "</b>")
+        else if (before.endsWith(startTag) && after.startsWith(endTag)) {
+            const newBefore = before.substring(0, before.length - startTag.length);
+            const newAfter = after.substring(endTag.length);
+            textarea.value = newBefore + selected + newAfter;
+            textarea.focus();
+            textarea.setSelectionRange(newBefore.length, newBefore.length + selected.length);
+        }
+        else {
+            // Not wrapped, so wrap it
+            textarea.value = before + startTag + selected + endTag + after;
+            textarea.focus();
+            textarea.setSelectionRange(cursor + startTag.length, cursor + startTag.length + selected.length);
+        }
+    } else {
+        let actualCursor = cursor;
+        if (actualCursor < 0 || actualCursor > text.length) {
+            actualCursor = text.length;
+        }
+        const before = text.substring(0, actualCursor);
+        const after = text.substring(actualCursor);
+
+        // If cursor is immediately between the tags, remove them (toggle empty)
+        if (before.endsWith(startTag) && after.startsWith(endTag)) {
+            const newBefore = before.substring(0, before.length - startTag.length);
+            const newAfter = after.substring(endTag.length);
+            textarea.value = newBefore + newAfter;
+            textarea.focus();
+            textarea.setSelectionRange(newBefore.length, newBefore.length);
+        }
+        else {
+            textarea.value = before + startTag + endTag + after;
+            textarea.focus();
+            textarea.setSelectionRange(actualCursor + startTag.length, actualCursor + startTag.length);
+        }
+    }
+
     updateLivePreview(textarea, previewElement);
 
-    const event = new Event('change');
+    const event = new Event('input');
     textarea.dispatchEvent(event);
 }
 
 function clearSelectionFormatting(textarea, previewElement) {
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selected = text.substring(start, end);
-    const cleaned = selected.replace(/<\/?[^>]+(>|$)/g, "");
-    textarea.value = text.substring(0, start) + cleaned + text.substring(end);
-    textarea.focus();
-    textarea.setSelectionRange(start, start + cleaned.length);
-    
+    let text = textarea.value ?? "";
+    let cursor = textarea.selectionStart;
+    let selectionLength = textarea.selectionEnd - cursor;
+
+    if (selectionLength > 0 && cursor >= 0 && cursor + selectionLength <= text.length) {
+        let before = text.substring(0, cursor);
+        let selected = text.substring(cursor, cursor + selectionLength);
+        let after = text.substring(cursor + selectionLength);
+
+        // Strip all tags inside the selection
+        let cleaned = selected.replace(/<[^>]+>/g, "");
+
+        // Strip bordering tags cleanly
+        while (true) {
+            let openBeforeMatch = before.match(/<[^>]+>$/);
+            let closeAfterMatch = after.match(/^<\/[^>]+>/);
+            if (openBeforeMatch && closeAfterMatch) {
+                before = before.substring(0, before.length - openBeforeMatch[0].length);
+                after = after.substring(closeAfterMatch[0].length);
+            } else {
+                let borderBefore = before.match(/<[^>]+>$/);
+                let borderAfter = after.match(/^<[^>]+>/);
+                if (borderBefore && borderAfter) {
+                    before = before.substring(0, before.length - borderBefore[0].length);
+                    after = after.substring(borderAfter[0].length);
+                } else {
+                    break;
+                }
+            }
+        }
+
+        textarea.value = before + cleaned + after;
+        textarea.focus();
+        textarea.setSelectionRange(before.length, before.length + cleaned.length);
+    } else {
+        // Strip everything if no selection
+        let cleaned = text.replace(/<[^>]+>/g, "");
+        textarea.value = cleaned;
+        textarea.focus();
+        textarea.setSelectionRange(Math.min(cursor, cleaned.length), Math.min(cursor, cleaned.length));
+    }
+
     updateLivePreview(textarea, previewElement);
 
-    const event = new Event('change');
+    const event = new Event('input');
     textarea.dispatchEvent(event);
+}
+
+function showColorDropdown(button, textarea, previewElement) {
+    const existing = document.querySelector('.color-dropdown');
+    if (existing) existing.remove();
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'color-dropdown';
+    dropdown.style.position = 'absolute';
+    dropdown.style.background = 'rgba(25, 25, 35, 0.95)';
+    dropdown.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+    dropdown.style.borderRadius = '8px';
+    dropdown.style.padding = '8px';
+    dropdown.style.zIndex = '10000';
+    dropdown.style.display = 'flex';
+    dropdown.style.flexWrap = 'wrap';
+    dropdown.style.gap = '6px';
+    dropdown.style.width = '140px';
+    dropdown.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+    dropdown.style.backdropFilter = 'blur(12px)';
+
+    const colors = [
+        { name: 'Red', hex: '#ef4444' },
+        { name: 'Green', hex: '#22c55e' },
+        { name: 'Blue', hex: '#3b82f6' },
+        { name: 'Yellow', hex: '#eab308' },
+        { name: 'Orange', hex: '#f97316' },
+        { name: 'Purple', hex: '#a855f7' }
+    ];
+
+    colors.forEach(c => {
+        const item = document.createElement('div');
+        item.style.width = '24px';
+        item.style.height = '24px';
+        item.style.borderRadius = '50%';
+        item.style.backgroundColor = c.hex;
+        item.style.cursor = 'pointer';
+        item.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        item.title = c.name;
+        item.onclick = (e) => {
+            e.stopPropagation();
+            wrapSelection(textarea, `<color=${c.hex}>`, '</color>', previewElement);
+            dropdown.remove();
+        };
+        dropdown.appendChild(item);
+    });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerText = '✕ Close';
+    closeBtn.className = 'btn-format';
+    closeBtn.style.width = '100%';
+    closeBtn.style.marginTop = '4px';
+    closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        dropdown.remove();
+    };
+    dropdown.appendChild(closeBtn);
+
+    const rect = button.getBoundingClientRect();
+    const bounds = container.getBoundingClientRect();
+    
+    const left = (rect.left - bounds.left - panX) / zoom;
+    const top = (rect.bottom - bounds.top - panY) / zoom;
+
+    dropdown.style.left = `${left}px`;
+    dropdown.style.top = `${top}px`;
+    dropdown.style.transformOrigin = 'top left';
+    dropdown.style.pointerEvents = 'auto';
+
+    const onOutsideClick = (e) => {
+        if (!dropdown.contains(e.target) && e.target !== button) {
+            dropdown.remove();
+            document.removeEventListener('mousedown', onOutsideClick);
+        }
+    };
+    document.addEventListener('mousedown', onOutsideClick);
+
+    nodesLayer.appendChild(dropdown);
+}
+
+function showHighlightDropdown(button, textarea, previewElement) {
+    const existing = document.querySelector('.color-dropdown');
+    if (existing) existing.remove();
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'color-dropdown';
+    dropdown.style.position = 'absolute';
+    dropdown.style.background = 'rgba(25, 25, 35, 0.95)';
+    dropdown.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+    dropdown.style.borderRadius = '8px';
+    dropdown.style.padding = '8px';
+    dropdown.style.zIndex = '10000';
+    dropdown.style.display = 'flex';
+    dropdown.style.flexWrap = 'wrap';
+    dropdown.style.gap = '6px';
+    dropdown.style.width = '140px';
+    dropdown.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+    dropdown.style.backdropFilter = 'blur(12px)';
+
+    const highlights = [
+        { name: 'Yellow', hex: '#eab30855' },
+        { name: 'Green', hex: '#22c55e55' },
+        { name: 'Blue', hex: '#3b82f655' },
+        { name: 'Red', hex: '#ef444455' },
+        { name: 'Orange', hex: '#f9731655' },
+        { name: 'Purple', hex: '#a855f755' }
+    ];
+
+    highlights.forEach(c => {
+        const item = document.createElement('div');
+        item.style.width = '24px';
+        item.style.height = '24px';
+        item.style.borderRadius = '50%';
+        item.style.backgroundColor = c.hex.substring(0, 7);
+        item.style.cursor = 'pointer';
+        item.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        item.title = c.name;
+        item.onclick = (e) => {
+            e.stopPropagation();
+            wrapSelection(textarea, `<mark=${c.hex}>`, '</mark>', previewElement);
+            dropdown.remove();
+        };
+        dropdown.appendChild(item);
+    });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerText = '✕ Close';
+    closeBtn.className = 'btn-format';
+    closeBtn.style.width = '100%';
+    closeBtn.style.marginTop = '4px';
+    closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        dropdown.remove();
+    };
+    dropdown.appendChild(closeBtn);
+
+    const rect = button.getBoundingClientRect();
+    const bounds = container.getBoundingClientRect();
+    
+    const left = (rect.left - bounds.left - panX) / zoom;
+    const top = (rect.bottom - bounds.top - panY) / zoom;
+
+    dropdown.style.left = `${left}px`;
+    dropdown.style.top = `${top}px`;
+    dropdown.style.transformOrigin = 'top left';
+    dropdown.style.pointerEvents = 'auto';
+
+    const onOutsideClick = (e) => {
+        if (!dropdown.contains(e.target) && e.target !== button) {
+            dropdown.remove();
+            document.removeEventListener('mousedown', onOutsideClick);
+        }
+    };
+    document.addEventListener('mousedown', onOutsideClick);
+
+    nodesLayer.appendChild(dropdown);
 }
 
 function createFormattingToolbar(textarea, previewElement, fieldName, node) {
@@ -507,63 +740,43 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     btnB.innerText = 'B';
     btnB.className = 'btn-format';
     btnB.style.fontWeight = 'bold';
-    btnB.onclick = (e) => { e.preventDefault(); insertTextDecorator(textarea, '<b>', '</b>', previewElement); };
+    btnB.onclick = (e) => { e.preventDefault(); wrapSelection(textarea, '<b>', '</b>', previewElement); };
     toolbar.appendChild(btnB);
 
     const btnI = document.createElement('button');
     btnI.innerText = 'I';
     btnI.className = 'btn-format';
     btnI.style.fontStyle = 'italic';
-    btnI.onclick = (e) => { e.preventDefault(); insertTextDecorator(textarea, '<i>', '</i>', previewElement); };
+    btnI.onclick = (e) => { e.preventDefault(); wrapSelection(textarea, '<i>', '</i>', previewElement); };
     toolbar.appendChild(btnI);
 
     const btnU = document.createElement('button');
     btnU.innerText = 'U';
     btnU.className = 'btn-format';
     btnU.style.textDecoration = 'underline';
-    btnU.onclick = (e) => { e.preventDefault(); insertTextDecorator(textarea, '<u>', '</u>', previewElement); };
+    btnU.onclick = (e) => { e.preventDefault(); wrapSelection(textarea, '<u>', '</u>', previewElement); };
     toolbar.appendChild(btnU);
-
-    // Color Selector Trigger with hidden color selector
-    const colorPickerContainer = document.createElement('div');
-    colorPickerContainer.style.position = 'relative';
-    colorPickerContainer.style.display = 'inline-block';
 
     const btnColor = document.createElement('button');
     btnColor.innerHTML = '🎨 Color';
     btnColor.className = 'btn-format';
     btnColor.style.fontSize = '10px';
+    btnColor.onclick = (e) => {
+        e.preventDefault();
+        showColorDropdown(btnColor, textarea, previewElement);
+    };
+    toolbar.appendChild(btnColor);
 
-    const nativePicker = document.createElement('input');
-    nativePicker.type = 'color';
-    nativePicker.value = '#a855f7';
-    nativePicker.style.position = 'absolute';
-    nativePicker.style.left = '0';
-    nativePicker.style.top = '0';
-    nativePicker.style.opacity = '0';
-    nativePicker.style.width = '100%';
-    nativePicker.style.height = '100%';
-    nativePicker.style.cursor = 'pointer';
-    nativePicker.addEventListener('change', (e) => {
-        insertTextDecorator(textarea, `<color=${nativePicker.value}>`, '</color>', previewElement);
-    });
-
-    colorPickerContainer.appendChild(btnColor);
-    colorPickerContainer.appendChild(nativePicker);
-    toolbar.appendChild(colorPickerContainer);
-
-    // Highlight text selector
     const btnHighlight = document.createElement('button');
     btnHighlight.innerHTML = '🖊️ Highlight';
     btnHighlight.className = 'btn-format';
     btnHighlight.style.fontSize = '10px';
     btnHighlight.onclick = (e) => { 
         e.preventDefault(); 
-        insertTextDecorator(textarea, '<mark=#FFFF0055>', '</mark>', previewElement); 
+        showHighlightDropdown(btnHighlight, textarea, previewElement);
     };
     toolbar.appendChild(btnHighlight);
 
-    // Clear tag formatting selector
     const btnClear = document.createElement('button');
     btnClear.innerHTML = '✕ Clear';
     btnClear.className = 'btn-format';
@@ -991,6 +1204,54 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
     node.choices.push(choiceObj);
 }
 
+function populateSelectWithOptions(select, items) {
+    select.innerHTML = "";
+    
+    const groups = {};
+    items.forEach(item => {
+        const cat = item.category || "General";
+        if (!groups[cat]) {
+            groups[cat] = [];
+        }
+        groups[cat].push(item);
+    });
+
+    const sortedCategories = Object.keys(groups).sort((a, b) => {
+        if (a === "General") return -1;
+        if (b === "General") return 1;
+        return a.localeCompare(b);
+    });
+
+    sortedCategories.forEach(cat => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = cat;
+        
+        const sortedItems = groups[cat].sort((a, b) => {
+            let labelA = a.label;
+            if (a.category && labelA.startsWith(a.category + ":")) {
+                labelA = labelA.substring(a.category.length + 1).trim();
+            }
+            let labelB = b.label;
+            if (b.category && labelB.startsWith(b.category + ":")) {
+                labelB = labelB.substring(b.category.length + 1).trim();
+            }
+            return labelA.localeCompare(labelB);
+        });
+
+        sortedItems.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.type;
+            let label = item.label;
+            if (item.category && label.startsWith(item.category + ":")) {
+                label = label.substring(item.category.length + 1).trim();
+            }
+            opt.innerText = label;
+            optgroup.appendChild(opt);
+        });
+        select.appendChild(optgroup);
+    });
+}
+
 // Custom Command Nodes
 function addNewCommandNode(x = null, y = null) {
     if (x === null || y === null) {
@@ -1005,12 +1266,7 @@ function addNewCommandNode(x = null, y = null) {
     addPin(node, 'output', 'exec', 'Out', `${id}_out`);
 
     const select = document.createElement('select');
-    AVAILABLE_COMMANDS.forEach(cmd => {
-        const opt = document.createElement('option');
-        opt.value = cmd.type;
-        opt.innerText = cmd.label;
-        select.appendChild(opt);
-    });
+    populateSelectWithOptions(select, AVAILABLE_COMMANDS);
     select.addEventListener('change', () => { 
         node.data.commandType = select.value; 
         refreshCommandFields(node); 
@@ -1045,12 +1301,7 @@ function addNewConditionNode(x = null, y = null) {
     addPin(node, 'output', 'false', 'False', `${id}_false`);
 
     const select = document.createElement('select');
-    AVAILABLE_CONDITIONS.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.type;
-        opt.innerText = c.label;
-        select.appendChild(opt);
-    });
+    populateSelectWithOptions(select, AVAILABLE_CONDITIONS);
     select.addEventListener('change', () => { 
         node.data.conditionType = select.value; 
         refreshCommandFields(node); 
@@ -1120,7 +1371,7 @@ function refreshCommandFields(node) {
         let inputElement;
         const initialVal = getPropertyValue(node.data, inputSchema.label);
 
-        if (inputSchema.controlType === 'ComboBox' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer') {
+        if (inputSchema.controlType === 'ComboBox' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item') {
             // Container for both controls
             const fieldWrapper = document.createElement('div');
             fieldWrapper.className = 'toggle-field-wrapper';
@@ -1138,7 +1389,7 @@ function refreshCommandFields(node) {
 
             let optionsList = [];
             if (inputSchema.dataType === 'Room') optionsList = catalogs.Rooms || [];
-            else if (inputSchema.dataType === 'GameObject') optionsList = catalogs.GameObjects || [];
+            else if (inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Item') optionsList = catalogs.GameObjects || [];
             else if (inputSchema.dataType === 'Character') optionsList = catalogs.Characters || [];
             else if (inputSchema.dataType === 'Variable') optionsList = catalogs.Variables || [];
             else if (inputSchema.dataType === 'Media') optionsList = catalogs.Media || [];
@@ -1493,7 +1744,7 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
                 type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
             }
             if (type) {
-                AVAILABLE_COMMANDS.push({ type: type, label: cmd.name });
+                AVAILABLE_COMMANDS.push({ type: type, label: cmd.name, category: cmd.category });
             }
         });
     }
@@ -1508,7 +1759,7 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
                 type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
             }
             if (type) {
-                AVAILABLE_CONDITIONS.push({ type: type, label: cond.name });
+                AVAILABLE_CONDITIONS.push({ type: type, label: cond.name, category: cond.category });
             }
         });
     }

@@ -84,7 +84,25 @@ namespace RagNext.Services
                 t.IsActive,
                 t.IsRepeating,
                 Nodes           = t.Nodes.ToList()
-            }).ToList()
+            }).ToList(),
+            SplashScreen = game.SplashScreen != null ? new
+            {
+                game.SplashScreen.Enabled,
+                game.SplashScreen.Mode,
+                game.SplashScreen.ImageAssetId,
+                game.SplashScreen.SoundAssetId,
+                game.SplashScreen.Text,
+                game.SplashScreen.FontName,
+                game.SplashScreen.FontSize,
+                game.SplashScreen.FontColor,
+                game.SplashScreen.TextX,
+                game.SplashScreen.TextY,
+                game.SplashScreen.FadeInDuration,
+                game.SplashScreen.DisplayDuration,
+                game.SplashScreen.FadeOutDuration,
+                game.SplashScreen.VideoAssetId,
+                game.SplashScreen.TransitionStyle
+            } : null
         };
 
         private static string NormalizeNewlines(string? val)

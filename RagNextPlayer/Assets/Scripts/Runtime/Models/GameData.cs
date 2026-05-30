@@ -20,6 +20,29 @@ namespace RagNextPlayer.Runtime.Models
         public List<MediaAssetData>       MediaAssets { get; set; } = new List<MediaAssetData>();
         public List<GlobalFunctionData>   Functions   { get; set; } = new List<GlobalFunctionData>();
         public List<GameTimerData>        Timers      { get; set; } = new List<GameTimerData>();
+        public SplashScreenSettingsData   SplashScreen{ get; set; } = new SplashScreenSettingsData();
+
+        [JsonIgnore]
+        public List<RuntimeCustomChoice> CustomChoices { get; } = new List<RuntimeCustomChoice>();
+    }
+
+    public class SplashScreenSettingsData
+    {
+        public bool Enabled { get; set; } = false;
+        public string Mode { get; set; } = "ImageAndText"; // "ImageAndText" or "Video"
+        public string ImageAssetId { get; set; } = string.Empty;
+        public string SoundAssetId { get; set; } = string.Empty;
+        public string Text { get; set; } = "My Adventure";
+        public string FontName { get; set; } = "Outfit";
+        public double FontSize { get; set; } = 32;
+        public string FontColor { get; set; } = "#FFFFFF";
+        public double TextX { get; set; } = 50;
+        public double TextY { get; set; } = 50;
+        public double FadeInDuration { get; set; } = 1.5;
+        public double DisplayDuration { get; set; } = 2.5;
+        public double FadeOutDuration { get; set; } = 1.0;
+        public string VideoAssetId { get; set; } = string.Empty;
+        public string TransitionStyle { get; set; } = "Fade"; // Fade, Rise, Cinematic, Glitch, Exposure
     }
 
     // ── Player ────────────────────────────────────────────────────────────────
@@ -141,16 +164,47 @@ namespace RagNextPlayer.Runtime.Models
     public class CharacterMoveToRoomCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; public string RoomId { get; set; } = string.Empty; }
     public class CharacterDisplayPortraitCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string PortraitId { get; set; } = string.Empty; }
     public class CharacterSetPortraitMediaCommandData: CommandData { public string CharacterId { get; set; } = string.Empty; public string MediaId { get; set; } = string.Empty; }
-    public class PlaySoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; }
+    public class PlaySoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; }
+    public class StopSoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public bool StopAllLooping { get; set; } = false; }
     public class DisplayMultimediaCommandData        : CommandData { public string MediaId { get; set; } = string.Empty; }
     public class EndGameCommandData                  : CommandData { public string FinalMessage { get; set; } = string.Empty; }
-    public class PromptPlayerInputCommandData        : CommandData { public string PromptText { get; set; } = string.Empty; public string InputType { get; set; } = "Text"; public string CustomOptions { get; set; } = string.Empty; public string StoreVariableName { get; set; } = string.Empty; }
+    public class PromptPlayerInputCommandData        : CommandData { public string PromptName { get; set; } = string.Empty; public string PromptText { get; set; } = string.Empty; public string InputType { get; set; } = "Text"; public string CustomOptions { get; set; } = string.Empty; public string StoreVariableName { get; set; } = string.Empty; }
     public class OpenContainerCommandData            : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class CloseContainerCommandData           : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class CallFunctionCommandData            : CommandData { public string FunctionId { get; set; } = string.Empty; }
     public class DamageCharacterCommandData         : CommandData { public string CharacterId { get; set; } = string.Empty; public int Amount { get; set; } }
     public class SetCharacterStateCommandData        : CommandData { public string CharacterId { get; set; } = string.Empty; public string State { get; set; } = "Alive"; }
     public class TriggerTurnTickCommandData         : CommandData { }
+
+    public class RuntimeCustomChoice
+    {
+        public string PromptName { get; set; } = string.Empty;
+        public string ChoiceText { get; set; } = string.Empty;
+        public string VariableName { get; set; } = string.Empty;
+    }
+
+    public class AddCustomChoiceCommandData : CommandData
+    {
+        public string PromptName { get; set; } = string.Empty;
+        public string ChoiceText { get; set; } = string.Empty;
+        public string VariableName { get; set; } = string.Empty;
+    }
+
+    public class ClearCustomChoiceCommandData : CommandData
+    {
+        public string PromptName { get; set; } = string.Empty;
+    }
+
+    public class RemoveCustomChoiceCommandData : CommandData
+    {
+        public string PromptName { get; set; } = string.Empty;
+        public string ChoiceText { get; set; } = string.Empty;
+    }
+    
+    public class ObjectDisplayDescriptionCommandData : CommandData { public string ObjectId { get; set; } = string.Empty; }
+    public class ObjectMoveToCharacterCommandData    : CommandData { public string ObjectId { get; set; } = string.Empty; public string CharacterId { get; set; } = string.Empty; }
+    public class ObjectMoveToInventoryCommandData    : CommandData { public string ObjectId { get; set; } = string.Empty; }
+    public class ObjectMoveInsideObjectCommandData   : CommandData { public string ObjectId { get; set; } = string.Empty; public string ContainerObjectId { get; set; } = string.Empty; }
     
     public class DialogueChoiceData
     {

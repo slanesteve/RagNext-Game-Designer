@@ -83,6 +83,7 @@ namespace RagNextPlayer.Runtime.Models
                 "char.displayPortrait"   => typeof(CharacterDisplayPortraitCommandData),
                 "char.setPortraitMedia"  => typeof(CharacterSetPortraitMediaCommandData),
                 "media.playSound"        => typeof(PlaySoundEffectCommandData),
+                "media.stopSound"        => typeof(StopSoundEffectCommandData),
                 "media.displayMultimedia"=> typeof(DisplayMultimediaCommandData),
                 "general.endGame"        => typeof(EndGameCommandData),
                 "general.promptInput"    => typeof(PromptPlayerInputCommandData),
@@ -93,6 +94,14 @@ namespace RagNextPlayer.Runtime.Models
                 "char.setState"          => typeof(SetCharacterStateCommandData),
                 "general.triggerTurnTick"=> typeof(TriggerTurnTickCommandData),
                 "general.startDialogue"  => typeof(StartDialogueCommandData),
+                "general.addCustomChoice" => typeof(AddCustomChoiceCommandData),
+                "general.clearCustomChoice" => typeof(ClearCustomChoiceCommandData),
+                "general.removeCustomChoice" => typeof(RemoveCustomChoiceCommandData),
+
+                "object.displayDescription" => typeof(ObjectDisplayDescriptionCommandData),
+                "object.moveToCharacter"    => typeof(ObjectMoveToCharacterCommandData),
+                "object.moveToInventory"    => typeof(ObjectMoveToInventoryCommandData),
+                "object.moveInsideObject"   => typeof(ObjectMoveInsideObjectCommandData),
 
                 _ => throw new JsonSerializationException($"Unknown ActionStep $type: '{typeName}'")
             };

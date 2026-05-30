@@ -19,7 +19,7 @@
     <Color x:Key="Secondary">#C19A6B</Color>
     <Color x:Key="Tertiary">#A67B5B</Color>
 
-    <Color x:Key="White">#FFFFFF</Color>
+    <Color x:Key="White">#F5ECD8</Color>
     <Color x:Key="Black">#3E2F23</Color>
     <Color x:Key="OffBlack">#4F3B2C</Color>
 

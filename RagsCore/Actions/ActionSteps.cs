@@ -31,9 +31,14 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
     [JsonDerivedType(typeof(AddObjectToRoomCommand), "room.addObject")]
     [JsonDerivedType(typeof(RemoveObjectFromRoomCommand), "room.removeObject")]
+    [JsonDerivedType(typeof(ObjectDisplayDescriptionCommand), "object.displayDescription")]
+    [JsonDerivedType(typeof(ObjectMoveToCharacterCommand), "object.moveToCharacter")]
+    [JsonDerivedType(typeof(ObjectMoveToInventoryCommand), "object.moveToInventory")]
+    [JsonDerivedType(typeof(ObjectMoveInsideObjectCommand), "object.moveInsideObject")]
     [JsonDerivedType(typeof(DisplayTextCommand), "general.displayText")]
     [JsonDerivedType(typeof(AddCommentCommand), "general.addComment")]
     [JsonDerivedType(typeof(PlaySoundEffectCommand), "media.playSound")]
+    [JsonDerivedType(typeof(StopSoundEffectCommand), "media.stopSound")]
     [JsonDerivedType(typeof(PlayerSetNameCommand), "player.setName")]
     [JsonDerivedType(typeof(PlayerSetDescriptionCommand), "player.setDescription")]
     [JsonDerivedType(typeof(PlayerSetGenderCommand), "player.setGender")]
@@ -159,17 +164,39 @@ namespace RagsCore.Actions
     {
         public string RoomId { get; set; } = string.Empty;
         public string ObjectId { get; set; } = string.Empty;
-        public override string TypeName => "Add object to room";
+        public override string TypeName => "Object: Move to Room";
         public override void Execute(ActionContext ctx)
         {
             var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
             var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
             if (!Guid.TryParse(resolvedRoom, out var rId) || !Guid.TryParse(resolvedObj, out var oId)) return;
 
+            RemoveObjectFromEverywhere(ctx, oId);
+
             var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId);
             if (room is null) return;
             if (!room.ObjectIds.Contains(oId))
                 room.ObjectIds.Add(oId);
+        }
+
+        public static void RemoveObjectFromEverywhere(ActionContext ctx, Guid oId)
+        {
+            foreach (var r in ctx.Game.Rooms)
+            {
+                r.ObjectIds.Remove(oId);
+            }
+            foreach (var c in ctx.Game.Characters)
+            {
+                var item = c.Inventory.FirstOrDefault(i => i.Id == oId);
+                if (item != null) c.Inventory.Remove(item);
+            }
+            var pItem = ctx.Player.Inventory.FirstOrDefault(i => i.Id == oId);
+            if (pItem != null) ctx.Player.Inventory.Remove(pItem);
+            var targetObj = ctx.Game.Objects.FirstOrDefault(o => o.Id == oId);
+            if (targetObj != null)
+            {
+                targetObj.Properties.Remove("ParentContainerId");
+            }
         }
     }
 
@@ -221,6 +248,19 @@ namespace RagsCore.Actions
             ctx.SetVariable("media.lastSoundId", resolved);
             ctx.SetVariable("media.lastSoundVolume", Volume.ToString());
             ctx.SetVariable("media.lastSoundLoop", Loop.ToString().ToLower());
+        }
+    }
+
+    public sealed class StopSoundEffectCommand : GameCommand
+    {
+        public string SoundId { get; set; } = string.Empty;
+        public bool StopAllLooping { get; set; } = false;
+        public override string TypeName => "Media: Stop Sound Effect";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(SoundId, ctx);
+            ctx.SetVariable("media.stopSoundId", resolved);
+            ctx.SetVariable("media.stopAllLooping", StopAllLooping.ToString().ToLower());
         }
     }
 
@@ -711,6 +751,7 @@ namespace RagsCore.Actions
 
     public sealed class PromptPlayerInputCommand : GameCommand
     {
+        public string PromptName { get; set; } = string.Empty;
         public string PromptText { get; set; } = string.Empty;
         public PlayerInputType InputType { get; set; } = PlayerInputType.Text;
         public string CustomOptions { get; set; } = string.Empty;
@@ -718,6 +759,7 @@ namespace RagsCore.Actions
         public override string TypeName => "General: Prompt Player Input";
         public override void Execute(ActionContext ctx)
         {
+            ctx.SetVariable("system.prompt.name", RagsCore.Services.TemplateResolver.Resolve(PromptName, ctx));
             ctx.SetVariable("system.prompt.text", RagsCore.Services.TemplateResolver.Resolve(PromptText, ctx));
             ctx.SetVariable("system.prompt.type", InputType.ToString());
             ctx.SetVariable("system.prompt.options", CustomOptions);
@@ -912,6 +954,7 @@ namespace RagsCore.Actions
 
     public sealed class AddCustomChoiceCommand : GameCommand
     {
+        public string PromptName { get; set; } = string.Empty;
         public string ChoiceText { get; set; } = string.Empty;
         public string VariableName { get; set; } = string.Empty;
         public override string TypeName => "Action: Add Custom Choice";
@@ -923,6 +966,7 @@ namespace RagsCore.Actions
 
     public sealed class ClearCustomChoiceCommand : GameCommand
     {
+        public string PromptName { get; set; } = string.Empty;
         public override string TypeName => "Action: Clear Custom Choice";
         public override void Execute(ActionContext ctx)
         {
@@ -932,10 +976,94 @@ namespace RagsCore.Actions
 
     public sealed class RemoveCustomChoiceCommand : GameCommand
     {
+        public string PromptName { get; set; } = string.Empty;
+        public string ChoiceText { get; set; } = string.Empty;
         public override string TypeName => "Action: Remove Custom Choice";
         public override void Execute(ActionContext ctx)
         {
             // Handled inside target environment runtime
+        }
+    }
+
+    public sealed class ObjectDisplayDescriptionCommand : GameCommand
+    {
+        public string ObjectId { get; set; } = string.Empty;
+        public override string TypeName => "Object: Display Description";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (Guid.TryParse(resolved, out var oId))
+            {
+                var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == oId);
+                if (obj != null)
+                {
+                    ctx.SetVariable("system.lastDisplayedText", RagsCore.Services.TemplateResolver.Resolve(obj.Description, ctx));
+                }
+            }
+        }
+    }
+
+    public sealed class ObjectMoveToCharacterCommand : GameCommand
+    {
+        public string ObjectId { get; set; } = string.Empty;
+        public string CharacterId { get; set; } = string.Empty;
+        public override string TypeName => "Object: Move to Character";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (Guid.TryParse(resolvedObj, out var oId) && Guid.TryParse(resolvedChar, out var cId))
+            {
+                AddObjectToRoomCommand.RemoveObjectFromEverywhere(ctx, oId);
+                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+                if (character != null && !character.Inventory.Any(i => i.Id == oId))
+                {
+                    var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == oId);
+                    if (obj != null)
+                        character.Inventory.Add(obj);
+                }
+            }
+        }
+    }
+
+    public sealed class ObjectMoveToInventoryCommand : GameCommand
+    {
+        public string ObjectId { get; set; } = string.Empty;
+        public override string TypeName => "Object: Move to Inventory";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (Guid.TryParse(resolvedObj, out var oId))
+            {
+                AddObjectToRoomCommand.RemoveObjectFromEverywhere(ctx, oId);
+                if (!ctx.Player.Inventory.Any(i => i.Id == oId))
+                {
+                    var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == oId);
+                    if (obj != null)
+                        ctx.Player.Inventory.Add(obj);
+                }
+            }
+        }
+    }
+
+    public sealed class ObjectMoveInsideObjectCommand : GameCommand
+    {
+        public string ObjectId { get; set; } = string.Empty;
+        public string ContainerObjectId { get; set; } = string.Empty;
+        public override string TypeName => "Object: Move Inside Object";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            var resolvedContainer = RagsCore.Services.TemplateResolver.Resolve(ContainerObjectId, ctx);
+            if (Guid.TryParse(resolvedObj, out var oId) && Guid.TryParse(resolvedContainer, out var containerId))
+            {
+                AddObjectToRoomCommand.RemoveObjectFromEverywhere(ctx, oId);
+                var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == oId);
+                if (obj != null)
+                {
+                    obj.Properties["ParentContainerId"] = containerId.ToString();
+                }
+            }
         }
     }
 }

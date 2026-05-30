@@ -238,31 +238,82 @@ namespace RagNext.ViewModels
         {
             if (p.PropertyType == typeof(bool)) return InputControlType.Checkbox;
             if (p.PropertyType == typeof(int) || p.PropertyType == typeof(double) || p.PropertyType == typeof(float)) return InputControlType.Number;
-            if (p.PropertyType.IsEnum || p.Name == "StoreVariableName" || p.Name == "InputType" || p.PropertyType == typeof(Guid) || p.Name.Contains("Id")) return InputControlType.ComboBox;
-            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName" || p.Name == "SourceName") && 
+
+            var name = p.Name;
+            if (p.PropertyType.IsEnum || 
+                name.Equals("StoreVariableName", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("InputType", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("PromptName", StringComparison.OrdinalIgnoreCase) || 
+                (name.Equals("ChoiceText", StringComparison.OrdinalIgnoreCase) && _target is RemoveCustomChoiceCommand) || 
+                p.PropertyType == typeof(Guid) || 
+                name.EndsWith("Id", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Room", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Object", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Item", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Character", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Media", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Function", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Timer", StringComparison.OrdinalIgnoreCase)) 
+                return InputControlType.ComboBox;
+
+            if ((name.Equals("Name", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("NameA", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("NameB", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("VariableName", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("SourceName", StringComparison.OrdinalIgnoreCase)) && 
                 (p.DeclaringType != null && (p.DeclaringType.Name.Contains("Variable") || p.DeclaringType.Name.Contains("Random") || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType)))) 
                 return InputControlType.ComboBox; 
-            if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
-            if (p.Name.Equals("Gender", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
-            if (p.Name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
-            if (p.Name.Contains("Text", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("Description", StringComparison.OrdinalIgnoreCase)) return InputControlType.TextArea;
+
+            if (name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
+            if (name.Equals("Gender", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
+            if (name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
+            if (name.Contains("Text", StringComparison.OrdinalIgnoreCase) || name.Contains("Description", StringComparison.OrdinalIgnoreCase)) return InputControlType.TextArea;
             return InputControlType.Text;
         }
 
         private InputDataType GetDataType(PropertyInfo p)
         {
-            if (p.Name == "StoreVariableName") return InputDataType.Variable;
-            if (p.Name.Equals("RoomId", StringComparison.OrdinalIgnoreCase) ||
-                p.Name.Equals("DestinationRoomId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Room;
-            if (p.Name.Equals("ObjectId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("ContainerObjectId", StringComparison.OrdinalIgnoreCase)) return InputDataType.GameObject;
-            if (p.Name.Equals("CharacterId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Character;
-            if (p.Name.Equals("ItemId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Item;
-            if (p.Name.Equals("SoundId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("PortraitId", StringComparison.OrdinalIgnoreCase) || p.Name.Equals("MediaId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Media;
-            if (p.Name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputDataType.Operator;
-            if (p.Name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return InputDataType.Direction;
-            if (p.Name.Equals("FunctionId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Function;
-            if (p.Name.Equals("TimerId", StringComparison.OrdinalIgnoreCase)) return InputDataType.Timer;
-            if ((p.Name == "Name" || p.Name == "NameA" || p.Name == "NameB" || p.Name == "VariableName" || p.Name == "SourceName") && 
+            var name = p.Name;
+            if (name.Equals("PromptName", StringComparison.OrdinalIgnoreCase)) return InputDataType.PromptName;
+            if (name.Equals("StoreVariableName", StringComparison.OrdinalIgnoreCase)) return InputDataType.Variable;
+
+            if (name.EndsWith("RoomId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Room", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("DestinationRoomId", StringComparison.OrdinalIgnoreCase)) 
+                return InputDataType.Room;
+
+            if (name.EndsWith("ObjectId", StringComparison.OrdinalIgnoreCase) || 
+                name.EndsWith("ItemId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Object", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Item", StringComparison.OrdinalIgnoreCase)) 
+                return InputDataType.GameObject;
+
+            if (name.EndsWith("CharacterId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Character", StringComparison.OrdinalIgnoreCase)) 
+                return InputDataType.Character;
+
+            if (name.EndsWith("SoundId", StringComparison.OrdinalIgnoreCase) || 
+                name.EndsWith("PortraitId", StringComparison.OrdinalIgnoreCase) || 
+                name.EndsWith("MediaId", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Media", StringComparison.OrdinalIgnoreCase)) 
+                return InputDataType.Media;
+
+            if (name.EndsWith("FunctionId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Function", StringComparison.OrdinalIgnoreCase)) 
+                return InputDataType.Function;
+
+            if (name.EndsWith("TimerId", StringComparison.OrdinalIgnoreCase) || 
+                name.Equals("Timer", StringComparison.OrdinalIgnoreCase)) 
+                return InputDataType.Timer;
+
+            if (name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputDataType.Operator;
+            if (name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return InputDataType.Direction;
+
+            if ((name.Equals("Name", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("NameA", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("NameB", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("VariableName", StringComparison.OrdinalIgnoreCase) || 
+                 name.Equals("SourceName", StringComparison.OrdinalIgnoreCase)) && 
                 (p.DeclaringType != null && (p.DeclaringType.Name.Contains("Variable") || p.DeclaringType.Name.Contains("Random") || typeof(RagsCore.Actions.Condition).IsAssignableFrom(p.DeclaringType)))) 
                 return InputDataType.Variable;
             return InputDataType.String;
@@ -288,8 +339,21 @@ namespace RagNext.ViewModels
                 return;
             }
 
+            if (input.Label.Equals("ChoiceText", StringComparison.OrdinalIgnoreCase) && _target is RemoveCustomChoiceCommand removeCmd)
+            {
+                input.PickerSource = GetCustomChoiceTexts(game, removeCmd.PromptName);
+                if (input.Value != null)
+                {
+                    var valStr = input.Value.ToString();
+                    var match = input.PickerSource.Cast<NamedOption>().FirstOrDefault(x => string.Equals(x.Name, valStr, StringComparison.OrdinalIgnoreCase));
+                    if (match != null) input.Value = match;
+                }
+                return;
+            }
+
             input.PickerSource = input.DataType switch
             {
+                InputDataType.PromptName => GetPromptNames(game),
                 InputDataType.Room => game.Rooms.Cast<object>().ToList(),
                 InputDataType.GameObject or InputDataType.Item => game.Objects.Cast<object>().ToList(),
                 InputDataType.Character => game.Characters.Cast<object>().ToList(),
@@ -412,7 +476,15 @@ namespace RagNext.ViewModels
 
                             if (valToSet != null && p.PropertyType != valToSet.GetType())
                             {
-                                if (p.PropertyType == typeof(Guid) && valToSet is string strGuid && Guid.TryParse(strGuid, out var g))
+                                if (p.PropertyType.IsEnum)
+                                {
+                                    try
+                                    {
+                                        valToSet = Enum.Parse(p.PropertyType, valToSet.ToString()!, true);
+                                    }
+                                    catch {}
+                                }
+                                else if (p.PropertyType == typeof(Guid) && valToSet is string strGuid && Guid.TryParse(strGuid, out var g))
                                 {
                                     valToSet = g;
                                 }
@@ -459,7 +531,8 @@ namespace RagNext.ViewModels
                 label.Equals("SoundIdB", StringComparison.OrdinalIgnoreCase) ||
                 label.Equals("SoundFile", StringComparison.OrdinalIgnoreCase) || 
                 label.Equals("MusicFile", StringComparison.OrdinalIgnoreCase) ||
-                target is PlaySoundEffectCommand)
+                target is PlaySoundEffectCommand ||
+                target is StopSoundEffectCommand)
             {
                 return assets.Where(m => m.Kind == MediaKind.Audio).Cast<object>().ToList();
             }
@@ -483,6 +556,87 @@ namespace RagNext.ViewModels
             }
             
             return assets.Cast<object>().ToList();
+        }
+
+        private System.Collections.Generic.List<object> GetPromptNames(Game game)
+        {
+            var prompts = new System.Collections.Generic.List<PromptPlayerInputCommand>();
+            var choices = new System.Collections.Generic.List<AddCustomChoiceCommand>();
+            CollectAllPromptPlayerInputCommands(prompts, choices);
+
+            return prompts
+                .Select(p => p.PromptName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(name => new NamedOption { Name = name })
+                .Cast<object>()
+                .ToList();
+        }
+
+        private System.Collections.Generic.List<object> GetCustomChoiceTexts(Game game, string targetPromptName)
+        {
+            var prompts = new System.Collections.Generic.List<PromptPlayerInputCommand>();
+            var choices = new System.Collections.Generic.List<AddCustomChoiceCommand>();
+            CollectAllPromptPlayerInputCommands(prompts, choices);
+
+            return choices
+                .Where(c => string.Equals(c.PromptName, targetPromptName, StringComparison.OrdinalIgnoreCase))
+                .Select(c => c.ChoiceText)
+                .Where(txt => !string.IsNullOrWhiteSpace(txt))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(txt => new NamedOption { Name = txt })
+                .Cast<object>()
+                .ToList();
+        }
+
+        private void CollectAllPromptPlayerInputCommands(System.Collections.Generic.List<PromptPlayerInputCommand> prompts, System.Collections.Generic.List<AddCustomChoiceCommand> customChoices)
+        {
+            var game = App.CurrentGame;
+            if (game == null) return;
+
+            var allActions = new System.Collections.Generic.List<RagsCore.Models.Action>();
+            
+            if (game.Player?.Actions != null) allActions.AddRange(game.Player.Actions);
+            foreach (var r in game.Rooms) { if (r.Actions != null) allActions.AddRange(r.Actions); }
+            foreach (var o in game.Objects) { if (o.Actions != null) allActions.AddRange(o.Actions); }
+            foreach (var c in game.Characters) { if (c.Actions != null) allActions.AddRange(c.Actions); }
+            foreach (var f in game.Functions) { allActions.Add(f); }
+
+            foreach (var action in allActions)
+            {
+                if (action.Nodes != null)
+                {
+                    foreach (var node in action.Nodes)
+                    {
+                        TraverseNode(node, prompts, customChoices);
+                    }
+                }
+            }
+        }
+
+        private void TraverseNode(ActionStep node, System.Collections.Generic.List<PromptPlayerInputCommand> prompts, System.Collections.Generic.List<AddCustomChoiceCommand> customChoices)
+        {
+            if (node == null) return;
+
+            if (node is PromptPlayerInputCommand prompt)
+            {
+                prompts.Add(prompt);
+            }
+            else if (node is AddCustomChoiceCommand choice)
+            {
+                customChoices.Add(choice);
+            }
+            else if (node is RagsCore.Actions.Condition cond)
+            {
+                if (cond.TrueBranch != null)
+                {
+                    foreach (var sub in cond.TrueBranch) TraverseNode(sub, prompts, customChoices);
+                }
+                if (cond.FalseBranch != null)
+                {
+                    foreach (var sub in cond.FalseBranch) TraverseNode(sub, prompts, customChoices);
+                }
+            }
         }
     }
 }
