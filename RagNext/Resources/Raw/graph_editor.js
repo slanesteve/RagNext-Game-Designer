@@ -55,49 +55,37 @@ function triggerAutoSave() {
 const fallbackDiscriminators = {
     "actionaddcustomchoice": "general.addCustomChoice",
     "actionclearcustomchoice": "general.clearCustomChoice",
-    "actionremovecustomchoice": "general.removeCustomChoice",
     "characterdisplaydescription": "char.displayDescription",
-    "characterdisplayportrait": "char.displayPortrait",
     "charactermovetoroom": "char.moveToRoom",
     "charactermoveinventorytoplayer": "char.moveInventoryToPlayer",
     "charactermovetoobject": "char.moveToObject",
     "charactersetportraitmedia": "char.setPortraitMedia",
     "charactersetactiontoactiveinactive": "char.setActionActive",
-    "charactersetcustomproperty": "char.setCustomProperty",
-    "charactersetcustompropertyjavascript": "char.setCustomPropertyJs",
+    "charactersetattribute": "char.setAttribute",
     "charactersetdescription": "char.setDescription",
     "charactersetgender": "char.setGender",
     "charactersetdisplayname": "char.setDisplayName",
     "addacomment": "general.addComment",
     "debugtext": "general.debugText",
-    "setragsdatawithjavascript": "general.setRagsDataJs",
     "displaytext": "general.displayText",
     "mediadisplaylayeredpicture": "media.displayLayeredPicture",
     "mediadisplaymultimedia": "media.displayMultimedia",
     "mediasetbackgroundmusic": "media.setBackgroundMusic",
     "mediastopbackgroundmusic": "media.stopBackgroundMusic",
     "mediaplaysoundeffect": "media.playSound",
-    "mediasetmaincompasspicture": "media.setMainCompassPicture",
-    "mediasetupdowncompasspicture": "media.setUpDownCompassPicture",
-    "imageaddlayeredimage": "image.addLayeredImage",
-    "imageclearlayeredimages": "image.clearLayeredImages",
-    "imageremovelayeredimage": "image.removeLayeredImage",
-    "imagereplacelayeredimage": "image.replaceLayeredImage",
-    "itemdisplaydescription": "item.displayDescription",
-    "itemlayeredremove": "item.layeredRemove",
-    "itemlayeredwear": "item.layeredWear",
-    "itemmovetocharacter": "item.moveToChar",
-    "itemmovetoinventory": "item.moveToInventory",
-    "itemmoveinsideobject": "item.moveInsideObject",
+    "itemdisplaydescription": "object.displayDescription",
+    "itemmovetocharacter": "object.moveToCharacter",
+    "itemmovetoinventory": "object.moveToInventory",
+    "itemmoveinsideobject": "object.moveInsideObject",
     "itemmovetoroom": "item.inRoom",
+    "itemsetattribute": "item.setAttribute",
     "playerdisplaydescription": "player.displayDescription",
-    "playersetlayeredportrait": "player.setLayeredPortrait",
     "playermoveinventorytocharacter": "player.moveInventoryToChar",
     "playermoveinventorytoroom": "player.moveInventoryToRoom",
     "playermovetoroom": "player.moveTo",
     "playermovetocharacter": "player.moveToChar",
     "playermovetoobject": "player.moveToObject",
-    "playersetcustomproperty": "player.setCustomProperty",
+    "playersetattribute": "player.setAttribute",
     "playersetdescription": "player.setDescription",
     "playersetname": "player.setName",
     "playersetgender": "player.setGender",
@@ -112,16 +100,16 @@ const fallbackDiscriminators = {
     "statusbarsetvisibleinvisible": "ui.setStatusBarVisible",
     "timerexecutetimer": "timer.executeTimer",
     "timerresettimer": "timer.resetTimer",
-    "timersetcustomproperty": "timer.setCustomProperty",
+    "timersetattribute": "timer.setAttribute",
     "timersettimertoactiveinactive": "timer.setTimerActive",
     "variabledisplaydata": "var.displayData",
     "variableset": "var.set",
-    "variablesetbyuserinput": "general.promptInput",
     "promptplayerinput": "general.promptInput",
     "variablesetnumericrandomly": "var.setRandom",
     "endthegame": "general.endGame",
     "itemopencontainer": "general.openContainer",
-    "itemclosecontainer": "general.closeContainer",
+    "itemclosecontainer": "general.closeContainer"
+};,
     "additionaldatacheck": "general.additionalDataCheck",
     "charactercustompropertycheck": "char.customPropertyCheck",
     "charactergender": "char.gender",
@@ -163,7 +151,16 @@ const propertyMappings = {
     "Variable": ["VariableName", "variableName", "Name", "name", "Variable", "variable"],
     "Text": ["Text", "text"],
     "Amount": ["Amount", "amount"],
-    "Direction": ["Direction", "direction"]
+    "Direction": ["Direction", "direction"],
+    "Item": ["ItemId", "itemId", "Item", "ObjectId", "objectId"],
+    "Container Object": ["ObjectId", "objectId", "ContainerObjectId", "containerObjectId", "ContainerObject", "containerObject"],
+    "Prompt Text": ["PromptText", "promptText"],
+    "Input Type": ["InputType", "inputType"],
+    "Custom Options": ["CustomOptions", "customOptions"],
+    "Store Variable": ["StoreVariableName", "storeVariableName"],
+    "Prompt Name": ["PromptName", "promptName"],
+    "Attribute Name": ["AttributeName", "attributeName"],
+    "Timer": ["TimerId", "timerId", "Timer"]
 };
 
 function getPropertyValue(nodeData, label) {
@@ -1282,7 +1279,9 @@ function addNewCommandNode(x = null, y = null) {
     node.bodyElement.appendChild(fieldContainer);
 
     if (AVAILABLE_COMMANDS.length > 0) {
-        node.data.commandType = AVAILABLE_COMMANDS[0].type;
+        const defaultCmd = AVAILABLE_COMMANDS.find(c => c.type === 'general.displayText') || AVAILABLE_COMMANDS[0];
+        node.data.commandType = defaultCmd.type;
+        select.value = defaultCmd.type;
         refreshCommandFields(node);
     }
 
@@ -1374,7 +1373,7 @@ function refreshCommandFields(node) {
         let inputElement;
         const initialVal = getPropertyValue(node.data, inputSchema.label);
 
-        if (inputSchema.controlType === 'ComboBox' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item') {
+        if (inputSchema.controlType === 'ComboBox' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'PromptName') {
             // Container for both controls
             const fieldWrapper = document.createElement('div');
             fieldWrapper.className = 'toggle-field-wrapper';
@@ -1398,15 +1397,34 @@ function refreshCommandFields(node) {
             else if (inputSchema.dataType === 'Media') optionsList = catalogs.Media || [];
             else if (inputSchema.dataType === 'Function') optionsList = catalogs.Functions || [];
             else if (inputSchema.dataType === 'Timer') optionsList = catalogs.Timers || [];
+            else if (inputSchema.dataType === 'PromptName') {
+                optionsList = [];
+                nodes.forEach(n => {
+                    if (n.type === 'command' && n.data && n.data.commandType === 'general.promptInput') {
+                        const pName = getPropertyValue(n.data, "Prompt Name") || n.data.PromptName;
+                        if (pName) {
+                            optionsList.push({ Id: pName, Name: pName });
+                        }
+                    }
+                });
+                const seen = new Set();
+                optionsList = optionsList.filter(opt => {
+                    if (!opt.Id || seen.has(opt.Id)) return false;
+                    seen.add(opt.Id);
+                    return true;
+                });
+            }
 
             optionsList.forEach(opt => {
                 const o = document.createElement('option');
-                if (inputSchema.dataType === 'Variable') {
-                    o.value = opt.Name;
-                    o.innerText = opt.Name;
+                const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
+                const idVal = opt.Id !== undefined ? opt.Id : opt.id;
+                if (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName') {
+                    o.value = nameVal;
+                    o.innerText = nameVal;
                 } else {
-                    o.value = opt.Id;
-                    o.innerText = opt.Name;
+                    o.value = idVal;
+                    o.innerText = nameVal;
                 }
                 pickerSelect.appendChild(o);
             });
@@ -1416,9 +1434,11 @@ function refreshCommandFields(node) {
             textInput.placeholder = `Enter expression / {this.name}...`;
             textInput.style.width = "100%";
 
-            const existsInOptions = optionsList.some(opt => 
-                inputSchema.dataType === 'Variable' ? opt.Name === initialVal : opt.Id === initialVal
-            );
+            const existsInOptions = optionsList.some(opt => {
+                const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
+                const idVal = opt.Id !== undefined ? opt.Id : opt.id;
+                return (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName') ? nameVal === initialVal : idVal === initialVal;
+            });
             let isExprMode = (initialVal && (initialVal.includes('{') || initialVal.includes('}') || !existsInOptions));
 
             pickerSelect.style.display = isExprMode ? 'none' : 'block';
@@ -1552,8 +1572,61 @@ function clearSelectedNode() {
     }
 }
 
+function getReachableNodeIds() {
+    const reachable = new Set();
+    const startConn = connections.find(c => c.fromPinId === "start_out");
+    if (!startConn) return reachable;
+    
+    const startNode = nodes.find(n => n.id === getNodeIdFromPinId(startConn.toPinId));
+    if (!startNode) return reachable;
+    
+    const queue = [startNode];
+    while (queue.length > 0) {
+        const curr = queue.shift();
+        if (reachable.has(curr.id)) continue;
+        reachable.add(curr.id);
+        
+        if (curr.type === 'command') {
+            const nextPin = connections.find(c => c.fromPinId === `${curr.id}_out`);
+            if (nextPin) {
+                const nextNode = nodes.find(n => n.id === getNodeIdFromPinId(nextPin.toPinId));
+                if (nextNode) queue.push(nextNode);
+            }
+        } else if (curr.type === 'condition') {
+            const truePin = connections.find(c => c.fromPinId === `${curr.id}_true`);
+            if (truePin) {
+                const trueNode = nodes.find(n => n.id === getNodeIdFromPinId(truePin.toPinId));
+                if (trueNode) queue.push(trueNode);
+            }
+            const falsePin = connections.find(c => c.fromPinId === `${curr.id}_false`);
+            if (falsePin) {
+                const falseNode = nodes.find(n => n.id === getNodeIdFromPinId(falsePin.toPinId));
+                if (falseNode) queue.push(falseNode);
+            }
+        } else if (curr.type === 'dialogue') {
+            curr.choices.forEach(c => {
+                const destPin = connections.find(conn => conn.fromPinId === `${c.rowId}_out`);
+                if (destPin) {
+                    const destNode = nodes.find(n => n.id === getNodeIdFromPinId(destPin.toPinId));
+                    if (destNode) queue.push(destNode);
+                }
+            });
+        }
+    }
+    return reachable;
+}
+
 // Bidirectional Sync back to C#
 function saveAndSyncCsharp() {
+    const reachable = getReachableNodeIds();
+    const unreachableCount = nodes.filter(n => !reachable.has(n.id)).length;
+    if (unreachableCount > 0) {
+        const confirmMsg = `You have ${unreachableCount} unconnected node(s) in your graph. If you save, these unconnected nodes will be permanently removed. \n\nClick OK to discard them and save/return, or Cancel to stay and fix them.`;
+        if (!confirm(confirmMsg)) {
+            return "CANCELLED"; // Cancel save
+        }
+    }
+
     const actionDto = serializeGraph();
     const json = JSON.stringify(actionDto);
     const base64 = btoa(unescape(encodeURIComponent(json)));

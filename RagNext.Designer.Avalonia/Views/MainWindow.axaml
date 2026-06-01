@@ -1164,8 +1164,19 @@
                                     <TextBlock Text="🎬 Cinematic Customization" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
                                     
                                     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="200,*">
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Background Image Asset:" VerticalAlignment="Center" Foreground="Gray"/>
-                                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" SelectedValue="{Binding ImageAssetId, Mode=TwoWay}" SelectedValueBinding="{Binding IdString}" HorizontalAlignment="Stretch" Background="#13131F">
+                                        <!-- Image Mode Background Selector -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Background Image Asset:" VerticalAlignment="Center" Foreground="Gray" IsVisible="{Binding Mode, ConverterParameter=ImageAndText, Converter={x:Static ObjectConverters.Equal}}"/>
+                                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashImageAsset, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="#13131F" IsVisible="{Binding Mode, ConverterParameter=ImageAndText, Converter={x:Static ObjectConverters.Equal}}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate x:DataType="models:MediaAsset">
+                                                    <TextBlock Text="{Binding OriginalFileName}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+
+                                        <!-- Video Mode Video Selector -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Background Video Asset:" VerticalAlignment="Center" Foreground="Gray" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.Equal}}"/>
+                                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VideoMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashVideoAsset, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="#13131F" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.Equal}}">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:MediaAsset">
                                                     <TextBlock Text="{Binding OriginalFileName}"/>
@@ -1173,8 +1184,9 @@
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
  
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Dramatic Sound / Music:" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
-                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" SelectedValue="{Binding SoundAssetId, Mode=TwoWay}" SelectedValueBinding="{Binding IdString}" HorizontalAlignment="Stretch" Background="#13131F" Margin="0,10,0,0">
+                                        <!-- Dramatic Sound / Music Selector (Ignored & Hidden in Video Mode) -->
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Dramatic Sound / Music:" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.NotEqual}}"/>
+                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AudioMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashSoundAsset, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="#13131F" Margin="0,10,0,0" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.NotEqual}}">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:MediaAsset">
                                                     <TextBlock Text="{Binding OriginalFileName}"/>
@@ -1247,27 +1259,37 @@
                                     <TextBlock Text="Vertical Alignment (Y):" Foreground="Gray" FontSize="11"/>
                                     <Slider Value="{Binding TextY, Mode=TwoWay}" Minimum="0" Maximum="100"/>
  
-                                    <!-- 16:9 Preview Frame -->
-                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MaxHeight="450">
-                                        <Border Width="1920" Height="1080" Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True">
-                                            <Canvas Width="1920" Height="1080">
-                                                <!-- Dynamically loaded custom background image asset -->
-                                                <Image Width="1920" Height="1080" 
-                                                       Source="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashBackgroundPath, Converter={x:Static views:ImagePathToBitmapConverter.Instance}}" 
-                                                       Stretch="UniformToFill" 
-                                                       Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewImageOpacity}"/>
-                                                
-                                                <!-- Dynamically positioned title text with calculated pixel coords (including transition style offsets) and custom font color -->
-                                                <TextBlock Text="{Binding Text}" 
-                                                           Foreground="{Binding FontColor}" 
-                                                           FontWeight="Bold" 
-                                                           FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewFontSize}" 
-                                                           Canvas.Left="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextLeftWithOffset}" 
-                                                           Canvas.Top="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextTopWithOffset}" 
-                                                           Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextOpacity}"/>
-                                            </Canvas>
-                                        </Border>
-                                    </Viewbox>
+                                    <!-- Image Mode Preview: Viewbox with absolute layout -->
+                                     <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MaxHeight="450"
+                                              IsVisible="{Binding !$parent[Window].((vm:MainWindowViewModel)DataContext).IsSplashVideoMode}">
+                                         <Border Width="1920" Height="1080" Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True">
+                                             <Canvas Width="1920" Height="1080">
+                                                 <!-- Image Mode: Dynamically loaded custom background image asset -->
+                                                 <Image Width="1920" Height="1080" 
+                                                        Source="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashBackgroundPath, Converter={x:Static views:ImagePathToBitmapConverter.Instance}}" 
+                                                        Stretch="UniformToFill" 
+                                                        Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewImageOpacity}"/>
+                                                 
+                                                 <!-- Image Mode Text Overlay: Only visible when NOT video mode -->
+                                                 <TextBlock Text="{Binding Text}" 
+                                                            Foreground="{Binding FontColor}" 
+                                                            FontWeight="Bold" 
+                                                            FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewFontSize}" 
+                                                            Canvas.Left="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextLeftWithOffset}" 
+                                                            Canvas.Top="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextTopWithOffset}" 
+                                                            Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextOpacity}"/>
+                                             </Canvas>
+                                         </Border>
+                                     </Viewbox>
+
+                                     <!-- Video Mode Preview: Dedicated 16:9 native browser rendering to prevent layout overflow -->
+                                     <Panel x:Name="SplashPreviewParentPanel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="200" MaxHeight="450"
+                                            IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsSplashVideoPreviewVisible}">
+                                         <Border x:Name="SplashPreviewContainer" Width="640" Height="360" Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                             <wv:NativeWebView x:Name="SplashPreviewWebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                                               IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsSplashVideoPreviewVisible}"/>
+                                         </Border>
+                                     </Panel>
                                     
                                     <Button Content="Preview Transition Sequence" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewTransitionCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="12,8" FontSize="13"/>
                                 </StackPanel>
@@ -1322,31 +1344,14 @@
                                         <!-- Image Preview -->
                                         <Image Source="{Binding SelectedFilePath, Converter={x:Static views:ImagePathToBitmapConverter.Instance}}" IsVisible="{Binding IsSelectedImage}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         
-                                        <!-- Audio / Video / Fallback details -->
-                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" IsVisible="{Binding HasSelectedFile}">
-                                            <StackPanel IsVisible="{Binding IsSelectedAudio}" Spacing="12">
-                                                <TextBlock Text="🔊" FontSize="48" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="{Binding Selected.Name}" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="Audio Track Loaded" Foreground="Gray" HorizontalAlignment="Center" FontSize="12"/>
-                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,10,0,0">
-                                                    <Button Content="▶ Play" Command="{Binding PlaySelectedCommand}" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="14,6"/>
-                                                    <Button Content="⏹ Stop" Command="{Binding StopSelectedCommand}" Background="#2B2B3A" Foreground="White" FontSize="11" Padding="14,6"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <StackPanel IsVisible="{Binding IsSelectedVideo}" Spacing="12">
-                                                <TextBlock Text="🎞️" FontSize="48" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="{Binding Selected.Name}" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="Video Track Loaded" Foreground="Gray" HorizontalAlignment="Center" FontSize="12"/>
-                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,10,0,0">
-                                                    <Button Content="▶ Play" Command="{Binding PlaySelectedCommand}" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="14,6"/>
-                                                    <Button Content="⏹ Stop" Command="{Binding StopSelectedCommand}" Background="#2B2B3A" Foreground="White" FontSize="11" Padding="14,6"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <StackPanel IsVisible="{Binding IsSelectedFallback}" Spacing="12">
-                                                <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="{Binding Selected.Name}" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="Binary/Other Media Format" Foreground="Gray" HorizontalAlignment="Center" FontSize="12"/>
-                                            </StackPanel>
+                                        <!-- WebView HTML5 Player for Audio/Video in Main Media Catalog Tab -->
+                                        <wv:NativeWebView x:Name="TabPreviewWebView" IsVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="8"/>
+
+                                        <!-- Fallback details (for none of the above) -->
+                                        <StackPanel IsVisible="{Binding IsSelectedFallback}" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12">
+                                            <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Selected.Name}" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                                            <TextBlock Text="Binary/Other Media Format" Foreground="Gray" HorizontalAlignment="Center" FontSize="12"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>

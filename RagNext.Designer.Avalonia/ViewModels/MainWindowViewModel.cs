@@ -42,6 +42,24 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     PublishVersion = value?.Version ?? "1.0.0";
                     if (value != null)
                     {
+                        // Self-healing: Ensure Kind is correctly resolved for legacy project files
+                        foreach (var asset in value.MediaAssets)
+                        {
+                            if (asset.Kind == MediaKind.Other)
+                            {
+                                var ext = Path.GetExtension(asset.RelativePath ?? asset.OriginalFileName)?.ToLowerInvariant();
+                                if (!string.IsNullOrEmpty(ext))
+                                {
+                                    if (ext == ".mp4" || ext == ".mov" || ext == ".avi")
+                                        asset.Kind = MediaKind.Video;
+                                    else if (ext == ".mp3" || ext == ".wav")
+                                        asset.Kind = MediaKind.Audio;
+                                    else if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".webp")
+                                        asset.Kind = MediaKind.Image;
+                                }
+                            }
+                        }
+
                         if (!string.IsNullOrEmpty(Preferences?.LastPublishDirectory))
                         {
                             PublishDestination = Preferences.LastPublishDirectory;
@@ -52,15 +70,39 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             PublishDestination = Path.Combine(docs, "RagNext_Published");
                         }
 
+                        value.MediaAssets.CollectionChanged += (sender, args) =>
+                        {
+                            OnPropertyChanged(nameof(VideoMediaAssets));
+                            OnPropertyChanged(nameof(ImageMediaAssets));
+                            OnPropertyChanged(nameof(AudioMediaAssets));
+                        };
+
                         if (value.SplashScreen != null)
                         {
                             value.SplashScreen.PropertyChanged += (sender, args) =>
                             {
-                                if (args.PropertyName == nameof(SplashScreenSettings.ImageAssetId))
+                                if (args.PropertyName == nameof(SplashScreenSettings.ImageAssetId) ||
+                                    args.PropertyName == nameof(SplashScreenSettings.VideoAssetId) ||
+                                    args.PropertyName == nameof(SplashScreenSettings.SoundAssetId) ||
+                                    args.PropertyName == nameof(SplashScreenSettings.Mode) ||
+                                    args.PropertyName == nameof(SplashScreenSettings.Text) ||
+                                    args.PropertyName == nameof(SplashScreenSettings.FontColor) ||
+                                    args.PropertyName == nameof(SplashScreenSettings.FontSize) ||
+                                    args.PropertyName == nameof(SplashScreenSettings.TextX) ||
+                                    args.PropertyName == nameof(SplashScreenSettings.TextY))
                                 {
                                     OnPropertyChanged(nameof(SplashBackgroundPath));
+                                    OnPropertyChanged(nameof(IsSplashVideoMode));
+                                    OnPropertyChanged(nameof(IsSplashVideoPreviewVisible));
+                                    OnPropertyChanged(nameof(SelectedSplashImageAsset));
+                                    OnPropertyChanged(nameof(SelectedSplashVideoAsset));
+                                    OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                                    
+                                    // Auto-save changes immediately!
+                                    _ = SaveGameAsync();
                                 }
-                                else if (args.PropertyName == nameof(SplashScreenSettings.TextX))
+                                
+                                if (args.PropertyName == nameof(SplashScreenSettings.TextX))
                                 {
                                     OnPropertyChanged(nameof(SplashPreviewTextLeft));
                                     OnPropertyChanged(nameof(SplashPreviewTextLeftWithOffset));
@@ -78,6 +120,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         }
                     }
                     OnPropertyChanged(nameof(SplashBackgroundPath));
+                    OnPropertyChanged(nameof(IsSplashVideoMode));
+                    OnPropertyChanged(nameof(IsSplashVideoPreviewVisible));
+                    OnPropertyChanged(nameof(SelectedSplashImageAsset));
+                    OnPropertyChanged(nameof(SelectedSplashVideoAsset));
+                    OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                    OnPropertyChanged(nameof(VideoMediaAssets));
+                    OnPropertyChanged(nameof(ImageMediaAssets));
+                    OnPropertyChanged(nameof(AudioMediaAssets));
                     OnPropertyChanged(nameof(SplashPreviewTextLeft));
                     OnPropertyChanged(nameof(SplashPreviewTextLeftWithOffset));
                     OnPropertyChanged(nameof(SplashPreviewTextTop));
@@ -152,6 +202,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     // Reset editing state on navigation change
                     IsVisualEditing = false;
                     ActiveAction = null;
+                    OnPropertyChanged(nameof(IsSplashVideoPreviewVisible));
                 }
             }
         }
@@ -209,20 +260,75 @@ namespace RagNext.Designer.Avalonia.ViewModels
             {
                 var game = CurrentGame;
                 var splash = game?.SplashScreen;
-                if (splash != null && !string.IsNullOrEmpty(splash.ImageAssetId))
+                if (splash != null)
                 {
-                    if (Guid.TryParse(splash.ImageAssetId, out var id))
+                    string assetId = splash.Mode == "Video" ? splash.VideoAssetId : splash.ImageAssetId;
+                    if (!string.IsNullOrEmpty(assetId))
                     {
-                        var asset = game.MediaAssets.FirstOrDefault(a => a.Id == id);
-                        if (asset != null)
+                        if (Guid.TryParse(assetId, out var id))
                         {
-                            return new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, asset);
+                            var asset = game.MediaAssets.FirstOrDefault(a => a.Id == id);
+                            if (asset != null)
+                            {
+                                return new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, asset);
+                            }
                         }
                     }
                 }
                 return string.Empty;
             }
         }
+
+        public bool IsSplashVideoMode => CurrentGame?.SplashScreen?.Mode == "Video";
+        public bool IsSplashVideoPreviewVisible => IsSplashVideoMode && (ActiveView == "SplashScreen" || ActiveView == "Player");
+
+        public MediaAsset? SelectedSplashImageAsset
+        {
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.ImageAssetId);
+            set
+            {
+                if (CurrentGame?.SplashScreen != null)
+                {
+                    CurrentGame.SplashScreen.ImageAssetId = value?.IdString ?? string.Empty;
+                    OnPropertyChanged(nameof(SelectedSplashImageAsset));
+                    OnPropertyChanged(nameof(SplashBackgroundPath));
+                }
+            }
+        }
+
+        public MediaAsset? SelectedSplashVideoAsset
+        {
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.VideoAssetId);
+            set
+            {
+                if (CurrentGame?.SplashScreen != null)
+                {
+                    CurrentGame.SplashScreen.VideoAssetId = value?.IdString ?? string.Empty;
+                    OnPropertyChanged(nameof(SelectedSplashVideoAsset));
+                    OnPropertyChanged(nameof(SplashBackgroundPath));
+                }
+            }
+        }
+
+        public MediaAsset? SelectedSplashSoundAsset
+        {
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.SoundAssetId);
+            set
+            {
+                if (CurrentGame?.SplashScreen != null)
+                {
+                    CurrentGame.SplashScreen.SoundAssetId = value?.IdString ?? string.Empty;
+                    OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                }
+            }
+        }
+
+        public IEnumerable<MediaAsset> VideoMediaAssets => CurrentGame?.MediaAssets.Where(a => a.Kind == MediaKind.Video) ?? Enumerable.Empty<MediaAsset>();
+        public IEnumerable<MediaAsset> ImageMediaAssets => CurrentGame?.MediaAssets.Where(a => a.Kind == MediaKind.Image) ?? Enumerable.Empty<MediaAsset>();
+        public IEnumerable<MediaAsset> AudioMediaAssets => CurrentGame?.MediaAssets.Where(a => a.Kind == MediaKind.Audio) ?? Enumerable.Empty<MediaAsset>();
+
+        public Func<string, double, double, double, Task>? PlaySplashVideoPreviewTransition { get; set; }
+        public System.Action? StopSplashVideoPreview { get; set; }
 
         private double _splashPreviewImageOpacity = 1.0;
         public double SplashPreviewImageOpacity
@@ -530,11 +636,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 double fadeOut = Math.Max(0.1, splash.FadeOutDuration);
                 string style = splash.TransitionStyle ?? "Fade";
 
+                if (IsSplashVideoMode && PlaySplashVideoPreviewTransition != null)
+                {
+                    await PlaySplashVideoPreviewTransition(style, fadeIn, hold, fadeOut);
+                    // Wait for the duration of the transition to complete
+                    await Task.Delay((int)((fadeIn + hold + fadeOut) * 1000));
+                    StopSplashVideoPreview?.Invoke();
+                    _isPlayingSplashPreview = false;
+                    return;
+                }
+
                 var rnd = new Random();
 
                 // Resolve Selected Audio File Path
                 string? soundPath = null;
-                if (!string.IsNullOrEmpty(splash.SoundAssetId) && Guid.TryParse(splash.SoundAssetId, out var sGuid))
+                if (splash.Mode != "Video" && !string.IsNullOrEmpty(splash.SoundAssetId) && Guid.TryParse(splash.SoundAssetId, out var sGuid))
                 {
                     var asset = CurrentGame.MediaAssets.FirstOrDefault(a => a.Id == sGuid);
                     if (asset != null)

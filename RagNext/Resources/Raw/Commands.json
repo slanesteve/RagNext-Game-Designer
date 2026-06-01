@@ -5,6 +5,11 @@
       "category": "Action",
       "inputs": [
         {
+          "label": "Prompt Name",
+          "controlType": "ComboBox",
+          "dataType": "PromptName"
+        },
+        {
           "label": "Choice Text",
           "controlType": "Text",
           "dataType": "String"
@@ -19,14 +24,14 @@
     {
       "name": "Action: Clear Custom Choice",
       "category": "Action",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Prompt Name",
+          "controlType": "ComboBox",
+          "dataType": "PromptName"
+        }
+      ]
     },
-    {
-      "name": "Action: Remove Custom Choice",
-      "category": "Action",
-      "inputs": []
-    },
-
     {
       "name": "Character: Display Description",
       "category": "Character",
@@ -35,22 +40,6 @@
           "label": "Character",
           "controlType": "ComboBox",
           "dataType": "Character"
-        }
-      ]
-    },
-    {
-      "name": "Character: Display Portrait",
-      "category": "Character",
-      "inputs": [
-        {
-          "label": "Character",
-          "controlType": "ComboBox",
-          "dataType": "Character"
-        },
-        {
-          "label": "Portrait Media",
-          "controlType": "ComboBox",
-          "dataType": "Media"
         }
       ]
     },
@@ -130,28 +119,22 @@
       ]
     },
     {
-      "name": "Character: Set Custom Property",
+      "name": "Character: Set Attribute",
       "category": "Character",
       "inputs": [
         {
-          "label": "Property Name",
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
+          "label": "Attribute Name",
           "controlType": "Text",
           "dataType": "String"
         },
         {
           "label": "Value",
           "controlType": "Text",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
-      "name": "Character: Set Custom Property (JavaScript)",
-      "category": "Character",
-      "inputs": [
-        {
-          "label": "Script",
-          "controlType": "TextArea",
           "dataType": "String"
         }
       ]
@@ -189,7 +172,6 @@
         }
       ]
     },
-
     {
       "name": "Add A Comment",
       "category": "General",
@@ -213,17 +195,6 @@
       ]
     },
     {
-      "name": "Set RAGS Data With JavaScript",
-      "category": "General",
-      "inputs": [
-        {
-          "label": "Script",
-          "controlType": "TextArea",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
       "name": "Display Text",
       "category": "General",
       "inputs": [
@@ -234,7 +205,6 @@
         }
       ]
     },
-
     {
       "name": "Media: Display Layered Picture",
       "category": "Media",
@@ -290,44 +260,6 @@
       ]
     },
     {
-      "name": "Media: Set Main Compass Picture",
-      "category": "Media",
-      "inputs": []
-    },
-    {
-      "name": "Media: Set Up/Down Compass Picture",
-      "category": "Media",
-      "inputs": []
-    },
-
-    {
-      "name": "Image: Add Layered Image",
-      "category": "Image",
-      "inputs": [
-        {
-          "label": "Image File",
-          "controlType": "ComboBox",
-          "dataType": "Media"
-        }
-      ]
-    },
-    {
-      "name": "Image: Clear Layered Images",
-      "category": "Image",
-      "inputs": []
-    },
-    {
-      "name": "Image: Remove Layered Image",
-      "category": "Image",
-      "inputs": []
-    },
-    {
-      "name": "Image: Replace Layered Image",
-      "category": "Image",
-      "inputs": []
-    },
-
-    {
       "name": "Item: Display Description",
       "category": "Item",
       "inputs": [
@@ -337,16 +269,6 @@
           "dataType": "Item"
         }
       ]
-    },
-    {
-      "name": "Item: Layered Remove",
-      "category": "Item",
-      "inputs": []
-    },
-    {
-      "name": "Item: Layered Wear",
-      "category": "Item",
-      "inputs": []
     },
     {
       "name": "Item: Move To Character",
@@ -380,14 +302,29 @@
         }
       ]
     },
-
     {
-      "name": "Player: Display Description",
-      "category": "Player",
-      "inputs": []
+      "name": "Item: Set Attribute",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        },
+        {
+          "label": "Attribute Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
     },
     {
-      "name": "Player: Set Layered Portrait",
+      "name": "Player: Display Description",
       "category": "Player",
       "inputs": []
     },
@@ -417,11 +354,11 @@
       "inputs": []
     },
     {
-      "name": "Player: Set Custom Property",
+      "name": "Player: Set Attribute",
       "category": "Player",
       "inputs": [
         {
-          "label": "Property",
+          "label": "Attribute Name",
           "controlType": "Text",
           "dataType": "String"
         },
@@ -476,7 +413,6 @@
         }
       ]
     },
-
     {
       "name": "Room: Display Description",
       "category": "Room",
@@ -546,7 +482,6 @@
         }
       ]
     },
-
     {
       "name": "StatusBar: Set Visible/Invisible",
       "category": "UI",
@@ -558,7 +493,6 @@
         }
       ]
     },
-
     {
       "name": "Timer: Execute Timer",
       "category": "Timer",
@@ -570,9 +504,25 @@
       "inputs": []
     },
     {
-      "name": "Timer: Set Custom Property",
+      "name": "Timer: Set Attribute",
       "category": "Timer",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Timer",
+          "controlType": "ComboBox",
+          "dataType": "Timer"
+        },
+        {
+          "label": "Attribute Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
     },
     {
       "name": "Timer: Set Timer To Active/Inactive",
@@ -585,7 +535,6 @@
         }
       ]
     },
-
     {
       "name": "Variable: Display Data",
       "category": "Variable",
@@ -608,20 +557,14 @@
       ]
     },
     {
-      "name": "Variable: Set By User Input",
-      "category": "Variable",
-      "inputs": [
-        {
-          "label": "Prompt",
-          "controlType": "Text",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
       "name": "Prompt Player Input",
       "category": "General",
       "inputs": [
+        {
+          "label": "Prompt Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
         {
           "label": "Prompt Text",
           "controlType": "TextArea",
@@ -660,7 +603,6 @@
         }
       ]
     },
-
     {
       "name": "End The Game",
       "category": "System",

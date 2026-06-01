@@ -206,6 +206,11 @@ namespace RagNextPlayer.Runtime.Models
     public class ObjectMoveToInventoryCommandData    : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class ObjectMoveInsideObjectCommandData   : CommandData { public string ObjectId { get; set; } = string.Empty; public string ContainerObjectId { get; set; } = string.Empty; }
     
+    public class SetCharacterAttributeCommandData    : CommandData { public string CharacterId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
+    public class SetPlayerAttributeCommandData       : CommandData { public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
+    public class SetTimerAttributeCommandData        : CommandData { public string TimerId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
+    public class SetItemAttributeCommandData         : CommandData { public string ItemId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
+    
     public class DialogueChoiceData
     {
         public string Text { get; set; } = string.Empty;

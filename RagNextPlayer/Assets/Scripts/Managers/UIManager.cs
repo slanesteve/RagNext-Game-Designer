@@ -438,10 +438,54 @@ namespace RagNextPlayer.Managers
                     else _videoPlayer.url = url;
 
                     _splashScreen.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
-                    if (titleLabel != null) titleLabel.style.display = DisplayStyle.None;
+                    
+                    // Customize Overlay Text block in Video Mode
+                    if (titleLabel != null)
+                    {
+                        titleLabel.text = settings.Text;
+                        titleLabel.style.display = DisplayStyle.Flex;
+                        titleLabel.style.position = Position.Absolute;
+                        titleLabel.style.opacity = 1f;
+                        titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                        titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
 
-                    _splashScreen.style.opacity = 1f;
+                        // Absolute Positioning from percentages
+                        titleLabel.style.left = Length.Percent((float)settings.TextX);
+                        titleLabel.style.top = Length.Percent((float)settings.TextY);
+
+                        if (double.TryParse(settings.FontSize.ToString(), out var sizeVal))
+                        {
+                            titleLabel.style.fontSize = (float)sizeVal;
+                        }
+
+                        if (ColorUtility.TryParseHtmlString(settings.FontColor, out var clr))
+                        {
+                            titleLabel.style.color = clr;
+                        }
+                        else
+                        {
+                            titleLabel.style.color = Color.white;
+                        }
+                    }
+
+                    _splashScreen.style.opacity = 0f;
+                    if (titleLabel != null) titleLabel.style.opacity = 0f;
                     _videoPlayer.Play();
+
+                    // Smooth cinematic Fade In over FadeInDuration
+                    float elapsedIn = 0f;
+                    float fadeInDuration = (float)settings.FadeInDuration;
+                    if (fadeInDuration < 0.1f) fadeInDuration = 0.1f;
+                    while (elapsedIn < fadeInDuration)
+                    {
+                        elapsedIn += UnityEngine.Time.deltaTime;
+                        float t = Mathf.Clamp01(elapsedIn / fadeInDuration);
+                        if (_splashScreen != null) _splashScreen.style.opacity = t;
+                        if (titleLabel != null) titleLabel.style.opacity = t;
+                        yield return null;
+                    }
+                    if (_splashScreen != null) _splashScreen.style.opacity = 1f;
+                    if (titleLabel != null) titleLabel.style.opacity = 1f;
 
                     // Wait until video starts and then finishes
                     yield return new UnityEngine.WaitForSeconds(0.5f);

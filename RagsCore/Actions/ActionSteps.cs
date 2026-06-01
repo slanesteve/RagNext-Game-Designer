@@ -68,6 +68,10 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(AddCustomChoiceCommand), "general.addCustomChoice")]
     [JsonDerivedType(typeof(ClearCustomChoiceCommand), "general.clearCustomChoice")]
     [JsonDerivedType(typeof(RemoveCustomChoiceCommand), "general.removeCustomChoice")]
+    [JsonDerivedType(typeof(SetCharacterAttributeCommand), "char.setAttribute")]
+    [JsonDerivedType(typeof(SetPlayerAttributeCommand), "player.setAttribute")]
+    [JsonDerivedType(typeof(SetTimerAttributeCommand), "timer.setAttribute")]
+    [JsonDerivedType(typeof(SetItemAttributeCommand), "item.setAttribute")]
     public abstract class ActionStep
     {
         public abstract ActionStepKind Kind { get; }
@@ -949,6 +953,76 @@ namespace RagsCore.Actions
             if (character is not null)
             {
                 character.Properties["State"] = State;
+            }
+        }
+    }
+
+    public sealed class SetCharacterAttributeCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string AttributeName { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public override string TypeName => "Character: Set Attribute";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            if (!Guid.TryParse(resolvedChar, out var charId)) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+            if (character is not null)
+            {
+                CustomAttribute.SetAttribute(AttributeName, resolvedVal, character.Attributes);
+            }
+        }
+    }
+
+    public sealed class SetPlayerAttributeCommand : GameCommand
+    {
+        public string AttributeName { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public override string TypeName => "Player: Set Attribute";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            CustomAttribute.SetAttribute(AttributeName, resolvedVal, ctx.Player.Attributes);
+        }
+    }
+
+    public sealed class SetTimerAttributeCommand : GameCommand
+    {
+        public string TimerId { get; set; } = string.Empty;
+        public string AttributeName { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public override string TypeName => "Timer: Set Attribute";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedTimer = RagsCore.Services.TemplateResolver.Resolve(TimerId, ctx);
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            var timer = ctx.Game.Timers.FirstOrDefault(t => string.Equals(t.Name, resolvedTimer, StringComparison.OrdinalIgnoreCase));
+            if (timer is not null)
+            {
+                CustomAttribute.SetAttribute(AttributeName, resolvedVal, timer.Attributes);
+            }
+        }
+    }
+
+    public sealed class SetItemAttributeCommand : GameCommand
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public string AttributeName { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public override string TypeName => "Item: Set Attribute";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedItem = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            if (!Guid.TryParse(resolvedItem, out var itemId)) return;
+
+            var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == itemId);
+            if (obj is not null)
+            {
+                CustomAttribute.SetAttribute(AttributeName, resolvedVal, obj.Attributes);
             }
         }
     }

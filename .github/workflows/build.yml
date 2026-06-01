@@ -1,0 +1,114 @@
+name: Build & Package RagNext Designer Distributions
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows x64 Distribution
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Configure NuGet Cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Build & Publish Standalone Windows x64
+      shell: pwsh
+      run: |
+        # 1. Temporarily target net9.0 only to bypass mobile Mono restores
+        (Get-Content RagsCore\RagsCore.csproj) -replace '<TargetFrameworks>.*</TargetFrameworks>', '<TargetFramework>net9.0</TargetFramework>' | Set-Content RagsCore\RagsCore.csproj
+        
+        # 2. Run publish in Single-File ReadyToRun format
+        Remove-Item -Recurse -Force Publish\Designer-Windows -ErrorAction SilentlyContinue
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o Publish/Designer-Windows
+        
+        # 3. Deploy WebAssets and Templates
+        New-Item -ItemType Directory -Force Publish\Designer-Windows\WebAssets
+        Copy-Item -Recurse -Force RagNext.Designer.Avalonia\WebAssets\* Publish\Designer-Windows\WebAssets\
+        if (Test-Path Templates) {
+          New-Item -ItemType Directory -Force Publish\Designer-Windows\Templates
+          Copy-Item -Recurse -Force Templates\* Publish\Designer-Windows\Templates\
+        }
+
+        # 4. Restore RagsCore back to multi-targeting
+        (Get-Content RagsCore\RagsCore.csproj) -replace '<TargetFramework>net9.0</TargetFramework>', '<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0</TargetFrameworks>' | Set-Content RagsCore\RagsCore.csproj
+
+    - name: Compress Windows Distribution
+      shell: pwsh
+      run: |
+        Compress-Archive -Path Publish\Designer-Windows\* -DestinationPath Publish\RagNext_Designer_Windows_x64.zip -Force
+
+    - name: Upload Windows Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RagNext_Designer_Windows_x64
+        path: Publish/RagNext_Designer_Windows_x64.zip
+        retention-days: 14
+
+  build-mac:
+    name: Build macOS Arm64 Distribution
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Configure NuGet Cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Build & Publish Standalone macOS Arm64
+      run: |
+        # 1. Temporarily target net9.0 only to bypass mobile Mono restores
+        sed -i '' 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
+        
+        # 2. Run publish in Single-File ReadyToRun format
+        rm -rf Publish/Designer-Mac
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o Publish/Designer-Mac
+        
+        # 3. Deploy WebAssets and Templates
+        mkdir -p Publish/Designer-Mac/WebAssets
+        cp -R RagNext.Designer.Avalonia/WebAssets/* Publish/Designer-Mac/WebAssets/
+        if [ -d "Templates" ]; then
+          mkdir -p Publish/Designer-Mac/Templates
+          cp -R Templates/* Publish/Designer-Mac/Templates/
+        fi
+
+        # 4. Restore RagsCore back to multi-targeting
+        sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
+
+    - name: Compress macOS Distribution
+      run: |
+        cd Publish/Designer-Mac
+        zip -r ../RagNext_Designer_Mac_Arm64.zip *
+
+    - name: Upload macOS Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RagNext_Designer_Mac_Arm64
+        path: Publish/RagNext_Designer_Mac_Arm64.zip
+        retention-days: 14

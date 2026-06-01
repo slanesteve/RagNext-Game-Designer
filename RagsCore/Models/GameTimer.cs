@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 
 namespace RagsCore.Models
 {
@@ -15,5 +16,7 @@ namespace RagsCore.Models
 
         private bool _isRepeating = true;
         public bool IsRepeating { get => _isRepeating; set => SetProperty(ref _isRepeating, value); }
+
+        public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
     }
 }

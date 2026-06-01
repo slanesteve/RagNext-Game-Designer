@@ -62,12 +62,31 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 return await ConfirmDialog.ShowAsync(this, title, message);
             };
+
+            // Responsive sizing subscription to prevent native airspace overlap/spillout
+            SplashPreviewParentPanel.SizeChanged += OnSplashPreviewParentPanelSizeChanged;
         }
 
         private void OnDataContextChanged(object? sender, EventArgs e)
         {
             if (DataContext is MainWindowViewModel vm)
             {
+                vm.PlaySplashVideoPreviewTransition = async (style, fadeIn, hold, fadeOut) =>
+                {
+                    if (SplashPreviewWebView != null)
+                    {
+                        await SplashPreviewWebView.InvokeScript($"if (typeof playTransition === 'function') {{ playTransition('{style}', {fadeIn}, {hold}, {fadeOut}); }}");
+                    }
+                };
+
+                vm.StopSplashVideoPreview = () =>
+                {
+                    if (SplashPreviewWebView != null)
+                    {
+                        _ = SplashPreviewWebView.InvokeScript("var video = document.querySelector('video'); if (video) { video.pause(); video.currentTime = 0; }");
+                    }
+                };
+
                 vm.PropertyChanged += (s, ev) =>
                 {
                     if (ev.PropertyName == nameof(MainWindowViewModel.IsVisualEditing))
@@ -94,6 +113,14 @@ namespace RagNext.Designer.Avalonia.Views
                             if (CharDetailsScrollViewer != null) CharDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
                             if (ObjectDetailsScrollViewer != null) ObjectDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
                         }, global::Avalonia.Threading.DispatcherPriority.Loaded);
+
+                        UpdateSplashVideoPreview(vm);
+                    }
+                    else if (ev.PropertyName == nameof(MainWindowViewModel.SplashBackgroundPath) ||
+                             ev.PropertyName == nameof(MainWindowViewModel.IsSplashVideoMode) ||
+                             ev.PropertyName == nameof(MainWindowViewModel.IsSplashVideoPreviewVisible))
+                    {
+                        UpdateSplashVideoPreview(vm);
                     }
                 };
 
@@ -265,13 +292,18 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        public async void OnSyncGraphClicked(object sender, RoutedEventArgs e)
+         public async void OnSyncGraphClicked(object sender, RoutedEventArgs e)
         {
             if (DataContext is not MainWindowViewModel vm || vm.CurrentGame == null || vm.ActiveAction == null) return;
 
             try
             {
                 var base64Json = await CanvasWebView.InvokeScript("saveAndSyncCsharp()");
+                if (base64Json == "CANCELLED")
+                {
+                    return; // User cancelled saving! Keep visual editor open!
+                }
+
                 if (!string.IsNullOrEmpty(base64Json) && base64Json != "undefined")
                 {
                     await SyncGraphData(base64Json);
@@ -1011,7 +1043,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             try
             {
-                if (PreviewWebView == null) return;
+                if (PreviewWebView == null && TabPreviewWebView == null) return;
 
                 if ((mediaVm.IsSelectedAudio || mediaVm.IsSelectedVideo) && !string.IsNullOrEmpty(mediaVm.SelectedFilePath))
                 {
@@ -1065,13 +1097,31 @@ namespace RagNext.Designer.Avalonia.Views
 </html>";
 
                     File.WriteAllText(tempHtmlPath, htmlContent, Encoding.UTF8);
-                    PreviewWebView.Source = new Uri(tempHtmlPath);
-                    PreviewWebView.IsVisible = true;
+                    
+                    var playerUri = new Uri(tempHtmlPath);
+                    if (PreviewWebView != null)
+                    {
+                        PreviewWebView.Source = playerUri;
+                        PreviewWebView.IsVisible = true;
+                    }
+                    if (TabPreviewWebView != null)
+                    {
+                        TabPreviewWebView.Source = playerUri;
+                        TabPreviewWebView.IsVisible = true;
+                    }
                 }
                 else
                 {
-                    PreviewWebView.IsVisible = false;
-                    PreviewWebView.Source = new Uri("about:blank");
+                    if (PreviewWebView != null)
+                    {
+                        PreviewWebView.IsVisible = false;
+                        PreviewWebView.Source = new Uri("about:blank");
+                    }
+                    if (TabPreviewWebView != null)
+                    {
+                        TabPreviewWebView.IsVisible = false;
+                        TabPreviewWebView.Source = new Uri("about:blank");
+                    }
                 }
             }
             catch (Exception ex)
@@ -1121,6 +1171,279 @@ namespace RagNext.Designer.Avalonia.Views
             if (DataContext is MainWindowViewModel vm)
             {
                 vm.SaveGameCommand.Execute(null);
+            }
+        }
+
+        private void UpdateSplashVideoPreview(MainWindowViewModel vm)
+        {
+            try
+            {
+                if (SplashPreviewWebView == null) return;
+
+                if (vm.IsSplashVideoPreviewVisible && !string.IsNullOrEmpty(vm.SplashBackgroundPath))
+                {
+                    var filePath = vm.SplashBackgroundPath;
+                    
+                    var tempHtmlDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WebAssets");
+                    if (!Directory.Exists(tempHtmlDir))
+                    {
+                        Directory.CreateDirectory(tempHtmlDir);
+                    }
+                    var tempHtmlPath = Path.Combine(tempHtmlDir, "splash_video_preview.html");
+
+                    var fileUri = new Uri(filePath).AbsoluteUri;
+                    
+                    var splash = vm.CurrentGame?.SplashScreen;
+                    string text = splash?.Text ?? "My Adventure";
+                    double textX = splash?.TextX ?? 50;
+                    double textY = splash?.TextY ?? 50;
+                    string fontColor = splash?.FontColor ?? "#FFFFFF";
+                    double fontSize = (splash?.FontSize ?? 32) * 2.4;
+                    string fontName = splash?.FontName ?? "Outfit";
+
+                    // Optimized HTML template with built-in transition physics mirroring Unity exactly
+                    string htmlContent = $@"<!DOCTYPE html>
+<html>
+<head>
+<meta charset=""utf-8"">
+<style>
+  body {{
+    background-color: #000000;
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    user-select: none;
+    transition: transform 0.05s ease-out;
+  }}
+  video {{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }}
+  .text-overlay {{
+    position: absolute;
+    left: {textX}%;
+    top: {textY}%;
+    transform: translate(0, 0);
+    color: {fontColor};
+    font-size: {fontSize}px;
+    font-family: '{fontName}', 'Outfit', sans-serif;
+    font-weight: bold;
+    z-index: 10;
+    pointer-events: none;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    transition: transform 0.05s ease-out;
+  }}
+</style>
+<script>
+  function playTransition(style, fadeIn, hold, fadeOut) {{
+      var body = document.body;
+      var overlay = document.querySelector('.text-overlay');
+      var video = document.querySelector('video');
+
+      if (!overlay || !body) return;
+
+      // Reset states
+      body.style.opacity = '0';
+      overlay.style.opacity = '0';
+      overlay.style.transform = 'translate(0,0)';
+      body.style.transform = 'scale(1)';
+      
+      if (video) {{
+          video.currentTime = 0;
+          video.play();
+      }}
+
+      var start = performance.now();
+      var duration = (fadeIn + hold + fadeOut) * 1000;
+
+      function animate(time) {{
+          var elapsed = time - start;
+          var progress = Math.min(elapsed / (fadeIn * 1000), 1);
+          
+          if (elapsed < fadeIn * 1000) {{
+              // Fade In Sequence
+              var imgOpacity = progress;
+              var txtOpacity = progress;
+
+              if (style === 'Rise') {{
+                  overlay.style.transform = 'translate(0, ' + (60 * (1 - progress)) + 'px)';
+              }} else if (style === 'Exposure') {{
+                  imgOpacity = Math.pow(progress, 0.4);
+              }} else if (style === 'Cinematic') {{
+                  var curScale = 1.0 + 0.02 * progress;
+                  body.style.transform = 'scale(' + curScale + ')';
+              }} else if (style === 'Glitch') {{
+                  if (Math.random() < 0.15) {{
+                      txtOpacity = Math.random() * 0.5 + 0.2;
+                      overlay.style.transform = 'translate(' + (Math.random() * 20 - 10) + 'px, ' + (Math.random() * 10 - 5) + 'px)';
+                  }} else {{
+                      overlay.style.transform = 'translate(0, 0)';
+                  }}
+              }}
+
+              body.style.opacity = imgOpacity;
+              overlay.style.opacity = txtOpacity;
+          }} else if (elapsed < (fadeIn + hold) * 1000) {{
+              // Hold State
+              body.style.opacity = '1';
+              overlay.style.opacity = '1';
+
+              var holdProgress = (elapsed - fadeIn * 1000) / (hold * 1000);
+
+              if (style === 'Cinematic') {{
+                  var curScale = 1.02 + 0.03 * holdProgress;
+                  body.style.transform = 'scale(' + curScale + ')';
+              }} else if (style === 'Glitch') {{
+                  if (Math.random() < 0.08) {{
+                      overlay.style.opacity = Math.random() * 0.6 + 0.3;
+                      overlay.style.transform = 'translate(' + (Math.random() * 30 - 15) + 'px, ' + (Math.random() * 16 - 8) + 'px)';
+                  }} else {{
+                      overlay.style.transform = 'translate(0, 0)';
+                  }}
+              }} else {{
+                  overlay.style.transform = 'translate(0, 0)';
+              }}
+          }} else if (elapsed < duration) {{
+              // Fade Out Sequence
+              var outProgress = (elapsed - (fadeIn + hold) * 1000) / (fadeOut * 1000);
+              body.style.opacity = (1 - outProgress);
+              overlay.style.opacity = (1 - outProgress);
+
+              if (style === 'Cinematic') {{
+                  var curScale = 1.05 + 0.02 * outProgress;
+                  body.style.transform = 'scale(' + curScale + ')';
+              }}
+          }} else {{
+              // End State
+              body.style.opacity = '1';
+              overlay.style.opacity = '1';
+              body.style.transform = 'scale(1)';
+              overlay.style.transform = 'translate(0, 0)';
+              return;
+          }}
+
+          requestAnimationFrame(animate);
+      }}
+
+      requestAnimationFrame(animate);
+  }}
+</script>
+</head>
+<body>
+  <video src=""{fileUri}"" autoplay loop playsinline></video>
+  <div class=""text-overlay"">{text}</div>
+</body>
+</html>";
+
+                    File.WriteAllText(tempHtmlPath, htmlContent, Encoding.UTF8);
+                    
+                    var targetUri = new Uri(tempHtmlPath);
+                    if (SplashPreviewWebView.Source != targetUri)
+                    {
+                        SplashPreviewWebView.Source = targetUri;
+                        SplashPreviewWebView.IsVisible = true;
+                    }
+                    else
+                    {
+                        // Direct JS insertion for real-time text updates
+                        string jsUpdate = $@"
+                            (function() {{
+                                var overlay = document.querySelector('.text-overlay');
+                                if (overlay) {{
+                                    overlay.innerText = `{text.Replace("`","\\`").Replace("$","\\$")}`;
+                                    overlay.style.left = '{textX}%';
+                                    overlay.style.top = '{textY}%';
+                                    overlay.style.color = '{fontColor}';
+                                    overlay.style.fontSize = '{fontSize}px';
+                                    overlay.style.fontFamily = `'{fontName}', 'Outfit', sans-serif`;
+                                }}
+                            }})();";
+                        _ = SplashPreviewWebView.InvokeScript(jsUpdate);
+                    }
+                }
+                else
+                {
+                    SplashPreviewWebView.IsVisible = false;
+                    SplashPreviewWebView.Source = new Uri("about:blank");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainWindow] Splash video preview error: {ex.Message}");
+            }
+        }
+
+        private void OnSplashPreviewParentPanelSizeChanged(object? sender, SizeChangedEventArgs e)
+        {
+            try
+            {
+                double availableWidth = e.NewSize.Width;
+                double availableHeight = e.NewSize.Height;
+
+                if (availableWidth <= 0 || availableHeight <= 0) return;
+
+                // Calculate maximum size that fits 16:9 ratio
+                double targetWidth = availableWidth;
+                double targetHeight = availableWidth * 9.0 / 16.0;
+
+                if (targetHeight > availableHeight)
+                {
+                    targetHeight = availableHeight;
+                    targetWidth = availableHeight * 16.0 / 9.0;
+                }
+
+                // Limit to maximum dimensions for design aesthetics (e.g. 640x360)
+                if (targetWidth > 640)
+                {
+                    targetWidth = 640;
+                    targetHeight = 360;
+                }
+
+                if (SplashPreviewContainer != null)
+                {
+                    SplashPreviewContainer.Width = targetWidth;
+                    SplashPreviewContainer.Height = targetHeight;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainWindow] Sizing error: {ex.Message}");
+            }
+        }
+
+        private bool _isSavingAndClosing = false;
+        protected override async void OnClosing(WindowClosingEventArgs e)
+        {
+            if (_isSavingAndClosing)
+            {
+                base.OnClosing(e);
+                return;
+            }
+
+            if (DataContext is MainWindowViewModel vm)
+            {
+                e.Cancel = true; // Cancel standard closing to allow save to finish
+                _isSavingAndClosing = true;
+
+                try
+                {
+                    await vm.SaveGameAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MainWindow] Save on close failed: {ex.Message}");
+                }
+
+                Close(); // Re-trigger close which will pass through the first branch
+            }
+            else
+            {
+                base.OnClosing(e);
             }
         }
     }

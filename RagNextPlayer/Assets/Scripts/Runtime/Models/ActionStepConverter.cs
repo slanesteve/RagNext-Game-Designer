@@ -98,6 +98,11 @@ namespace RagNextPlayer.Runtime.Models
                 "general.clearCustomChoice" => typeof(ClearCustomChoiceCommandData),
                 "general.removeCustomChoice" => typeof(RemoveCustomChoiceCommandData),
 
+                "char.setAttribute"      => typeof(SetCharacterAttributeCommandData),
+                "player.setAttribute"    => typeof(SetPlayerAttributeCommandData),
+                "timer.setAttribute"     => typeof(SetTimerAttributeCommandData),
+                "item.setAttribute"      => typeof(SetItemAttributeCommandData),
+
                 "object.displayDescription" => typeof(ObjectDisplayDescriptionCommandData),
                 "object.moveToCharacter"    => typeof(ObjectMoveToCharacterCommandData),
                 "object.moveToInventory"    => typeof(ObjectMoveToInventoryCommandData),
