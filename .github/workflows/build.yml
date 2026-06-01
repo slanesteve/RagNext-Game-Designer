@@ -90,21 +90,55 @@ jobs:
         rm -rf Publish/Designer-Mac
         dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o Publish/Designer-Mac
         
-        # 3. Deploy WebAssets and Templates
-        mkdir -p Publish/Designer-Mac/WebAssets
-        cp -R RagNext.Designer.Avalonia/WebAssets/* Publish/Designer-Mac/WebAssets/
+        # 3. Create macOS .app Bundle Structure
+        mkdir -p Publish/RagNext.app/Contents/MacOS
+        
+        # 4. Move binary and adjacent folders into Contents/MacOS (so path resolving runs natively)
+        mv Publish/Designer-Mac/RagNext.Designer.Avalonia Publish/RagNext.app/Contents/MacOS/
+        cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext.app/Contents/MacOS/WebAssets
         if [ -d "Templates" ]; then
-          mkdir -p Publish/Designer-Mac/Templates
-          cp -R Templates/* Publish/Designer-Mac/Templates/
+          cp -R Templates Publish/RagNext.app/Contents/MacOS/Templates
         fi
 
-        # 4. Restore RagsCore back to multi-targeting
+        # 5. Write standard Apple Info.plist metadata
+        cat << 'EOF' > Publish/RagNext.app/Contents/Info.plist
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleDevelopmentRegion</key>
+            <string>English</string>
+            <key>CFBundleExecutable</key>
+            <string>RagNext.Designer.Avalonia</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.slanesteve.ragnext</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundleName</key>
+            <string>RagNext</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0.0</string>
+            <key>CFBundleSignature</key>
+            <string>????</string>
+            <key>CFBundleVersion</key>
+            <string>1.0.0</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>10.12</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+        </dict>
+        </plist>
+        EOF
+
+        # 6. Restore RagsCore back to multi-targeting
         sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
 
     - name: Compress macOS Distribution
       run: |
-        cd Publish/Designer-Mac
-        zip -r ../RagNext_Designer_Mac_Arm64.zip *
+        cd Publish
+        zip -r ../RagNext_Designer_Mac_Arm64.zip RagNext.app
 
     - name: Upload macOS Artifact
       uses: actions/upload-artifact@v4
