@@ -138,7 +138,7 @@ jobs:
     - name: Compress macOS Distribution
       run: |
         cd Publish
-        zip -r ../RagNext_Designer_Mac_Arm64.zip RagNext.app
+        zip -r RagNext_Designer_Mac_Arm64.zip RagNext.app
 
     - name: Upload macOS Artifact
       uses: actions/upload-artifact@v4
