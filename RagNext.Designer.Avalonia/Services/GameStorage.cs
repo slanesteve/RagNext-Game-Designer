@@ -30,6 +30,7 @@ namespace RagNext.Designer.Avalonia.Services
                 };
                 // Ensure polymorphic deserialization for steps
                 opts.Converters.Add(new StepDefinitionBaseJsonConverter());
+                opts.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
                 return opts;
             }
         }

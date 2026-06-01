@@ -6,6 +6,7 @@
         xmlns:wv="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.WebView"
         xmlns:models="using:RagsCore.Models"
         xmlns:views="using:RagNext.Designer.Avalonia.Views"
+        xmlns:services="using:RagNext.Designer.Avalonia.Services"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="750"
         x:Class="RagNext.Designer.Avalonia.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -165,7 +166,7 @@
                 </ScrollViewer>
 
                 <!-- 1b. Player & Start Config Tab -->
-                <ScrollViewer IsVisible="{Binding ActiveView, ConverterParameter=Player, Converter={x:Static ObjectConverters.Equal}}">
+                <ScrollViewer x:Name="PlayerDetailsScrollViewer" IsVisible="{Binding ActiveView, ConverterParameter=Player, Converter={x:Static ObjectConverters.Equal}}">
                     <StackPanel Spacing="24" MaxWidth="800" HorizontalAlignment="Left" DataContext="{Binding Player}" x:DataType="models:Player">
                         <TextBlock Text="Player &amp; Start Config" FontSize="26" FontWeight="Bold" Foreground="White"/>
                         
@@ -174,10 +175,19 @@
                                 <TextBlock Text="👤 Protagonist Identity" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
                                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="140,*" RowSpacing="12" Margin="0,10,0,0">
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Protagonist Name:" VerticalAlignment="Center" Foreground="Gray"/>
-                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A"/>
+                                    <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Padding="8,6"/>
+                                        <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                    </Grid>
                                     
                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" VerticalAlignment="Top" Margin="0,6,0,0" Foreground="Gray"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="60" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A"/>
+                                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
+                                        <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                                            <Button Content="?" Click="OnSuggestDescriptionClicked" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                            <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
                                     
                                     <!-- Prompt for Name switch -->
                                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Prompt for Name:" VerticalAlignment="Center" Foreground="Gray"/>
@@ -360,7 +370,7 @@
                                             <TextBlock Text="Name" Foreground="Gray" FontSize="12" FontWeight="SemiBold"/>
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBox Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Padding="8,6"/>
-                                                <Button Grid.Column="1" Content="✨" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                             </Grid>
 
                                             <!-- Description -->
@@ -376,8 +386,8 @@
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBox Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
                                                 <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
-                                                    <Button Content="?" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                                                    <Button Content="✨" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                    <Button Content="?" Click="OnSuggestDescriptionClicked" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                    <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                                 </StackPanel>
                                             </Grid>
 
@@ -703,10 +713,19 @@
                                 <TextBlock Text="Edit Character" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
                                 
                                 <TextBlock Text="Name:" Foreground="Gray"/>
-                                <TextBox Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Padding="8,6"/>
+                                    <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                </Grid>
                                 
                                 <TextBlock Text="Description:" Foreground="Gray"/>
-                                <TextBox Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="80" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
+                                    <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                                        <Button Content="?" Click="OnSuggestDescriptionClicked" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                        <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
 
                                 <!-- Portrait Image -->
                                 <TextBlock Text="Portrait" Foreground="Gray" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,0"/>
@@ -878,7 +897,7 @@
                                             <TextBlock Text="Name" Foreground="Gray" FontSize="12" FontWeight="SemiBold"/>
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBox Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Padding="8,6"/>
-                                                <Button Grid.Column="1" Content="✨" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                             </Grid>
 
                                             <!-- Description -->
@@ -894,8 +913,8 @@
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBox Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
                                                 <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
-                                                    <Button Content="?" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                                                    <Button Content="✨" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                    <Button Content="?" Click="OnSuggestDescriptionClicked" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                    <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                                 </StackPanel>
                                             </Grid>
 
@@ -951,7 +970,7 @@
                                                         <ListBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Objects.Objects}" Height="120" Background="#0C0C12">
                                                             <ListBox.ItemTemplate>
                                                                 <DataTemplate x:DataType="models:GameObject">
-                                                                    <CheckBox Content="{Binding Name}" Foreground="White" FontSize="12"/>
+                                                                    <CheckBox Content="{Binding Name}" Foreground="White" FontSize="12" IsCheckedChanged="OnContainedObjectCheckedChanged" Loaded="OnContainedObjectCheckBoxLoaded"/>
                                                                 </DataTemplate>
                                                             </ListBox.ItemTemplate>
                                                         </ListBox>
@@ -1024,7 +1043,7 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Define Variable" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Button Grid.Row="2" Content="+ Define Variable" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.AddVariableCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
                         </Grid>
                     </Border>
                     <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20">
@@ -1052,18 +1071,33 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Add Timer" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Button Grid.Row="2" Content="+ Add Timer" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Timers.AddTimerCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
                         </Grid>
                     </Border>
-                    <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20">
+                    <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20" IsVisible="{Binding #TimersList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <StackPanel Spacing="16" DataContext="{Binding #TimersList.SelectedItem}" x:DataType="models:GameTimer">
                             <TextBlock Text="Edit Timer" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
                             
-                            <TextBlock Text="Name:" Foreground="Gray"/>
-                            <TextBox Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A"/>
+                            <TextBlock Text="Name" Foreground="Gray" FontSize="12" FontWeight="SemiBold"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Padding="8,6"/>
+                                <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            </Grid>
                             
-                            <TextBlock Text="Ticks Interval (Seconds):" Foreground="Gray"/>
+                            <TextBlock Text="Interval (Seconds)" Foreground="Gray" FontSize="12" FontWeight="SemiBold"/>
                             <TextBox Text="{Binding IntervalSeconds, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A"/>
+
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                                <TextBlock Text="Timer Active" VerticalAlignment="Center" Foreground="Gray" FontSize="12" FontWeight="SemiBold"/>
+                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsActive, Mode=TwoWay}" OnContent="" OffContent="" Foreground="White" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                                <TextBlock Text="Repeating" VerticalAlignment="Center" Foreground="Gray" FontSize="12" FontWeight="SemiBold"/>
+                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsRepeating, Mode=TwoWay}" OnContent="" OffContent="" Foreground="White" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <Button Content="✨ Edit Timer Action Visually" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" Margin="0,16,0,0"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -1080,7 +1114,7 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Create Function" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Button Grid.Row="2" Content="+ Create Function" Command="{Binding Functions.AddFunctionCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
                         </Grid>
                     </Border>
                     <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20">
@@ -1103,7 +1137,7 @@
                 <!-- 7b. Splash Screen Settings Tab -->
                 <!-- 7b. Splash Screen Settings Tab -->
                 <ScrollViewer IsVisible="{Binding ActiveView, ConverterParameter=SplashScreen, Converter={x:Static ObjectConverters.Equal}}">
-                    <Grid ColumnDefinitions="*, *" MaxWidth="1100" HorizontalAlignment="Left" DataContext="{Binding SplashScreen}" x:DataType="models:SplashScreenSettings">
+                    <Grid ColumnDefinitions="*, *" HorizontalAlignment="Stretch" DataContext="{Binding SplashScreen}" x:DataType="models:SplashScreenSettings">
                         <!-- Left Side: Customization Parameters -->
                         <StackPanel Grid.Column="0" Spacing="20" Margin="0,0,24,0">
                             <TextBlock Text="Splash Screen Settings" FontSize="26" FontWeight="Bold" Foreground="White"/>
@@ -1118,57 +1152,57 @@
                                         
                                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Splash Mode:" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
                                         <ComboBox Grid.Row="1" Grid.Column="1" SelectedItem="{Binding Mode, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="#13131F" Margin="0,10,0,0">
-                                            <ComboBoxItem Content="ImageAndText"/>
-                                            <ComboBoxItem Content="Video"/>
+                                            <x:String>ImageAndText</x:String>
+                                            <x:String>Video</x:String>
                                         </ComboBox>
                                     </Grid>
                                 </StackPanel>
                             </Border>
-
+ 
                             <Border Background="#1C1C28" BorderBrush="#2A2A3A" BorderThickness="1" CornerRadius="8" Padding="20">
                                 <StackPanel Spacing="14">
                                     <TextBlock Text="🎬 Cinematic Customization" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
                                     
                                     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="200,*">
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Background Image Asset:" VerticalAlignment="Center" Foreground="Gray"/>
-                                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" SelectedValue="{Binding ImageAssetId, Mode=TwoWay}" SelectedValueBinding="{Binding Id}" HorizontalAlignment="Stretch" Background="#13131F">
+                                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" SelectedValue="{Binding ImageAssetId, Mode=TwoWay}" SelectedValueBinding="{Binding IdString}" HorizontalAlignment="Stretch" Background="#13131F">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:MediaAsset">
                                                     <TextBlock Text="{Binding OriginalFileName}"/>
                                                 </DataTemplate>
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
-
+ 
                                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Dramatic Sound / Music:" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
-                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" SelectedValue="{Binding SoundAssetId, Mode=TwoWay}" SelectedValueBinding="{Binding Id}" HorizontalAlignment="Stretch" Background="#13131F" Margin="0,10,0,0">
+                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" SelectedValue="{Binding SoundAssetId, Mode=TwoWay}" SelectedValueBinding="{Binding IdString}" HorizontalAlignment="Stretch" Background="#13131F" Margin="0,10,0,0">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:MediaAsset">
                                                     <TextBlock Text="{Binding OriginalFileName}"/>
                                                 </DataTemplate>
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
-
+ 
                                         <TextBlock Grid.Row="2" Grid.Column="0" Text="Transition Style Effect:" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
                                         <ComboBox Grid.Row="2" Grid.Column="1" SelectedItem="{Binding TransitionStyle, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="#13131F" Margin="0,10,0,0">
-                                            <ComboBoxItem Content="Fade"/>
-                                            <ComboBoxItem Content="Rise"/>
-                                            <ComboBoxItem Content="Cinematic"/>
-                                            <ComboBoxItem Content="Glitch"/>
-                                            <ComboBoxItem Content="Exposure"/>
+                                            <x:String>Fade</x:String>
+                                            <x:String>Rise</x:String>
+                                            <x:String>Cinematic</x:String>
+                                            <x:String>Glitch</x:String>
+                                            <x:String>Exposure</x:String>
                                         </ComboBox>
-
+ 
                                         <TextBlock Grid.Row="3" Grid.Column="0" Text="Display Title Text:" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
                                         <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Text, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Margin="0,10,0,0"/>
-
+ 
                                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Font Color (Hex):" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
                                         <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding FontColor, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Margin="0,10,0,0"/>
-
+ 
                                         <TextBlock Grid.Row="5" Grid.Column="0" Text="Font Size (pt):" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
                                         <NumericUpDown Grid.Row="5" Grid.Column="1" Value="{Binding FontSize, Mode=TwoWay}" Minimum="10" Maximum="120" Background="#13131F" Margin="0,10,0,0"/>
                                     </Grid>
                                 </StackPanel>
                             </Border>
-
+ 
                             <Border Background="#1C1C28" BorderBrush="#2A2A3A" BorderThickness="1" CornerRadius="8" Padding="20">
                                 <StackPanel Spacing="14">
                                     <TextBlock Text="⏱️ Animation Timeline (Seconds)" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
@@ -1193,7 +1227,7 @@
                                 </StackPanel>
                             </Border>
                         </StackPanel>
-
+ 
                         <!-- Right Side: Live WYSIWYG Screen Coordinates & Preview -->
                         <StackPanel Grid.Column="1" Spacing="20" VerticalAlignment="Top">
                             <TextBlock Text="Live WYSIWYG Screen Preview" FontSize="20" FontWeight="Bold" Foreground="White"/>
@@ -1205,31 +1239,37 @@
                                         <TextBlock Text="{Binding TextX, StringFormat='X: {0:0}%'}" Foreground="#8E2DE2" FontWeight="Bold"/>
                                         <TextBlock Text="{Binding TextY, StringFormat='Y: {0:0}%'}" Foreground="#8E2DE2" FontWeight="Bold"/>
                                     </StackPanel>
-
+ 
                                     <!-- Sliders to position text visually -->
                                     <TextBlock Text="Horizontal Alignment (X):" Foreground="Gray" FontSize="11"/>
                                     <Slider Value="{Binding TextX, Mode=TwoWay}" Minimum="0" Maximum="100"/>
-
+ 
                                     <TextBlock Text="Vertical Alignment (Y):" Foreground="Gray" FontSize="11"/>
                                     <Slider Value="{Binding TextY, Mode=TwoWay}" Minimum="0" Maximum="100"/>
-
+ 
                                     <!-- 16:9 Preview Frame -->
-                                    <Border Width="400" Height="225" Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" HorizontalAlignment="Center" ClipToBounds="True">
-                                        <Canvas Width="400" Height="225">
-                                            <!-- Ambient mockup image background for preview -->
-                                            <Image Width="400" Height="225" Source="/Assets/splash_mockup.png" Stretch="UniformToFill" Opacity="0.5"/>
-                                            
-                                            <!-- Dynamically positioned title text -->
-                                            <TextBlock Text="{Binding Text}" 
-                                                       Foreground="White" 
-                                                       FontWeight="Bold" 
-                                                       FontSize="{Binding FontSize}" 
-                                                       Canvas.Left="{Binding TextX}" 
-                                                       Canvas.Top="{Binding TextY}" />
-                                        </Canvas>
-                                    </Border>
+                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MaxHeight="450">
+                                        <Border Width="1920" Height="1080" Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True">
+                                            <Canvas Width="1920" Height="1080">
+                                                <!-- Dynamically loaded custom background image asset -->
+                                                <Image Width="1920" Height="1080" 
+                                                       Source="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashBackgroundPath, Converter={x:Static views:ImagePathToBitmapConverter.Instance}}" 
+                                                       Stretch="UniformToFill" 
+                                                       Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewImageOpacity}"/>
+                                                
+                                                <!-- Dynamically positioned title text with calculated pixel coords (including transition style offsets) and custom font color -->
+                                                <TextBlock Text="{Binding Text}" 
+                                                           Foreground="{Binding FontColor}" 
+                                                           FontWeight="Bold" 
+                                                           FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewFontSize}" 
+                                                           Canvas.Left="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextLeftWithOffset}" 
+                                                           Canvas.Top="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextTopWithOffset}" 
+                                                           Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextOpacity}"/>
+                                            </Canvas>
+                                        </Border>
+                                    </Viewbox>
                                     
-                                    <Button Content="Preview Transition Sequence" Background="#2B2B3A" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="12,8" FontSize="13"/>
+                                    <Button Content="Preview Transition Sequence" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewTransitionCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="12,8" FontSize="13"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -1361,6 +1401,31 @@
                                 <TextBlock Text="🔒 High-Security Executable Generation" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
                                 <TextBlock Text="Compile your story logic directly into zero-dependency C# native machine code (no MSIL, no decompile hacks possible!). Your licensing and logic are completely secure." FontSize="13" TextWrapping="Wrap" Foreground="Gray"/>
                                 
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="150,*,Auto" RowSpacing="12" Margin="0,10,0,10">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Game Title" VerticalAlignment="Center" Foreground="White" FontSize="13"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding PublishTitle}" Background="#13131F" Foreground="White" CornerRadius="4" BorderBrush="#2A2A3A"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Version" VerticalAlignment="Center" Foreground="White" FontSize="13"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding PublishVersion}" Background="#13131F" Foreground="White" CornerRadius="4" BorderBrush="#2A2A3A"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Author" VerticalAlignment="Center" Foreground="White" FontSize="13"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding PublishAuthor}" Background="#13131F" Foreground="White" CornerRadius="4" BorderBrush="#2A2A3A"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Publish Destination" VerticalAlignment="Center" Foreground="White" FontSize="13"/>
+                                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding PublishDestination}" Background="#13131F" Foreground="White" CornerRadius="4" BorderBrush="#2A2A3A" Margin="0,0,8,0"/>
+                                    <Button Grid.Row="3" Grid.Column="2" Content="Browse..." Command="{Binding BrowsePublishDestinationCommand}" Background="#2B2B3A" Foreground="White" Padding="14,6" CornerRadius="4"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Target Platform" VerticalAlignment="Center" Foreground="White" FontSize="13"/>
+                                    <ComboBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" SelectedItem="{Binding SelectedPublishTarget}" HorizontalAlignment="Stretch" Background="#13131F" Foreground="White" CornerRadius="4" BorderBrush="#2A2A3A">
+                                        <ComboBox.Items>
+                                            <services:PackagingTarget>Windows</services:PackagingTarget>
+                                            <services:PackagingTarget>MacOS</services:PackagingTarget>
+                                            <services:PackagingTarget>Linux</services:PackagingTarget>
+                                            <services:PackagingTarget>WebGL</services:PackagingTarget>
+                                        </ComboBox.Items>
+                                    </ComboBox>
+                                </Grid>
+
                                 <Button Content="🚀 Compile standalone game now" Command="{Binding PublishCommand}" IsEnabled="{Binding !IsPublishing}" HorizontalAlignment="Left" Foreground="White" FontWeight="Bold" CornerRadius="4" Padding="20,12">
                                     <Button.Background>
                                         <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -1412,45 +1477,62 @@
                                 </StackPanel>
                                 <TextBlock Text="Set up endpoints for real-time storytelling hints, narrative suggestions, and descriptions co-writing." FontSize="13" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                                 
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="150,*" RowSpacing="12">
+                                <!-- Setup Help Instructions Box -->
+                                <Border Background="#1C1C28" BorderBrush="#2A2A3A" BorderThickness="1" CornerRadius="8" Padding="15" IsVisible="{Binding Preferences.IsCoAuthorHelpVisible}">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock Text="{Binding Preferences.CoAuthorSetupStepsTitle}" FontWeight="Bold" Foreground="White" FontSize="13"/>
+                                        <TextBlock Text="{Binding Preferences.CoAuthorStep1}" Foreground="Gray" FontSize="12" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Preferences.CoAuthorStep2}" Foreground="Gray" FontSize="12" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Preferences.CoAuthorStep3}" Foreground="Gray" FontSize="12" TextWrapping="Wrap"/>
+                                        <Button Content="{Binding Preferences.CoAuthorHelpButtonText}" Command="{Binding Preferences.OpenHelpCommand}" CommandParameter="{Binding Preferences.CoAuthorHelpUrl}" Background="#8E2DE2" Foreground="White" CornerRadius="4" Padding="10,6" FontSize="11" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="150,*" RowSpacing="12">
                                     <!-- Provider -->
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="AI Provider" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <ComboBox Grid.Row="0" Grid.Column="1" SelectedItem="{Binding Preferences.AiCoAuthorProvider}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}">
-                                        <ComboBoxItem Content="Ollama"/>
-                                        <ComboBoxItem Content="LMStudio"/>
-                                        <ComboBoxItem Content="OpenAICompatible"/>
-                                        <ComboBoxItem Content="OpenRouter"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" SelectedItem="{Binding Preferences.AiCoAuthorProvider, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}">
+                                        <ComboBox.Items>
+                                            <x:String>Ollama</x:String>
+                                            <x:String>LMStudio</x:String>
+                                            <x:String>OpenAICompatible</x:String>
+                                            <x:String>OpenRouter</x:String>
+                                        </ComboBox.Items>
                                     </ComboBox>
 
                                     <!-- Endpoint -->
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="API Endpoint" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorEndpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="e.g. https://api.openai.com/v1" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="API Endpoint" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowCoAuthorEndpoint}"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorEndpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="e.g. https://api.openai.com/v1" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowCoAuthorEndpoint}"/>
 
                                     <!-- Key -->
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="API Key" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PasswordChar="●" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="API Key" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowCoAuthorApiKey}"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PasswordChar="●" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowCoAuthorApiKey}"/>
 
                                     <!-- Model -->
                                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Model ID" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorModel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*,Auto,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding Preferences.AiCoAuthorModel, Mode=TwoWay}" Watermark="Select or type model ID..." Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                        <ComboBox Grid.Column="1" ItemsSource="{Binding Preferences.AvailableModels}" SelectedItem="{Binding Preferences.AiCoAuthorModel, Mode=TwoWay}" Width="150" Margin="8,0,0,0" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" PlaceholderText="Pulled Models"/>
+                                        <Button Grid.Column="2" Content="⟳" Command="{Binding Preferences.FetchModelsCommand}" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Fetch Available Models"/>
+                                    </Grid>
 
-                                    <!-- Host & Port (Conditional for Local Servers) -->
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Local Connection" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowCoAuthorHostPort}"/>
-                                    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Spacing="10" IsVisible="{Binding Preferences.ShowCoAuthorHostPort}">
-                                        <TextBox Width="250" Text="{Binding Preferences.AiCoAuthorHost, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="http://localhost" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
-                                        <TextBlock Text=":" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                        <TextBox Width="100" Text="{Binding Preferences.AiCoAuthorPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="1234" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
-                                    </StackPanel>
+                                    <!-- Host (Conditional for Local Servers) -->
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Host (include scheme)" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowCoAuthorHostPort}"/>
+                                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorHost, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="http://localhost" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowCoAuthorHostPort}"/>
+
+                                    <!-- Port (Conditional for Local Servers) -->
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Port" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowCoAuthorHostPort}"/>
+                                    <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="1234" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowCoAuthorHostPort}"/>
 
                                     <!-- Generation Parameters -->
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Temperature" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <Grid Grid.Row="5" Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,5,0,5">
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Temperature" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                    <Grid Grid.Row="6" Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,5,0,5">
                                         <Slider Grid.Column="0" Value="{Binding Preferences.AiCoAuthorTemperature, Mode=TwoWay}" Minimum="0.0" Maximum="1.0" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
                                         <TextBlock Grid.Column="1" Text="{Binding Preferences.AiCoAuthorTemperature, StringFormat='{}{0:F2}'}" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" Margin="10,0,0,0" Width="40"/>
                                     </Grid>
 
-                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Max Tokens" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorMaxTokens, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Max Tokens" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                    <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding Preferences.AiCoAuthorMaxTokens, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
                                 </Grid>
 
                                 <TextBlock Text="System Assistant Instructions (Prompt Template)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextNormal}" Margin="0,10,0,0"/>
@@ -1467,38 +1549,51 @@
                                 </StackPanel>
                                 <TextBlock Text="Set up Stable Diffusion or Dall-E services to automatically create room portraits, items icons, and character artwork." FontSize="13" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
 
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="150,*" RowSpacing="12">
+                                <!-- Setup Help Instructions Box -->
+                                <Border Background="#1C1C28" BorderBrush="#2A2A3A" BorderThickness="1" CornerRadius="8" Padding="15" IsVisible="{Binding Preferences.IsImageGenHelpVisible}">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock Text="{Binding Preferences.ImageGenSetupStepsTitle}" FontWeight="Bold" Foreground="White" FontSize="13"/>
+                                        <TextBlock Text="{Binding Preferences.ImageGenStep1}" Foreground="Gray" FontSize="12" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Preferences.ImageGenStep2}" Foreground="Gray" FontSize="12" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Preferences.ImageGenStep3}" Foreground="Gray" FontSize="12" TextWrapping="Wrap"/>
+                                        <Button Content="{Binding Preferences.ImageGenHelpButtonText}" Command="{Binding Preferences.OpenHelpCommand}" CommandParameter="{Binding Preferences.ImageGenHelpUrl}" Background="#8E2DE2" Foreground="White" CornerRadius="4" Padding="10,6" FontSize="11" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="150,*" RowSpacing="12">
                                     <!-- Provider -->
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="AI Provider" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <ComboBox Grid.Row="0" Grid.Column="1" SelectedItem="{Binding Preferences.AiImageGenProvider}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}">
-                                        <ComboBoxItem Content="Pollinations.ai"/>
-                                        <ComboBoxItem Content="ChatGPT"/>
-                                        <ComboBoxItem Content="Azure OpenAI Images"/>
-                                        <ComboBoxItem Content="Google Gemini"/>
-                                        <ComboBoxItem Content="Local Stable Diffusion"/>
-                                        <ComboBoxItem Content="Local ComfyUI"/>
-                                        <ComboBoxItem Content="Other"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" SelectedItem="{Binding Preferences.AiImageGenProvider, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}">
+                                        <ComboBox.Items>
+                                            <x:String>Pollinations.ai</x:String>
+                                            <x:String>ChatGPT</x:String>
+                                            <x:String>Azure OpenAI Images</x:String>
+                                            <x:String>Google Gemini</x:String>
+                                            <x:String>Local Stable Diffusion</x:String>
+                                            <x:String>Local ComfyUI</x:String>
+                                            <x:String>Other</x:String>
+                                        </ComboBox.Items>
                                     </ComboBox>
 
                                     <!-- Endpoint -->
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="API Endpoint" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Preferences.AiImageGenEndpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="e.g. https://api.openai.com/v1" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="API Endpoint" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenEndpoint}"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Preferences.AiImageGenEndpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="e.g. https://api.openai.com/v1" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowImageGenEndpoint}"/>
 
                                     <!-- Key -->
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="API Key" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Preferences.AiImageGenKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PasswordChar="●" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="API Key" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenApiKey}"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Preferences.AiImageGenKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PasswordChar="●" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowImageGenApiKey}"/>
 
                                     <!-- Model -->
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Model ID" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Model / Checkpoint Name" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
                                     <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Preferences.AiImageGenModel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
 
-                                    <!-- Host & Port (Conditional for Local Servers) -->
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Local Connection" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
-                                    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Spacing="10" IsVisible="{Binding Preferences.ShowImageGenHostPort}">
-                                        <TextBox Width="250" Text="{Binding Preferences.AiImageGenHost, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="http://localhost" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
-                                        <TextBlock Text=":" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                        <TextBox Width="100" Text="{Binding Preferences.AiImageGenPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="7860" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
-                                    </StackPanel>
+                                    <!-- Host (Conditional for Local Servers) -->
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Host (include scheme)" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
+                                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Preferences.AiImageGenHost, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="http://localhost" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
+
+                                    <!-- Port (Conditional for Local Servers) -->
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Port" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
+                                    <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Preferences.AiImageGenPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="7860" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -1579,9 +1674,9 @@
                 <!-- Overlay Header -->
                 <Border Grid.Row="0" Height="54" Background="#1D1D28" BorderBrush="#2D2D3E" BorderThickness="0,0,0,1" Padding="16,0">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" DataContext="{Binding ActiveAction}" x:DataType="models:Action">
                             <TextBlock Text="🎨 Visual Script Editor:" Foreground="Gray" FontSize="14" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding ActiveAction.Name}" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Name, FallbackValue=''}" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/>
                         </StackPanel>
                         
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">

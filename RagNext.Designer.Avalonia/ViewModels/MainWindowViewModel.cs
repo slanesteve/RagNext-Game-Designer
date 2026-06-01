@@ -16,6 +16,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
+        [System.Runtime.InteropServices.DllImport("winmm.dll")]
+        private static extern long mciSendString(string command, System.Text.StringBuilder? returnValue, int returnLength, IntPtr winHandle);
+
         private readonly IGameStorage _storage;
 
         private Game? _game;
@@ -33,6 +36,62 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     OnPropertyChanged(nameof(GameVersion));
                     OnPropertyChanged(nameof(Player));
                     OnPropertyChanged(nameof(SplashScreen));
+
+                    PublishTitle = value?.Title ?? "My Adventure";
+                    PublishAuthor = value?.Author ?? Environment.UserName ?? "Unknown";
+                    PublishVersion = value?.Version ?? "1.0.0";
+                    if (value != null)
+                    {
+                        if (!string.IsNullOrEmpty(Preferences?.LastPublishDirectory))
+                        {
+                            PublishDestination = Preferences.LastPublishDirectory;
+                        }
+                        else
+                        {
+                            string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                            PublishDestination = Path.Combine(docs, "RagNext_Published");
+                        }
+
+                        if (value.SplashScreen != null)
+                        {
+                            value.SplashScreen.PropertyChanged += (sender, args) =>
+                            {
+                                if (args.PropertyName == nameof(SplashScreenSettings.ImageAssetId))
+                                {
+                                    OnPropertyChanged(nameof(SplashBackgroundPath));
+                                }
+                                else if (args.PropertyName == nameof(SplashScreenSettings.TextX))
+                                {
+                                    OnPropertyChanged(nameof(SplashPreviewTextLeft));
+                                    OnPropertyChanged(nameof(SplashPreviewTextLeftWithOffset));
+                                }
+                                else if (args.PropertyName == nameof(SplashScreenSettings.TextY))
+                                {
+                                    OnPropertyChanged(nameof(SplashPreviewTextTop));
+                                    OnPropertyChanged(nameof(SplashPreviewTextTopWithOffset));
+                                }
+                                else if (args.PropertyName == nameof(SplashScreenSettings.FontSize))
+                                {
+                                    OnPropertyChanged(nameof(SplashPreviewFontSize));
+                                }
+                            };
+                        }
+                    }
+                    OnPropertyChanged(nameof(SplashBackgroundPath));
+                    OnPropertyChanged(nameof(SplashPreviewTextLeft));
+                    OnPropertyChanged(nameof(SplashPreviewTextLeftWithOffset));
+                    OnPropertyChanged(nameof(SplashPreviewTextTop));
+                    OnPropertyChanged(nameof(SplashPreviewTextTopWithOffset));
+                    OnPropertyChanged(nameof(SplashPreviewFontSize));
+                    OnPropertyChanged(nameof(PublishSummaryText));
+                    OnPropertyChanged(nameof(WinStatusText));
+                    OnPropertyChanged(nameof(MacStatusText));
+                    OnPropertyChanged(nameof(LinuxStatusText));
+                    OnPropertyChanged(nameof(WebGLStatusText));
+                    OnPropertyChanged(nameof(WinStatusColor));
+                    OnPropertyChanged(nameof(MacStatusColor));
+                    OnPropertyChanged(nameof(LinuxStatusColor));
+                    OnPropertyChanged(nameof(WebGLStatusColor));
                 }
             }
         }
@@ -110,6 +169,77 @@ namespace RagNext.Designer.Avalonia.ViewModels
         // Active properties
         public Player? Player => CurrentGame?.Player;
         public SplashScreenSettings? SplashScreen => CurrentGame?.SplashScreen;
+
+        public double SplashPreviewTextLeft => (CurrentGame?.SplashScreen?.TextX ?? 50) * 19.2;
+        public double SplashPreviewTextTop => (CurrentGame?.SplashScreen?.TextY ?? 50) * 10.8;
+        public double SplashPreviewFontSize => (CurrentGame?.SplashScreen?.FontSize ?? 32) * 2.4;
+
+        private double _splashPreviewTextLeftOffset = 0.0;
+        public double SplashPreviewTextLeftOffset
+        {
+            get => _splashPreviewTextLeftOffset;
+            set
+            {
+                if (SetProperty(ref _splashPreviewTextLeftOffset, value))
+                {
+                    OnPropertyChanged(nameof(SplashPreviewTextLeftWithOffset));
+                }
+            }
+        }
+
+        private double _splashPreviewTextTopOffset = 0.0;
+        public double SplashPreviewTextTopOffset
+        {
+            get => _splashPreviewTextTopOffset;
+            set
+            {
+                if (SetProperty(ref _splashPreviewTextTopOffset, value))
+                {
+                    OnPropertyChanged(nameof(SplashPreviewTextTopWithOffset));
+                }
+            }
+        }
+
+        public double SplashPreviewTextLeftWithOffset => SplashPreviewTextLeft + SplashPreviewTextLeftOffset;
+        public double SplashPreviewTextTopWithOffset => SplashPreviewTextTop + SplashPreviewTextTopOffset;
+
+        public string SplashBackgroundPath
+        {
+            get
+            {
+                var game = CurrentGame;
+                var splash = game?.SplashScreen;
+                if (splash != null && !string.IsNullOrEmpty(splash.ImageAssetId))
+                {
+                    if (Guid.TryParse(splash.ImageAssetId, out var id))
+                    {
+                        var asset = game.MediaAssets.FirstOrDefault(a => a.Id == id);
+                        if (asset != null)
+                        {
+                            return new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, asset);
+                        }
+                    }
+                }
+                return string.Empty;
+            }
+        }
+
+        private double _splashPreviewImageOpacity = 1.0;
+        public double SplashPreviewImageOpacity
+        {
+            get => _splashPreviewImageOpacity;
+            set => SetProperty(ref _splashPreviewImageOpacity, value);
+        }
+
+        private double _splashPreviewTextOpacity = 1.0;
+        public double SplashPreviewTextOpacity
+        {
+            get => _splashPreviewTextOpacity;
+            set => SetProperty(ref _splashPreviewTextOpacity, value);
+        }
+
+        private bool _isPlayingSplashPreview = false;
+        public ICommand PreviewTransitionCommand { get; }
 
         // Visual Graph Scripting Overlay State
         private bool _isVisualEditing = false;
@@ -190,6 +320,105 @@ namespace RagNext.Designer.Avalonia.ViewModels
             set => SetProperty(ref _publishLogs, value);
         }
 
+        private string _publishTitle = string.Empty;
+        public string PublishTitle
+        {
+            get => _publishTitle;
+            set => SetProperty(ref _publishTitle, value);
+        }
+
+        private string _publishAuthor = string.Empty;
+        public string PublishAuthor
+        {
+            get => _publishAuthor;
+            set => SetProperty(ref _publishAuthor, value);
+        }
+
+        private string _publishVersion = "1.0.0";
+        public string PublishVersion
+        {
+            get => _publishVersion;
+            set => SetProperty(ref _publishVersion, value);
+        }
+
+        private string _publishDestination = string.Empty;
+        public string PublishDestination
+        {
+            get => _publishDestination;
+            set => SetProperty(ref _publishDestination, value);
+        }
+
+        private bool _publishCreateZip = true;
+        public bool PublishCreateZip
+        {
+            get => _publishCreateZip;
+            set => SetProperty(ref _publishCreateZip, value);
+        }
+
+        private PackagingTarget _selectedPublishTarget = PackagingTarget.Windows;
+        public PackagingTarget SelectedPublishTarget
+        {
+            get => _selectedPublishTarget;
+            set
+            {
+                if (SetProperty(ref _selectedPublishTarget, value))
+                {
+                    OnPropertyChanged(nameof(IsWindowsSelected));
+                    OnPropertyChanged(nameof(IsMacSelected));
+                    OnPropertyChanged(nameof(IsLinuxSelected));
+                    OnPropertyChanged(nameof(IsWebGLSelected));
+                    OnPropertyChanged(nameof(WinCardBorder));
+                    OnPropertyChanged(nameof(MacCardBorder));
+                    OnPropertyChanged(nameof(LinuxCardBorder));
+                    OnPropertyChanged(nameof(WebGLCardBorder));
+                    OnPropertyChanged(nameof(WinCardBg));
+                    OnPropertyChanged(nameof(MacCardBg));
+                    OnPropertyChanged(nameof(LinuxCardBg));
+                    OnPropertyChanged(nameof(WebGLCardBg));
+                    OnPropertyChanged(nameof(TemplateMissingWarningVisible));
+                }
+            }
+        }
+
+        public bool IsWindowsSelected => SelectedPublishTarget == PackagingTarget.Windows;
+        public bool IsMacSelected => SelectedPublishTarget == PackagingTarget.MacOS;
+        public bool IsLinuxSelected => SelectedPublishTarget == PackagingTarget.Linux;
+        public bool IsWebGLSelected => SelectedPublishTarget == PackagingTarget.WebGL;
+
+        public string WinCardBorder => IsWindowsSelected ? "#00BFFF" : "#444444";
+        public string MacCardBorder => IsMacSelected ? "#00BFFF" : "#444444";
+        public string LinuxCardBorder => IsLinuxSelected ? "#00BFFF" : "#444444";
+        public string WebGLCardBorder => IsWebGLSelected ? "#00BFFF" : "#444444";
+
+        public string WinCardBg => IsWindowsSelected ? "#252525" : "#1E1E1E";
+        public string MacCardBg => IsMacSelected ? "#252525" : "#1E1E1E";
+        public string LinuxCardBg => IsLinuxSelected ? "#252525" : "#1E1E1E";
+        public string WebGLCardBg => IsWebGLSelected ? "#252525" : "#1E1E1E";
+
+        public string WinStatusText => PublishEngine.IsTemplateAvailable(PackagingTarget.Windows) ? "✅ Ready" : "⚠️ No template";
+        public string MacStatusText => PublishEngine.IsTemplateAvailable(PackagingTarget.MacOS) ? "✅ Ready" : "⚠️ No template";
+        public string LinuxStatusText => PublishEngine.IsTemplateAvailable(PackagingTarget.Linux) ? "✅ Ready" : "⚠️ No template";
+        public string WebGLStatusText => PublishEngine.IsTemplateAvailable(PackagingTarget.WebGL) ? "✅ Ready" : "⚠️ No template";
+
+        public string WinStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.Windows) ? "#00FA9A" : "#FF8C00";
+        public string MacStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.MacOS) ? "#00FA9A" : "#FF8C00";
+        public string LinuxStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.Linux) ? "#00FA9A" : "#FF8C00";
+        public string WebGLStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.WebGL) ? "#00FA9A" : "#FF8C00";
+
+        public bool TemplateMissingWarningVisible => !PublishEngine.IsTemplateAvailable(SelectedPublishTarget);
+
+        public string PublishSummaryText
+        {
+            get
+            {
+                if (CurrentGame == null) return string.Empty;
+                var s = PublishEngine.GetPublishSummary(CurrentGame);
+                return $"📖 {s.RoomCount} rooms  |  📦 {s.ObjectCount} objects  |  👥 {s.CharacterCount} characters  |  📊 {s.VariableCount} variables  |  🖼️ {s.MediaCount} media assets";
+            }
+        }
+
+        public ICommand SelectPlatformCommand { get; set; }
+
         // Dynamic Overlays for Inventory and Attributes
         private bool _showInventorySelectorOverlay = false;
         public bool ShowInventorySelectorOverlay
@@ -242,6 +471,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand CloseWelcomeCommand { get; }
         public ICommand PublishCommand { get; }
 
+        public static Func<Task<string>> PickFolderAsync { get; set; }
+        public ICommand BrowsePublishDestinationCommand { get; }
+
         public ICommand StartEditingActionCommand { get; }
         public ICommand StopEditingActionCommand { get; }
         public ICommand AddActionCommand { get; }
@@ -270,9 +502,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
             Rooms = new RoomsViewModel(_storage);
             Characters = new CharactersViewModel(_storage);
             Objects = new GameObjectsViewModel(_storage);
-            Variables = new GameVariablesViewModel();
-            Timers = new GameTimersViewModel();
-            Functions = new GlobalFunctionsViewModel();
+            Variables = new GameVariablesViewModel(_storage);
+            Timers = new GameTimersViewModel(_storage);
+            Functions = new GlobalFunctionsViewModel(_storage);
             Media = new MediaLibraryViewModel();
             Preferences = new PreferencesViewModel();
 
@@ -286,6 +518,216 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             NavigateCommand = new Command<string>(view => ActiveView = view ?? "Dashboard");
             ToggleAssetsSidebarCommand = new Command(() => IsAssetsSidebarOpen = !IsAssetsSidebarOpen);
+
+            PreviewTransitionCommand = new Command(async () =>
+            {
+                if (_isPlayingSplashPreview || CurrentGame?.SplashScreen == null) return;
+                _isPlayingSplashPreview = true;
+
+                var splash = CurrentGame.SplashScreen;
+                double fadeIn = Math.Max(0.1, splash.FadeInDuration);
+                double hold = Math.Max(0.1, splash.DisplayDuration);
+                double fadeOut = Math.Max(0.1, splash.FadeOutDuration);
+                string style = splash.TransitionStyle ?? "Fade";
+
+                var rnd = new Random();
+
+                // Resolve Selected Audio File Path
+                string? soundPath = null;
+                if (!string.IsNullOrEmpty(splash.SoundAssetId) && Guid.TryParse(splash.SoundAssetId, out var sGuid))
+                {
+                    var asset = CurrentGame.MediaAssets.FirstOrDefault(a => a.Id == sGuid);
+                    if (asset != null)
+                    {
+                        soundPath = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(CurrentGame, asset);
+                    }
+                }
+
+                // Play Audio natively on Windows during preview
+                bool audioStarted = false;
+                if (OperatingSystem.IsWindows() && !string.IsNullOrEmpty(soundPath) && File.Exists(soundPath))
+                {
+                    try
+                    {
+                        mciSendString("close splashAudio", null, 0, IntPtr.Zero);
+                        mciSendString($"open \"{soundPath}\" type mpegvideo alias splashAudio", null, 0, IntPtr.Zero);
+                        mciSendString("play splashAudio", null, 0, IntPtr.Zero);
+                        audioStarted = true;
+                    }
+                    catch
+                    {
+                        // Ignore audio playback failures in preview
+                    }
+                }
+
+                try
+                {
+                    // 1. Initial State: Hidden
+                    SplashPreviewImageOpacity = 0.0;
+                    SplashPreviewTextOpacity = 0.0;
+                    SplashPreviewTextLeftOffset = 0.0;
+                    SplashPreviewTextTopOffset = 0.0;
+                    await Task.Delay(200);
+
+                    // 2. Fade In Sequence (frequent updates for 1:1 smooth rendering matching Unity)
+                    int stepsFadeIn = (int)(fadeIn * 60.0); // 60 FPS target
+                    int stepDelayFadeIn = (int)((fadeIn * 1000) / stepsFadeIn);
+                    for (int i = 0; i <= stepsFadeIn; i++)
+                    {
+                        double progress = (double)i / stepsFadeIn;
+                        
+                        double imgOpacity = progress;
+                        double txtOpacity = progress;
+
+                        if (style.Equals("Rise", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Text slides up from 60px below to mimic player exactly
+                            SplashPreviewTextTopOffset = 60.0 * (1.0 - progress);
+                        }
+                        else if (style.Equals("Glitch", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Glitch shake title text with random translation shifts
+                            if (rnd.NextDouble() < 0.15)
+                            {
+                                txtOpacity = rnd.NextDouble() * 0.5 + 0.2; // 0.2 to 0.7
+                                SplashPreviewTextLeftOffset = rnd.NextDouble() * 20.0 - 10.0; // -10 to 10
+                                SplashPreviewTextTopOffset = rnd.NextDouble() * 10.0 - 5.0; // -5 to 5
+                            }
+                            else
+                            {
+                                txtOpacity = progress;
+                                SplashPreviewTextLeftOffset = 0.0;
+                                SplashPreviewTextTopOffset = 0.0;
+                            }
+                        }
+                        else if (style.Equals("Exposure", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Flash overexposure: raise opacity quickly using t^0.4
+                            double expT = Math.Pow(progress, 0.4);
+                            imgOpacity = expT;
+                            txtOpacity = progress;
+                        }
+                        else if (style.Equals("Cinematic", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Slide text in horizontally slightly to simulate slow pan
+                            SplashPreviewTextLeftOffset = -30.0 * (1.0 - progress);
+                        }
+
+                        SplashPreviewImageOpacity = imgOpacity;
+                        SplashPreviewTextOpacity = txtOpacity;
+                        await Task.Delay(stepDelayFadeIn);
+                    }
+
+                    // Reset offsets for Hold State
+                    SplashPreviewTextLeftOffset = 0.0;
+                    SplashPreviewTextTopOffset = 0.0;
+                    SplashPreviewImageOpacity = 1.0;
+                    SplashPreviewTextOpacity = 1.0;
+
+                    // 3. Hold State (with live running animations like Glitch shaking/flicker)
+                    int stepsHold = (int)(hold * 60.0);
+                    int stepDelayHold = (int)((hold * 1000) / stepsHold);
+                    for (int i = 0; i < stepsHold; i++)
+                    {
+                        if (style.Equals("Glitch", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (rnd.NextDouble() < 0.08)
+                            {
+                                SplashPreviewTextOpacity = rnd.NextDouble() * 0.6 + 0.3; // 0.3 to 0.9
+                                SplashPreviewTextLeftOffset = rnd.NextDouble() * 30.0 - 15.0; // -15 to 15
+                                SplashPreviewTextTopOffset = rnd.NextDouble() * 16.0 - 8.0; // -8 to 8
+                            }
+                            else
+                            {
+                                SplashPreviewTextOpacity = 1.0;
+                                SplashPreviewTextLeftOffset = 0.0;
+                                SplashPreviewTextTopOffset = 0.0;
+                            }
+                        }
+                        await Task.Delay(stepDelayHold);
+                    }
+
+                    // Reset offsets for Fade Out State
+                    SplashPreviewTextLeftOffset = 0.0;
+                    SplashPreviewTextTopOffset = 0.0;
+
+                    // 4. Fade Out Sequence
+                    int stepsFadeOut = (int)(fadeOut * 60.0);
+                    int stepDelayFadeOut = (int)((fadeOut * 1000) / stepsFadeOut);
+                    for (int i = stepsFadeOut; i >= 0; i--)
+                    {
+                        double progress = (double)i / stepsFadeOut;
+                        double imgOpacity = progress;
+                        double txtOpacity = progress;
+
+                        if (style.Equals("Glitch", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (rnd.NextDouble() < 0.15)
+                            {
+                                txtOpacity = (rnd.NextDouble() * 0.5 + 0.2) * progress;
+                                SplashPreviewTextLeftOffset = rnd.NextDouble() * 16.0 - 8.0;
+                                SplashPreviewTextTopOffset = rnd.NextDouble() * 8.0 - 4.0;
+                            }
+                            else
+                            {
+                                txtOpacity = progress;
+                                SplashPreviewTextLeftOffset = 0.0;
+                                SplashPreviewTextTopOffset = 0.0;
+                            }
+                        }
+
+                        SplashPreviewImageOpacity = imgOpacity;
+                        SplashPreviewTextOpacity = txtOpacity;
+                        await Task.Delay(stepDelayFadeOut);
+                    }
+
+                    // Done
+                    SplashPreviewImageOpacity = 0.0;
+                    SplashPreviewTextOpacity = 0.0;
+                    SplashPreviewTextLeftOffset = 0.0;
+                    SplashPreviewTextTopOffset = 0.0;
+                    await Task.Delay(300);
+                }
+                catch
+                {
+                    // Ignore errors during delay
+                }
+                finally
+                {
+                    // Stop Audio natively
+                    if (audioStarted && OperatingSystem.IsWindows())
+                    {
+                        try
+                        {
+                            mciSendString("stop splashAudio", null, 0, IntPtr.Zero);
+                            mciSendString("close splashAudio", null, 0, IntPtr.Zero);
+                        }
+                        catch
+                        {
+                            // ignore
+                        }
+                    }
+
+                    // Restore to normal static state
+                    SplashPreviewImageOpacity = 1.0;
+                    SplashPreviewTextOpacity = 1.0;
+                    SplashPreviewTextLeftOffset = 0.0;
+                    SplashPreviewTextTopOffset = 0.0;
+                    _isPlayingSplashPreview = false;
+                }
+            });
+
+            BrowsePublishDestinationCommand = new Command(async () =>
+            {
+                if (PickFolderAsync != null)
+                {
+                    var folder = await PickFolderAsync();
+                    if (!string.IsNullOrEmpty(folder))
+                    {
+                        PublishDestination = folder;
+                    }
+                }
+            });
 
             NewGameCommand = new Command(() =>
             {
@@ -333,13 +775,20 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             SaveGameCommand = new Command(async () =>
             {
-                if (CurrentGame == null) return;
-                await _storage.SaveAsync(CurrentGame, CurrentGame.Title, true);
+                await SaveGameAsync();
             });
 
             CloseWelcomeCommand = new Command(() => ShowWelcomeOverlay = false);
 
             PublishCommand = new Command(async () => await PublishProjectAsync());
+
+            SelectPlatformCommand = new Command<string>(platform =>
+            {
+                if (Enum.TryParse<PackagingTarget>(platform, out var target))
+                {
+                    SelectedPublishTarget = target;
+                }
+            });
 
             StartEditingActionCommand = new Command<RagsCore.Models.Action>(action =>
             {
@@ -352,10 +801,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             {
                 IsVisualEditing = false;
                 ActiveAction = null;
-                if (CurrentGame != null)
-                {
-                    await _storage.SaveAsync(CurrentGame, CurrentGame.Title, false);
-                }
+                await SaveGameAsync();
             });
 
             LoadLastWorkspaceCommand = new Command(async () =>
@@ -397,35 +843,35 @@ namespace RagNext.Designer.Avalonia.ViewModels
             // Load recents on startup
             LoadRecentProjects();
 
-            AddActionCommand = new Command<object>(parameter =>
+            AddActionCommand = new Command<object>(async parameter =>
             {
                 if (parameter is Room room)
                 {
                     var act = new RagsCore.Models.Action { Name = "New Room Action", Trigger = ActionTrigger.UserClicked, InitallyActive = true };
                     room.Actions.Add(act);
-                    SaveGameCommand.Execute(null);
+                    await SaveGameAsync();
                 }
                 else if (parameter is Character character)
                 {
-                    var act = new RagsCore.Models.Action { Name = "New Character Action", Trigger = ActionTrigger.OnInteract, InitallyActive = true };
+                    var act = new RagsCore.Models.Action { Name = "New Character Action", Trigger = ActionTrigger.UserClicked, InitallyActive = true };
                     character.Actions.Add(act);
-                    SaveGameCommand.Execute(null);
+                    await SaveGameAsync();
                 }
                 else if (parameter is GameObject obj)
                 {
-                    var act = new RagsCore.Models.Action { Name = "New Object Action", Trigger = ActionTrigger.OnInteract, InitallyActive = true };
+                    var act = new RagsCore.Models.Action { Name = "New Object Action", Trigger = ActionTrigger.UserClicked, InitallyActive = true };
                     obj.Actions.Add(act);
-                    SaveGameCommand.Execute(null);
+                    await SaveGameAsync();
                 }
                 else if (parameter is Player player)
                 {
-                    var act = new RagsCore.Models.Action { Name = "New Player Action", Trigger = ActionTrigger.OnGameStart, InitallyActive = true };
+                    var act = new RagsCore.Models.Action { Name = "New Player Action", Trigger = ActionTrigger.UserClicked, InitallyActive = true };
                     player.Actions.Add(act);
-                    SaveGameCommand.Execute(null);
+                    await SaveGameAsync();
                 }
             });
 
-            DeleteActionCommand = new Command<RagsCore.Models.Action>(action =>
+            DeleteActionCommand = new Command<RagsCore.Models.Action>(async action =>
             {
                 if (action == null || CurrentGame == null) return;
                 if (CurrentGame.Player.Actions.Contains(action))
@@ -448,7 +894,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     CurrentGame.Functions.Remove(fn);
                 }
-                SaveGameCommand.Execute(null);
+                await SaveGameAsync();
             });
 
             ShowLauncherCommand = new Command(() =>
@@ -467,7 +913,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 ShowInventorySelectorOverlay = true;
             });
 
-            SelectInventoryItemCommand = new Command<GameObject>(item =>
+            SelectInventoryItemCommand = new Command<GameObject>(async item =>
             {
                 if (item == null || InventoryTarget == null) return;
                 if (InventoryTarget is Player p && !p.Inventory.Contains(item))
@@ -479,10 +925,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     c.Inventory.Add(item);
                 }
                 ShowInventorySelectorOverlay = false;
-                SaveGameCommand.Execute(null);
+                await SaveGameAsync();
             });
 
-            RemoveInventoryItemCommand = new Command<object>(parameter =>
+            RemoveInventoryItemCommand = new Command<object>(async parameter =>
             {
                 // parameter is a tuple or we can inspect elements
                 if (parameter is global::System.Collections.IList list && list.Count == 2)
@@ -493,7 +939,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
                     if (owner is Player p) p.Inventory.Remove(item);
                     else if (owner is Character c) c.Inventory.Remove(item);
-                    SaveGameCommand.Execute(null);
+                    await SaveGameAsync();
                 }
             });
 
@@ -507,7 +953,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 ShowAttributeDialogOverlay = true;
             });
 
-            SaveAttributeCommand = new Command(() =>
+            SaveAttributeCommand = new Command(async () =>
             {
                 if (AttributeTarget == null || string.IsNullOrWhiteSpace(NewAttributeName)) return;
 
@@ -523,10 +969,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 }
 
                 ShowAttributeDialogOverlay = false;
-                SaveGameCommand.Execute(null);
+                await SaveGameAsync();
             });
 
-            RemoveAttributeCommand = new Command<object>(parameter =>
+            RemoveAttributeCommand = new Command<object>(async parameter =>
             {
                 if (parameter is global::System.Collections.IList list && list.Count == 2)
                 {
@@ -544,7 +990,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     {
                         attrs.Remove(attr);
                     }
-                    SaveGameCommand.Execute(null);
+                    await SaveGameAsync();
                 }
             });
         }
@@ -577,6 +1023,30 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private async Task PublishProjectAsync()
         {
             if (CurrentGame == null) return;
+
+            var destination = PublishDestination?.Trim();
+            var title = PublishTitle?.Trim();
+
+            if (string.IsNullOrWhiteSpace(destination))
+            {
+                PublishLogs += "❌ Publish validation failed: Please select an output folder.\n";
+                PublishStatus = "Failed";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                PublishLogs += "❌ Publish validation failed: Please enter a game title.\n";
+                PublishStatus = "Failed";
+                return;
+            }
+            if (!PublishEngine.IsTemplateAvailable(SelectedPublishTarget))
+            {
+                PublishLogs += $"❌ Template Missing: No shell template found for {SelectedPublishTarget}.\n" +
+                               $"Please build the Unity player first and copy to: {PublishEngine.GetTemplateDir(SelectedPublishTarget)}\n";
+                PublishStatus = "Failed";
+                return;
+            }
+
             IsPublishing = true;
             PublishStatus = "Analyzing and building database...";
             PublishLogs = "Initializing publication packaging engine...\n";
@@ -593,23 +1063,77 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     return;
                 }
 
-                PublishLogs += "✔️ Validation passed.\n";
-                PublishLogs += "Exporting story-engine database assets...\n";
+                PublishLogs += "✔️ Database validation passed.\n";
 
-                // Direct packaging export
-                var bytes = GameJsonExporter.Export(CurrentGame);
-                PublishLogs += $"✔️ Database packaged. Size: {bytes.Length} bytes.\n";
-                PublishLogs += "Triggering .NET Ahead-Of-Time Native AOT compiler checks...\n";
-                
-                // Invoke PublishEngine logic
-                var outputDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "RagNextPublish");
-                PublishLogs += $"Exporting compiled assets to: {outputDir}\n";
-                
-                await PublishEngine.PublishAsync(CurrentGame, PackagingTarget.Windows, outputDir, false);
+                // Overwrite warning check
+                if (Directory.Exists(destination) && Directory.GetFileSystemEntries(destination).Length > 0)
+                {
+                    bool clearDir = false;
+                    if (MediaLibraryViewModel.ConfirmDialogAsync != null)
+                    {
+                        clearDir = await MediaLibraryViewModel.ConfirmDialogAsync(
+                            "Overwrite Warning",
+                            "The destination folder is not empty. To prevent mixing game assets or loading outdated configurations, it is highly recommended to clear this folder.\n\nDo you want to delete its contents before publishing?");
+                    }
 
-                PublishLogs += "✔️ Native AOT compatibility check passed.\n";
-                PublishLogs += "🎉 Publication complete! Your secure Native AOT compiled storytelling package is ready on your Desktop.\n";
-                PublishStatus = "Success! Package created.";
+                    if (clearDir)
+                    {
+                        PublishLogs += "Clearing destination folder...\n";
+                        try
+                        {
+                            foreach (var file in Directory.GetFiles(destination)) File.Delete(file);
+                            foreach (var dir in Directory.GetDirectories(destination)) Directory.Delete(dir, true);
+                            PublishLogs += "✔️ Folder cleared successfully.\n";
+                        }
+                        catch (Exception ex)
+                        {
+                            PublishLogs += $"❌ Error: Could not clear folder: {ex.Message}\n";
+                            PublishStatus = "Failed";
+                            IsPublishing = false;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        PublishLogs += "⚠️ Continuing without clearing folder.\n";
+                    }
+                }
+
+                // Sync UI metadata back to the active Game model
+                CurrentGame.Title = title;
+                CurrentGame.Author = PublishAuthor?.Trim() ?? string.Empty;
+                CurrentGame.Version = PublishVersion?.Trim() ?? "1.0.0";
+
+                // Wire progress reporting
+                Action<string> progressHandler = msg =>
+                {
+                    Dispatcher.UIThread.Post(() => PublishLogs += msg + "\n");
+                };
+
+                PublishEngine.OnProgress += progressHandler;
+
+                try
+                {
+                    PublishLogs += $"Exporting compiled branded assets for {SelectedPublishTarget} to: {destination}\n";
+                    
+                    await Task.Run(async () =>
+                        await PublishEngine.PublishAsync(CurrentGame, SelectedPublishTarget, destination, PublishCreateZip));
+
+                    PublishLogs += "🎉 Publication complete! Branded package is ready.\n";
+                    PublishStatus = "Success! Package created.";
+                    
+                    if (Preferences != null)
+                    {
+                        Preferences.LastPublishDirectory = destination;
+                    }
+                    
+                    // Open folder automatically
+                    try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = destination, UseShellExecute = true }); } catch { }
+                }
+                finally
+                {
+                    PublishEngine.OnProgress -= progressHandler;
+                }
             }
             catch (Exception ex)
             {
@@ -625,6 +1149,16 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private string RecentProjectsFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "recent_projects.json");
 
         public ObservableCollection<string> RecentProjects { get; } = new();
+
+        public async Task SaveGameAsync()
+        {
+            if (CurrentGame == null) return;
+            await _storage.SaveAsync(CurrentGame, CurrentGame.Title, false);
+            if (!string.IsNullOrWhiteSpace(CurrentGame.FileName))
+            {
+                SaveRecentProject(CurrentGame.FileName);
+            }
+        }
 
         public void LoadRecentProjects()
         {

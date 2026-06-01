@@ -514,6 +514,38 @@
         }
       ]
     },
+    {
+      "name": "Room: Lock Exit",
+      "category": "Room",
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        },
+        {
+          "label": "Direction",
+          "controlType": "ComboBox",
+          "dataType": "Direction"
+        }
+      ]
+    },
+    {
+      "name": "Room: Unlock Exit",
+      "category": "Room",
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        },
+        {
+          "label": "Direction",
+          "controlType": "ComboBox",
+          "dataType": "Direction"
+        }
+      ]
+    },
 
     {
       "name": "StatusBar: Set Visible/Invisible",

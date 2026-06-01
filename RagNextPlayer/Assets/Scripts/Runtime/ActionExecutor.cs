@@ -651,6 +651,14 @@ namespace RagNextPlayer.Runtime
             }
             ctx.Player.Inventory.RemoveAll(i => string.Equals(i.Id, oId, StringComparison.OrdinalIgnoreCase));
             
+            foreach (var o in ctx.Game.Objects)
+            {
+                if (o.ContainedObjectIds != null)
+                {
+                    o.ContainedObjectIds.RemoveAll(id => string.Equals(id, oId, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+
             var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, oId, StringComparison.OrdinalIgnoreCase));
             if (obj != null)
             {

@@ -12,6 +12,9 @@ namespace RagsCore.Models
         [System.Text.Json.Serialization.JsonIgnore]
         public string Name => OriginalFileName;
 
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string IdString => Id.ToString();
+
         public string RelativePath { get; set; } = string.Empty; // under the game's Assets folder
         public string ContentType { get; set; } = "application/octet-stream";
         public MediaKind Kind { get; set; } = MediaKind.Other;

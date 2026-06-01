@@ -333,6 +333,22 @@
       ]
     },
     {
+      "name": "Room: Is Exit Locked",
+      "category": "Room",
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        },
+        {
+          "label": "Direction",
+          "controlType": "ComboBox",
+          "dataType": "Direction"
+        }
+      ]
+    },
+    {
       "name": "Timer: Custom Property Check",
       "category": "Timer",
       "inputs": [

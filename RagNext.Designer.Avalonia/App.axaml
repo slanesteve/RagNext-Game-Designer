@@ -2,39 +2,54 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="RagNext.Designer.Avalonia.App"
              xmlns:local="using:RagNext.Designer.Avalonia"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Dark">
 
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
   
     <Application.Styles>
-        <FluentTheme />
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <ColorPaletteResources x:Key="Dark" 
+                                       RegionColor="#1E1E1E" 
+                                       ListLow="#252526" 
+                                       ListMedium="#2D2D2D"
+                                       Accent="#007ACC" 
+                                       ChromeLow="#3F3F46" />
+                
+                <ColorPaletteResources x:Key="Light" 
+                                       RegionColor="#F3F3F3" 
+                                       ListLow="#FFFFFF" 
+                                       ListMedium="#EAEAEA"
+                                       Accent="#007ACC" 
+                                       ChromeLow="#CCCCCC" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
     </Application.Styles>
 
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="MainBg" Color="#F5F5F7"/>
+                    <SolidColorBrush x:Key="MainBg" Color="#F3F3F3"/>
                     <SolidColorBrush x:Key="SidebarBg" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="CardBg" Color="#EFEFEF"/>
-                    <SolidColorBrush x:Key="InputBg" Color="#E2E2E7"/>
-                    <SolidColorBrush x:Key="TextNormal" Color="#1D1D1F"/>
-                    <SolidColorBrush x:Key="TextMuted" Color="#86868B"/>
-                    <SolidColorBrush x:Key="BorderBrush" Color="#D2D2D7"/>
-                    <SolidColorBrush x:Key="AccentBrush" Color="#8E2DE2"/>
+                    <SolidColorBrush x:Key="CardBg" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="InputBg" Color="#EAEAEA"/>
+                    <SolidColorBrush x:Key="TextNormal" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="TextMuted" Color="#7F7F7F"/>
+                    <SolidColorBrush x:Key="BorderBrush" Color="#CCCCCC"/>
+                    <SolidColorBrush x:Key="AccentBrush" Color="#007ACC"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="MainBg" Color="#14141E"/>
-                    <SolidColorBrush x:Key="SidebarBg" Color="#0B0B12"/>
-                    <SolidColorBrush x:Key="CardBg" Color="#1C1C28"/>
-                    <SolidColorBrush x:Key="InputBg" Color="#13131F"/>
-                    <SolidColorBrush x:Key="TextNormal" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="TextMuted" Color="#9A9A9A"/>
-                    <SolidColorBrush x:Key="BorderBrush" Color="#33334A"/>
-                    <SolidColorBrush x:Key="AccentBrush" Color="#8E2DE2"/>
+                    <SolidColorBrush x:Key="MainBg" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="SidebarBg" Color="#252526"/>
+                    <SolidColorBrush x:Key="CardBg" Color="#252526"/>
+                    <SolidColorBrush x:Key="InputBg" Color="#2D2D2D"/>
+                    <SolidColorBrush x:Key="TextNormal" Color="#F5F5F5"/>
+                    <SolidColorBrush x:Key="TextMuted" Color="#A1A1AA"/>
+                    <SolidColorBrush x:Key="BorderBrush" Color="#3F3F46"/>
+                    <SolidColorBrush x:Key="AccentBrush" Color="#007ACC"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>

@@ -42,6 +42,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(PlayerSetNameCommand), "player.setName")]
     [JsonDerivedType(typeof(PlayerSetDescriptionCommand), "player.setDescription")]
     [JsonDerivedType(typeof(PlayerSetGenderCommand), "player.setGender")]
+    [JsonDerivedType(typeof(CharacterSetGenderCommand), "char.setGender")]
     [JsonDerivedType(typeof(SetNumericRandomlyCommand), "var.setRandom")]
     [JsonDerivedType(typeof(CharacterMoveToRoomCommand), "char.moveToRoom")]
     [JsonDerivedType(typeof(DisplayMultimediaCommand), "media.displayMultimedia")]
@@ -192,6 +193,15 @@ namespace RagsCore.Actions
             }
             var pItem = ctx.Player.Inventory.FirstOrDefault(i => i.Id == oId);
             if (pItem != null) ctx.Player.Inventory.Remove(pItem);
+
+            foreach (var o in ctx.Game.Objects)
+            {
+                if (o.ContainedObjectIds != null)
+                {
+                    o.ContainedObjectIds.Remove(oId);
+                }
+            }
+
             var targetObj = ctx.Game.Objects.FirstOrDefault(o => o.Id == oId);
             if (targetObj != null)
             {
@@ -291,6 +301,25 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             ctx.Player.Gender = Gender;
+        }
+    }
+
+    public sealed class CharacterSetGenderCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string Gender { get; set; } = "Male";
+        public override string TypeName => "Character: Set Gender";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (Guid.TryParse(resolvedChar, out var cId))
+            {
+                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+                if (character != null)
+                {
+                    character.Properties["Gender"] = Gender;
+                }
+            }
         }
     }
 

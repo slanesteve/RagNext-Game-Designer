@@ -107,6 +107,8 @@ const fallbackDiscriminators = {
     "roommoveitemstoplayer": "room.moveItemsToPlayer",
     "roomsetdescription": "room.setDescription",
     "roomsetpicture": "room.setPicture",
+    "roomlockexit": "room.lockExit",
+    "roomunlockexit": "room.unlockExit",
     "statusbarsetvisibleinvisible": "ui.setStatusBarVisible",
     "timerexecutetimer": "timer.executeTimer",
     "timerresettimer": "timer.resetTimer",
@@ -142,6 +144,7 @@ const fallbackDiscriminators = {
     "playerinsameroomas": "player.sameRoom",
     "playermovingindirection": "player.movingInDirection",
     "roomcustompropertycheck": "room.customPropertyCheck",
+    "roomisexitlocked": "room.isExitLocked",
     "timercustompropertycheck": "timer.customPropertyCheck",
     "variablecomparison": "var.compare",
     "variablecomparisontovariable": "var.compareVar",
@@ -1631,12 +1634,20 @@ function buildNodeJsonWithoutNext(node) {
         };
         if (node.inputs) {
             node.inputs.forEach(inp => {
-                let val = node.data[inp.label];
+                let val = getPropertyValue(node.data, inp.label);
                 if (val === undefined) val = "";
                 
                 // Map to primary C# property name
                 const aliases = propertyMappings[inp.label] || [];
-                const primaryCsharpProp = aliases[0] || inp.label;
+                let primaryCsharpProp = aliases[0] || inp.label;
+                
+                // Override property mapping for C# commands which expect ObjectId/ContainerObjectId
+                if (inp.label === 'Item') {
+                    primaryCsharpProp = 'ObjectId';
+                } else if (inp.label === 'Container Object' && node.data.commandType === 'object.moveInsideObject') {
+                    primaryCsharpProp = 'ContainerObjectId';
+                }
+                
                 commandJson[primaryCsharpProp] = val;
                 
                 // Keep original label for JS graph canvas reload consistency

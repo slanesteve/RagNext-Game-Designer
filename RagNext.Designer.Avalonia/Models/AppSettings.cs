@@ -26,5 +26,8 @@ namespace RagNext.Designer.Avalonia.Models
         public string AiImageGenHost { get; set; } = "http://localhost";
         public string AiImageGenPort { get; set; } = "7860";
         public bool AiImageGenEnableHelper { get; set; } = true;
+
+        // Last Published Directory
+        public string LastPublishDirectory { get; set; } = string.Empty;
     }
 }

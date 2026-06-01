@@ -144,6 +144,9 @@ namespace RagNext.Designer.Avalonia.Services
             PortraitImagePath = (o as Character)?.PortraitImagePath ?? o.PortraitImagePath,
             IsCollectible     = o.IsCollectible,
             IsCharacter       = o is Character,
+            IsContainer       = o.IsContainer,
+            ContainerOpen     = o.ContainerOpen,
+            ContainedObjectIds = o.ContainedObjectIds.Select(id => id.ToString()).ToList(),
             StartingRoomId    = (o as Character)?.StartingRoom?.Id.ToString(),
             Actions           = o.Actions.Select(a => BuildActionDto(a)).ToList(),
             Inventory         = o is Character ch

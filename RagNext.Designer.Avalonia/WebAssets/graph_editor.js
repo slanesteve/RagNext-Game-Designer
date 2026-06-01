@@ -90,12 +90,12 @@ const fallbackDiscriminators = {
     "imageclearlayeredimages": "image.clearLayeredImages",
     "imageremovelayeredimage": "image.removeLayeredImage",
     "imagereplacelayeredimage": "image.replaceLayeredImage",
-    "itemdisplaydescription": "item.displayDescription",
+    "itemdisplaydescription": "object.displayDescription",
     "itemlayeredremove": "item.layeredRemove",
     "itemlayeredwear": "item.layeredWear",
-    "itemmovetocharacter": "item.moveToChar",
-    "itemmovetoinventory": "item.moveToInventory",
-    "itemmoveinsideobject": "item.moveInsideObject",
+    "itemmovetocharacter": "object.moveToCharacter",
+    "itemmovetoinventory": "object.moveToInventory",
+    "itemmoveinsideobject": "object.moveInsideObject",
     "itemmovetoroom": "item.inRoom",
     "playerdisplaydescription": "player.displayDescription",
     "playersetlayeredportrait": "player.setLayeredPortrait",
@@ -114,6 +114,8 @@ const fallbackDiscriminators = {
     "roommoveitemstoplayer": "room.moveItemsToPlayer",
     "roomsetdescription": "room.setDescription",
     "roomsetpicture": "room.setPicture",
+    "roomlockexit": "room.lockExit",
+    "roomunlockexit": "room.unlockExit",
     "statusbarsetvisibleinvisible": "ui.setStatusBarVisible",
     "timerexecutetimer": "timer.executeTimer",
     "timerresettimer": "timer.resetTimer",
@@ -149,6 +151,7 @@ const fallbackDiscriminators = {
     "playerinsameroomas": "player.sameRoom",
     "playermovingindirection": "player.movingInDirection",
     "roomcustompropertycheck": "room.customPropertyCheck",
+    "roomisexitlocked": "room.isExitLocked",
     "timercustompropertycheck": "timer.customPropertyCheck",
     "variablecomparison": "var.compare",
     "variablecomparisontovariable": "var.compareVar",
@@ -162,12 +165,20 @@ const propertyMappings = {
     "Media File": ["MediaId", "mediaId", "MediaFile", "mediaFile"],
     "Portrait Media": ["PortraitId", "portraitId", "PortraitMedia", "portraitMedia", "MediaId"],
     "Object": ["ObjectId", "objectId", "Object"],
+    "Item": ["ItemId", "itemId", "Item", "ObjectId", "objectId"],
+    "Container Object": ["ObjectId", "objectId", "ContainerObjectId", "containerObjectId", "ContainerObject", "containerObject"],
     "Choice Text": ["ChoiceText", "choiceText", "Text", "text"],
     "Target Variable": ["VariableName", "variableName", "Name", "name", "TargetVariable", "targetVariable"],
-    "Variable": ["VariableName", "variableName", "Name", "name", "Variable", "variable"],
+    "Variable": ["Name", "name", "VariableName", "variableName", "Variable", "variable"],
+    "Variable A": ["NameA", "nameA", "VariableA", "variableA"],
+    "Variable B": ["NameB", "nameB", "VariableB", "variableB"],
     "Text": ["Text", "text"],
     "Amount": ["Amount", "amount"],
-    "Direction": ["Direction", "direction"]
+    "Direction": ["Direction", "direction"],
+    "Prompt Text": ["PromptText", "promptText"],
+    "Input Type": ["InputType", "inputType"],
+    "Custom Options": ["CustomOptions", "customOptions"],
+    "Store Variable": ["StoreVariableName", "storeVariableName"]
 };
 
 function getPropertyValue(nodeData, label) {
@@ -1367,6 +1378,11 @@ function refreshCommandFields(node) {
     }
 
     schema.inputs.forEach(inputSchema => {
+        const currentInputType = getPropertyValue(node.data, "Input Type") || getPropertyValue(node.data, "InputType") || "Text";
+        if ((inputSchema.label === "Custom Options" || inputSchema.label === "CustomOptions") && currentInputType !== "Custom") {
+            return;
+        }
+
         const row = document.createElement('div');
         row.className = 'field-row';
         row.style.marginBottom = '6px';
@@ -1381,9 +1397,148 @@ function refreshCommandFields(node) {
         row.appendChild(label);
 
         let inputElement;
-        const initialVal = getPropertyValue(node.data, inputSchema.label);
+        let initialVal = getPropertyValue(node.data, inputSchema.label);
 
-        if (inputSchema.controlType === 'ComboBox' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item') {
+        // Normalize numeric enums serialized as integers
+        if (inputSchema.label === 'InputType' || inputSchema.label === 'Input Type') {
+            if (initialVal === 0 || initialVal === '0') initialVal = "Text";
+            else if (initialVal === 1 || initialVal === '1') initialVal = "Objects";
+            else if (initialVal === 2 || initialVal === '2') initialVal = "Characters";
+            else if (initialVal === 3 || initialVal === '3') initialVal = "Custom";
+            
+            node.data[inputSchema.label] = initialVal;
+            const aliases = propertyMappings[inputSchema.label] || [];
+            aliases.forEach(alias => {
+                node.data[alias] = initialVal;
+            });
+        } else if (inputSchema.label === 'Gender') {
+            if (initialVal === 0 || initialVal === '0') initialVal = "Male";
+            else if (initialVal === 1 || initialVal === '1') initialVal = "Female";
+            else if (initialVal === 2 || initialVal === '2') initialVal = "Non-binary";
+            else if (initialVal === 3 || initialVal === '3') initialVal = "Other";
+            
+            node.data[inputSchema.label] = initialVal;
+            const aliases = propertyMappings[inputSchema.label] || [];
+            aliases.forEach(alias => {
+                node.data[alias] = initialVal;
+            });
+        }
+
+        if (inputSchema.label === 'Custom Options' || inputSchema.label === 'CustomOptions') {
+            // Render interactive option list builder!
+            const listWrapper = document.createElement('div');
+            listWrapper.className = 'custom-options-wrapper';
+            listWrapper.style.display = 'flex';
+            listWrapper.style.flexDirection = 'column';
+            listWrapper.style.gap = '6px';
+            listWrapper.style.marginTop = '4px';
+
+            const optionsListContainer = document.createElement('div');
+            optionsListContainer.className = 'options-list-container';
+            optionsListContainer.style.display = 'flex';
+            optionsListContainer.style.flexDirection = 'column';
+            optionsListContainer.style.gap = '4px';
+
+            const updateOptionsUI = () => {
+                optionsListContainer.innerHTML = '';
+                const currentVal = getPropertyValue(node.data, "Custom Options") || "";
+                const options = currentVal ? currentVal.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+
+                options.forEach((opt, idx) => {
+                    const itemRow = document.createElement('div');
+                    itemRow.style.display = 'flex';
+                    itemRow.style.justifyContent = 'space-between';
+                    itemRow.style.alignItems = 'center';
+                    itemRow.style.padding = '6px 8px';
+                    itemRow.style.background = '#1e1e2e'; // dark slate bento style
+                    itemRow.style.border = '1px solid #313244';
+                    itemRow.style.borderRadius = '6px';
+                    itemRow.style.fontSize = '12px';
+
+                    const textSpan = document.createElement('span');
+                    textSpan.innerText = opt;
+                    textSpan.style.color = '#cdd6f4';
+                    itemRow.appendChild(textSpan);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '🗑️';
+                    deleteBtn.style.background = 'none';
+                    deleteBtn.style.border = 'none';
+                    deleteBtn.style.cursor = 'pointer';
+                    deleteBtn.style.fontSize = '12px';
+                    deleteBtn.style.padding = '0';
+                    deleteBtn.style.color = '#f38ba8';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const newOptions = options.filter((_, i) => i !== idx);
+                        const joined = newOptions.join(',');
+                        node.data["Custom Options"] = joined;
+                        node.data["CustomOptions"] = joined;
+                        updateOptionsUI();
+                        triggerAutoSave();
+                    });
+                    itemRow.appendChild(deleteBtn);
+                    optionsListContainer.appendChild(itemRow);
+                });
+            };
+
+            updateOptionsUI();
+            listWrapper.appendChild(optionsListContainer);
+
+            // Add new option control group
+            const addGroup = document.createElement('div');
+            addGroup.style.display = 'flex';
+            addGroup.style.gap = '6px';
+            addGroup.style.marginTop = '4px';
+
+            const addInput = document.createElement('input');
+            addInput.type = 'text';
+            addInput.placeholder = 'another option to add';
+            addInput.style.flex = '1';
+            addInput.style.fontSize = '12px';
+            addInput.style.padding = '6px 8px';
+            addGroup.appendChild(addInput);
+
+            const addBtn = document.createElement('button');
+            addBtn.innerText = 'Add';
+            addBtn.style.padding = '6px 12px';
+            addBtn.style.background = '#89b4fa';
+            addBtn.style.color = '#11111b';
+            addBtn.style.border = 'none';
+            addBtn.style.borderRadius = '6px';
+            addBtn.style.cursor = 'pointer';
+            addBtn.style.fontWeight = 'bold';
+            addBtn.style.fontSize = '12px';
+
+            const handleAdd = (e) => {
+                if (e) e.preventDefault();
+                const newOpt = addInput.value.trim();
+                if (newOpt) {
+                    const currentVal = getPropertyValue(node.data, "Custom Options") || "";
+                    const options = currentVal ? currentVal.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+                    options.push(newOpt);
+                    const joined = options.join(',');
+                    node.data["Custom Options"] = joined;
+                    node.data["CustomOptions"] = joined;
+                    addInput.value = '';
+                    updateOptionsUI();
+                    triggerAutoSave();
+                }
+            };
+
+            addBtn.addEventListener('click', handleAdd);
+            addInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAdd();
+                }
+            });
+
+            addGroup.appendChild(addBtn);
+            listWrapper.appendChild(addGroup);
+
+            inputElement = listWrapper;
+        } else if (inputSchema.controlType === 'ComboBox' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item') {
             // Container for both controls
             const fieldWrapper = document.createElement('div');
             fieldWrapper.className = 'toggle-field-wrapper';
@@ -1401,21 +1556,63 @@ function refreshCommandFields(node) {
 
             let optionsList = [];
             if (inputSchema.dataType === 'Room') optionsList = catalogs.Rooms || [];
-            else if (inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Item') optionsList = catalogs.GameObjects || [];
+            else if (inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Item') {
+                optionsList = catalogs.GameObjects || [];
+                if (inputSchema.label === 'Container Object' || inputSchema.label === 'ContainerObject') {
+                    optionsList = optionsList.filter(o => o.IsContainer || o.isContainer);
+                }
+            }
             else if (inputSchema.dataType === 'Character') optionsList = catalogs.Characters || [];
             else if (inputSchema.dataType === 'Variable') optionsList = catalogs.Variables || [];
             else if (inputSchema.dataType === 'Media') optionsList = catalogs.Media || [];
             else if (inputSchema.dataType === 'Function') optionsList = catalogs.Functions || [];
             else if (inputSchema.dataType === 'Timer') optionsList = catalogs.Timers || [];
+            else if (inputSchema.label === 'Gender') {
+                optionsList = [
+                    { Id: "Male", Name: "Male" },
+                    { Id: "Female", Name: "Female" },
+                    { Id: "Non-binary", Name: "Non-binary" },
+                    { Id: "Other", Name: "Other" }
+                ];
+            } else if (inputSchema.label === 'InputType' || inputSchema.label === 'Input Type') {
+                optionsList = [
+                    { Id: "Text", Name: "Text" },
+                    { Id: "Objects", Name: "Objects" },
+                    { Id: "Characters", Name: "Characters" },
+                    { Id: "Custom", Name: "Custom" }
+                ];
+            } else if (inputSchema.label === 'Comparison') {
+                optionsList = [
+                    { Id: "=", Name: "=" },
+                    { Id: "!=", Name: "!=" },
+                    { Id: ">", Name: ">" },
+                    { Id: ">=", Name: ">=" },
+                    { Id: "<", Name: "<" },
+                    { Id: "<=", Name: "<=" }
+                ];
+            } else if (inputSchema.label === 'Direction') {
+                optionsList = [
+                    { Id: "North", Name: "North" },
+                    { Id: "South", Name: "South" },
+                    { Id: "East", Name: "East" },
+                    { Id: "West", Name: "West" },
+                    { Id: "Up", Name: "Up" },
+                    { Id: "Down", Name: "Down" },
+                    { Id: "In", Name: "In" },
+                    { Id: "Out", Name: "Out" }
+                ];
+            }
 
             optionsList.forEach(opt => {
                 const o = document.createElement('option');
+                const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
+                const idVal = opt.Id !== undefined ? opt.Id : opt.id;
                 if (inputSchema.dataType === 'Variable') {
-                    o.value = opt.Name;
-                    o.innerText = opt.Name;
+                    o.value = nameVal;
+                    o.innerText = nameVal;
                 } else {
-                    o.value = opt.Id;
-                    o.innerText = opt.Name;
+                    o.value = idVal;
+                    o.innerText = nameVal;
                 }
                 pickerSelect.appendChild(o);
             });
@@ -1425,9 +1622,11 @@ function refreshCommandFields(node) {
             textInput.placeholder = `Enter expression / {this.name}...`;
             textInput.style.width = "100%";
 
-            const existsInOptions = optionsList.some(opt => 
-                inputSchema.dataType === 'Variable' ? opt.Name === initialVal : opt.Id === initialVal
-            );
+            const existsInOptions = optionsList.some(opt => {
+                const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
+                const idVal = opt.Id !== undefined ? opt.Id : opt.id;
+                return inputSchema.dataType === 'Variable' ? nameVal === initialVal : idVal === initialVal;
+            });
             let isExprMode = (initialVal && (initialVal.includes('{') || initialVal.includes('}') || !existsInOptions));
 
             pickerSelect.style.display = isExprMode ? 'none' : 'block';
@@ -1473,6 +1672,9 @@ function refreshCommandFields(node) {
                 aliases.forEach(alias => {
                     node.data[alias] = pickerSelect.value;
                 });
+                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType') {
+                    refreshCommandFields(node);
+                }
                 triggerAutoSave();
             });
 
@@ -1483,6 +1685,9 @@ function refreshCommandFields(node) {
                 aliases.forEach(alias => {
                     node.data[alias] = textInput.value;
                 });
+                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType') {
+                    refreshCommandFields(node);
+                }
                 triggerAutoSave();
             });
 
@@ -1647,12 +1852,20 @@ function buildNodeJsonWithoutNext(node) {
         };
         if (node.inputs) {
             node.inputs.forEach(inp => {
-                let val = node.data[inp.label];
+                let val = getPropertyValue(node.data, inp.label);
                 if (val === undefined) val = "";
                 
                 // Map to primary C# property name
                 const aliases = propertyMappings[inp.label] || [];
-                const primaryCsharpProp = aliases[0] || inp.label;
+                let primaryCsharpProp = aliases[0] || inp.label;
+                
+                // Override property mapping for C# commands which expect ObjectId/ContainerObjectId
+                if (inp.label === 'Item') {
+                    primaryCsharpProp = 'ObjectId';
+                } else if (inp.label === 'Container Object' && node.data.commandType === 'object.moveInsideObject') {
+                    primaryCsharpProp = 'ContainerObjectId';
+                }
+                
                 commandJson[primaryCsharpProp] = val;
                 
                 // Keep original label for JS graph canvas reload consistency
@@ -1684,7 +1897,7 @@ function buildNodeJsonWithoutNext(node) {
 
         if (node.inputs) {
             node.inputs.forEach(inp => {
-                let val = node.data[inp.label];
+                let val = getPropertyValue(node.data, inp.label);
                 if (val === undefined) val = "";
                 
                 // Map to primary C# property name
@@ -1912,18 +2125,16 @@ function parseAndCreateNode(data, x, y) {
             Object.keys(data).forEach(key => {
                 if (key !== "trueBranch" && key !== "falseBranch" && key !== "TrueBranch" && key !== "FalseBranch") {
                     node.data[key] = data[key];
+                    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+                    const lowKey = key.charAt(0).toLowerCase() + key.slice(1);
+                    node.data[capKey] = data[key];
+                    node.data[lowKey] = data[key];
                 }
             });
 
             const select = node.element.querySelector('select');
             if (select) {
-                select.innerHTML = "";
-                AVAILABLE_CONDITIONS.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.type;
-                    opt.innerText = c.label;
-                    select.appendChild(opt);
-                });
+                populateSelectWithOptions(select, AVAILABLE_CONDITIONS);
                 select.value = data["$type"];
             }
 
@@ -1977,18 +2188,16 @@ function parseAndCreateNode(data, x, y) {
             Object.keys(data).forEach(key => {
                 if (key !== "nextStep") {
                     node.data[key] = data[key];
+                    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+                    const lowKey = key.charAt(0).toLowerCase() + key.slice(1);
+                    node.data[capKey] = data[key];
+                    node.data[lowKey] = data[key];
                 }
             });
 
             const select = node.element.querySelector('select');
             if (select) {
-                select.innerHTML = "";
-                AVAILABLE_COMMANDS.forEach(cmd => {
-                    const opt = document.createElement('option');
-                    opt.value = cmd.type;
-                    opt.innerText = cmd.label;
-                    select.appendChild(opt);
-                });
+                populateSelectWithOptions(select, AVAILABLE_COMMANDS);
                 select.value = data["$type"];
             }
 

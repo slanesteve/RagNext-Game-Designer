@@ -42,6 +42,17 @@ namespace RagNext.Designer.Avalonia.Views
                 return global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.Select(files, f => f.Path.LocalPath));
             };
 
+            MainWindowViewModel.PickFolderAsync = async () =>
+            {
+                var folders = await StorageProvider.OpenFolderPickerAsync(new global::Avalonia.Platform.Storage.FolderPickerOpenOptions
+                {
+                    AllowMultiple = false,
+                    Title = "Select Standalone Publish Export Directory"
+                });
+                var folder = global::System.Linq.Enumerable.FirstOrDefault(folders);
+                return folder?.Path.LocalPath ?? string.Empty;
+            };
+
             MediaLibraryViewModel.PromptInputAsync = async (title, message) =>
             {
                 return await PromptDialog.ShowAsync(this, title, message);
@@ -65,6 +76,24 @@ namespace RagNext.Designer.Avalonia.Views
                         {
                             EnsureWebViewLoaded();
                         }
+                    }
+                    else if (ev.PropertyName == nameof(MainWindowViewModel.ActiveView))
+                    {
+                        global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            if (PlayerDetailsScrollViewer != null) PlayerDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                            if (RoomDetailsScrollViewer != null) RoomDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                            if (CharDetailsScrollViewer != null) CharDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                            if (ObjectDetailsScrollViewer != null) ObjectDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                        }, global::Avalonia.Threading.DispatcherPriority.Background);
+
+                        global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            if (PlayerDetailsScrollViewer != null) PlayerDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                            if (RoomDetailsScrollViewer != null) RoomDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                            if (CharDetailsScrollViewer != null) CharDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                            if (ObjectDetailsScrollViewer != null) ObjectDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                        }, global::Avalonia.Threading.DispatcherPriority.Loaded);
                     }
                 };
 
@@ -193,10 +222,13 @@ namespace RagNext.Designer.Avalonia.Views
                 // Gather dynamic target options (rooms, characters, objects, variables) for properties autocomplete dropdown mapping
                 var catalogsObj = new
                 {
-                    rooms = vm.CurrentGame.Rooms.Select(r => r.Name).ToList(),
-                    characters = vm.CurrentGame.Characters.Select(c => c.Name).ToList(),
-                    objects = vm.CurrentGame.Objects.Select(o => o.Name).ToList(),
-                    variables = vm.CurrentGame.Variables.Select(v => v.Name).ToList()
+                    Rooms = vm.CurrentGame.Rooms.Select(r => new { Id = r.Id.ToString(), Name = r.Name }).ToList(),
+                    Characters = vm.CurrentGame.Characters.Select(c => new { Id = c.Id.ToString(), Name = c.Name }).ToList(),
+                    GameObjects = vm.CurrentGame.Objects.Select(o => new { Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer }).ToList(),
+                    Variables = vm.CurrentGame.Variables.Select(v => new { Id = v.Name, Name = v.Name }).ToList(),
+                    Media = vm.CurrentGame.MediaAssets.Select(m => new { Id = m.RelativePath, Name = string.IsNullOrWhiteSpace(m.OriginalFileName) ? m.RelativePath : m.OriginalFileName }).ToList(),
+                    Functions = vm.CurrentGame.Functions.Select(f => new { Id = f.Name, Name = f.Name }).ToList(),
+                    Timers = vm.CurrentGame.Timers.Select(t => new { Id = t.Name, Name = t.Name }).ToList()
                 };
                 string catalogsJson = JsonSerializer.Serialize(catalogsObj);
 
@@ -240,9 +272,15 @@ namespace RagNext.Designer.Avalonia.Views
             try
             {
                 var base64Json = await CanvasWebView.InvokeScript("saveAndSyncCsharp()");
-                if (string.IsNullOrEmpty(base64Json) || base64Json == "undefined") return;
-
-                SyncGraphData(base64Json);
+                if (!string.IsNullOrEmpty(base64Json) && base64Json != "undefined")
+                {
+                    await SyncGraphData(base64Json);
+                }
+                else
+                {
+                    // Delay slightly to allow the webview's async window.location / rags-action sync interceptor to finish
+                    await Task.Delay(250);
+                }
 
                 // Exit visual editing cleanly and return back to details panel
                 vm.IsVisualEditing = false;
@@ -251,10 +289,12 @@ namespace RagNext.Designer.Avalonia.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to sync canvas: {ex.Message}");
+                vm.IsVisualEditing = false;
+                vm.ActiveAction = null;
             }
         }
 
-        private void OnWebViewNavigationStarted(object? sender, WebViewNavigationStartingEventArgs e)
+        private async void OnWebViewNavigationStarted(object? sender, WebViewNavigationStartingEventArgs e)
         {
             var url = e.Request?.ToString() ?? "";
             if (url.StartsWith("rags-action://"))
@@ -270,7 +310,7 @@ namespace RagNext.Designer.Avalonia.Views
                         string base64 = query["data"] ?? "";
                         if (!string.IsNullOrEmpty(base64))
                         {
-                            SyncGraphData(base64);
+                            await SyncGraphData(base64);
                         }
                     }
                     else if (url.StartsWith("rags-action://ai"))
@@ -288,14 +328,14 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        private void HandleRagsAction(string msg)
+        private async void HandleRagsAction(string msg)
         {
             try
             {
                 if (msg.StartsWith("sync?data="))
                 {
                     string base64 = msg.Substring("sync?data=".Length);
-                    SyncGraphData(base64);
+                    await SyncGraphData(base64);
                 }
                 else if (msg.StartsWith("ai?"))
                 {
@@ -312,7 +352,7 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        private async void SyncGraphData(string base64)
+        private async Task SyncGraphData(string base64)
         {
             if (DataContext is not MainWindowViewModel vm || vm.CurrentGame == null || vm.ActiveAction == null) return;
 
@@ -333,6 +373,7 @@ namespace RagNext.Designer.Avalonia.Views
                     ReferenceHandler = ReferenceHandler.Preserve
                 };
                 settings.Converters.Add(new JsonStringEnumConverter());
+                settings.Converters.Add(new StepDefinitionBaseJsonConverter());
                 var imported = JsonSerializer.Deserialize<RagsCore.Models.Action>(json, settings);
 
                 if (imported != null)
@@ -347,8 +388,8 @@ namespace RagNext.Designer.Avalonia.Views
                         target.Nodes.Add(node);
                     }
 
-                    // Save immediately
-                    await GameStorage.SaveAsync(vm.CurrentGame, vm.CurrentGame.Title);
+                    // Save immediately and make sure changes write synchronously to disk
+                    await GameStorage.SaveAsync(vm.CurrentGame, vm.CurrentGame.Title, false);
                     vm.RunValidation();
                 }
             }
@@ -366,7 +407,11 @@ namespace RagNext.Designer.Avalonia.Views
             var apiKey = vm.Preferences.AiCoAuthorKey;
             var model = vm.Preferences.AiCoAuthorModel;
 
-            if (string.IsNullOrWhiteSpace(apiKey))
+            var provider = vm.Preferences.AiCoAuthorProvider;
+            bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
+                                  string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+
+            if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
             {
                 await ConfirmDialog.ShowAsync(this, "AI Dialogue Co-Author", "Please set your AI Co-Author API Key in Preferences / Settings first.");
                 return;
@@ -376,11 +421,15 @@ namespace RagNext.Designer.Avalonia.Views
             var prompt = await PromptDialog.ShowAsync(this, "✨ AI Co-Author", $"Enter instructions to improve this text:\n\n\"{currentText}\"");
             if (string.IsNullOrWhiteSpace(prompt)) return;
 
-            // Notify Javascript to display loading/spinning status on node AI trigger button
-            await CanvasWebView.InvokeScript($"if (typeof showNodeAISpinner === 'function') {{ showNodeAISpinner('{nodeId}', '{fieldName}', true); }}");
-
             try
             {
+                try
+                {
+                    // Notify Javascript to display loading/spinning status on node AI trigger button
+                    await CanvasWebView.InvokeScript($"if (typeof showNodeAISpinner === 'function') {{ showNodeAISpinner('{nodeId}', '{fieldName}', true); }}");
+                }
+                catch {}
+
                 using var client = new HttpClient();
                 if (!string.IsNullOrWhiteSpace(apiKey))
                 {
@@ -428,7 +477,183 @@ namespace RagNext.Designer.Avalonia.Views
             }
             finally
             {
-                await CanvasWebView.InvokeScript($"if (typeof showNodeAISpinner === 'function') {{ showNodeAISpinner('{nodeId}', '{fieldName}', false); }}");
+                try
+                {
+                    await CanvasWebView.InvokeScript($"if (typeof showNodeAISpinner === 'function') {{ showNodeAISpinner('{nodeId}', '{fieldName}', false); }}");
+                }
+                catch {}
+            }
+        }
+
+        private async Task CoAuthorPropertyAsync(object dataObj, string propertyName)
+        {
+            if (DataContext is not MainWindowViewModel vm) return;
+
+            var prop = dataObj.GetType().GetProperty(propertyName);
+            if (prop == null) return;
+
+            var currentText = prop.GetValue(dataObj) as string ?? string.Empty;
+
+            var endpoint = vm.Preferences.AiCoAuthorEndpoint;
+            var apiKey = vm.Preferences.AiCoAuthorKey;
+            var model = vm.Preferences.AiCoAuthorModel;
+
+            var provider = vm.Preferences.AiCoAuthorProvider;
+            bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
+                                  string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+
+            if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
+            {
+                await ConfirmDialog.ShowAsync(this, "AI Co-Author", "Please set your AI Co-Author API Key in Preferences / Settings first.");
+                return;
+            }
+
+            var prompt = await PromptDialog.ShowAsync(this, "✨ AI Co-Author", $"Enter instructions to improve this {propertyName.ToLower()}:\n\n\"{currentText}\"");
+            if (string.IsNullOrWhiteSpace(prompt)) return;
+
+            try
+            {
+                using var client = new HttpClient();
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                }
+
+                var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
+                var requestBody = new
+                {
+                    model = model,
+                    messages = new[]
+                    {
+                        new { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                        new { role = "user", content = finalPrompt }
+                    },
+                    temperature = 0.7
+                };
+
+                var requestJson = JsonSerializer.Serialize(requestBody);
+                var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                var url = endpoint.TrimEnd('/') + "/chat/completions";
+                var response = await client.PostAsync(url, requestContent);
+                var responseJson = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
+                }
+
+                using var doc = JsonDocument.Parse(responseJson);
+                if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                {
+                    var content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        prop.SetValue(dataObj, content);
+                        if (dataObj is RagsCore.Models.BaseModel bm)
+                        {
+                            bm.GetType().GetMethod("OnPropertyChanged")?.Invoke(bm, new object[] { propertyName });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await ConfirmDialog.ShowAsync(this, "AI Assist Error", ex.Message);
+            }
+        }
+
+        private async void OnCoAuthorNameClicked(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext != null)
+            {
+                await CoAuthorPropertyAsync(btn.DataContext, "Name");
+            }
+        }
+
+        private async void OnCoAuthorDescriptionClicked(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext != null)
+            {
+                await CoAuthorPropertyAsync(btn.DataContext, "Description");
+            }
+        }
+
+        private async void OnSuggestDescriptionClicked(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext != null)
+            {
+                var dataObj = btn.DataContext;
+                var propName = dataObj.GetType().GetProperty("Name");
+                var nameVal = propName?.GetValue(dataObj) as string ?? "Unnamed";
+                
+                if (DataContext is not MainWindowViewModel vm) return;
+
+                var endpoint = vm.Preferences.AiCoAuthorEndpoint;
+                var apiKey = vm.Preferences.AiCoAuthorKey;
+                var model = vm.Preferences.AiCoAuthorModel;
+
+                var provider = vm.Preferences.AiCoAuthorProvider;
+                bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
+                                      string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+
+                if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
+                {
+                    await ConfirmDialog.ShowAsync(this, "AI Co-Author", "Please set your AI Co-Author API Key in Preferences / Settings first.");
+                    return;
+                }
+
+                try
+                {
+                    using var client = new HttpClient();
+                    if (!string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    }
+
+                    var finalPrompt = $"Generate a vivid, sensory, second-person adventure game description for a {dataObj.GetType().Name.ToLower()} named \"{nameVal}\".";
+                    var requestBody = new
+                    {
+                        model = model,
+                        messages = new[]
+                        {
+                            new { role = "system", content = vm.Preferences.AiCoAuthorAssistantPrompt },
+                            new { role = "user", content = finalPrompt }
+                        },
+                        temperature = 0.7
+                    };
+
+                    var requestJson = JsonSerializer.Serialize(requestBody);
+                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                    var url = endpoint.TrimEnd('/') + "/chat/completions";
+                    var response = await client.PostAsync(url, requestContent);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
+                    }
+
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                    {
+                        var content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
+                        if (!string.IsNullOrEmpty(content))
+                        {
+                            var descProp = dataObj.GetType().GetProperty("Description");
+                            descProp?.SetValue(dataObj, content);
+                            if (dataObj is RagsCore.Models.BaseModel bm)
+                            {
+                                bm.GetType().GetMethod("OnPropertyChanged")?.Invoke(bm, new object[] { "Description" });
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ConfirmDialog.ShowAsync(this, "AI Assist Error", ex.Message);
+                }
             }
         }
 
@@ -464,7 +689,7 @@ namespace RagNext.Designer.Avalonia.Views
             }
             if (RoomDetailsScrollViewer != null)
             {
-                RoomDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() => { RoomDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0); }, global::Avalonia.Threading.DispatcherPriority.Background);
             }
         }
 
@@ -472,7 +697,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (CharDetailsScrollViewer != null)
             {
-                CharDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() => { CharDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0); }, global::Avalonia.Threading.DispatcherPriority.Background);
             }
         }
 
@@ -480,7 +705,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (ObjectDetailsScrollViewer != null)
             {
-                ObjectDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() => { ObjectDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0); }, global::Avalonia.Threading.DispatcherPriority.Background);
             }
         }
 
@@ -687,6 +912,12 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     room.ObjectIds.Remove(item.Id);
                 }
+
+                // Save changes automatically
+                if (DataContext is MainWindowViewModel vm)
+                {
+                    vm.SaveGameCommand.Execute(null);
+                }
             }
         }
 
@@ -848,6 +1079,50 @@ namespace RagNext.Designer.Avalonia.Views
                 System.Diagnostics.Debug.WriteLine($"Failed to update media preview: {ex.Message}");
             }
         }
+
+        private bool _isSyncingContainedObjects = false;
+
+        public void OnContainedObjectCheckBoxLoaded(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
+            if (ObjectsList.SelectedItem is not GameObject container) return;
+
+            _isSyncingContainedObjects = true;
+            try
+            {
+                cb.IsEnabled = item.Id != container.Id;
+                cb.IsChecked = container.ContainedObjectIds.Contains(item.Id);
+            }
+            finally
+            {
+                _isSyncingContainedObjects = false;
+            }
+        }
+
+        public void OnContainedObjectCheckedChanged(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (_isSyncingContainedObjects) return;
+            if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
+            if (ObjectsList.SelectedItem is not GameObject container) return;
+
+            if (cb.IsChecked == true)
+            {
+                if (!container.ContainedObjectIds.Contains(item.Id))
+                {
+                    container.ContainedObjectIds.Add(item.Id);
+                }
+            }
+            else
+            {
+                container.ContainedObjectIds.Remove(item.Id);
+            }
+
+            // Save changes automatically
+            if (DataContext is MainWindowViewModel vm)
+            {
+                vm.SaveGameCommand.Execute(null);
+            }
+        }
     }
 
     public class ObjectCheckItem
@@ -890,6 +1165,16 @@ namespace RagNext.Designer.Avalonia.Views
 
             okBtn.Click += (s, e) => { tcs.SetResult(input.Text ?? ""); dialog.Close(); };
             cancelBtn.Click += (s, e) => { tcs.SetResult(""); dialog.Close(); };
+
+            input.KeyDown += (s, e) =>
+            {
+                if (e.Key == global::Avalonia.Input.Key.Enter)
+                {
+                    e.Handled = true;
+                    tcs.SetResult(input.Text ?? "");
+                    dialog.Close();
+                }
+            };
 
             buttons.Children.Add(okBtn);
             buttons.Children.Add(cancelBtn);
