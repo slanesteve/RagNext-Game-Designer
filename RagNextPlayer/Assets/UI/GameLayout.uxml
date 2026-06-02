@@ -1,0 +1,217 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <ui:Style src="project://database/Assets/UI/GameStyles.uss?fileID=7433451118617782107&amp;guid=0cf91808b5cc2af43bbc800baeb214b6&amp;type=3#GameStyles" />
+  <ui:VisualElement name="root" class="root-container">
+
+    <!-- ══ TOP BAR ═══════════════════════════════════════════════════════════ -->
+    <ui:VisualElement name="top-bar" class="top-bar">
+      <ui:Label name="room-title" class="room-title" text="Room Name" />
+      <ui:VisualElement style="flex-direction: row; align-items: center; column-gap: 12px;">
+        <ui:Label name="game-info"  class="game-info"  text="by Author · v1.0" />
+        <ui:Button name="settings-btn" class="settings-btn" text="⚙ Settings" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+
+
+    <!-- ══ MAIN SPLITTER (Vertical) ══════════════════════════════════════════ -->
+    <ui:TwoPaneSplitView name="main-splitter" orientation="Vertical" fixed-pane-index="1" fixed-pane-initial-dimension="125" style="flex-grow: 1; min-height: 0;">
+
+      <!-- Pane 0: Top Main Area with Horizontal Splitter -->
+      <ui:TwoPaneSplitView name="content-splitter" orientation="Horizontal" fixed-pane-index="1" fixed-pane-initial-dimension="300" class="content-area" style="min-height: 0;">
+
+        <!-- Pane 0: Left Column with Vertical Splitter between Scene Art and Narrative -->
+        <ui:TwoPaneSplitView name="left-column-splitter" orientation="Vertical" fixed-pane-index="0" fixed-pane-initial-dimension="350" class="left-column" style="min-height: 0;">
+
+          <!-- Scene artwork card (Pane 0) -->
+          <ui:VisualElement name="scene-card" class="scene-card">
+            <ui:VisualElement name="scene-image" class="scene-image" />
+            <ui:Label name="scene-placeholder" class="scene-placeholder" text="🏰" />
+          </ui:VisualElement>
+
+          <!-- Narrative scroll log (Pane 1) -->
+          <ui:VisualElement name="narrative-panel" class="narrative-panel">
+            <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
+                           vertical-scroller-visibility="AlwaysVisible"
+                           horizontal-scroller-visibility="Hidden" />
+          </ui:VisualElement>
+
+        </ui:TwoPaneSplitView>
+
+        <!-- Pane 1: Right Column -->
+        <ui:VisualElement name="right-column" class="right-column">
+
+          <!-- Static Compass Navigation Ring -->
+          <ui:VisualElement name="compass-card" class="compass-card">
+            <ui:Label class="section-header" text="Navigation" />
+            
+            <!-- Beautiful 3x3 Cardinal Compass Rose -->
+            <ui:VisualElement name="compass-rose" class="compass-rose">
+              <!-- Row 1 -->
+              <ui:VisualElement class="compass-row">
+                <ui:Button name="compass-dir-nw" class="compass-rose-btn compass-btn--inactive" text="↖" />
+                <ui:Button name="compass-dir-north" class="compass-rose-btn compass-btn--inactive" text="▲" />
+                <ui:Button name="compass-dir-ne" class="compass-rose-btn compass-btn--inactive" text="↗" />
+              </ui:VisualElement>
+              <!-- Row 2 -->
+              <ui:VisualElement class="compass-row">
+                <ui:Button name="compass-dir-west" class="compass-rose-btn compass-btn--inactive" text="◀" />
+                <ui:VisualElement name="compass-center" class="compass-center">
+                  <ui:Label class="compass-center-dot" text="❖" />
+                </ui:VisualElement>
+                <ui:Button name="compass-dir-east" class="compass-rose-btn compass-btn--inactive" text="▶" />
+              </ui:VisualElement>
+              <!-- Row 3 -->
+              <ui:VisualElement class="compass-row">
+                <ui:Button name="compass-dir-sw" class="compass-rose-btn compass-btn--inactive" text="↙" />
+                <ui:Button name="compass-dir-south" class="compass-rose-btn compass-btn--inactive" text="▼" />
+                <ui:Button name="compass-dir-se" class="compass-rose-btn compass-btn--inactive" text="↘" />
+              </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Auxiliary Portal Transitions -->
+            <ui:VisualElement name="compass-auxiliary" class="compass-auxiliary">
+              <ui:Button name="compass-dir-up" class="compass-aux-btn compass-btn--inactive" text="▲ Up" />
+              <ui:Button name="compass-dir-down" class="compass-aux-btn compass-btn--inactive" text="▼ Down" />
+              <ui:Button name="compass-dir-in" class="compass-aux-btn compass-btn--inactive" text="📥 In" />
+              <ui:Button name="compass-dir-out" class="compass-aux-btn compass-btn--inactive" text="📤 Out" />
+            </ui:VisualElement>
+            
+          </ui:VisualElement>
+
+          <!-- Room Objects -->
+          <ui:VisualElement name="objects-card" class="entity-card">
+            <ui:Label class="section-header" text="Objects" />
+            <ui:VisualElement name="objects-list" class="entity-list" />
+          </ui:VisualElement>
+
+          <!-- Characters -->
+          <ui:VisualElement name="characters-card" class="entity-card">
+            <ui:Label class="section-header" text="Characters" />
+            <ui:VisualElement name="characters-list" class="entity-list" />
+          </ui:VisualElement>
+
+        </ui:VisualElement>
+
+      </ui:TwoPaneSplitView>
+
+      <!-- Pane 1: Bottom Bar (Player Strip) -->
+      <ui:VisualElement name="bottom-bar" class="bottom-bar">
+
+        <!-- Player portrait -->
+        <ui:VisualElement name="player-portrait" class="player-portrait" />
+
+        <!-- Player info -->
+        <ui:VisualElement name="player-info" class="player-info">
+          <ui:Label name="player-name"   class="player-name"   text="Player" />
+          <ui:Label name="player-gender" class="player-gender" text="Male" />
+        </ui:VisualElement>
+
+        <!-- Inventory -->
+        <ui:VisualElement name="inventory-card" class="inventory-card">
+          <ui:Label class="section-header" text="Inventory" />
+          <ui:ScrollView name="inventory-scroll" class="inventory-scroll"
+                         horizontal-scroller-visibility="AlwaysVisible"
+                         vertical-scroller-visibility="Hidden">
+            <ui:VisualElement name="inventory-list" class="inventory-list" />
+          </ui:ScrollView>
+        </ui:VisualElement>
+
+      </ui:VisualElement>
+
+    </ui:TwoPaneSplitView>
+
+    <!-- ══ INTERACTION POPUP MENU (hidden by default) ═══════════════════════ -->
+    <ui:VisualElement name="interaction-menu" class="interaction-menu" style="display: none;" />
+
+    <!-- ══ SETTINGS POPUP MENU (hidden by default) ═══════════════════════════ -->
+    <ui:VisualElement name="settings-menu" class="settings-menu" style="display: none;">
+      <ui:Label class="settings-menu-title" text="Settings" />
+      
+      <!-- Screen Mode Toggle -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Screen Mode" />
+        <ui:Button name="fullscreen-toggle-btn" class="settings-toggle-btn" text="Fullscreen" />
+      </ui:VisualElement>
+
+      <!-- Typewriter reveal toggle -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Text Scrolling" />
+        <ui:Button name="typewriter-toggle-btn" class="settings-toggle-btn" text="Typewriter ON" />
+      </ui:VisualElement>
+
+      <!-- Typewriter Speed Slider -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Text Speed" />
+        <ui:Slider name="typewriter-speed-slider" class="settings-slider" low-value="0.001" high-value="0.05" value="0.018" />
+      </ui:VisualElement>
+
+      <!-- Master Volume Slider -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Volume" />
+        <ui:SliderInt name="volume-slider" class="settings-slider" low-value="0" high-value="100" value="100" />
+      </ui:VisualElement>
+
+      <!-- Save slots -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Save Game" />
+        <ui:VisualElement style="flex-direction: row; column-gap: 6px;">
+          <ui:Button name="save-slot-1-btn" class="slot-btn" text="Slot 1" />
+          <ui:Button name="save-slot-2-btn" class="slot-btn" text="Slot 2" />
+          <ui:Button name="save-slot-3-btn" class="slot-btn" text="Slot 3" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+
+      <!-- Load slots -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="Load Game" />
+        <ui:VisualElement style="flex-direction: row; column-gap: 6px;">
+          <ui:Button name="load-slot-1-btn" class="slot-btn" text="Slot 1" />
+          <ui:Button name="load-slot-2-btn" class="slot-btn" text="Slot 2" />
+          <ui:Button name="load-slot-3-btn" class="slot-btn" text="Slot 3" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+
+      <!-- Separator -->
+      <ui:VisualElement class="settings-separator" />
+
+      <!-- Quit Game -->
+      <ui:Button name="quit-game-btn" class="quit-btn" text="Quit Game" />
+      <ui:Button name="close-settings-btn" class="settings-menu-cancel" text="✕ Close" />
+    </ui:VisualElement>
+
+    <!-- ══ GAME OVER POPUP MENU (hidden by default) ══════════════════════════ -->
+    <ui:VisualElement name="game-over-menu" class="settings-menu" style="display: none;">
+      <ui:Label class="settings-menu-title" text="Game Over" />
+      <ui:Label name="game-over-message" class="game-over-message" text="Thank you for playing!" />
+      <ui:Button name="game-over-restart-btn" class="settings-toggle-btn" style="margin-top: 10px; width: auto;" text="↺ Restart Game" />
+      <ui:Button name="game-over-load-btn" class="settings-toggle-btn" style="margin-top: 6px; width: auto;" text="📥 Load Save Game" />
+      <ui:Button name="game-over-exit-btn" class="quit-btn" style="margin-top: 12px;" text="✕ Quit Game" />
+    </ui:VisualElement>
+
+    <!-- ══ PLAYER PROMPT INPUT POPUP (hidden by default) ══════════════════ -->
+    <ui:VisualElement name="prompt-input-menu" class="settings-menu" style="display: none;">
+      <ui:Label name="prompt-input-title" class="settings-menu-title" text="Input Required" />
+      <ui:Label name="prompt-input-message" class="prompt-input-message" text="Please provide input:" />
+      
+      <!-- Text input container -->
+      <ui:VisualElement name="prompt-text-container" style="flex-direction: row; align-items: center; margin-top: 8px; margin-bottom: 4px;">
+        <ui:TextField name="prompt-text-field" style="flex-grow: 1;" />
+      </ui:VisualElement>
+      
+      <!-- Selection list container (for Objects, Characters, and Custom list selection buttons) -->
+      <ui:ScrollView name="prompt-selection-scroll" style="max-height: 150px; margin-top: 8px; display: none;" />
+      
+      <!-- Submit / Close options -->
+      <ui:Button name="prompt-submit-btn" class="settings-toggle-btn" style="margin-top: 12px; width: auto;" text="✔ Submit" />
+    </ui:VisualElement>
+
+    <!-- ══ SPLASH SCREEN OVERLAY ═════════════════════════════════════════════ -->
+    <ui:VisualElement name="splash-screen" class="splash-screen">
+      <ui:VisualElement class="splash-badge">
+        <ui:Label class="splash-badge-text" text="RN" />
+      </ui:VisualElement>
+      <ui:Label class="splash-title" text="RAGNEXT" />
+      <ui:Label class="splash-subtitle" text="PREMIUM STORY ENGINE &amp; RPG PLAYER" />
+    </ui:VisualElement>
+
+  </ui:VisualElement>
+</ui:UXML>

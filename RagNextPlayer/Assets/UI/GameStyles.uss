@@ -1,0 +1,801 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   RagNext Player — GameStyles.uss
+   Dark fantasy theme: deep blacks, deep blue-grey accents, amber highlights
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ────────────────────────────────────────────────────────── */
+:root {
+    --color-bg-deep:        #0D0D0F;
+    --color-bg-card:        #141418;
+    --color-bg-panel:       #1A1A20;
+    --color-border:         #2A2A38;
+    --color-accent-blue:    #4AABFF;
+    --color-accent-amber:   #FFB84A;
+    --color-text-primary:   #E0E0E8;
+    --color-text-secondary: #888899;
+    --color-text-hotlink:   #4AABFF;
+    --color-character-dot:  #FF6B9D;
+    --color-object-dot:     #4AABFF;
+    --radius-card:          8px;
+    --radius-btn:           6px;
+    --font-size-body:       14px;
+    --font-size-header:     18px;
+    --font-size-section:    11px;
+}
+
+/* ── Root Layout ──────────────────────────────────────────────────────────── */
+.root-container {
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background-color: #0D0D0F;
+    color: #E0E0E8;
+}
+
+/* ── Top Bar ──────────────────────────────────────────────────────────────── */
+.top-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 18px;
+    background-color: #101014;
+    border-bottom-width: 1px;
+    border-bottom-color: #2A2A38;
+}
+
+.room-title {
+    font-size: 20px;
+    color: #4AABFF;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    cursor: link;
+}
+
+.room-title:hover {
+    color: #FFB84A;
+}
+
+
+.game-info {
+    font-size: 11px;
+    color: #888899;
+    -unity-font-style: italic;
+}
+
+/* ── Content Area ─────────────────────────────────────────────────────────── */
+.content-area {
+    flex-direction: row;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0px;
+    padding: 10px;
+    overflow: hidden;
+    margin-bottom: 4px; /* Clear bottom split handle */
+}
+
+/* ── Left Column ──────────────────────────────────────────────────────────── */
+.left-column {
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0px;
+    row-gap: 10px;
+    min-height: 0px;
+    margin-right: 6px; /* Clear vertical split handle */
+}
+
+/* Scene Art Card */
+.scene-card {
+    background-color: #141418;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 100px;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3px; /* Clear horizontal split handle */
+}
+
+.scene-image {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.scene-placeholder {
+    font-size: 64px;
+    color: #2A2A38;
+    -unity-text-align: middle-center;
+}
+
+/* Narrative Panel */
+.narrative-panel {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0px;
+    min-height: 0px;
+    background-color: #141418;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    transition-property: opacity;
+    transition-duration: 0.3s;
+    margin-top: 3px; /* Clear horizontal split handle */
+}
+
+.narrative-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0px;
+    min-height: 0px;
+    padding: 12px;
+}
+
+.narrative-room-header {
+    font-size: 15px;
+    color: #4AABFF;
+    -unity-font-style: bold;
+    margin-bottom: 4px;
+    margin-top: 8px;
+}
+
+.narrative-paragraph {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+    align-items: flex-start;
+}
+
+.narrative-text {
+    font-size: 14px;
+    color: #D0D0D8;
+    white-space: normal;
+}
+
+.narrative-status {
+    font-size: 14px;
+    color: #D0D0D8;
+    white-space: normal;
+    margin: 3px 0;
+}
+
+.narrative-hotlink {
+    font-size: 14px;
+    color: #4AABFF;
+    -unity-font-style: bold;
+    text-decoration: underline;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    cursor: link;
+}
+
+.narrative-hotlink:hover {
+    color: #80CAFF;
+}
+
+.narrative-separator {
+    height: 1px;
+    background-color: #2A2A38;
+    margin: 10px 0;
+}
+
+.narrative-spacer {
+    height: 4px;
+}
+
+/* ── Right Column ─────────────────────────────────────────────────────────── */
+.right-column {
+    flex-direction: column;
+    row-gap: 10px;
+    min-width: 150px;
+    margin-left: 6px; /* Clear vertical split handle */
+    padding-left: 2px;
+    margin-right: 4px;
+}
+
+/* Section headers */
+.section-header {
+    font-size: 11px;
+    color: #888899;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: #2A2A38;
+}
+
+/* Card base */
+.compass-card, .entity-card {
+    background-color: #141418;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    padding: 10px;
+}
+
+/* ── Exits Compass ────────────────────────────────────────────────────────── */
+.compass-rose {
+    background-color: #16161E;
+    border-radius: 50%;
+    border-width: 1px;
+    border-color: #2E2E3E;
+    width: 120px;
+    height: 120px;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    margin-bottom: 12px;
+}
+
+.compass-row {
+    flex-direction: row;
+    column-gap: 4px;
+    margin: 2px 0;
+}
+
+.compass-rose-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    background-color: #121216;
+    border-width: 1px;
+    font-size: 13px;
+    -unity-font-style: bold;
+    padding: 0;
+    -unity-text-align: middle-center;
+}
+
+.compass-center {
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+}
+
+.compass-center-dot {
+    font-size: 14px;
+    color: #4AABFF;
+    -unity-font-style: bold;
+}
+
+.compass-auxiliary {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 6px;
+    row-gap: 6px;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.compass-aux-btn {
+    background-color: #121216;
+    border-radius: 6px;
+    border-width: 1px;
+    font-size: 11px;
+    padding: 6px 12px;
+    -unity-font-style: bold;
+}
+
+/* Dimmed / Inactive exits */
+.compass-btn--inactive {
+    opacity: 0.12;
+    border-color: #222228;
+    color: #444450;
+    background-color: #0E0E12;
+}
+
+/* Active Exits (Cardinal directions / blue glow) */
+.compass-rose-btn.compass-btn--active {
+    border-color: #4AABFF;
+    color: #4AABFF;
+    background-color: #1E1E28;
+    opacity: 1.0;
+}
+
+.compass-rose-btn.compass-btn--active:hover {
+    background-color: #4AABFF;
+    color: #0D0D0F;
+}
+
+/* Active Vertical portals (amber gold glow) */
+.compass-aux-btn.compass-btn--active {
+    border-color: #FFB84A;
+    color: #FFB84A;
+    background-color: #1E1E28;
+    opacity: 1.0;
+}
+
+.compass-aux-btn.compass-btn--active:hover {
+    background-color: #FFB84A;
+    color: #0D0D0F;
+}
+
+/* Active Spatial portals (pink glow) */
+.compass-aux-btn.compass-btn--active {
+    border-color: #FF6B9D;
+    color: #FF6B9D;
+    background-color: #1E1E28;
+    opacity: 1.0;
+}
+
+.compass-aux-btn.compass-btn--active:hover {
+    background-color: #FF6B9D;
+    color: #0D0D0F;
+}
+
+/* ── Entity Lists ─────────────────────────────────────────────────────────── */
+.entity-list {
+    flex-direction: column;
+    row-gap: 3px;
+}
+
+.entity-row {
+    flex-direction: row;
+    align-items: center;
+    background-color: #1A1A22;
+    border-radius: 4px;
+    padding: 5px 8px;
+    transition-property: background-color;
+    transition-duration: 0.1s;
+}
+
+.entity-row:hover {
+    background-color: #22222E;
+}
+
+.entity-dot--object {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: #4AABFF;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.entity-dot--character {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: #FF6B9D;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.entity-name {
+    flex-grow: 1;
+    font-size: 13px;
+    color: #E0E0E8;
+}
+
+.entity-action-btn {
+    background-color: transparent;
+    border-width: 0;
+    color: #888899;
+    font-size: 16px;
+    padding: 0 4px;
+}
+
+.entity-action-btn:hover {
+    color: #FFB84A;
+}
+
+/* ── Bottom Bar ───────────────────────────────────────────────────────────── */
+.bottom-bar {
+    flex-direction: row;
+    align-items: center;
+    background-color: #101014;
+    border-top-width: 1px;
+    border-top-color: #2A2A38;
+    padding: 8px 14px;
+    min-height: 115px; /* Sized to fit inventory scroll and info */
+    column-gap: 14px;
+    margin-top: 4px; /* Clear vertical split handle */
+}
+
+.player-portrait {
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    border-width: 2px;
+    border-color: #FFB84A;
+    background-color: #1E1E28;
+    -unity-background-scale-mode: scale-and-crop;
+    flex-shrink: 0;
+    cursor: link;
+}
+
+.player-portrait:hover {
+    border-color: #4AABFF;
+}
+
+
+.player-info {
+    flex-direction: column;
+    justify-content: center;
+    row-gap: 2px;
+    min-width: 90px;
+}
+
+.player-name {
+    font-size: 14px;
+    color: #E0E0E8;
+    -unity-font-style: bold;
+}
+
+.player-gender {
+    font-size: 11px;
+    color: #888899;
+}
+
+.inventory-card {
+    flex-grow: 1;
+    background-color: #141418;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    padding: 6px 10px;
+    overflow: hidden;
+}
+
+.inventory-scroll {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.inventory-list {
+    flex-direction: row;
+    align-items: center;
+    column-gap: 8px;
+    padding: 4px 0;
+}
+
+/* Horizontal pill-style badges for inventory items */
+.inventory-list .entity-row {
+    flex-direction: row;
+    align-items: center;
+    background-color: #1E1E28;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: #3A3A4A;
+    padding: 5px 14px;
+    flex-shrink: 0;
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.inventory-list .entity-row:hover {
+    background-color: #2E2E3E;
+    border-color: #FFB84A; /* Amber glow on hover */
+}
+
+/* Hide action button in inventory pills since tapping the entire pill interacts */
+.inventory-list .entity-row .entity-action-btn {
+    display: none;
+}
+
+.inventory-list .entity-row .entity-name {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #E0E0E8;
+}
+
+/* ── Interaction Popup Menu ────────────────────────────────────────────────── */
+.interaction-menu {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    background-color: #18181E;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #4AABFF;
+    padding: 16px;
+    min-width: 220px;
+    max-width: 320px;
+    flex-direction: column;
+    row-gap: 6px;
+    /* URP drop shadow via box-shadow not yet supported; use border glow instead */
+    z-index: 100;
+}
+
+.interaction-menu-title {
+    font-size: 15px;
+    color: #4AABFF;
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+    -unity-text-align: upper-center;
+}
+
+.interaction-menu-btn {
+    background-color: #1E1E28;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 13px;
+    padding: 8px 12px;
+    -unity-text-align: middle-left;
+    transition-property: background-color, border-color;
+    transition-duration: 0.12s;
+}
+
+.interaction-menu-btn:hover {
+    background-color: #2A2A38;
+    border-color: #4AABFF;
+}
+
+.interaction-menu-cancel {
+    background-color: transparent;
+    border-width: 0;
+    color: #888899;
+    font-size: 12px;
+    margin-top: 6px;
+    -unity-text-align: upper-center;
+}
+
+.interaction-menu-cancel:hover {
+    color: #E0E0E8;
+}
+
+/* ── Settings Controls & Settings Panel ──────────────────────────────────── */
+.settings-btn {
+    background-color: #1E1E28;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 11px;
+    padding: 4px 10px;
+    -unity-font-style: bold;
+}
+
+.settings-btn:hover {
+    background-color: #2A2A38;
+    border-color: #4AABFF;
+    color: #4AABFF;
+}
+
+.settings-btn:active {
+    background-color: #1A1A20;
+    color: #FFB84A;
+}
+
+.settings-menu {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    background-color: #18181E;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #4AABFF;
+    padding: 20px;
+    min-width: 280px;
+    max-width: 360px;
+    flex-direction: column;
+    row-gap: 12px;
+    z-index: 200;
+}
+
+.settings-menu-title {
+    font-size: 16px;
+    color: #4AABFF;
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+    -unity-text-align: upper-center;
+}
+
+.settings-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    column-gap: 10px;
+}
+
+.settings-label {
+    font-size: 13px;
+    color: #E0E0E8;
+    flex-grow: 1;
+}
+
+.settings-toggle-btn {
+    background-color: #1E1E28;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 12px;
+    padding: 6px 12px;
+    min-width: 110px;
+}
+
+.settings-toggle-btn:hover {
+    border-color: #4AABFF;
+    background-color: #22222E;
+}
+
+.settings-slider {
+    flex-grow: 1;
+    min-width: 120px;
+}
+
+.settings-separator {
+    height: 1px;
+    background-color: #2A2A38;
+    margin: 4px 0;
+}
+
+.quit-btn {
+    background-color: #4C1C24;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #FF4A4A;
+    color: #FFC0C0;
+    font-size: 13px;
+    padding: 8px 12px;
+    -unity-font-style: bold;
+}
+
+.quit-btn:hover {
+    background-color: #FF4A4A;
+    color: #0D0D0F;
+}
+
+.settings-menu-cancel {
+    background-color: transparent;
+    border-width: 0;
+    color: #888899;
+    font-size: 12px;
+    -unity-text-align: upper-center;
+    margin-top: 4px;
+}
+
+.settings-menu-cancel:hover {
+    color: #E0E0E8;
+}
+
+.slot-btn {
+    background-color: #1E1E28;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 11px;
+    padding: 4px 8px;
+    min-width: 55px;
+}
+
+.slot-btn:hover {
+    border-color: #4AABFF;
+    color: #4AABFF;
+}
+
+.slot-btn:disabled {
+    color: #444450;
+    border-color: #222228;
+    background-color: #121216;
+}
+
+/* ── Splitter Styles (TwoPaneSplitView) ────────────────────────────────────── */
+.unity-two-pane-split-view__drag-line {
+    background-color: #2A2A38;
+}
+
+.unity-two-pane-split-view__drag-line--hovered {
+    background-color: #4AABFF;
+}
+
+.unity-two-pane-split-view__handle {
+    background-color: #1E1E28;
+    border-color: #2A2A38;
+}
+
+.unity-two-pane-split-view__handle:hover {
+    background-color: #4AABFF;
+}
+
+/* ── Game Over & Player Input Modal Styling ───────────────────────────────── */
+.game-over-message,
+.prompt-input-message {
+    font-size: 13px;
+    color: #888899;
+    white-space: normal;
+    margin: 4px 0 8px 0;
+    -unity-text-align: middle-center;
+}
+
+.prompt-choice-btn {
+    background-color: #1E1E28;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #2A2A38;
+    color: #E0E0E8;
+    font-size: 12px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    -unity-text-align: middle-left;
+}
+
+.prompt-choice-btn:hover {
+    background-color: #2A2A38;
+    border-color: #FFB84A;
+    color: #FFB84A;
+}
+
+/* ── Nested Container Items Styling ────────────────────────────────────────── */
+.entity-row--nested {
+    padding-left: 20px;
+    background-color: #121217;
+    border-radius: 4px;
+    margin-left: 10px;
+    margin-bottom: 2px;
+}
+
+.entity-nested-arrow {
+    font-size: 14px;
+    color: #FFB84A;
+    margin-right: 4px;
+    -unity-font-style: bold;
+}
+
+.entity-name--nested {
+    font-size: 11px;
+    color: #A0A0B0;
+    -unity-font-style: italic;
+}
+
+/* ── Splash Screen ────────────────────────────────────────────────────────── */
+.splash-screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0B0914;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition-property: opacity;
+    transition-duration: 0.8s;
+}
+
+.splash-badge {
+    width: 100px;
+    height: 100px;
+    border-radius: 50px;
+    background-color: #6F1AD4;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.splash-badge-text {
+    font-size: 40px;
+    color: white;
+    -unity-font-style: bold;
+}
+
+.splash-title {
+    font-size: 32px;
+    color: white;
+    -unity-font-style: bold;
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+}
+
+.splash-subtitle {
+    font-size: 10px;
+    color: #888899;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+}
+
