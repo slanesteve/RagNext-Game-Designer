@@ -61,7 +61,7 @@ jobs:
         retention-days: 14
 
   build-mac:
-    name: Build macOS Arm64 Distribution
+    name: Build macOS Arm64 & Intel x64 Distributions
     runs-on: macos-latest
 
     steps:
