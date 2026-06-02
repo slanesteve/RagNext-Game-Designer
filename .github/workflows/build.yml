@@ -86,22 +86,76 @@ jobs:
         # 1. Temporarily target net9.0 only to bypass mobile Mono restores
         sed -i '' 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
         
-        # 2. Run publish in Single-File ReadyToRun format
-        rm -rf Publish/Designer-Mac
-        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o Publish/Designer-Mac
+        # 2. Run publish in Single-File ReadyToRun format for Arm64
+        rm -rf Publish/Designer-Mac-Arm64
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o Publish/Designer-Mac-Arm64
         
-        # 3. Create macOS .app Bundle Structure
-        mkdir -p Publish/RagNext.app/Contents/MacOS
+        # 3. Create macOS .app Bundle Structure for Arm64
+        mkdir -p Publish/RagNext_Arm64.app/Contents/MacOS
         
         # 4. Move binary and adjacent folders into Contents/MacOS (so path resolving runs natively)
-        mv Publish/Designer-Mac/RagNext.Designer.Avalonia Publish/RagNext.app/Contents/MacOS/
-        cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext.app/Contents/MacOS/WebAssets
+        mv Publish/Designer-Mac-Arm64/RagNext.Designer.Avalonia Publish/RagNext_Arm64.app/Contents/MacOS/
+        cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets
         if [ -d "Templates" ]; then
-          cp -R Templates Publish/RagNext.app/Contents/MacOS/Templates
+          cp -R Templates Publish/RagNext_Arm64.app/Contents/MacOS/Templates
         fi
 
         # 5. Write standard Apple Info.plist metadata
-        cat << 'EOF' > Publish/RagNext.app/Contents/Info.plist
+        cat << 'EOF' > Publish/RagNext_Arm64.app/Contents/Info.plist
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleDevelopmentRegion</key>
+            <string>English</string>
+            <key>CFBundleExecutable</key>
+            <string>RagNext.Designer.Avalonia</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.slanesteve.ragnext</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundleName</key>
+            <string>RagNext</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0.0</string>
+            <key>CFBundleSignature</key>
+            <string>????</string>
+            <key>CFBundleVersion</key>
+            <string>1.0.0</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>10.12</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+        </dict>
+        </plist>
+        EOF
+
+        # 6. Restore RagsCore back to multi-targeting temporarily (to ensure clean slate or keep it net9.0 for the next build)
+        sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
+
+    - name: Build & Publish Standalone macOS Intel x64
+      run: |
+        # 1. Temporarily target net9.0 only to bypass mobile Mono restores
+        sed -i '' 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
+        
+        # 2. Run publish in Single-File ReadyToRun format for Intel x64
+        rm -rf Publish/Designer-Mac-Intel
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o Publish/Designer-Mac-Intel
+        
+        # 3. Create macOS .app Bundle Structure for Intel x64
+        mkdir -p Publish/RagNext_Intel.app/Contents/MacOS
+        
+        # 4. Move binary and adjacent folders into Contents/MacOS (so path resolving runs natively)
+        mv Publish/Designer-Mac-Intel/RagNext.Designer.Avalonia Publish/RagNext_Intel.app/Contents/MacOS/
+        cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Intel.app/Contents/MacOS/WebAssets
+        if [ -d "Templates" ]; then
+          cp -R Templates Publish/RagNext_Intel.app/Contents/MacOS/Templates
+        fi
+
+        # 5. Write standard Apple Info.plist metadata
+        cat << 'EOF' > Publish/RagNext_Intel.app/Contents/Info.plist
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
@@ -135,14 +189,28 @@ jobs:
         # 6. Restore RagsCore back to multi-targeting
         sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
 
-    - name: Compress macOS Distribution
+    - name: Compress macOS Distributions
       run: |
         cd Publish
+        # Rename to generic RagNext.app before zipping so that the unzipped folders have clean names
+        mv RagNext_Arm64.app RagNext.app
         zip -r RagNext_Designer_Mac_Arm64.zip RagNext.app
+        rm -rf RagNext.app
+        
+        mv RagNext_Intel.app RagNext.app
+        zip -r RagNext_Designer_Mac_Intel_x64.zip RagNext.app
+        rm -rf RagNext.app
 
-    - name: Upload macOS Artifact
+    - name: Upload macOS Arm64 Artifact
       uses: actions/upload-artifact@v4
       with:
         name: RagNext_Designer_Mac_Arm64
         path: Publish/RagNext_Designer_Mac_Arm64.zip
+        retention-days: 14
+
+    - name: Upload macOS Intel x64 Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RagNext_Designer_Mac_Intel_x64
+        path: Publish/RagNext_Designer_Mac_Intel_x64.zip
         retention-days: 14
