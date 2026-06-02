@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.5.11716.220
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagsUIShared", "RagsUIShared\RagsUIShared.csproj", "{7B7010C3-1A95-478F-9512-C6FAE640E0E4}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagsCore", "RagsCore\RagsCore.csproj", "{9001761F-FFA8-4486-9DF0-A1284C941F0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagNext.Designer.Avalonia", "RagNext.Designer.Avalonia\RagNext.Designer.Avalonia.csproj", "{4343187F-6C6F-42E7-B6F3-009560575625}"
@@ -22,24 +20,6 @@ Global
 		TestDeploy|x86 = TestDeploy|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Debug|x64.Build.0 = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Debug|x86.Build.0 = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Release|x64.ActiveCfg = Release|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Release|x64.Build.0 = Release|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Release|x86.ActiveCfg = Release|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.Release|x86.Build.0 = Release|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.TestDeploy|Any CPU.ActiveCfg = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.TestDeploy|Any CPU.Build.0 = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.TestDeploy|x64.ActiveCfg = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.TestDeploy|x64.Build.0 = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.TestDeploy|x86.ActiveCfg = Debug|Any CPU
-		{7B7010C3-1A95-478F-9512-C6FAE640E0E4}.TestDeploy|x86.Build.0 = Debug|Any CPU
 		{9001761F-FFA8-4486-9DF0-A1284C941F0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9001761F-FFA8-4486-9DF0-A1284C941F0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9001761F-FFA8-4486-9DF0-A1284C941F0B}.Debug|x64.ActiveCfg = Debug|Any CPU
