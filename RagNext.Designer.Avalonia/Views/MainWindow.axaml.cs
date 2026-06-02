@@ -31,6 +31,9 @@ namespace RagNext.Designer.Avalonia.Views
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
 
+            AddHandler(TextBox.KeyUpEvent, OnTextBoxKeyUp, RoutingStrategies.Bubble, true);
+            AddHandler(TextBox.KeyDownEvent, OnTextBoxKeyDown, RoutingStrategies.Bubble, true);
+
             // Setup MediaLibraryViewModel hooks
             MediaLibraryViewModel.PickMultipleFilesAsync = async () =>
             {
@@ -246,16 +249,49 @@ namespace RagNext.Designer.Avalonia.Views
                     System.Diagnostics.Debug.WriteLine($"Failed to load catalog files: {ex.Message}");
                 }
 
+                // Find owner context attributes
+                System.Collections.Generic.List<string> ownerAttributes = new();
+                if (vm.CurrentGame.Player.Actions.Any(a => a.Id == activeAction.Id))
+                {
+                    ownerAttributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList();
+                }
+                else
+                {
+                    var ownerRoom = vm.CurrentGame.Rooms.FirstOrDefault(r => r.Actions.Any(a => a.Id == activeAction.Id));
+                    if (ownerRoom != null)
+                    {
+                        ownerAttributes = ownerRoom.Attributes.Select(a => a.Name).ToList();
+                    }
+                    else
+                    {
+                        var ownerObj = vm.CurrentGame.Objects.FirstOrDefault(o => o.Actions.Any(a => a.Id == activeAction.Id));
+                        if (ownerObj != null)
+                        {
+                            ownerAttributes = ownerObj.Attributes.Select(a => a.Name).ToList();
+                        }
+                        else
+                        {
+                            var ownerChar = vm.CurrentGame.Characters.FirstOrDefault(c => c.Actions.Any(a => a.Id == activeAction.Id));
+                            if (ownerChar != null)
+                            {
+                                ownerAttributes = ownerChar.Attributes.Select(a => a.Name).ToList();
+                            }
+                        }
+                    }
+                }
+
                 // Gather dynamic target options (rooms, characters, objects, variables) for properties autocomplete dropdown mapping
                 var catalogsObj = new
                 {
-                    Rooms = vm.CurrentGame.Rooms.Select(r => new { Id = r.Id.ToString(), Name = r.Name }).ToList(),
-                    Characters = vm.CurrentGame.Characters.Select(c => new { Id = c.Id.ToString(), Name = c.Name }).ToList(),
-                    GameObjects = vm.CurrentGame.Objects.Select(o => new { Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer }).ToList(),
-                    Variables = vm.CurrentGame.Variables.Select(v => new { Id = v.Name, Name = v.Name }).ToList(),
+                    Rooms = vm.CurrentGame.Rooms.Select(r => new { Id = r.Id.ToString(), Name = r.Name, Attributes = r.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Characters = vm.CurrentGame.Characters.Select(c => new { Id = c.Id.ToString(), Name = c.Name, Attributes = c.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    GameObjects = vm.CurrentGame.Objects.Select(o => new { Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer, Attributes = o.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Variables = vm.CurrentGame.Variables.Select(v => new { Id = v.Name, Name = v.Name, Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Player = new { Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList() },
+                    Owner = new { Attributes = ownerAttributes },
                     Media = vm.CurrentGame.MediaAssets.Select(m => new { Id = m.RelativePath, Name = string.IsNullOrWhiteSpace(m.OriginalFileName) ? m.RelativePath : m.OriginalFileName }).ToList(),
                     Functions = vm.CurrentGame.Functions.Select(f => new { Id = f.Name, Name = f.Name }).ToList(),
-                    Timers = vm.CurrentGame.Timers.Select(t => new { Id = t.Name, Name = t.Name }).ToList()
+                    Timers = vm.CurrentGame.Timers.Select(t => new { Id = t.Name, Name = t.Name, Attributes = t.Attributes.Select(a => a.Name).ToList() }).ToList()
                 };
                 string catalogsJson = JsonSerializer.Serialize(catalogsObj);
 
@@ -431,6 +467,68 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private string AppendPortToEndpoint(string endpoint, string port)
+        {
+            if (string.IsNullOrWhiteSpace(port)) return endpoint;
+            if (string.IsNullOrWhiteSpace(endpoint)) return endpoint;
+
+            endpoint = endpoint.Trim();
+            if (endpoint.Contains(":" + port)) return endpoint;
+
+            try
+            {
+                var uri = new Uri(endpoint);
+                var builder = new UriBuilder(uri);
+                if (int.TryParse(port, out int portNum))
+                {
+                    builder.Port = portNum;
+                    return builder.Uri.ToString().TrimEnd('/');
+                }
+            }
+            catch
+            {
+                if (endpoint.Contains("://"))
+                {
+                    var parts = endpoint.Split(new[] { "://" }, 2, StringSplitOptions.None);
+                    var scheme = parts[0];
+                    var remainder = parts[1];
+                    var firstSlash = remainder.IndexOf('/');
+                    if (firstSlash >= 0)
+                    {
+                        var host = remainder.Substring(0, firstSlash);
+                        var path = remainder.Substring(firstSlash);
+                        if (!host.Contains(":")) host = host + ":" + port;
+                        return scheme + "://" + host + path;
+                    }
+                    else
+                    {
+                        if (!remainder.Contains(":")) remainder = remainder + ":" + port;
+                        return scheme + "://" + remainder;
+                    }
+                }
+                else
+                {
+                    if (!endpoint.Contains(":")) return endpoint + ":" + port;
+                }
+            }
+
+            return endpoint;
+        }
+
+        private string GetAiUrl(string endpoint, string port, string provider)
+        {
+            var resolvedEndpoint = endpoint;
+            if (!string.IsNullOrWhiteSpace(port) && port != "0")
+            {
+                resolvedEndpoint = AppendPortToEndpoint(endpoint, port);
+            }
+            if (provider != null && provider.ToUpper() == "LMSTUDIO")
+            {
+                return resolvedEndpoint.TrimEnd('/') + "/v1/chat/completions";
+            }
+            return resolvedEndpoint.TrimEnd('/') + "/chat/completions";
+        }
+
         private async void TriggerAICoAuthor(string nodeId, string fieldName, string currentText)
         {
             if (DataContext is not MainWindowViewModel vm) return;
@@ -438,10 +536,11 @@ namespace RagNext.Designer.Avalonia.Views
             var endpoint = vm.Preferences.AiCoAuthorEndpoint;
             var apiKey = vm.Preferences.AiCoAuthorKey;
             var model = vm.Preferences.AiCoAuthorModel;
+            var port = vm.Preferences.AiCoAuthorPort;
 
             var provider = vm.Preferences.AiCoAuthorProvider;
             bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
-                                  string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
 
             if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
             {
@@ -483,7 +582,7 @@ namespace RagNext.Designer.Avalonia.Views
                 var requestJson = JsonSerializer.Serialize(requestBody);
                 var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
-                var url = endpoint.TrimEnd('/') + "/chat/completions";
+                var url = GetAiUrl(endpoint, port, provider);
                 var response = await client.PostAsync(url, requestContent);
                 var responseJson = await response.Content.ReadAsStringAsync();
 
@@ -529,10 +628,10 @@ namespace RagNext.Designer.Avalonia.Views
             var endpoint = vm.Preferences.AiCoAuthorEndpoint;
             var apiKey = vm.Preferences.AiCoAuthorKey;
             var model = vm.Preferences.AiCoAuthorModel;
-
+            var port = vm.Preferences.AiCoAuthorPort;
             var provider = vm.Preferences.AiCoAuthorProvider;
             bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
-                                  string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
 
             if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
             {
@@ -565,8 +664,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                 var requestJson = JsonSerializer.Serialize(requestBody);
                 var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
-
-                var url = endpoint.TrimEnd('/') + "/chat/completions";
+                var url = GetAiUrl(endpoint, port, provider);
                 var response = await client.PostAsync(url, requestContent);
                 var responseJson = await response.Content.ReadAsStringAsync();
 
@@ -624,6 +722,7 @@ namespace RagNext.Designer.Avalonia.Views
                 var endpoint = vm.Preferences.AiCoAuthorEndpoint;
                 var apiKey = vm.Preferences.AiCoAuthorKey;
                 var model = vm.Preferences.AiCoAuthorModel;
+                var port = vm.Preferences.AiCoAuthorPort;
 
                 var provider = vm.Preferences.AiCoAuthorProvider;
                 bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
@@ -658,7 +757,7 @@ namespace RagNext.Designer.Avalonia.Views
                     var requestJson = JsonSerializer.Serialize(requestBody);
                     var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
-                    var url = endpoint.TrimEnd('/') + "/chat/completions";
+                    var url = GetAiUrl(endpoint, port, provider);
                     var response = await client.PostAsync(url, requestContent);
                     var responseJson = await response.Content.ReadAsStringAsync();
 
@@ -955,14 +1054,28 @@ namespace RagNext.Designer.Avalonia.Views
 
         private async void OnDragDropFile(object? sender, global::Avalonia.Input.DragEventArgs e)
         {
-            var files = e.DataTransfer.TryGetFiles();
-            if (files == null || !files.Any()) return;
-
-            var paths = files.Select(f => f.Path.LocalPath).ToArray();
-            if (paths.Length == 0) return;
-
             var vm = DataContext as MainWindowViewModel;
             if (vm == null) return;
+
+            string[]? paths = null;
+            var files = e.DataTransfer.TryGetFiles();
+            if (files != null && files.Any())
+            {
+                paths = files.Select(f => f.Path.LocalPath).ToArray();
+            }
+            else
+            {
+                var textData = e.DataTransfer.TryGetText();
+                if (!string.IsNullOrWhiteSpace(textData))
+                {
+                    if (File.Exists(textData))
+                    {
+                        paths = new[] { textData };
+                    }
+                }
+            }
+
+            if (paths == null || paths.Length == 0) return;
 
             var border = sender as Border;
             bool isPortraitDrop = border != null && border.Tag is string;
@@ -979,7 +1092,263 @@ namespace RagNext.Designer.Avalonia.Views
                     _ => "General"
                 };
 
-                // Find or create folder in Media Library
+                var game = App.CurrentGame;
+                if (game == null) return;
+
+                string? localPathReal = null;
+                var firstPath = paths[0];
+
+                var matchingAsset = game.MediaAssets.FirstOrDefault(a => 
+                    string.Equals(new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, a), firstPath, StringComparison.OrdinalIgnoreCase));
+
+                if (matchingAsset != null)
+                {
+                    localPathReal = firstPath;
+                }
+                else
+                {
+                    // Find or create folder in Media Library
+                    MediaFolder? targetFolder = null;
+                    var rootNode = vm.Media.Roots.FirstOrDefault();
+                    if (rootNode != null)
+                    {
+                        var matchNode = rootNode.Children.FirstOrDefault(c => string.Equals(c.Name, folderName, StringComparison.OrdinalIgnoreCase));
+                        if (matchNode != null)
+                        {
+                            targetFolder = matchNode.Folder;
+                        }
+                        else if (rootNode.Folder != null)
+                        {
+                            var newFolder = new MediaFolder { Name = folderName };
+                            rootNode.Folder.Children.Add(newFolder);
+                            targetFolder = newFolder;
+                        }
+                    }
+
+                    // Ingest files
+                    await vm.Media.ImportFilesFromPathsAsync(paths, targetFolder);
+
+                    if (targetFolder != null && targetFolder.AssetIds.Any())
+                    {
+                        var lastAddedAssetId = targetFolder.AssetIds.LastOrDefault();
+                        var asset = game.MediaAssets.FirstOrDefault(a => a.Id == lastAddedAssetId);
+                        if (asset != null)
+                        {
+                            localPathReal = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, asset);
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(localPathReal))
+                {
+                    if (dropType == "Player")
+                    {
+                        game.Player.PortraitImagePath = localPathReal;
+                    }
+                    else if (dropType == "Room" && RoomsList.SelectedItem is Room room)
+                    {
+                        room.PortraitImagePath = localPathReal;
+                    }
+                    else if (dropType == "Character" && CharsList.SelectedItem is Character character)
+                    {
+                        character.PortraitImagePath = localPathReal;
+                    }
+                    else if (dropType == "Object" && ObjectsList.SelectedItem is GameObject obj)
+                    {
+                        obj.PortraitImagePath = localPathReal;
+                    }
+                    await vm.SaveGameAsync();
+                }
+            }
+            else
+            {
+                // Ingest files to the currently selected folder in media catalog
+                await vm.Media.ImportFilesFromPathsAsync(paths);
+            }
+        }
+
+        private Point? _dragStartPoint;
+        private PointerPressedEventArgs? _dragPressedEventArgs;
+
+        private void OnMediaItemPointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            var prop = e.GetCurrentPoint(this).Properties;
+            if (prop.IsLeftButtonPressed)
+            {
+                _dragStartPoint = e.GetPosition(this);
+                _dragPressedEventArgs = e;
+            }
+        }
+
+        private async void OnMediaItemPointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (_dragStartPoint.HasValue && _dragPressedEventArgs != null && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                var currentPos = e.GetPosition(this);
+                var delta = currentPos - _dragStartPoint.Value;
+                if (Math.Abs(delta.X) > 5 || Math.Abs(delta.Y) > 5)
+                {
+                    var dragPressedArgs = _dragPressedEventArgs;
+                    _dragStartPoint = null; 
+                    _dragPressedEventArgs = null; // Clear to prevent multiple starts
+
+                    if (sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node node && node.Asset != null)
+                    {
+                        var game = App.CurrentGame;
+                        if (game != null)
+                        {
+                            var localPath = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, node.Asset);
+                            var item = new DataTransferItem();
+                            item.Set(DataFormat.Text, localPath);
+                            var data = new DataTransfer();
+                            data.Add(item);
+                            await DragDrop.DoDragDropAsync(dragPressedArgs, data, DragDropEffects.Copy | DragDropEffects.Link);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void OnMediaItemPointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            _dragStartPoint = null;
+            _dragPressedEventArgs = null;
+        }
+
+        private readonly System.Collections.Generic.Dictionary<Button, object> _originalButtonContents = new();
+
+        private void StartButtonSpinner(Button btn)
+        {
+            if (btn == null) return;
+            if (!_originalButtonContents.ContainsKey(btn))
+            {
+                _originalButtonContents[btn] = btn.Content ?? "";
+            }
+            
+            var spinnerTextBlock = new TextBlock
+            {
+                Text = "⟳",
+                Classes = { "spinner" },
+                RenderTransform = new RotateTransform(),
+                RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            btn.Content = spinnerTextBlock;
+            btn.IsEnabled = false;
+        }
+
+        private void StopButtonSpinner(Button btn)
+        {
+            if (btn == null) return;
+            if (_originalButtonContents.TryGetValue(btn, out var originalContent))
+            {
+                btn.Content = originalContent;
+                _originalButtonContents.Remove(btn);
+            }
+            btn.IsEnabled = true;
+        }
+
+        private async void OnGeneratePortraitClicked(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+            string dropType = btn.Tag as string ?? "";
+            if (string.IsNullOrWhiteSpace(dropType)) return;
+
+            var vm = DataContext as MainWindowViewModel;
+            if (vm == null) return;
+
+            var prompt = await PromptDialog.ShowAsync(this, "🎨 Generate Portrait with AI", $"Enter a visual prompt for the {dropType.ToLower()}:");
+            if (string.IsNullOrWhiteSpace(prompt)) return;
+
+            string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".png");
+            try
+            {
+                StartButtonSpinner(btn);
+
+                var provider = vm.Preferences.AiImageGenProvider;
+                var endpoint = vm.Preferences.AiImageGenEndpoint;
+                var apiKey = vm.Preferences.AiImageGenKey;
+                var model = vm.Preferences.AiImageGenModel;
+                var host = vm.Preferences.AiImageGenHost;
+                var port = vm.Preferences.AiImageGenPort;
+
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromMinutes(3);
+
+                byte[]? imageBytes = null;
+
+                if (string.Equals(provider, "Pollinations.ai", StringComparison.OrdinalIgnoreCase))
+                {
+                    var encodedPrompt = Uri.EscapeDataString(prompt);
+                    var url = $"https://image.pollinations.ai/prompt/{encodedPrompt}?width=512&height=512&model={Uri.EscapeDataString(model)}&nologo=true&enhance=true";
+                    imageBytes = await client.GetByteArrayAsync(url);
+                }
+                else
+                {
+                    var resolvedEndpoint = endpoint;
+                    if (!string.IsNullOrWhiteSpace(port) && port != "0")
+                    {
+                        resolvedEndpoint = AppendPortToEndpoint(endpoint, port);
+                    }
+                    var url = resolvedEndpoint.TrimEnd('/') + "/images/generations";
+
+                    if (!string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    }
+
+                    var requestBody = new
+                    {
+                        prompt = prompt,
+                        model = model,
+                        n = 1,
+                        size = "512x512"
+                    };
+
+                    var requestJson = JsonSerializer.Serialize(requestBody);
+                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(url, requestContent);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Image generation failed: {response.StatusCode} - {responseJson}");
+                    }
+
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("data", out var dataArray) && dataArray.ValueKind == JsonValueKind.Array && dataArray.GetArrayLength() > 0)
+                    {
+                        var imgUrl = dataArray[0].GetProperty("url").GetString();
+                        if (string.IsNullOrWhiteSpace(imgUrl))
+                        {
+                            throw new Exception("No image URL returned from API.");
+                        }
+                        imageBytes = await client.GetByteArrayAsync(imgUrl);
+                    }
+                    else
+                    {
+                        throw new Exception("Invalid API response structure.");
+                    }
+                }
+
+                if (imageBytes == null || imageBytes.Length == 0)
+                {
+                    throw new Exception("Failed to retrieve image data.");
+                }
+
+                await File.WriteAllBytesAsync(tempFilePath, imageBytes);
+
+                string folderName = dropType switch
+                {
+                    "Player" => "Players",
+                    "Room" => "Rooms",
+                    "Character" => "Characters",
+                    "Object" => "Objects",
+                    _ => "General"
+                };
+
                 MediaFolder? targetFolder = null;
                 var rootNode = vm.Media.Roots.FirstOrDefault();
                 if (rootNode != null)
@@ -997,10 +1366,8 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                 }
 
-                // Ingest files
-                await vm.Media.ImportFilesFromPathsAsync(paths, targetFolder);
+                await vm.Media.ImportFilesFromPathsAsync(new[] { tempFilePath }, targetFolder);
 
-                // Assign the first ingested file's local path to the portrait property
                 if (targetFolder != null && targetFolder.AssetIds.Any())
                 {
                     var game = App.CurrentGame;
@@ -1028,14 +1395,27 @@ namespace RagNext.Designer.Avalonia.Views
                             {
                                 obj.PortraitImagePath = localPathReal;
                             }
+
+                            await vm.SaveGameAsync();
                         }
                     }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                // Ingest files to the currently selected folder in media catalog
-                await vm.Media.ImportFilesFromPathsAsync(paths);
+                await ConfirmDialog.ShowAsync(this, "AI Image Generation Error", ex.Message);
+            }
+            finally
+            {
+                StopButtonSpinner(btn);
+                try
+                {
+                    if (File.Exists(tempFilePath))
+                    {
+                        File.Delete(tempFilePath);
+                    }
+                }
+                catch {}
             }
         }
 
@@ -1446,6 +1826,363 @@ namespace RagNext.Designer.Avalonia.Views
                 base.OnClosing(e);
             }
         }
+
+        private TextBox? _activeTextBox;
+        private char _triggerChar;
+        private int _triggerIndex = -1;
+
+        private void OnTextBoxKeyUp(object? sender, KeyEventArgs e)
+        {
+            if (e.Source is TextBox textBox)
+            {
+                string text = textBox.Text ?? "";
+                int caret = textBox.CaretIndex;
+                if (caret > 0 && caret <= text.Length)
+                {
+                    int openBraceIndex = text.LastIndexOf('{', caret - 1);
+                    int openBracketIndex = text.LastIndexOf('[', caret - 1);
+                    
+                    int triggerIdx = Math.Max(openBraceIndex, openBracketIndex);
+                    if (triggerIdx >= 0)
+                    {
+                        char trigger = text[triggerIdx];
+                        string sub = text.Substring(triggerIdx + 1, caret - (triggerIdx + 1));
+                        
+                        char close = trigger == '{' ? '}' : ']';
+                        if (!sub.Contains(close) && (trigger == '[' || !sub.Contains(' ')))
+                        {
+                            _activeTextBox = textBox;
+                            _triggerChar = trigger;
+                            _triggerIndex = triggerIdx;
+                            ShowAutocomplete(textBox, trigger, sub);
+                            return;
+                        }
+                    }
+                }
+                HideAutocomplete();
+            }
+        }
+
+        private void OnTextBoxKeyDown(object? sender, KeyEventArgs e)
+        {
+            if (_activeTextBox != null && AutocompletePopup != null && AutocompletePopup.IsOpen)
+            {
+                if (e.Key == Key.Down)
+                {
+                    e.Handled = true;
+                    int nextIndex = AutocompleteListBox.SelectedIndex + 1;
+                    if (nextIndex < AutocompleteListBox.Items.Count)
+                        AutocompleteListBox.SelectedIndex = nextIndex;
+                    else
+                        AutocompleteListBox.SelectedIndex = 0;
+                    AutocompleteListBox.ScrollIntoView(AutocompleteListBox.SelectedItem);
+                }
+                else if (e.Key == Key.Up)
+                {
+                    e.Handled = true;
+                    int prevIndex = AutocompleteListBox.SelectedIndex - 1;
+                    if (prevIndex >= 0)
+                        AutocompleteListBox.SelectedIndex = prevIndex;
+                    else
+                        AutocompleteListBox.SelectedIndex = AutocompleteListBox.Items.Count - 1;
+                    AutocompleteListBox.ScrollIntoView(AutocompleteListBox.SelectedItem);
+                }
+                else if (e.Key == Key.Enter || e.Key == Key.Tab)
+                {
+                    e.Handled = true;
+                    ApplySelectedAutocomplete();
+                }
+                else if (e.Key == Key.Escape)
+                {
+                    e.Handled = true;
+                    HideAutocomplete();
+                }
+            }
+        }
+
+        private void OnTextBoxLostFocus(object? sender, RoutedEventArgs e)
+        {
+        }
+
+        private void OnAutocompleteListBoxTapped(object? sender, global::Avalonia.Input.TappedEventArgs e)
+        {
+            ApplySelectedAutocomplete();
+        }
+
+        private void ApplySelectedAutocomplete()
+        {
+            if (_activeTextBox == null || AutocompleteListBox == null || AutocompleteListBox.SelectedItem is not AutocompleteItem selectedItem)
+            {
+                HideAutocomplete();
+                return;
+            }
+
+            string text = _activeTextBox.Text ?? "";
+            int caret = _activeTextBox.CaretIndex;
+            if (_triggerIndex >= 0 && _triggerIndex < text.Length)
+            {
+                char close = _triggerChar == '{' ? '}' : ']';
+                string replacement = _triggerChar + selectedItem.Token + close;
+                
+                string before = text.Substring(0, _triggerIndex);
+                string after = text.Substring(caret);
+                
+                _activeTextBox.Text = before + replacement + after;
+                _activeTextBox.CaretIndex = _triggerIndex + replacement.Length;
+            }
+            HideAutocomplete();
+        }
+
+
+
+        private void ShowAutocomplete(TextBox textBox, char trigger, string query)
+        {
+            if (AutocompleteListBox == null || AutocompletePopup == null) return;
+            
+            // Caret positioning approximation relative to top-left of the target TextBox
+            int lineIndex = 0;
+            int colIndex = 0;
+            try
+            {
+                string text = textBox.Text ?? "";
+                int caret = Math.Min(textBox.CaretIndex, text.Length);
+                if (caret >= 0)
+                {
+                    string prefix = text.Substring(0, caret);
+                    string[] lines = prefix.Split('\n');
+                    lineIndex = lines.Length - 1;
+                    colIndex = lines[lineIndex].Length;
+                }
+            }
+            catch {}
+
+            AutocompletePopup.HorizontalOffset = Math.Max(0, colIndex * 7.2 - 10);
+            AutocompletePopup.VerticalOffset = Math.Max(0, lineIndex * 18 + 20);
+
+            var list = new System.Collections.Generic.List<AutocompleteItem>();
+            var game = App.CurrentGame;
+            
+            if (game != null)
+            {
+                if (trigger == '{')
+                {
+                    // Add local / context properties
+                    list.Add(new AutocompleteItem { Token = "this.Name", DisplayToken = "{this.Name}", TypeName = "Current Object Property", Description = "Name of this object." });
+                    list.Add(new AutocompleteItem { Token = "this.Description", DisplayToken = "{this.Description}", TypeName = "Current Object Property", Description = "Description of this object." });
+                    list.Add(new AutocompleteItem { Token = "this.portrait", DisplayToken = "{this.portrait}", TypeName = "Current Object Property", Description = "Portrait or image path." });
+
+                    // Add local attributes on the current context object (only attributes belonging to "this" context)
+                    var attrProp = textBox.DataContext?.GetType().GetProperty("Attributes");
+                    if (attrProp != null && attrProp.GetValue(textBox.DataContext) is System.Collections.IEnumerable attributesList)
+                    {
+                        foreach (var attrObj in attributesList)
+                        {
+                            var nameProp = attrObj.GetType().GetProperty("Name");
+                            var nameVal = nameProp?.GetValue(attrObj) as string;
+                            if (!string.IsNullOrEmpty(nameVal))
+                            {
+                                list.Add(new AutocompleteItem { Token = $"this.attributes.{nameVal}", DisplayToken = $"{{this.attributes.{nameVal}}}", TypeName = "Context Custom Attribute", Description = $"Context object custom attribute '{nameVal}'." });
+                            }
+                        }
+                    }
+
+                    list.Add(new AutocompleteItem { Token = "player.Name", DisplayToken = "{player.Name}", TypeName = "Player Property", Description = "Name of the protagonist." });
+                    list.Add(new AutocompleteItem { Token = "player.Description", DisplayToken = "{player.Description}", TypeName = "Player Property", Description = "Description of the protagonist." });
+                    list.Add(new AutocompleteItem { Token = "player.Gender", DisplayToken = "{player.Gender}", TypeName = "Player Property", Description = "Gender of the protagonist." });
+                    list.Add(new AutocompleteItem { Token = "player.portrait", DisplayToken = "{player.portrait}", TypeName = "Player Property", Description = "Protagonist image portrait path." });
+
+                    list.Add(new AutocompleteItem { Token = "room.Name", DisplayToken = "{room.Name}", TypeName = "Room Property", Description = "Name of current room." });
+                    list.Add(new AutocompleteItem { Token = "room.Description", DisplayToken = "{room.Description}", TypeName = "Room Property", Description = "Description of current room." });
+                    list.Add(new AutocompleteItem { Token = "room.portrait", DisplayToken = "{room.portrait}", TypeName = "Room Property", Description = "Image path of current room." });
+
+                    list.Add(new AutocompleteItem { Token = "focus.Name", DisplayToken = "{focus.Name}", TypeName = "Focus Object Property", Description = "Name of current focus object." });
+                    list.Add(new AutocompleteItem { Token = "focus.Description", DisplayToken = "{focus.Description}", TypeName = "Focus Object Property", Description = "Description of current focus object." });
+
+                    // Dynamically scan and insert created custom attributes
+                    var uniqueAttrNames = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    if (game.Player?.Attributes != null)
+                    {
+                        foreach (var a in game.Player.Attributes)
+                        {
+                            uniqueAttrNames.Add(a.Name);
+                            list.Add(new AutocompleteItem { Token = $"player.attributes.{a.Name}", DisplayToken = $"{{player.attributes.{a.Name}}}", TypeName = "Player Custom Attribute", Description = $"Custom attribute '{a.Name}' on player." });
+                        }
+                    }
+
+                    if (game.Characters != null)
+                    {
+                        foreach (var c in game.Characters)
+                        {
+                            string nameClean = c.Name.Replace(" ", "");
+                            if (c.Attributes != null)
+                            {
+                                foreach (var a in c.Attributes)
+                                {
+                                    uniqueAttrNames.Add(a.Name);
+                                    list.Add(new AutocompleteItem { Token = $"characters.{nameClean}.attributes.{a.Name}", DisplayToken = $"{{characters.{nameClean}.attributes.{a.Name}}}", TypeName = "Character Custom Attribute", Description = $"Custom attribute '{a.Name}' on character '{c.Name}'." });
+                                }
+                            }
+                        }
+                    }
+
+                    if (game.Objects != null)
+                    {
+                        foreach (var o in game.Objects)
+                        {
+                            string nameClean = o.Name.Replace(" ", "");
+                            if (o.Attributes != null)
+                            {
+                                foreach (var a in o.Attributes)
+                                {
+                                    uniqueAttrNames.Add(a.Name);
+                                    list.Add(new AutocompleteItem { Token = $"objects.{nameClean}.attributes.{a.Name}", DisplayToken = $"{{objects.{nameClean}.attributes.{a.Name}}}", TypeName = "Object Custom Attribute", Description = $"Custom attribute '{a.Name}' on object '{o.Name}'." });
+                                }
+                            }
+                        }
+                    }
+
+                    if (game.Rooms != null)
+                    {
+                        foreach (var r in game.Rooms)
+                        {
+                            string nameClean = r.Name.Replace(" ", "");
+                            if (r.Attributes != null)
+                            {
+                                foreach (var a in r.Attributes)
+                                {
+                                    uniqueAttrNames.Add(a.Name);
+                                    list.Add(new AutocompleteItem { Token = $"rooms.{nameClean}.attributes.{a.Name}", DisplayToken = $"{{rooms.{nameClean}.attributes.{a.Name}}}", TypeName = "Room Custom Attribute", Description = $"Custom attribute '{a.Name}' on room '{r.Name}'." });
+                                }
+                            }
+                        }
+                    }
+
+                    if (game.Timers != null)
+                    {
+                        foreach (var t in game.Timers)
+                        {
+                            string nameClean = t.Name.Replace(" ", "");
+                            if (t.Attributes != null)
+                            {
+                                foreach (var a in t.Attributes)
+                                {
+                                    uniqueAttrNames.Add(a.Name);
+                                    list.Add(new AutocompleteItem { Token = $"timers.{nameClean}.attributes.{a.Name}", DisplayToken = $"{{timers.{nameClean}.attributes.{a.Name}}}", TypeName = "Timer Custom Attribute", Description = $"Custom attribute '{a.Name}' on timer '{t.Name}'." });
+                                }
+                            }
+                        }
+                    }
+
+
+
+                    if (game.Variables != null)
+                    {
+                        foreach (var v in game.Variables)
+                        {
+                            list.Add(new AutocompleteItem { 
+                                Token = $"variables.{v.Name}", 
+                                DisplayToken = $"{{variables.{v.Name}}}", 
+                                TypeName = "Player Variable", 
+                                Description = $"Value: {v.Value}" 
+                            });
+                        }
+                    }
+
+                    if (game.Characters != null)
+                    {
+                        foreach (var c in game.Characters)
+                        {
+                            string nameClean = c.Name.Replace(" ", "");
+                            list.Add(new AutocompleteItem { Token = $"characters.{nameClean}.Name", DisplayToken = $"{{characters.{nameClean}.Name}}", TypeName = "Character Property", Description = $"Name of character '{c.Name}'." });
+                            list.Add(new AutocompleteItem { Token = $"characters.{nameClean}.Description", DisplayToken = $"{{characters.{nameClean}.Description}}", TypeName = "Character Property", Description = $"Description of character '{c.Name}'." });
+                            list.Add(new AutocompleteItem { Token = $"characters.{nameClean}.Health", DisplayToken = $"{{characters.{nameClean}.Health}}", TypeName = "Character Property", Description = $"Health of character '{c.Name}'." });
+                        }
+                    }
+
+                    if (game.Objects != null)
+                    {
+                        foreach (var o in game.Objects)
+                        {
+                            string nameClean = o.Name.Replace(" ", "");
+                            list.Add(new AutocompleteItem { Token = $"objects.{nameClean}.Name", DisplayToken = $"{{objects.{nameClean}.Name}}", TypeName = "Object Property", Description = $"Name of object '{o.Name}'." });
+                            list.Add(new AutocompleteItem { Token = $"objects.{nameClean}.Description", DisplayToken = $"{{objects.{nameClean}.Description}}", TypeName = "Object Property", Description = $"Description of object '{o.Name}'." });
+                        }
+                    }
+                }
+                else if (trigger == '[')
+                {
+                    var directions = new[] { "North", "South", "East", "West", "Up", "Down", "In", "Out" };
+                    foreach (var dir in directions)
+                    {
+                        list.Add(new AutocompleteItem { Token = dir, DisplayToken = $"[{dir}]", TypeName = "Exit Direction", Description = "Clickable exit shortcut in player navigation." });
+                    }
+
+                    if (game.Rooms != null)
+                    {
+                        foreach (var r in game.Rooms)
+                        {
+                            list.Add(new AutocompleteItem { Token = r.Name, DisplayToken = $"[{r.Name}]", TypeName = "Room Link", Description = $"Navigation link to '{r.Name}'." });
+                        }
+                    }
+
+                    if (game.Characters != null)
+                    {
+                        foreach (var c in game.Characters)
+                        {
+                            list.Add(new AutocompleteItem { Token = c.Name, DisplayToken = $"[{c.Name}]", TypeName = "Character Link", Description = $"Interactive inline link to character '{c.Name}'." });
+                        }
+                    }
+
+                    if (game.Objects != null)
+                    {
+                        foreach (var o in game.Objects)
+                        {
+                            list.Add(new AutocompleteItem { Token = o.Name, DisplayToken = $"[{o.Name}]", TypeName = "Object Link", Description = $"Interactive inline link to object '{o.Name}'." });
+                        }
+                    }
+                }
+            }
+
+            var filtered = new System.Collections.Generic.List<AutocompleteItem>();
+            foreach (var item in list)
+            {
+                if (string.IsNullOrEmpty(query) || item.Token.Contains(query, StringComparison.OrdinalIgnoreCase))
+                {
+                    filtered.Add(item);
+                }
+            }
+
+            if (filtered.Count == 0)
+            {
+                HideAutocomplete();
+                return;
+            }
+
+            AutocompleteListBox.ItemsSource = filtered;
+            AutocompleteListBox.SelectedIndex = 0;
+
+            AutocompletePopup.PlacementTarget = textBox;
+            AutocompletePopup.IsOpen = true;
+        }
+
+        private void HideAutocomplete()
+        {
+            if (AutocompletePopup != null)
+            {
+                AutocompletePopup.IsOpen = false;
+            }
+            _activeTextBox = null;
+            _triggerIndex = -1;
+        }
+    }
+
+    public class AutocompleteItem
+    {
+        public string Token { get; set; } = "";
+        public string DisplayToken { get; set; } = "";
+        public string TypeName { get; set; } = "";
+        public string Description { get; set; } = "";
     }
 
     public class ObjectCheckItem
@@ -1585,5 +2322,37 @@ namespace RagNext.Designer.Avalonia.Views
         {
             throw new NotImplementedException();
         }
+    }
+
+    public class SelectedToBrushConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly SelectedToBrushConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is bool selected && selected)
+            {
+                return global::Avalonia.Media.Brush.Parse("#2E1A47"); // Dark purple / violet highlight
+            }
+            return global::Avalonia.Media.Brush.Parse("#13131F"); // Base button color
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class SelectedToBorderBrushConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly SelectedToBorderBrushConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is bool selected && selected)
+            {
+                return global::Avalonia.Media.Brush.Parse("#8E2DE2"); // Highlight border
+            }
+            return global::Avalonia.Media.Brush.Parse("#2A2A3A"); // Dark border
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
     }
 }

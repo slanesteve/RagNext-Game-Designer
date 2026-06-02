@@ -54,7 +54,7 @@ let autoSaveTimeout = null;
 function triggerAutoSave() {
     if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
     autoSaveTimeout = setTimeout(() => {
-        saveAndSyncCsharp();
+        saveAndSyncCsharp(true);
     }, 400); // 400ms debounce
 }
 
@@ -115,8 +115,7 @@ const fallbackDiscriminators = {
     "variablesetnumericrandomly": "var.setRandom",
     "endthegame": "general.endGame",
     "itemopencontainer": "general.openContainer",
-    "itemclosecontainer": "general.closeContainer"
-};,
+    "itemclosecontainer": "general.closeContainer",
     "additionaldatacheck": "general.additionalDataCheck",
     "charactercustompropertycheck": "char.customPropertyCheck",
     "charactergender": "char.gender",
@@ -1778,6 +1777,7 @@ function clearSelectedNode() {
 
 function getReachableNodeIds() {
     const reachable = new Set();
+    reachable.add('start');
     const startConn = connections.find(c => c.fromPinId === "start_out");
     if (!startConn) return reachable;
     
@@ -1821,10 +1821,10 @@ function getReachableNodeIds() {
 }
 
 // Bidirectional Sync back to C#
-function saveAndSyncCsharp() {
+function saveAndSyncCsharp(isAutoSave = false) {
     const reachable = getReachableNodeIds();
-    const unreachableCount = nodes.filter(n => !reachable.has(n.id)).length;
-    if (unreachableCount > 0) {
+    const unreachableCount = nodes.filter(n => n.id !== 'start' && !reachable.has(n.id)).length;
+    if (!isAutoSave && unreachableCount > 0) {
         const confirmMsg = `You have ${unreachableCount} unconnected node(s) in your graph. If you save, these unconnected nodes will be permanently removed. \n\nClick OK to discard them and save/return, or Cancel to stay and fix them.`;
         if (!confirm(confirmMsg)) {
             return "CANCELLED"; // Cancel save
@@ -1981,117 +1981,127 @@ function buildNodeJsonWithoutNext(node) {
 
 // C# Hook to populate existing JSON action trees and databases
 window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogsDb, typesMap) {
-    nodesLayer.innerHTML = "";
-    nodes = [];
-    connections = [];
+    try {
+        // Reset panning and zoom to center and show the Start Node
+        panX = 0;
+        panY = 0;
+        zoom = 1.0;
 
-    // Store dynamic databases
-    catalogs = catalogsDb || {};
-    nameToTypeMap = {};
-    typeToNameMap = {};
-    typeToInputsMap = {};
+        nodesLayer.innerHTML = "";
+        nodes = [];
+        connections = [];
 
-    // Build C# type maps
-    if (typesMap) {
-        getArray(typesMap).forEach(tm => {
-            nameToTypeMap[tm.TypeName] = tm.Discriminator;
-            nameToTypeMap[normalize(tm.TypeName)] = tm.Discriminator;
-            typeToNameMap[tm.Discriminator] = tm.TypeName;
-        });
-    }
+        // Store dynamic databases
+        catalogs = catalogsDb || {};
+        nameToTypeMap = {};
+        typeToNameMap = {};
+        typeToInputsMap = {};
 
-    // Map Inputs Schema
-    if (commandsDb && commandsDb.commands) {
-        getArray(commandsDb.commands).forEach(cmd => {
-            let type = nameToTypeMap[cmd.name] || nameToTypeMap[normalize(cmd.name)] || fallbackDiscriminators[normalize(cmd.name)];
-            if (!type) {
-                const combined = cmd.category + ": " + cmd.name;
-                type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
-            }
-            if (type) {
-                typeToInputsMap[type] = cmd;
-            }
-        });
-    }
+        // Build C# type maps
+        if (typesMap) {
+            getArray(typesMap).forEach(tm => {
+                nameToTypeMap[tm.TypeName] = tm.Discriminator;
+                nameToTypeMap[normalize(tm.TypeName)] = tm.Discriminator;
+                typeToNameMap[tm.Discriminator] = tm.TypeName;
+            });
+        }
 
-    if (conditionsDb && conditionsDb.conditions) {
-        getArray(conditionsDb.conditions).forEach(cond => {
-            let type = nameToTypeMap[cond.name] || nameToTypeMap[normalize(cond.name)] || fallbackDiscriminators[normalize(cond.name)];
-            if (!type) {
-                const combined = cond.category + ": " + cond.name;
-                type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
-            }
-            if (type) {
-                typeToInputsMap[type] = cond;
-            }
-        });
-    }
+        // Map Inputs Schema
+        if (commandsDb && commandsDb.commands) {
+            getArray(commandsDb.commands).forEach(cmd => {
+                let type = nameToTypeMap[cmd.name] || nameToTypeMap[normalize(cmd.name)] || fallbackDiscriminators[normalize(cmd.name)];
+                if (!type) {
+                    const combined = cmd.category + ": " + cmd.name;
+                    type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
+                }
+                if (type) {
+                    typeToInputsMap[type] = cmd;
+                }
+            });
+        }
 
-    AVAILABLE_COMMANDS = [];
-    if (commandsDb && commandsDb.commands) {
-        getArray(commandsDb.commands).forEach(cmd => {
-            let type = nameToTypeMap[cmd.name] || nameToTypeMap[normalize(cmd.name)] || fallbackDiscriminators[normalize(cmd.name)];
-            if (!type) {
-                const combined = cmd.category + ": " + cmd.name;
-                type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
-            }
-            if (type) {
-                AVAILABLE_COMMANDS.push({ type: type, label: cmd.name, category: cmd.category });
-            }
-        });
-    }
-    AVAILABLE_COMMANDS.sort((a, b) => a.label.localeCompare(b.label));
+        if (conditionsDb && conditionsDb.conditions) {
+            getArray(conditionsDb.conditions).forEach(cond => {
+                let type = nameToTypeMap[cond.name] || nameToTypeMap[normalize(cond.name)] || fallbackDiscriminators[normalize(cond.name)];
+                if (!type) {
+                    const combined = cond.category + ": " + cond.name;
+                    type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
+                }
+                if (type) {
+                    typeToInputsMap[type] = cond;
+                }
+            });
+        }
 
-    AVAILABLE_CONDITIONS = [];
-    if (conditionsDb && conditionsDb.conditions) {
-        getArray(conditionsDb.conditions).forEach(cond => {
-            let type = nameToTypeMap[cond.name] || nameToTypeMap[normalize(cond.name)] || fallbackDiscriminators[normalize(cond.name)];
-            if (!type) {
-                const combined = cond.category + ": " + cond.name;
-                type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
-            }
-            if (type) {
-                AVAILABLE_CONDITIONS.push({ type: type, label: cond.name, category: cond.category });
-            }
-        });
-    }
-    AVAILABLE_CONDITIONS.sort((a, b) => a.label.localeCompare(b.label));
+        AVAILABLE_COMMANDS = [];
+        if (commandsDb && commandsDb.commands) {
+            getArray(commandsDb.commands).forEach(cmd => {
+                let type = nameToTypeMap[cmd.name] || nameToTypeMap[normalize(cmd.name)] || fallbackDiscriminators[normalize(cmd.name)];
+                if (!type) {
+                    const combined = cmd.category + ": " + cmd.name;
+                    type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
+                }
+                if (type) {
+                    AVAILABLE_COMMANDS.push({ type: type, label: cmd.name, category: cmd.category });
+                }
+            });
+        }
+        AVAILABLE_COMMANDS.sort((a, b) => a.label.localeCompare(b.label));
 
-    // Dynamic header title update
-    activeActionName = actionJson?.Name || actionJson?.name || "Visual Action Node";
-    activeActionTrigger = actionJson?.Trigger || actionJson?.trigger || "UserClicked";
-    activeActionInitallyActive = (actionJson?.InitallyActive !== undefined) ? actionJson.InitallyActive : 
-                                 ((actionJson?.initallyActive !== undefined) ? actionJson.initallyActive : 
-                                 ((actionJson?.initiallyActive !== undefined) ? actionJson.initiallyActive : true));
+        AVAILABLE_CONDITIONS = [];
+        if (conditionsDb && conditionsDb.conditions) {
+            getArray(conditionsDb.conditions).forEach(cond => {
+                let type = nameToTypeMap[cond.name] || nameToTypeMap[normalize(cond.name)] || fallbackDiscriminators[normalize(cond.name)];
+                if (!type) {
+                    const combined = cond.category + ": " + cond.name;
+                    type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
+                }
+                if (type) {
+                    AVAILABLE_CONDITIONS.push({ type: type, label: cond.name, category: cond.category });
+                }
+            });
+        }
+        AVAILABLE_CONDITIONS.sort((a, b) => a.label.localeCompare(b.label));
 
-    const titleEl = document.getElementById("editor-title");
-    if (titleEl) {
-        titleEl.innerText = "Editing Action: " + activeActionName;
-    }
+        // Dynamic header title update
+        activeActionName = actionJson?.Name || actionJson?.name || "Visual Action Node";
+        activeActionTrigger = actionJson?.Trigger || actionJson?.trigger || "UserClicked";
+        activeActionInitallyActive = (actionJson?.InitallyActive !== undefined) ? actionJson.InitallyActive : 
+                                     ((actionJson?.initallyActive !== undefined) ? actionJson.initallyActive : 
+                                     ((actionJson?.initiallyActive !== undefined) ? actionJson.initiallyActive : true));
 
-    // Always create the permanent Start Node at (50, 150)
-    createStartNode();
+        const titleEl = document.getElementById("editor-title");
+        if (titleEl) {
+            titleEl.innerText = "Editing Action: " + activeActionName;
+        }
 
-    const rawNodesList = actionJson?.Nodes || actionJson?.nodes || actionJson?.Steps || actionJson?.steps;
-    const nodesList = getArray(rawNodesList);
-    if (!nodesList || nodesList.length === 0) {
+        // Always create the permanent Start Node at (50, 150)
+        createStartNode();
+
+        const rawNodesList = actionJson?.Nodes || actionJson?.nodes || actionJson?.Steps || actionJson?.steps;
+        const nodesList = getArray(rawNodesList);
+        if (!nodesList || nodesList.length === 0) {
+            redrawConnections();
+            updateTransform();
+            return;
+        }
+
+        // Render the sequential node-graph connected list starting from Start Node
+        const firstNode = parseFlatSequence(nodesList, 250, 150);
+        if (firstNode) {
+            connections.push({
+                fromPinId: "start_out",
+                toPinId: `${firstNode.id}_in`,
+                type: 'exec'
+            });
+        }
+
         redrawConnections();
         updateTransform();
-        return;
+    } catch (err) {
+        console.error("Visual editor load failed: ", err);
+        alert("Visual action editor failed to load:\n\nError: " + err.message + "\n\nStack:\n" + err.stack);
     }
-
-    // Render the sequential node-graph connected list starting from Start Node
-    const firstNode = parseFlatSequence(nodesList, 250, 150);
-    if (firstNode) {
-        connections.push({
-            fromPinId: "start_out",
-            toPinId: `${firstNode.id}_in`,
-            type: 'exec'
-        });
-    }
-
-    redrawConnections();
-    updateTransform();
 };
 
 // Generate a sequence of nodes drawn connected sequentially
@@ -2381,9 +2391,68 @@ function getAutocompleteSuggestions(triggerChar) {
         list.push({ token: "this.Description", typeName: "Current Object Property", desc: "Description of this object." });
         list.push({ token: "this.portrait", typeName: "Current Object Property", desc: "Portrait or image path." });
         
-        if (catalogs.GameObjects && catalogs.GameObjects.length > 0) {
-            list.push({ token: "this.attributes.health", typeName: "Current Object Attribute", desc: "Custom health attribute." });
+        // Populate this.attributes.* only from catalogs.Owner.Attributes (matching context of the active action owner)
+        if (catalogs.Owner && catalogs.Owner.Attributes) {
+            getArray(catalogs.Owner.Attributes).forEach(a => {
+                list.push({ token: `this.attributes.${a}`, typeName: "Current Object Attribute", desc: `Context object custom attribute '${a}'.` });
+            });
         }
+        
+        // Scan custom attributes dynamically from catalogs databases
+        const uniqueAttrNames = new Set();
+        if (catalogs.Player && catalogs.Player.Attributes) {
+            getArray(catalogs.Player.Attributes).forEach(a => {
+                uniqueAttrNames.add(a);
+                list.push({ token: `player.attributes.${a}`, typeName: "Player Attribute", desc: `Custom attribute '${a}' on player.` });
+            });
+        }
+        if (catalogs.Characters) {
+            getArray(catalogs.Characters).forEach(c => {
+                if (c.Attributes) {
+                    const nameClean = c.Name.replace(/\s+/g, "");
+                    getArray(c.Attributes).forEach(a => {
+                        uniqueAttrNames.add(a);
+                        list.push({ token: `characters.${nameClean}.attributes.${a}`, typeName: "Character Attribute", desc: `Custom attribute '${a}' on character '${c.Name}'.` });
+                    });
+                }
+            });
+        }
+        if (catalogs.GameObjects) {
+            getArray(catalogs.GameObjects).forEach(o => {
+                if (o.Attributes) {
+                    const nameClean = o.Name.replace(/\s+/g, "");
+                    getArray(o.Attributes).forEach(a => {
+                        uniqueAttrNames.add(a);
+                        list.push({ token: `objects.${nameClean}.attributes.${a}`, typeName: "Object Attribute", desc: `Custom attribute '${a}' on object '${o.Name}'.` });
+                    });
+                }
+            });
+        }
+        if (catalogs.Rooms) {
+            getArray(catalogs.Rooms).forEach(r => {
+                if (r.Attributes) {
+                    const nameClean = r.Name.replace(/\s+/g, "");
+                    getArray(r.Attributes).forEach(a => {
+                        uniqueAttrNames.add(a);
+                        list.push({ token: `rooms.${nameClean}.attributes.${a}`, typeName: "Room Attribute", desc: `Custom attribute '${a}' on room '${r.Name}'.` });
+                    });
+                }
+            });
+        }
+        if (catalogs.Timers) {
+            getArray(catalogs.Timers).forEach(t => {
+                if (t.Attributes) {
+                    const nameClean = t.Name.replace(/\s+/g, "");
+                    getArray(t.Attributes).forEach(a => {
+                        uniqueAttrNames.add(a);
+                        list.push({ token: `timers.${nameClean}.attributes.${a}`, typeName: "Timer Attribute", desc: `Custom attribute '${a}' on timer '${t.Name}'.` });
+                    });
+                }
+            });
+        }
+        uniqueAttrNames.forEach(a => {
+            list.push({ token: `room.attributes.${a}`, typeName: "Current Room Attribute", desc: `Current room custom attribute '${a}'.` });
+        });
 
         // Player
         list.push({ token: "player.Name", typeName: "Player Property", desc: "Name of the protagonist." });
@@ -2679,6 +2748,67 @@ document.addEventListener('click', (e) => {
     const popup = document.getElementById('autocomplete-popup');
     if (popup && !popup.contains(e.target) && (!activeAutocomplete.targetInput || e.target !== activeAutocomplete.targetInput)) {
         hideAutocompletePopup();
+    }
+});
+
+// Document-level drag/drop handlers to autofill media paths
+document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+document.addEventListener('drop', (e) => {
+    const text = e.dataTransfer.getData('text') || e.dataTransfer.getData('Text');
+    if (!text) return;
+
+    // Check if the text resembles a relative media path pattern (contains a / and folder/extension matches)
+    const isMediaPath = text.includes('/') && (
+        text.startsWith('images/') || 
+        text.startsWith('audio/') || 
+        text.startsWith('videos/') || 
+        text.startsWith('fonts/') ||
+        /\.(png|jpg|jpeg|gif|webp|svg|mp3|wav|ogg|mp4|webm|m4a)$/i.test(text)
+    );
+
+    if (!isMediaPath) return;
+
+    const target = e.target;
+    if (!target) return;
+
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        e.preventDefault();
+        target.value = text;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+    } else if (target.tagName === 'SELECT') {
+        e.preventDefault();
+        target.value = text;
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+        // Look for a nearby input, textarea, or select element
+        const formGroup = target.closest('.input-row') || target.closest('.node-body') || target.closest('.node-element');
+        if (formGroup) {
+            const inputs = formGroup.querySelectorAll('input, select, textarea');
+            if (inputs.length === 1) {
+                const inp = inputs[0];
+                inp.value = text;
+                inp.dispatchEvent(new Event('input', { bubbles: true }));
+                inp.dispatchEvent(new Event('change', { bubbles: true }));
+                e.preventDefault();
+            } else if (inputs.length > 1) {
+                for (const inp of inputs) {
+                    const label = inp.previousElementSibling?.innerText?.toLowerCase() || '';
+                    const placeholder = inp.placeholder?.toLowerCase() || '';
+                    if (label.includes('path') || label.includes('media') || label.includes('image') || label.includes('sound') || label.includes('audio') || label.includes('file') ||
+                        placeholder.includes('path') || placeholder.includes('media') || placeholder.includes('image') || placeholder.includes('sound') || placeholder.includes('audio') || placeholder.includes('file')) {
+                        inp.value = text;
+                        inp.dispatchEvent(new Event('input', { bubbles: true }));
+                        inp.dispatchEvent(new Event('change', { bubbles: true }));
+                        e.preventDefault();
+                        break;
+                    }
+                }
+            }
+        }
     }
 });
 

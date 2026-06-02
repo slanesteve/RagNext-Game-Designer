@@ -218,7 +218,7 @@
                                             <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No Portrait Image set'}" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Media.RemoveAssetCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
-                                                <Button Content="✨ Generate with AI..." Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
+                                                <Button Content="✨ Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Player" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Grid>
@@ -247,7 +247,7 @@
                                                 </StackPanel>
                                                 <Button Grid.Column="1" Content="🗑️ Remove" 
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveInventoryItemCommand}"
-                                                        CommandParameter="{Binding $parent[ListBox].((models:Player)DataContext).Inventory, Converter={x:Static ObjectConverters.Equal}}" 
+                                                        CommandParameter="{Binding}" 
                                                         Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                             </Grid>
                                         </DataTemplate>
@@ -279,7 +279,7 @@
                                                 </StackPanel>
                                                 <Button Grid.Column="1" Content="🗑️ Remove" 
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                        CommandParameter="{Binding $parent[ListBox].((models:Player)DataContext).Attributes, Converter={x:Static ObjectConverters.Equal}}" 
+                                                        CommandParameter="{Binding}" 
                                                         Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                             </Grid>
                                         </DataTemplate>
@@ -408,7 +408,7 @@
                                                         <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                                             <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Media.RemoveAssetCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
-                                                            <Button Content="Generate with AI..." Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
+                                                            <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Room" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
                                                         </StackPanel>
                                                     </StackPanel>
                                                 </Grid>
@@ -611,7 +611,7 @@
                                                                     </StackPanel>
                                                                     <Button Grid.Column="1" Content="🗑️ Remove" 
                                                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                            CommandParameter="{Binding $parent[ListBox].((models:Room)DataContext).Attributes, Converter={x:Static ObjectConverters.Equal}}" 
+                                                                            CommandParameter="{Binding}" 
                                                                             Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                                                 </Grid>
                                                             </DataTemplate>
@@ -738,7 +738,7 @@
                                             <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Media.RemoveAssetCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
-                                                <Button Content="Generate with AI..." Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
+                                                <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Character" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Grid>
@@ -783,7 +783,7 @@
                                                         </StackPanel>
                                                         <Button Grid.Column="1" Content="🗑️ Remove" 
                                                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveInventoryItemCommand}"
-                                                                CommandParameter="{Binding $parent[ListBox].((models:Character)DataContext).Inventory, Converter={x:Static ObjectConverters.Equal}}" 
+                                                                CommandParameter="{Binding}" 
                                                                 Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                                     </Grid>
                                                 </DataTemplate>
@@ -811,7 +811,7 @@
                                                         </StackPanel>
                                                         <Button Grid.Column="1" Content="🗑️ Remove" 
                                                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                CommandParameter="{Binding $parent[ListBox].((models:Character)DataContext).Attributes, Converter={x:Static ObjectConverters.Equal}}" 
+                                                                CommandParameter="{Binding}" 
                                                                 Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                                     </Grid>
                                                 </DataTemplate>
@@ -935,7 +935,7 @@
                                                         <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                                             <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Media.RemoveAssetCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
-                                                            <Button Content="Generate with AI..." Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
+                                                            <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Object" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
                                                         </StackPanel>
                                                     </StackPanel>
                                                 </Grid>
@@ -944,15 +944,25 @@
                                             <!-- Collapsible Attributes -->
                                             <Expander Header="Attributes" Background="#13131F" Margin="0,8,0,0">
                                                 <StackPanel Spacing="10" Margin="10">
-                                                    <TextBlock Text="Manage custom story variable parameters on this item:" FontSize="11" Foreground="Gray"/>
-                                                    <ListBox ItemsSource="{Binding Attributes}" Height="100" Background="#0C0C12" BorderBrush="#2D2D3E" BorderThickness="1">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Grid.Column="0" Text="Manage custom attributes on this item:" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
+                                                        <Button Grid.Column="1" Content="➕ Add Attribute" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerAddAttributeCommand}" CommandParameter="{Binding}" Background="#2A2A3E" Foreground="#A29BFE" FontSize="11" Padding="8,4"/>
+                                                    </Grid>
+                                                    <ListBox ItemsSource="{Binding Attributes}" Height="120" Background="#0C0C12" BorderBrush="#2D2D3E" BorderThickness="1">
                                                         <ListBox.ItemTemplate>
                                                             <DataTemplate x:DataType="models:CustomAttribute">
-                                                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="White"/>
-                                                                    <TextBlock Text="=" Foreground="Gray"/>
-                                                                    <TextBlock Text="{Binding Value}" Foreground="LightGray"/>
-                                                                </StackPanel>
+                                                                <Grid ColumnDefinitions="*,Auto" Height="36">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                                        <TextBlock Text="⚡" FontSize="12" VerticalAlignment="Center"/>
+                                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                                                        <TextBlock Text="=" Foreground="Gray" VerticalAlignment="Center"/>
+                                                                        <TextBlock Text="{Binding Value}" Foreground="#A29BFE" VerticalAlignment="Center"/>
+                                                                    </StackPanel>
+                                                                    <Button Grid.Column="1" Content="🗑️ Remove" 
+                                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                                            CommandParameter="{Binding}" 
+                                                                            Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                                </Grid>
                                                             </DataTemplate>
                                                         </ListBox.ItemTemplate>
                                                     </ListBox>
@@ -1277,7 +1287,9 @@
                                                             FontSize="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewFontSize}" 
                                                             Canvas.Left="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextLeftWithOffset}" 
                                                             Canvas.Top="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextTopWithOffset}" 
-                                                            Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextOpacity}"/>
+                                                            Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextOpacity}"
+                                                            TextWrapping="Wrap"
+                                                            MaxWidth="1800"/>
                                              </Canvas>
                                          </Border>
                                      </Viewbox>
@@ -1316,7 +1328,7 @@
                                     <TreeView ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
                                         <TreeView.ItemTemplate>
                                             <TreeDataTemplate DataType="{x:Type vm:MediaLibraryViewModel+Node}" ItemsSource="{Binding Children}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased">
                                                     <TextBlock Text="{Binding Icon}"/>
                                                     <TextBlock Text="{Binding Name}"/>
                                                 </StackPanel>
@@ -1421,14 +1433,44 @@
                                     <Button Grid.Row="3" Grid.Column="2" Content="Browse..." Command="{Binding BrowsePublishDestinationCommand}" Background="#2B2B3A" Foreground="White" Padding="14,6" CornerRadius="4"/>
 
                                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Target Platform" VerticalAlignment="Center" Foreground="White" FontSize="13"/>
-                                    <ComboBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" SelectedItem="{Binding SelectedPublishTarget}" HorizontalAlignment="Stretch" Background="#13131F" Foreground="White" CornerRadius="4" BorderBrush="#2A2A3A">
-                                        <ComboBox.Items>
-                                            <services:PackagingTarget>Windows</services:PackagingTarget>
-                                            <services:PackagingTarget>MacOS</services:PackagingTarget>
-                                            <services:PackagingTarget>Linux</services:PackagingTarget>
-                                            <services:PackagingTarget>WebGL</services:PackagingTarget>
-                                        </ComboBox.Items>
-                                    </ComboBox>
+                                    <Grid Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*,*" Margin="0,4,0,0" Height="80">
+                                        <Button Grid.Column="0" Command="{Binding SelectPlatformCommand}" CommandParameter="Windows" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,8,0" Padding="8" CornerRadius="6"
+                                                Background="{Binding IsWindowsSelected, Converter={x:Static views:SelectedToBrushConverter.Instance}}"
+                                                BorderBrush="{Binding IsWindowsSelected, Converter={x:Static views:SelectedToBorderBrushConverter.Instance}}"
+                                                BorderThickness="2">
+                                            <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="🪟 Windows" FontWeight="Bold" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding WinStatusText}" Foreground="{Binding WinStatusColor}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="1" Command="{Binding SelectPlatformCommand}" CommandParameter="MacOS" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,8,0" Padding="8" CornerRadius="6"
+                                                Background="{Binding IsMacSelected, Converter={x:Static views:SelectedToBrushConverter.Instance}}"
+                                                BorderBrush="{Binding IsMacSelected, Converter={x:Static views:SelectedToBorderBrushConverter.Instance}}"
+                                                BorderThickness="2">
+                                            <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="🍎 macOS" FontWeight="Bold" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding MacStatusText}" Foreground="{Binding MacStatusColor}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="2" Command="{Binding SelectPlatformCommand}" CommandParameter="Linux" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,8,0" Padding="8" CornerRadius="6"
+                                                Background="{Binding IsLinuxSelected, Converter={x:Static views:SelectedToBrushConverter.Instance}}"
+                                                BorderBrush="{Binding IsLinuxSelected, Converter={x:Static views:SelectedToBorderBrushConverter.Instance}}"
+                                                BorderThickness="2">
+                                            <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="🐧 Linux" FontWeight="Bold" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding LinuxStatusText}" Foreground="{Binding LinuxStatusColor}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="3" Command="{Binding SelectPlatformCommand}" CommandParameter="WebGL" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="8" CornerRadius="6"
+                                                Background="{Binding IsWebGLSelected, Converter={x:Static views:SelectedToBrushConverter.Instance}}"
+                                                BorderBrush="{Binding IsWebGLSelected, Converter={x:Static views:SelectedToBorderBrushConverter.Instance}}"
+                                                BorderThickness="2">
+                                            <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="🌐 WebGL" FontWeight="Bold" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding WebGLStatusText}" Foreground="{Binding WebGLStatusColor}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
                                 </Grid>
 
                                 <Button Content="🚀 Compile standalone game now" Command="{Binding PublishCommand}" IsEnabled="{Binding !IsPublishing}" HorizontalAlignment="Left" Foreground="White" FontWeight="Bold" CornerRadius="4" Padding="20,12">
@@ -1634,7 +1676,7 @@
                         <TreeView Grid.Row="2" ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" Margin="8" DragDrop.AllowDrop="True" DragDrop.Drop="OnDragDropFile">
                             <TreeView.ItemTemplate>
                                 <TreeDataTemplate DataType="{x:Type vm:MediaLibraryViewModel+Node}" ItemsSource="{Binding Children}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased">
                                         <TextBlock Text="{Binding Icon}"/>
                                         <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12"/>
                                     </StackPanel>
@@ -1865,6 +1907,21 @@
                 </StackPanel>
             </Border>
         </Border>
+        <Popup Name="AutocompletePopup" IsOpen="False" Placement="Top" IsLightDismissEnabled="True">
+            <Border Background="#16161E" BorderBrush="#333344" BorderThickness="1" CornerRadius="8" Padding="4" MaxHeight="220" Width="280">
+                <ListBox Name="AutocompleteListBox" Background="Transparent" BorderThickness="0" Foreground="White" Tapped="OnAutocompleteListBoxTapped">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="views:AutocompleteItem">
+                            <StackPanel Spacing="2" Margin="2">
+                                <TextBlock Text="{Binding DisplayToken}" FontWeight="Bold" Foreground="White"/>
+                                <TextBlock Text="{Binding TypeName}" FontSize="10" Foreground="#A855F7"/>
+                                <TextBlock Text="{Binding Description}" FontSize="10" Foreground="#94A3B8" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+        </Popup>
     </Grid>
 
     <Window.Styles>

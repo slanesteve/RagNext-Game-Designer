@@ -26,6 +26,22 @@
                                        ChromeLow="#CCCCCC" />
             </FluentTheme.Palettes>
         </FluentTheme>
+        <Style Selector="TextBlock.spinner">
+            <Setter Property="RenderTransform">
+                <RotateTransform />
+            </Setter>
+            <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+            <Style.Animations>
+                <Animation Duration="0:0:1" IterationCount="Infinite">
+                    <KeyFrame KeyTime="0:0:0">
+                        <Setter Property="(RotateTransform.Angle)" Value="0"/>
+                    </KeyFrame>
+                    <KeyFrame KeyTime="0:0:1">
+                        <Setter Property="(RotateTransform.Angle)" Value="360"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
     </Application.Styles>
 
     <Application.Resources>

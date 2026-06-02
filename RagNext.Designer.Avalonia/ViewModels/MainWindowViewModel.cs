@@ -1046,6 +1046,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             RemoveInventoryItemCommand = new Command<object>(async parameter =>
             {
+                if (parameter == null) return;
+
                 // parameter is a tuple or we can inspect elements
                 if (parameter is global::System.Collections.IList list && list.Count == 2)
                 {
@@ -1056,6 +1058,28 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     if (owner is Player p) p.Inventory.Remove(item);
                     else if (owner is Character c) c.Inventory.Remove(item);
                     await SaveGameAsync();
+                }
+                else if (parameter is GameObject item)
+                {
+                    if (CurrentGame != null)
+                    {
+                        if (CurrentGame.Player.Inventory.Contains(item))
+                        {
+                            CurrentGame.Player.Inventory.Remove(item);
+                        }
+                        else
+                        {
+                            foreach (var c in CurrentGame.Characters)
+                            {
+                                if (c.Inventory.Contains(item))
+                                {
+                                    c.Inventory.Remove(item);
+                                    break;
+                                }
+                            }
+                        }
+                        await SaveGameAsync();
+                    }
                 }
             });
 
@@ -1090,6 +1114,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             RemoveAttributeCommand = new Command<object>(async parameter =>
             {
+                if (parameter == null) return;
+
                 if (parameter is global::System.Collections.IList list && list.Count == 2)
                 {
                     var owner = list[0];
@@ -1107,6 +1133,58 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         attrs.Remove(attr);
                     }
                     await SaveGameAsync();
+                }
+                else if (parameter is CustomAttribute attr)
+                {
+                    if (CurrentGame != null)
+                    {
+                        bool found = false;
+                        if (CurrentGame.Player.Attributes.Contains(attr))
+                        {
+                            CurrentGame.Player.Attributes.Remove(attr);
+                            found = true;
+                        }
+                        if (!found)
+                        {
+                            foreach (var r in CurrentGame.Rooms)
+                            {
+                                if (r.Attributes.Contains(attr))
+                                {
+                                    r.Attributes.Remove(attr);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!found)
+                        {
+                            foreach (var c in CurrentGame.Characters)
+                            {
+                                if (c.Attributes.Contains(attr))
+                                {
+                                    c.Attributes.Remove(attr);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!found)
+                        {
+                            foreach (var o in CurrentGame.Objects)
+                            {
+                                if (o.Attributes.Contains(attr))
+                                {
+                                    o.Attributes.Remove(attr);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (found)
+                        {
+                            await SaveGameAsync();
+                        }
+                    }
                 }
             });
         }
