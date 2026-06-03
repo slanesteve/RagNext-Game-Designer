@@ -304,6 +304,8 @@
                                         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
                                             <Button Content="+ Action" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AddActionCommand}" CommandParameter="{Binding}" Background="#2B2B3A" FontSize="11" Padding="8,4"/>
                                             <Button Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteActionCommand}" CommandParameter="{Binding #PlayerActionsList.SelectedItem}" Background="#C0392B" FontSize="11" Padding="8,4"/>
+                                            <Button Content="Copy" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CopyActionCommand}" CommandParameter="{Binding #PlayerActionsList.SelectedItem}" Background="#2B2B3A" FontSize="11" Padding="8,4"/>
+                                            <Button Content="Paste" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PasteActionCommand}" CommandParameter="{Binding}" Background="#2B2B3A" FontSize="11" Padding="8,4" IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanPasteAction}"/>
                                         </StackPanel>
                                     </Grid>
                                     <Border Grid.Column="1" Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="10" IsVisible="{Binding #PlayerActionsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -364,7 +366,7 @@
                             <TabControl Grid.Row="1" DataContext="{Binding #RoomsList.SelectedItem}" x:DataType="models:Room">
                                 <!-- Properties Tab -->
                                 <TabItem Header="Properties">
-                                    <ScrollViewer x:Name="RoomDetailsScrollViewer" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0" Height="500">
+                                    <ScrollViewer x:Name="RoomDetailsScrollViewer" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
                                         <StackPanel Spacing="16">
                                             <!-- Name -->
                                             <TextBlock Text="Name" Foreground="Gray" FontSize="12" FontWeight="SemiBold"/>
@@ -653,6 +655,8 @@
                                                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
                                                         <Button Content="+ Action" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AddActionCommand}" CommandParameter="{Binding}" Background="#2B2B3A" FontSize="11" Padding="8,4"/>
                                                         <Button Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteActionCommand}" CommandParameter="{Binding #RoomActionsList.SelectedItem}" Background="#C0392B" FontSize="11" Padding="8,4"/>
+                                                         <Button Content="Copy" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CopyActionCommand}" CommandParameter="{Binding #RoomActionsList.SelectedItem}" Background="#2B2B3A" FontSize="11" Padding="8,4"/>
+                                                         <Button Content="Paste" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PasteActionCommand}" CommandParameter="{Binding}" Background="#2B2B3A" FontSize="11" Padding="8,4" IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanPasteAction}"/>
                                                     </StackPanel>
                                                 </Grid>
                                                 <Border Grid.Column="1" Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="10" IsVisible="{Binding #RoomActionsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -708,7 +712,7 @@
                         </Grid>
                     </Border>
                     <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20" IsVisible="{Binding #CharsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
-                        <ScrollViewer x:Name="CharDetailsScrollViewer" VerticalScrollBarVisibility="Auto" Height="620">
+                        <ScrollViewer x:Name="CharDetailsScrollViewer" VerticalScrollBarVisibility="Auto">
                             <StackPanel Spacing="16" DataContext="{Binding #CharsList.SelectedItem}" x:DataType="models:Character">
                                 <TextBlock Text="Edit Character" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
                                 
@@ -833,6 +837,8 @@
                                         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
                                             <Button Content="+ Action" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AddActionCommand}" CommandParameter="{Binding}" Background="#2B2B3A" FontSize="11" Padding="8,4"/>
                                             <Button Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteActionCommand}" CommandParameter="{Binding #CharacterActionsList.SelectedItem}" Background="#C0392B" FontSize="11" Padding="8,4"/>
+                                             <Button Content="Copy" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CopyActionCommand}" CommandParameter="{Binding #CharacterActionsList.SelectedItem}" Background="#2B2B3A" FontSize="11" Padding="8,4"/>
+                                             <Button Content="Paste" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PasteActionCommand}" CommandParameter="{Binding}" Background="#2B2B3A" FontSize="11" Padding="8,4" IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanPasteAction}"/>
                                         </StackPanel>
                                     </Grid>
                                     <Border Grid.Column="1" Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="10" IsVisible="{Binding #CharacterActionsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -891,7 +897,7 @@
                             <TabControl Grid.Row="1" DataContext="{Binding #ObjectsList.SelectedItem}" x:DataType="models:GameObject">
                                 <!-- Properties Tab -->
                                 <TabItem Header="Properties">
-                                    <ScrollViewer x:Name="ObjectDetailsScrollViewer" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0" Height="500">
+                                    <ScrollViewer x:Name="ObjectDetailsScrollViewer" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
                                         <StackPanel Spacing="16">
                                             <!-- Name -->
                                             <TextBlock Text="Name" Foreground="Gray" FontSize="12" FontWeight="SemiBold"/>
@@ -1002,6 +1008,8 @@
                                                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
                                                         <Button Content="+ Action" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AddActionCommand}" CommandParameter="{Binding}" Background="#2B2B3A" FontSize="11" Padding="8,4"/>
                                                         <Button Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteActionCommand}" CommandParameter="{Binding #ObjectActionsList.SelectedItem}" Background="#C0392B" FontSize="11" Padding="8,4"/>
+                                                         <Button Content="Copy" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CopyActionCommand}" CommandParameter="{Binding #ObjectActionsList.SelectedItem}" Background="#2B2B3A" FontSize="11" Padding="8,4"/>
+                                                         <Button Content="Paste" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PasteActionCommand}" CommandParameter="{Binding}" Background="#2B2B3A" FontSize="11" Padding="8,4" IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanPasteAction}"/>
                                                     </StackPanel>
                                                 </Grid>
                                                 <Border Grid.Column="1" Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="10" IsVisible="{Binding #ObjectActionsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -1326,9 +1334,14 @@
                                 
                                 <ScrollViewer Grid.Row="1">
                                     <TreeView ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
+                                        <TreeView.Styles>
+                                            <Style Selector="TreeViewItem" x:DataType="vm:MediaLibraryViewModel+Node">
+                                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                            </Style>
+                                        </TreeView.Styles>
                                         <TreeView.ItemTemplate>
                                             <TreeDataTemplate DataType="{x:Type vm:MediaLibraryViewModel+Node}" ItemsSource="{Binding Children}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnMediaItemDragOver" DragDrop.Drop="OnMediaItemDrop">
                                                     <TextBlock Text="{Binding Icon}"/>
                                                     <TextBlock Text="{Binding Name}"/>
                                                 </StackPanel>
@@ -1674,9 +1687,14 @@
                         </StackPanel>
                         <!-- TreeView -->
                         <TreeView Grid.Row="2" ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" Margin="8" DragDrop.AllowDrop="True" DragDrop.Drop="OnDragDropFile">
+                            <TreeView.Styles>
+                                <Style Selector="TreeViewItem" x:DataType="vm:MediaLibraryViewModel+Node">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                </Style>
+                            </TreeView.Styles>
                             <TreeView.ItemTemplate>
                                 <TreeDataTemplate DataType="{x:Type vm:MediaLibraryViewModel+Node}" ItemsSource="{Binding Children}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnMediaItemDragOver" DragDrop.Drop="OnMediaItemDrop">
                                         <TextBlock Text="{Binding Icon}"/>
                                         <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12"/>
                                     </StackPanel>

@@ -399,46 +399,137 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private async Task RenameAsync()
         {
             if (_game is null || Selected is null) return;
-            if (!Selected.IsFolder) return;
-            var folder = Selected.Folder!;
-
-            string name = folder.Name;
-            if (PromptInputAsync != null)
+            
+            if (Selected.IsFolder)
             {
-                name = await PromptInputAsync("Rename Folder", "Enter new name");
+                var folder = Selected.Folder!;
+                string name = folder.Name;
+                if (PromptInputAsync != null)
+                {
+                    name = await PromptInputAsync("Rename Folder", "Enter new name");
+                }
+                if (string.IsNullOrWhiteSpace(name)) return;
+                folder.Name = name.Trim();
+                await _store.SaveAsync(_game, _doc);
+                RebuildNodes();
             }
-            if (string.IsNullOrWhiteSpace(name)) return;
-            folder.Name = name.Trim();
-            await _store.SaveAsync(_game, _doc);
-            RebuildNodes();
+            else if (Selected.Asset != null)
+            {
+                var asset = Selected.Asset;
+                string name = asset.OriginalFileName;
+                if (PromptInputAsync != null)
+                {
+                    name = await PromptInputAsync("Rename Asset", "Enter new name");
+                }
+                if (string.IsNullOrWhiteSpace(name)) return;
+
+                var oldExt = Path.GetExtension(asset.OriginalFileName);
+                var newExt = Path.GetExtension(name);
+                if (string.IsNullOrEmpty(newExt) && !string.IsNullOrEmpty(oldExt))
+                {
+                    name += oldExt;
+                }
+
+                asset.OriginalFileName = name.Trim();
+                try
+                {
+                    await GameStorage.SaveAsync(_game, string.IsNullOrWhiteSpace(_game.Title) ? "game" : _game.Title);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to save game after rename: {ex.Message}");
+                }
+                await _store.SaveAsync(_game, _doc);
+                RebuildNodes();
+            }
         }
 
         private async Task DeleteAsync()
         {
             if (_game is null || Selected is null) return;
-            if (!Selected.IsFolder) return;
-
-            bool confirm = true;
-            if (ConfirmDialogAsync != null)
+            if (Selected.IsFolder)
             {
-                confirm = await ConfirmDialogAsync("Delete Folder", $"Delete folder '{Selected.Name}'? (assets will remain in game database)");
-            }
-            if (!confirm) return;
+                bool confirm = true;
+                if (ConfirmDialogAsync != null)
+                {
+                    confirm = await ConfirmDialogAsync("Delete Folder", $"Delete folder '{Selected.Name}'? (assets will remain in game database)");
+                }
+                if (!confirm) return;
 
-            bool RemoveFolder(ObservableCollection<MediaFolder> list, MediaFolder f)
+                bool RemoveFolder(ObservableCollection<MediaFolder> list, MediaFolder f)
+                {
+                    var idx = list.IndexOf(f);
+                    if (idx >= 0) { list.RemoveAt(idx); return true; }
+                    foreach (var x in list)
+                        if (RemoveFolder(x.Children, f)) return true;
+                    return false;
+                }
+
+                if (RemoveFolder(_doc.Roots, Selected.Folder!))
+                {
+                    await _store.SaveAsync(_game, _doc);
+                    RebuildNodes();
+                }
+            }
+            else if (Selected.Asset != null)
             {
-                var idx = list.IndexOf(f);
-                if (idx >= 0) { list.RemoveAt(idx); return true; }
-                foreach (var x in list)
-                    if (RemoveFolder(x.Children, f)) return true;
-                return false;
+                await RemoveAssetAsync(Selected);
+            }
+        }
+
+        public async Task MoveNodeAsync(Node sourceNode, MediaFolder targetFolder)
+        {
+            if (_game is null || sourceNode is null || targetFolder is null) return;
+
+            if (sourceNode.IsFolder)
+            {
+                var folderToMove = sourceNode.Folder;
+                if (folderToMove == null || folderToMove == targetFolder) return;
+
+                // Cyclic check
+                bool IsDescendant(MediaFolder parent, MediaFolder child)
+                {
+                    if (parent.Children.Contains(child)) return true;
+                    foreach (var sub in parent.Children)
+                        if (IsDescendant(sub, child)) return true;
+                    return false;
+                }
+                if (IsDescendant(folderToMove, targetFolder)) return;
+
+                // Remove from old parent
+                bool RemoveFolderFromTree(ObservableCollection<MediaFolder> list, MediaFolder f)
+                {
+                    var idx = list.IndexOf(f);
+                    if (idx >= 0) { list.RemoveAt(idx); return true; }
+                    foreach (var x in list)
+                        if (RemoveFolderFromTree(x.Children, f)) return true;
+                    return false;
+                }
+
+                if (RemoveFolderFromTree(_doc.Roots, folderToMove))
+                {
+                    targetFolder.Children.Add(folderToMove);
+                }
+            }
+            else if (sourceNode.Asset != null)
+            {
+                var assetToMove = sourceNode.Asset;
+                var oldFolder = sourceNode.ParentFolder;
+                if (oldFolder == targetFolder) return;
+
+                if (oldFolder != null)
+                {
+                    oldFolder.AssetIds.Remove(assetToMove.Id);
+                }
+
+                if (!targetFolder.AssetIds.Contains(assetToMove.Id))
+                {
+                    targetFolder.AssetIds.Add(assetToMove.Id);
+                }
             }
 
-            if (RemoveFolder(_doc.Roots, Selected.Folder!))
-            {
-                await _store.SaveAsync(_game, _doc);
-                RebuildNodes();
-            }
+            await _store.SaveAsync(_game, _doc);
+            RebuildNodes();
         }
 
         private List<(string EntityType, string EntityName, global::System.Action ClearAction)> GetPortraitReferences(string localPath)

@@ -355,7 +355,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get
             {
                 var provider = AiImageGenProvider;
-                return string.Equals(provider, "ChatGPT", StringComparison.OrdinalIgnoreCase) ||
+                return string.Equals(provider, "Pollinations.ai", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(provider, "ChatGPT", StringComparison.OrdinalIgnoreCase) ||
                        string.Equals(provider, "Azure OpenAI Images", StringComparison.OrdinalIgnoreCase) ||
                        string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase);
             }
@@ -426,7 +427,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public string ImageGenStep1 => AiImageGenProvider switch
         {
-            "Pollinations.ai" => "1. Uses state-of-the-art open-source creative models (like FLUX) hosted by the community.",
+            "Pollinations.ai" => "1. Completely free and anonymous by default (leave API Key empty to use your local IP's quota).",
             "ChatGPT" => "1. Requires an active OpenAI Developer account with paid API billing.",
             "Azure OpenAI Images" => "1. Deploy an Azure OpenAI instance in your Microsoft Azure Portal.",
             "Google Gemini" => "1. Enable the Vertex AI API inside your Google Cloud Console.",
@@ -437,7 +438,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public string ImageGenStep2 => AiImageGenProvider switch
         {
-            "Pollinations.ai" => "2. Completely free online service requiring no API keys, tokens, or local installation.",
+            "Pollinations.ai" => "2. Optional: If you hit IP rate limits, log in at enter.pollinations.ai with GitHub to get a key.",
             "ChatGPT" => "2. Go to the API Keys tab in your dashboard, generate a key, and copy it.",
             "Azure OpenAI Images" => "2. Copy your deployed endpoint (e.g. https://YOUR-RESOURCE.openai.azure.com/) into Host.",
             "Google Gemini" => "2. Setup your billing project and copy your project endpoints.",
@@ -448,7 +449,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public string ImageGenStep3 => AiImageGenProvider switch
         {
-            "Pollinations.ai" => "3. Perfect out-of-the-box experience for immediate testing and portrait generation!",
+            "Pollinations.ai" => "3. Note: Generated Secret Keys (sk_...) require a funded balance, so anonymous mode is recommended.",
             "ChatGPT" => "3. Paste the key in the API Key box below and use DALL-E 3 (default).",
             "Azure OpenAI Images" => "3. Enter your resource-specific auth key in the API Key field below.",
             "Google Gemini" => "3. Configure your API token or service key credentials in the fields below.",

@@ -547,6 +547,63 @@ namespace RagNext.Designer.Avalonia.ViewModels
             set => SetProperty(ref _showAttributeDialogOverlay, value);
         }
 
+        private bool _showComposeOverlay = false;
+        public bool ShowComposeOverlay
+        {
+            get => _showComposeOverlay;
+            set => SetProperty(ref _showComposeOverlay, value);
+        }
+
+        private string _composeTitle = "Compose Description";
+        public string ComposeTitle
+        {
+            get => _composeTitle;
+            set => SetProperty(ref _composeTitle, value);
+        }
+
+        private object? _composeTarget;
+        public object? ComposeTarget
+        {
+            get => _composeTarget;
+            set => SetProperty(ref _composeTarget, value);
+        }
+
+        private string _composeText = string.Empty;
+        public string ComposeText
+        {
+            get => _composeText;
+            set
+            {
+                if (SetProperty(ref _composeText, value))
+                {
+                    if (_composeTarget != null)
+                    {
+                        var prop = _composeTarget.GetType().GetProperty("Description");
+                        if (prop != null && prop.CanWrite)
+                        {
+                            prop.SetValue(_composeTarget, value);
+                        }
+                    }
+                }
+            }
+        }
+
+        private string? _composeNodeId;
+        public string? ComposeNodeId
+        {
+            get => _composeNodeId;
+            set => SetProperty(ref _composeNodeId, value);
+        }
+
+        private string? _composeFieldName;
+        public string? ComposeFieldName
+        {
+            get => _composeFieldName;
+            set => SetProperty(ref _composeFieldName, value);
+        }
+
+        public event Action<string, string, string>? ComposeApplied;
+
         private object? _attributeTarget; // Can be Player, Room, Character, or GameObject
         public object? AttributeTarget
         {
@@ -584,6 +641,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand StopEditingActionCommand { get; }
         public ICommand AddActionCommand { get; }
         public ICommand DeleteActionCommand { get; }
+        public ICommand CopyActionCommand { get; }
+        public ICommand PasteActionCommand { get; }
+        public bool CanPasteAction => RagNext.Designer.Avalonia.Services.ActionClipboardService.CanPaste;
+        public ICommand OpenComposeCommand { get; }
+        public ICommand CloseComposeCommand { get; }
         public ICommand LoadLastWorkspaceCommand { get; }
         public ICommand LoadRecentProjectCommand { get; }
         public ICommand RemoveRecentProjectCommand { get; }
@@ -1010,6 +1072,75 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     CurrentGame.Functions.Remove(fn);
                 }
+                await SaveGameAsync();
+            });
+
+            CopyActionCommand = new Command<RagsCore.Models.Action>(action =>
+            {
+                if (action == null) return;
+                RagNext.Designer.Avalonia.Services.ActionClipboardService.Copy(action);
+                OnPropertyChanged(nameof(CanPasteAction));
+            });
+
+            PasteActionCommand = new Command<object>(async parameter =>
+            {
+                var pasted = RagNext.Designer.Avalonia.Services.ActionClipboardService.Paste() as RagsCore.Models.Action;
+                if (pasted == null) return;
+
+                if (parameter is Room room)
+                {
+                    room.Actions.Add(pasted);
+                    await SaveGameAsync();
+                }
+                else if (parameter is Character character)
+                {
+                    character.Actions.Add(pasted);
+                    await SaveGameAsync();
+                }
+                else if (parameter is GameObject obj)
+                {
+                    obj.Actions.Add(pasted);
+                    await SaveGameAsync();
+                }
+                else if (parameter is Player player)
+                {
+                    player.Actions.Add(pasted);
+                    await SaveGameAsync();
+                }
+            });
+
+            OpenComposeCommand = new Command<object>(parameter =>
+            {
+                if (parameter == null) return;
+                ComposeTarget = parameter;
+                
+                string name = "";
+                var nameProp = parameter.GetType().GetProperty("Name");
+                if (nameProp != null)
+                {
+                    name = nameProp.GetValue(parameter)?.ToString() ?? "";
+                }
+                ComposeTitle = $"Compose Description - {name}";
+
+                var descProp = parameter.GetType().GetProperty("Description");
+                if (descProp != null)
+                {
+                    ComposeText = descProp.GetValue(parameter)?.ToString() ?? "";
+                }
+                
+                ShowComposeOverlay = true;
+            });
+
+            CloseComposeCommand = new Command(async () =>
+            {
+                ShowComposeOverlay = false;
+                if (!string.IsNullOrEmpty(ComposeNodeId))
+                {
+                    ComposeApplied?.Invoke(ComposeNodeId, ComposeFieldName ?? "", ComposeText);
+                    ComposeNodeId = null;
+                    ComposeFieldName = null;
+                }
+                ComposeTarget = null;
                 await SaveGameAsync();
             });
 

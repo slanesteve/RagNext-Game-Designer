@@ -742,6 +742,7 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     btnB.innerText = 'B';
     btnB.className = 'btn-format';
     btnB.style.fontWeight = 'bold';
+    btnB.onmousedown = (e) => { e.preventDefault(); };
     btnB.onclick = (e) => { e.preventDefault(); wrapSelection(textarea, '<b>', '</b>', previewElement); };
     toolbar.appendChild(btnB);
 
@@ -749,6 +750,7 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     btnI.innerText = 'I';
     btnI.className = 'btn-format';
     btnI.style.fontStyle = 'italic';
+    btnI.onmousedown = (e) => { e.preventDefault(); };
     btnI.onclick = (e) => { e.preventDefault(); wrapSelection(textarea, '<i>', '</i>', previewElement); };
     toolbar.appendChild(btnI);
 
@@ -756,6 +758,7 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     btnU.innerText = 'U';
     btnU.className = 'btn-format';
     btnU.style.textDecoration = 'underline';
+    btnU.onmousedown = (e) => { e.preventDefault(); };
     btnU.onclick = (e) => { e.preventDefault(); wrapSelection(textarea, '<u>', '</u>', previewElement); };
     toolbar.appendChild(btnU);
 
@@ -763,6 +766,7 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     btnColor.innerHTML = '🎨 Color';
     btnColor.className = 'btn-format';
     btnColor.style.fontSize = '10px';
+    btnColor.onmousedown = (e) => { e.preventDefault(); };
     btnColor.onclick = (e) => {
         e.preventDefault();
         showColorDropdown(btnColor, textarea, previewElement);
@@ -773,6 +777,7 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     btnHighlight.innerHTML = '🖊️ Highlight';
     btnHighlight.className = 'btn-format';
     btnHighlight.style.fontSize = '10px';
+    btnHighlight.onmousedown = (e) => { e.preventDefault(); };
     btnHighlight.onclick = (e) => { 
         e.preventDefault(); 
         showHighlightDropdown(btnHighlight, textarea, previewElement);
@@ -783,17 +788,36 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     btnClear.innerHTML = '✕ Clear';
     btnClear.className = 'btn-format';
     btnClear.style.fontSize = '10px';
+    btnClear.onmousedown = (e) => { e.preventDefault(); };
     btnClear.onclick = (e) => { 
         e.preventDefault(); 
         clearSelectionFormatting(textarea, previewElement); 
     };
     toolbar.appendChild(btnClear);
 
+    const btnCompose = document.createElement('button');
+    btnCompose.innerHTML = '📝 Compose';
+    btnCompose.className = 'btn-format';
+    btnCompose.style.fontSize = '10px';
+    btnCompose.onmousedown = (e) => { e.preventDefault(); };
+    btnCompose.onclick = (e) => {
+        e.preventDefault();
+        const currentText = textarea.value;
+        const composeUrl = "compose?nodeId=" + node.id + "&fieldName=" + fieldName + "&currentText=" + encodeURIComponent(currentText);
+        if (typeof invokeCSharpAction === 'function') {
+            invokeCSharpAction(composeUrl);
+        } else {
+            window.location.href = "rags-action://" + composeUrl;
+        }
+    };
+    toolbar.appendChild(btnCompose);
+
     // Glowing ✨ AI dialogue trigger calling native C# DI chat service co-author bridge
     const btnAI = document.createElement('button');
     btnAI.innerHTML = '✨ AI dialogue';
     btnAI.className = 'btn-format ai-glow';
     btnAI.style.marginLeft = 'auto';
+    btnAI.onmousedown = (e) => { e.preventDefault(); };
     btnAI.onclick = (e) => {
         e.preventDefault();
         const currentText = textarea.value;
@@ -809,25 +833,7 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     return toolbar;
 }
 
-function createLivePreviewContainer(textarea) {
-    const container = document.createElement('div');
-    container.className = 'live-preview-container';
 
-    const header = document.createElement('div');
-    header.className = 'live-preview-header';
-    header.innerHTML = '<span>👁️ Live Preview</span>';
-    container.appendChild(header);
-
-    const body = document.createElement('div');
-    body.className = 'live-preview-body';
-    body.innerHTML = renderRichTextPreview(textarea.value);
-    container.appendChild(body);
-
-    textarea.addEventListener('input', () => updateLivePreview(textarea, body));
-    textarea.addEventListener('change', () => updateLivePreview(textarea, body));
-
-    return { container, body };
-}
 
 // Node Engine Creation Methods
 function createBaseNode(id, type, title, x, y) {
@@ -1131,10 +1137,8 @@ function addNewDialogueNode(x = null, y = null) {
         triggerAutoSave(); // Auto-save on keystroke/input
     });
 
-    const preview = createLivePreviewContainer(txt);
-    node.bodyElement.appendChild(createFormattingToolbar(txt, preview.body, 'characterLines', node));
+    node.bodyElement.appendChild(createFormattingToolbar(txt, null, 'characterLines', node));
     node.bodyElement.appendChild(txt);
-    node.bodyElement.appendChild(preview.container);
 
     const choicesList = document.createElement('div');
     choicesList.id = `${id}_choices_container`;
@@ -1746,10 +1750,8 @@ function refreshCommandFields(node) {
                 triggerAutoSave();
             });
 
-            const preview = createLivePreviewContainer(inputElement);
-            row.appendChild(createFormattingToolbar(inputElement, preview.body, inputSchema.label, node));
+            row.appendChild(createFormattingToolbar(inputElement, null, inputSchema.label, node));
             row.appendChild(inputElement);
-            row.appendChild(preview.container);
         } else {
             // Standard Text / Input field
             inputElement = document.createElement('input');

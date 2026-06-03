@@ -25,6 +25,8 @@ namespace RagNext.Designer.Avalonia.Views
     public partial class MainWindow : Window
     {
         private bool _isWebViewLoaded = false;
+        private int _composeSelectionStart = -1;
+        private int _composeSelectionEnd = -1;
 
         public MainWindow()
         {
@@ -33,6 +35,20 @@ namespace RagNext.Designer.Avalonia.Views
 
             AddHandler(TextBox.KeyUpEvent, OnTextBoxKeyUp, RoutingStrategies.Bubble, true);
             AddHandler(TextBox.KeyDownEvent, OnTextBoxKeyDown, RoutingStrategies.Bubble, true);
+
+            var composeTextBox = this.FindControl<TextBox>("ComposeTextBox");
+            if (composeTextBox != null)
+            {
+                composeTextBox.AddHandler(TextBox.PointerReleasedEvent, (s, e) => {
+                    _composeSelectionStart = composeTextBox.SelectionStart;
+                    _composeSelectionEnd = composeTextBox.SelectionEnd;
+                }, RoutingStrategies.Bubble, true);
+
+                composeTextBox.KeyUp += (s, e) => {
+                    _composeSelectionStart = composeTextBox.SelectionStart;
+                    _composeSelectionEnd = composeTextBox.SelectionEnd;
+                };
+            }
 
             // Setup MediaLibraryViewModel hooks
             MediaLibraryViewModel.PickMultipleFilesAsync = async () =>
@@ -98,6 +114,7 @@ namespace RagNext.Designer.Avalonia.Views
                         {
                             EnsureWebViewLoaded();
                         }
+                        UpdateWebViewsAirspace(vm.ShowComposeOverlay);
                     }
                     else if (ev.PropertyName == nameof(MainWindowViewModel.ActiveView))
                     {
@@ -125,6 +142,10 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         UpdateSplashVideoPreview(vm);
                     }
+                    else if (ev.PropertyName == nameof(MainWindowViewModel.ShowComposeOverlay))
+                    {
+                        UpdateWebViewsAirspace(vm.ShowComposeOverlay);
+                    }
                 };
 
                 vm.Media.PropertyChanged += (s, ev) =>
@@ -149,6 +170,20 @@ namespace RagNext.Designer.Avalonia.Views
                     };
                     timer.Start();
                 }
+
+                vm.ComposeApplied += async (nodeId, fieldName, text) =>
+                {
+                    var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
+                    await CanvasWebView.InvokeScript($"if (typeof updateNodeAIResult === 'function') {{ updateNodeAIResult('{nodeId}', '{fieldName}', atob('{base64}')); }}");
+                };
+
+                vm.PropertyChanged += (s, ev) =>
+                {
+                    if (ev.PropertyName == nameof(MainWindowViewModel.ComposeText))
+                    {
+                        UpdateComposePreview(vm.ComposeText);
+                    }
+                };
             }
         }
 
@@ -388,6 +423,13 @@ namespace RagNext.Designer.Avalonia.Views
                         string currentText = query["currentText"] ?? "";
                         TriggerAICoAuthor(nodeId, fieldName, currentText);
                     }
+                    else if (url.StartsWith("rags-action://compose"))
+                    {
+                        string nodeId = query["nodeId"] ?? "";
+                        string fieldName = query["fieldName"] ?? "";
+                        string currentText = query["currentText"] ?? "";
+                        TriggerCompose(nodeId, fieldName, currentText);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -412,6 +454,14 @@ namespace RagNext.Designer.Avalonia.Views
                     string fieldName = query["fieldName"] ?? "";
                     string currentText = query["currentText"] ?? "";
                     TriggerAICoAuthor(nodeId, fieldName, currentText);
+                }
+                else if (msg.StartsWith("compose?"))
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("compose?".Length));
+                    string nodeId = query["nodeId"] ?? "";
+                    string fieldName = query["fieldName"] ?? "";
+                    string currentText = query["currentText"] ?? "";
+                    TriggerCompose(nodeId, fieldName, currentText);
                 }
             }
             catch (Exception ex)
@@ -698,7 +748,15 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is Button btn && btn.DataContext != null)
             {
-                await CoAuthorPropertyAsync(btn.DataContext, "Name");
+                StartButtonSpinner(btn);
+                try
+                {
+                    await CoAuthorPropertyAsync(btn.DataContext, "Name");
+                }
+                finally
+                {
+                    StopButtonSpinner(btn);
+                }
             }
         }
 
@@ -706,7 +764,15 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is Button btn && btn.DataContext != null)
             {
-                await CoAuthorPropertyAsync(btn.DataContext, "Description");
+                StartButtonSpinner(btn);
+                try
+                {
+                    await CoAuthorPropertyAsync(btn.DataContext, "Description");
+                }
+                finally
+                {
+                    StopButtonSpinner(btn);
+                }
             }
         }
 
@@ -735,6 +801,7 @@ namespace RagNext.Designer.Avalonia.Views
                     return;
                 }
 
+                StartButtonSpinner(btn);
                 try
                 {
                     using var client = new HttpClient();
@@ -785,6 +852,10 @@ namespace RagNext.Designer.Avalonia.Views
                 catch (Exception ex)
                 {
                     await ConfirmDialog.ShowAsync(this, "AI Assist Error", ex.Message);
+                }
+                finally
+                {
+                    StopButtonSpinner(btn);
                 }
             }
         }
@@ -1170,6 +1241,7 @@ namespace RagNext.Designer.Avalonia.Views
 
         private Point? _dragStartPoint;
         private PointerPressedEventArgs? _dragPressedEventArgs;
+        private MediaLibraryViewModel.Node? _draggedNode;
 
         private void OnMediaItemPointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -1193,18 +1265,25 @@ namespace RagNext.Designer.Avalonia.Views
                     _dragStartPoint = null; 
                     _dragPressedEventArgs = null; // Clear to prevent multiple starts
 
-                    if (sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node node && node.Asset != null)
+                    if (sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node node)
                     {
+                        _draggedNode = node;
                         var game = App.CurrentGame;
-                        if (game != null)
+                        var data = new DataTransfer();
+
+                        if (node.Asset != null && game != null)
                         {
                             var localPath = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, node.Asset);
-                            var item = new DataTransferItem();
-                            item.Set(DataFormat.Text, localPath);
-                            var data = new DataTransfer();
+                            var item = DataTransferItem.Create(DataFormat.Text, localPath);
                             data.Add(item);
-                            await DragDrop.DoDragDropAsync(dragPressedArgs, data, DragDropEffects.Copy | DragDropEffects.Link);
                         }
+                        else
+                        {
+                            var item = DataTransferItem.Create(DataFormat.Text, "rags-internal-move:" + node.Name);
+                            data.Add(item);
+                        }
+
+                        await DragDrop.DoDragDropAsync(dragPressedArgs, data, DragDropEffects.Move | DragDropEffects.Copy | DragDropEffects.Link);
                     }
                 }
             }
@@ -1214,6 +1293,41 @@ namespace RagNext.Designer.Avalonia.Views
         {
             _dragStartPoint = null;
             _dragPressedEventArgs = null;
+        }
+
+        private void OnMediaItemDragOver(object? sender, global::Avalonia.Input.DragEventArgs e)
+        {
+            if (_draggedNode != null && sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node targetNode)
+            {
+                if (_draggedNode != targetNode)
+                {
+                    e.DragEffects = DragDropEffects.Move;
+                    e.Handled = true;
+                }
+                else
+                {
+                    e.DragEffects = DragDropEffects.None;
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private async void OnMediaItemDrop(object? sender, global::Avalonia.Input.DragEventArgs e)
+        {
+            if (_draggedNode != null && sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node targetNode)
+            {
+                if (DataContext is MainWindowViewModel vm && _draggedNode != targetNode)
+                {
+                    var targetFolder = targetNode.IsFolder ? targetNode.Folder : targetNode.ParentFolder;
+                    if (targetFolder != null)
+                    {
+                        var source = _draggedNode;
+                        _draggedNode = null;
+                        e.Handled = true;
+                        await vm.Media.MoveNodeAsync(source, targetFolder);
+                    }
+                }
+            }
         }
 
         private readonly System.Collections.Generic.Dictionary<Button, object> _originalButtonContents = new();
@@ -1287,6 +1401,10 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     var encodedPrompt = Uri.EscapeDataString(prompt);
                     var url = $"https://image.pollinations.ai/prompt/{encodedPrompt}?width={width}&height={height}&model={Uri.EscapeDataString(model)}&nologo=true&enhance=true";
+                    if (!string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    }
                     imageBytes = await client.GetByteArrayAsync(url);
                 }
                 else if (string.Equals(provider, "Local Stable Diffusion", StringComparison.OrdinalIgnoreCase))
@@ -1456,7 +1574,7 @@ namespace RagNext.Designer.Avalonia.Views
             }
             catch (Exception ex)
             {
-                await ConfirmDialog.ShowAsync(this, "AI Image Generation Error", ex.Message);
+                await AlertDialog.ShowAsync(this, "AI Image Generation Error", ex.Message);
             }
             finally
             {
@@ -2228,6 +2346,333 @@ namespace RagNext.Designer.Avalonia.Views
             _activeTextBox = null;
             _triggerIndex = -1;
         }
+
+        private void UpdateWebViewsAirspace(bool overlayOpen)
+        {
+            if (overlayOpen)
+            {
+                if (CanvasWebView != null) CanvasWebView.IsVisible = false;
+                if (PreviewWebView != null) PreviewWebView.IsVisible = false;
+                if (TabPreviewWebView != null) TabPreviewWebView.IsVisible = false;
+                if (SplashPreviewWebView != null) SplashPreviewWebView.IsVisible = false;
+            }
+            else
+            {
+                if (DataContext is MainWindowViewModel vm)
+                {
+                    if (CanvasWebView != null) CanvasWebView.IsVisible = vm.IsVisualEditing;
+                    if (vm.Media != null)
+                    {
+                        UpdateMediaPreview(vm.Media);
+                    }
+                    UpdateSplashVideoPreview(vm);
+                }
+            }
+        }
+
+        private void TriggerCompose(string nodeId, string fieldName, string currentText)
+        {
+            _composeSelectionStart = -1;
+            _composeSelectionEnd = -1;
+            if (DataContext is not MainWindowViewModel vm) return;
+            vm.ComposeNodeId = nodeId;
+            vm.ComposeFieldName = fieldName;
+            vm.ComposeText = currentText;
+            vm.ComposeTitle = $"Compose {fieldName} - Node {nodeId}";
+            vm.ComposeTarget = null;
+            vm.ShowComposeOverlay = true;
+        }
+
+        private void UpdateComposePreview(string text)
+        {
+            var webview = this.FindControl<global::Avalonia.Controls.NativeWebView>("ComposePreviewWebView");
+            if (webview == null) return;
+
+            var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            background-color: #0C0C14;
+            color: #E2E2EC;
+            font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            word-wrap: break-word;
+        }}
+        strong {{ color: #ffffff; }}
+    </style>
+</head>
+<body>
+    {RenderRichTextHtml(text)}
+</body>
+</html>";
+
+            try
+            {
+                webview.Source = new Uri("data:text/html;charset=utf-8," + Uri.EscapeDataString(html));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to update compose preview: {ex.Message}");
+            }
+        }
+
+        private string RenderRichTextHtml(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "<span style=\"color: #6B7280; font-style: italic;\">No preview text...</span>";
+            
+            var html = text
+                .Replace("&", "&amp;")
+                .Replace("<", "&lt;")
+                .Replace(">", "&gt;");
+
+            html = html
+                .Replace("&lt;b&gt;", "<strong>")
+                .Replace("&lt;/b&gt;", "</strong>")
+                .Replace("&lt;i&gt;", "<em>")
+                .Replace("&lt;/i&gt;", "</em>")
+                .Replace("&lt;u&gt;", "<u>")
+                .Replace("&lt;/u&gt;", "</u>");
+
+            html = System.Text.RegularExpressions.Regex.Replace(html, @"&lt;color=(#[a-f0-9]{6})&gt;(.*?)&lt;/color&gt;", "<span style=\"color: $1;\">$2</span>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            html = System.Text.RegularExpressions.Regex.Replace(html, @"&lt;mark=(#[a-f0-9]{6,8})&gt;(.*?)&lt;/mark&gt;", "<span style=\"background-color: $1; padding: 2px 4px; border-radius: 4px;\">$2</span>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            html = html.Replace("\n", "<br>");
+            return html;
+        }
+
+        private void WrapComposeSelection(string startTag, string endTag)
+        {
+            var tb = this.FindControl<TextBox>("ComposeTextBox");
+            if (tb == null) return;
+
+            int start, end;
+            if (_composeSelectionStart >= 0 && _composeSelectionEnd >= 0)
+            {
+                start = Math.Min(_composeSelectionStart, _composeSelectionEnd);
+                end = Math.Max(_composeSelectionStart, _composeSelectionEnd);
+            }
+            else
+            {
+                start = Math.Min(tb.SelectionStart, tb.SelectionEnd);
+                end = Math.Max(tb.SelectionStart, tb.SelectionEnd);
+            }
+
+            var selectionLength = end - start;
+            var text = tb.Text ?? string.Empty;
+
+            if (selectionLength > 0 && start >= 0 && start + selectionLength <= text.Length)
+            {
+                var before = text.Substring(0, start);
+                var selected = text.Substring(start, selectionLength);
+                var after = text.Substring(start + selectionLength);
+
+                if (selected.StartsWith(startTag) && selected.EndsWith(endTag))
+                {
+                    var unwrapped = selected.Substring(startTag.Length, selected.Length - startTag.Length - endTag.Length);
+                    tb.Text = before + unwrapped + after;
+                    tb.Focus();
+                    tb.SelectionStart = start;
+                    tb.SelectionEnd = start + unwrapped.Length;
+                }
+                else if (before.EndsWith(startTag) && after.StartsWith(endTag))
+                {
+                    var newBefore = before.Substring(0, before.Length - startTag.Length);
+                    var newAfter = after.Substring(endTag.Length);
+                    tb.Text = newBefore + selected + newAfter;
+                    tb.Focus();
+                    tb.SelectionStart = newBefore.Length;
+                    tb.SelectionEnd = newBefore.Length + selected.Length;
+                }
+                else
+                {
+                    tb.Text = before + startTag + selected + endTag + after;
+                    tb.Focus();
+                    tb.SelectionStart = start;
+                    tb.SelectionEnd = start + startTag.Length + selected.Length + endTag.Length;
+                }
+            }
+            else
+            {
+                var actualCursor = start;
+                if (actualCursor < 0 || actualCursor > text.Length) actualCursor = text.Length;
+
+                var before = text.Substring(0, actualCursor);
+                var after = text.Substring(actualCursor);
+
+                if (before.EndsWith(startTag) && after.StartsWith(endTag))
+                {
+                    var newBefore = before.Substring(0, before.Length - startTag.Length);
+                    var newAfter = after.Substring(endTag.Length);
+                    tb.Text = newBefore + newAfter;
+                    tb.Focus();
+                    tb.SelectionStart = newBefore.Length;
+                    tb.SelectionEnd = newBefore.Length;
+                }
+                else
+                {
+                    tb.Text = before + startTag + endTag + after;
+                    tb.Focus();
+                    tb.SelectionStart = actualCursor + startTag.Length;
+                    tb.SelectionEnd = actualCursor + startTag.Length;
+                }
+            }
+
+            _composeSelectionStart = tb.SelectionStart;
+            _composeSelectionEnd = tb.SelectionEnd;
+        }
+
+        private void OnComposeBoldClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            WrapComposeSelection("<b>", "</b>");
+        }
+
+        private void OnComposeItalicClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            WrapComposeSelection("<i>", "</i>");
+        }
+
+        private void OnComposeUnderlineClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            WrapComposeSelection("<u>", "</u>");
+        }
+
+        private void OnComposeColorSelected(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.CommandParameter is string hex)
+            {
+                WrapComposeSelection($"<color={hex}>", "</color>");
+            }
+        }
+
+        private void OnComposeHighlightSelected(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.CommandParameter is string hex)
+            {
+                WrapComposeSelection($"<mark={hex}>", "</mark>");
+            }
+        }
+
+        private void OnComposeClearClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            var tb = this.FindControl<TextBox>("ComposeTextBox");
+            if (tb == null) return;
+
+            int start, end;
+            if (_composeSelectionStart >= 0 && _composeSelectionEnd >= 0)
+            {
+                start = Math.Min(_composeSelectionStart, _composeSelectionEnd);
+                end = Math.Max(_composeSelectionStart, _composeSelectionEnd);
+            }
+            else
+            {
+                start = Math.Min(tb.SelectionStart, tb.SelectionEnd);
+                end = Math.Max(tb.SelectionStart, tb.SelectionEnd);
+            }
+
+            var selectionLength = end - start;
+            var text = tb.Text ?? string.Empty;
+
+            if (selectionLength > 0 && start >= 0 && start + selectionLength <= text.Length)
+            {
+                var before = text.Substring(0, start);
+                var selected = text.Substring(start, selectionLength);
+                var after = text.Substring(start + selectionLength);
+
+                var cleaned = System.Text.RegularExpressions.Regex.Replace(selected, @"<[^>]+>", "");
+                tb.Text = before + cleaned + after;
+                tb.Focus();
+                tb.SelectionStart = start;
+                tb.SelectionEnd = start + cleaned.Length;
+                _composeSelectionStart = tb.SelectionStart;
+                _composeSelectionEnd = tb.SelectionEnd;
+            }
+        }
+
+        private async void OnComposeAIClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (DataContext is not MainWindowViewModel vm) return;
+
+            var endpoint = vm.Preferences.AiCoAuthorEndpoint;
+            var apiKey = vm.Preferences.AiCoAuthorKey;
+            var model = vm.Preferences.AiCoAuthorModel;
+            var port = vm.Preferences.AiCoAuthorPort;
+            var provider = vm.Preferences.AiCoAuthorProvider;
+            bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+
+            if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
+            {
+                await ConfirmDialog.ShowAsync(this, "AI Co-Author", "Please set your AI Co-Author API Key in Preferences / Settings first.");
+                return;
+            }
+
+            var currentText = vm.ComposeText;
+            var prompt = await PromptDialog.ShowAsync(this, "✨ AI Co-Author", $"Enter instructions to improve this text:\n\n\"{currentText}\"");
+            if (string.IsNullOrWhiteSpace(prompt)) return;
+
+            if (sender is Button btn)
+            {
+                StartButtonSpinner(btn);
+            }
+
+            try
+            {
+                using var client = new HttpClient();
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                }
+
+                var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
+                var requestBody = new
+                {
+                    model = model,
+                    messages = new[]
+                    {
+                        new { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                        new { role = "user", content = finalPrompt }
+                    },
+                    temperature = 0.7
+                };
+
+                var requestJson = JsonSerializer.Serialize(requestBody);
+                var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+                var url = GetAiUrl(endpoint, port, provider);
+                var response = await client.PostAsync(url, requestContent);
+                var responseJson = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
+                }
+
+                using var doc = JsonDocument.Parse(responseJson);
+                if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                {
+                    var content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        vm.ComposeText = content;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await ConfirmDialog.ShowAsync(this, "AI Assist Error", ex.Message);
+            }
+            finally
+            {
+                if (sender is Button composeBtn)
+                {
+                    StopButtonSpinner(composeBtn);
+                }
+            }
+        }
     }
 
     public class AutocompleteItem
@@ -2473,6 +2918,39 @@ namespace RagNext.Designer.Avalonia.Views
 
             buttons.Children.Add(yesBtn);
             buttons.Children.Add(noBtn);
+            stack.Children.Add(buttons);
+
+            dialog.Content = stack;
+            dialog.ShowDialog(parent);
+            return tcs.Task;
+        }
+    }
+
+    public static class AlertDialog
+    {
+        public static Task ShowAsync(Window parent, string title, string message)
+        {
+            var tcs = new TaskCompletionSource();
+            var dialog = new Window
+            {
+                Title = title,
+                Width = 400,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Background = global::Avalonia.Media.Brush.Parse("#14141E"),
+                Foreground = global::Avalonia.Media.Brushes.White,
+                Padding = new global::Avalonia.Thickness(20)
+            };
+
+            var stack = new StackPanel { Spacing = 16 };
+            stack.Children.Add(new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap, Foreground = global::Avalonia.Media.Brushes.Gray });
+
+            var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
+            var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
+
+            okBtn.Click += (s, e) => { tcs.SetResult(); dialog.Close(); };
+
+            buttons.Children.Add(okBtn);
             stack.Children.Add(buttons);
 
             dialog.Content = stack;
