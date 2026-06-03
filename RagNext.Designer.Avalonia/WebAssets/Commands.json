@@ -374,7 +374,13 @@
     {
       "name": "Player: Move To Room",
       "category": "Player",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Destination Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        }
+      ]
     },
     {
       "name": "Player: Move To Character",

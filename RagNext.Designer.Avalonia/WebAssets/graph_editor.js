@@ -984,6 +984,8 @@ function addPin(node, direction, type, name, pinId) {
             
             // Limit output pins to only a single connection to enforce standard sequential execution flows
             connections = connections.filter(c => c.fromPinId !== from);
+            // Limit input pins to only a single connection to enforce standard sequential execution flows
+            connections = connections.filter(c => c.toPinId !== to);
 
             if (!connections.some(c => c.fromPinId === from && c.toPinId === to)) {
                 connections.push({
@@ -1202,6 +1204,8 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
         if (activeDrawingPin && activeDrawingPin.id !== pin.id && activeDrawingPin.direction === 'input') {
             // Limit choice output pin to only a single connection to enforce standard sequential execution flows
             connections = connections.filter(c => c.fromPinId !== pin.id);
+            // Limit input pin to only a single connection to enforce standard sequential execution flows
+            connections = connections.filter(c => c.toPinId !== activeDrawingPin.id);
             connections.push({ fromPinId: pin.id, toPinId: activeDrawingPin.id, type: 'dialogue-choice' });
             triggerAutoSave();
         }

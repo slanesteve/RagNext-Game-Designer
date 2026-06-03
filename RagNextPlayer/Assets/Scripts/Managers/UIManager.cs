@@ -871,7 +871,12 @@ namespace RagNextPlayer.Managers
 
             // Room title
             if (_roomTitleLabel is not null)
-                _roomTitleLabel.text = room.Name;
+            {
+                var game = GameManager.Instance?.ActiveGame;
+                _roomTitleLabel.text = game is not null
+                    ? TemplateResolver.Resolve(room.Name, game, room, room)
+                    : room.Name;
+            }
 
             // Scene image (preserve aspect ratio scale and hide placeholder)
             if (!string.IsNullOrWhiteSpace(room.PortraitImagePath))
@@ -1003,7 +1008,14 @@ namespace RagNextPlayer.Managers
             var player = GameManager.Instance?.ActiveGame?.Player;
             if (player is null) return;
 
-            if (_playerNameLabel   is not null) _playerNameLabel.text   = player.Name;
+            if (_playerNameLabel is not null)
+            {
+                var game = GameManager.Instance?.ActiveGame;
+                var room = GameManager.Instance?.CurrentRoom;
+                _playerNameLabel.text = game is not null
+                    ? TemplateResolver.Resolve(player.Name, game, room, player)
+                    : player.Name;
+            }
             if (_playerGenderLabel is not null) _playerGenderLabel.text = player.Gender;
             RefreshPlayerPortrait();
         }
@@ -1285,7 +1297,11 @@ namespace RagNextPlayer.Managers
             dot.AddToClassList(entity.IsCharacter ? "entity-dot--character" : "entity-dot--object");
             row.Add(dot);
 
-            string nameText = entity.Name;
+            var game = GameManager.Instance?.ActiveGame;
+            var room = GameManager.Instance?.CurrentRoom;
+            string nameText = game is not null
+                ? TemplateResolver.Resolve(entity.Name, game, room, entity)
+                : entity.Name;
             if (entity.IsContainer)
             {
                 nameText += entity.ContainerOpen ? " [Open]" : " [Closed]";
@@ -1320,7 +1336,12 @@ namespace RagNextPlayer.Managers
             dot.AddToClassList("entity-dot--object");
             row.Add(dot);
 
-            var lbl = new Label(entity.Name);
+            var game = GameManager.Instance?.ActiveGame;
+            var room = GameManager.Instance?.CurrentRoom;
+            string nameText = game is not null
+                ? TemplateResolver.Resolve(entity.Name, game, room, entity)
+                : entity.Name;
+            var lbl = new Label(nameText);
             lbl.AddToClassList("entity-name");
             lbl.AddToClassList("entity-name--nested");
             row.Add(lbl);

@@ -58,6 +58,7 @@ namespace RagNextPlayer.Runtime.Models
         public string? StartingRoomId   { get; set; }
         public List<GameObjectData>  Inventory  { get; set; } = new List<GameObjectData>();
         public List<ActionData>      Actions    { get; set; } = new List<ActionData>();
+        [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
 
@@ -72,6 +73,7 @@ namespace RagNextPlayer.Runtime.Models
         public Dictionary<string, bool>   LockedExits { get; set; } = new Dictionary<string, bool>();
         public List<string>               ObjectIds { get; set; } = new List<string>();
         public List<ActionData>           Actions   { get; set; } = new List<ActionData>();
+        [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
 
@@ -91,6 +93,7 @@ namespace RagNextPlayer.Runtime.Models
         public bool                        ContainerOpen      { get; set; }
         public List<string>                ContainedObjectIds { get; set; } = new List<string>();
         public string?                     StartingRoomId     { get; set; }
+        [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
 
@@ -256,6 +259,7 @@ namespace RagNextPlayer.Runtime.Models
 
         [JsonIgnore]
         public float ElapsedSeconds { get; set; }
+        [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
 

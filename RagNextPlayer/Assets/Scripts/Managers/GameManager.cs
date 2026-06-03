@@ -67,7 +67,7 @@ namespace RagNextPlayer.Managers
 
                         // Execute the timer nodes!
                         var actionData = new ActionData { Nodes = timer.Nodes };
-                        var ctx = MakeContext();
+                        var ctx = new GameExecutionContext(ActiveGame!, CurrentRoom, null, timer);
                         var sink = InteractionController.Instance?.GetComponent<CommandEffectRouter>();
                         
                         ActionExecutor.Execute(actionData, ctx, sink);
@@ -137,11 +137,13 @@ namespace RagNextPlayer.Managers
             // 1. Player actions
             if (ActiveGame.Player.Actions != null)
             {
+                var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description, PortraitImagePath = ActiveGame.Player.PortraitImagePath };
+                var playerCtx = new GameExecutionContext(ActiveGame, null, playerStub, ActiveGame.Player);
                 foreach (var action in ActiveGame.Player.Actions)
                 {
                     if (string.Equals(action.Trigger, "OnGameStart", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, ctx, sink);
+                        ActionExecutor.Execute(action, playerCtx, sink);
                     }
                 }
             }
@@ -151,11 +153,12 @@ namespace RagNextPlayer.Managers
             {
                 if (room.Actions != null)
                 {
+                    var roomCtx = new GameExecutionContext(ActiveGame, room, null, room);
                     foreach (var action in room.Actions)
                     {
                         if (string.Equals(action.Trigger, "OnGameStart", StringComparison.OrdinalIgnoreCase))
                         {
-                            ActionExecutor.Execute(action, ctx, sink);
+                            ActionExecutor.Execute(action, roomCtx, sink);
                         }
                     }
                 }
@@ -166,11 +169,12 @@ namespace RagNextPlayer.Managers
             {
                 if (obj.Actions != null)
                 {
+                    var objCtx = new GameExecutionContext(ActiveGame, null, obj, obj);
                     foreach (var action in obj.Actions)
                     {
                         if (string.Equals(action.Trigger, "OnGameStart", StringComparison.OrdinalIgnoreCase))
                         {
-                            ActionExecutor.Execute(action, ctx, sink);
+                            ActionExecutor.Execute(action, objCtx, sink);
                         }
                     }
                 }
@@ -181,11 +185,12 @@ namespace RagNextPlayer.Managers
             {
                 if (ch.Actions != null)
                 {
+                    var chCtx = new GameExecutionContext(ActiveGame, null, ch, ch);
                     foreach (var action in ch.Actions)
                     {
                         if (string.Equals(action.Trigger, "OnGameStart", StringComparison.OrdinalIgnoreCase))
                         {
-                            ActionExecutor.Execute(action, ctx, sink);
+                            ActionExecutor.Execute(action, chCtx, sink);
                         }
                     }
                 }
@@ -200,6 +205,15 @@ namespace RagNextPlayer.Managers
         /// </summary>
         public void MovePlayerToRoom(string roomId)
         {
+            if (CurrentState == GameState.Transitioning)
+            {
+                var roomVar = ActiveGame?.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                if (roomVar != null)
+                {
+                    roomVar.Value = roomId;
+                }
+                return;
+            }
             _ = TransitionToRoomAsync(roomId);
         }
 
@@ -217,13 +231,50 @@ namespace RagNextPlayer.Managers
 
                 CurrentState = GameState.Transitioning;
 
+                // Sync currentRoomId variable to the target room before firing exit actions
+                var roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                if (roomVar is null)
+                {
+                    ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = roomId });
+                }
+                else
+                {
+                    roomVar.Value = roomId;
+                }
+
+                // Run current room's OnPlayerExit actions before moving
+                if (CurrentRoom is not null)
+                {
+                    var exitCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, null, CurrentRoom);
+                    foreach (var action in CurrentRoom.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                        }
+                    }
+
+                    // Check if currentRoomId was redirected/overridden during OnPlayerExit
+                    var finalRoomId = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
+                    if (!string.IsNullOrEmpty(finalRoomId) && !string.Equals(finalRoomId, roomId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        roomId = finalRoomId;
+                        room = ActiveGame.Rooms.Find(r => r.Id == roomId);
+                        if (room is null)
+                        {
+                            Debug.LogWarning($"[GameManager] Redirect target room '{roomId}' not found.");
+                            return;
+                        }
+                    }
+                }
+
                 // 1. Fade out
                 if (UIManager.Instance is not null)
                     await UIManager.Instance.FadeNarrativeAsync(0f, 300);
 
                 // 2. Update state
                 CurrentRoom = room;
-                var roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
                 if (roomVar is null)
                 {
                     ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = roomId });
@@ -237,11 +288,12 @@ namespace RagNextPlayer.Managers
                 OnRoomEntered?.Invoke(room);
 
                 // Run room's OnPlayerEnter actions
+                var enterCtx = new GameExecutionContext(ActiveGame!, room, null, room);
                 foreach (var action in room.Actions)
                 {
                     if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, MakeContext(), InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                        ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
                     }
                 }
 
@@ -262,7 +314,7 @@ namespace RagNextPlayer.Managers
                 {
                     if (string.Equals(action.Trigger, "OnRoomTick", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, MakeContext(), InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                        ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
                     }
                 }
 

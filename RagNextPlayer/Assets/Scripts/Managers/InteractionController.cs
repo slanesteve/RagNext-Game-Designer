@@ -76,7 +76,13 @@ namespace RagNextPlayer.Managers
                 return;
             }
 
-            BuildMenuUI(entity.Name, options);
+            var game = GameManager.Instance?.ActiveGame;
+            var room = GameManager.Instance?.CurrentRoom;
+            string resolvedTitle = game is not null
+                ? TemplateResolver.Resolve(entity.Name, game, room, entity)
+                : entity.Name;
+
+            BuildMenuUI(resolvedTitle, options);
             _menuPanel.style.display = DisplayStyle.Flex;
             _menuPanel.BringToFront();
         }
@@ -106,7 +112,12 @@ namespace RagNextPlayer.Managers
 
             if (options.Count == 0) return;
 
-            BuildMenuUI(room.Name, options);
+            var game = GameManager.Instance?.ActiveGame;
+            string resolvedTitle = game is not null
+                ? TemplateResolver.Resolve(room.Name, game, room, room)
+                : room.Name;
+
+            BuildMenuUI(resolvedTitle, options);
             panel.style.display = DisplayStyle.Flex;
             panel.BringToFront();
         }
@@ -130,7 +141,13 @@ namespace RagNextPlayer.Managers
 
             if (options.Count == 0) return;
 
-            BuildMenuUI(player.Name, options);
+            var game = GameManager.Instance?.ActiveGame;
+            var room = GameManager.Instance?.CurrentRoom;
+            string resolvedTitle = game is not null
+                ? TemplateResolver.Resolve(player.Name, game, room, player)
+                : player.Name;
+
+            BuildMenuUI(resolvedTitle, options);
             panel.style.display = DisplayStyle.Flex;
             panel.BringToFront();
         }

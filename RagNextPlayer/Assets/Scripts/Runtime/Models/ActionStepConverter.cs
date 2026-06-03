@@ -175,4 +175,74 @@ namespace RagNextPlayer.Runtime.Models
             return list;
         }
     }
+
+    /// <summary>
+    /// Custom converter to safely map polymorphic attribute structures (objects vs. array of custom property objects)
+    /// into a flat C# Dictionary<string, string> for fast lookup.
+    /// </summary>
+    public class AttributesConverter : JsonConverter<Dictionary<string, string>>
+    {
+        public override bool CanWrite => false;
+
+        public override void WriteJson(JsonWriter writer, Dictionary<string, string>? value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Dictionary<string, string>? ReadJson(
+            JsonReader reader,
+            Type objectType,
+            Dictionary<string, string>? existingValue,
+            bool hasExistingValue,
+            JsonSerializer serializer)
+        {
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (reader.TokenType == JsonToken.Null) return dict;
+
+            var token = JToken.Load(reader);
+            if (token.Type == JTokenType.Object)
+            {
+                var jo = (JObject)token;
+                var valuesArray = jo["$values"] as JArray;
+                if (valuesArray != null)
+                {
+                    PopulateFromAttributeArray(valuesArray, dict);
+                }
+                else
+                {
+                    foreach (var prop in jo.Properties())
+                    {
+                        if (prop.Name.StartsWith("$")) continue;
+                        var valStr = prop.Value?.ToString();
+                        if (valStr != null)
+                        {
+                            dict[prop.Name] = valStr;
+                        }
+                    }
+                }
+            }
+            else if (token.Type == JTokenType.Array)
+            {
+                PopulateFromAttributeArray((JArray)token, dict);
+            }
+
+            return dict;
+        }
+
+        private void PopulateFromAttributeArray(JArray array, Dictionary<string, string> dict)
+        {
+            foreach (var item in array)
+            {
+                if (item is JObject itemObj)
+                {
+                    var name = itemObj["name"]?.ToString() ?? itemObj["Name"]?.ToString();
+                    var val = itemObj["value"]?.ToString() ?? itemObj["Value"]?.ToString();
+                    if (!string.IsNullOrEmpty(name))
+                    {
+                        dict[name] = val ?? string.Empty;
+                    }
+                }
+            }
+        }
+    }
 }
