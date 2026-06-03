@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Text.RegularExpressions;
 using RagNextPlayer.Runtime.Models;
@@ -169,9 +170,9 @@ namespace RagNextPlayer.Runtime
                             attributes.TryGetValue(parts[2].Trim(), out var attrVal);
                             return attrVal;
                         default:
-                            if (attributes is not null && attributes.TryGetValue(parts[1].Trim(), out var attrVal))
+                            if (attributes is not null && attributes.TryGetValue(parts[1].Trim(), out var directAttrVal))
                             {
-                                return attrVal;
+                                return directAttrVal;
                             }
                             if (properties is not null && properties.TryGetValue(parts[1].Trim(), out var prop))
                             {
