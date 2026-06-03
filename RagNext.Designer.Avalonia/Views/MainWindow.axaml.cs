@@ -253,13 +253,7 @@ namespace RagNext.Designer.Avalonia.Views
             try
             {
                 var activeAction = vm.ActiveAction;
-                var settings = new JsonSerializerOptions(JsonSerializerDefaults.Web)
-                {
-                    ReferenceHandler = ReferenceHandler.Preserve,
-                    WriteIndented = false
-                };
-                settings.Converters.Add(new JsonStringEnumConverter());
-                string actionJson = JsonSerializer.Serialize(activeAction, settings);
+                string actionJson = JsonSerializer.Serialize(activeAction, RagsCore.RagsJsonContext.CustomDefault.Action);
 
                 // Load available commands & conditions catalogs to feed the web catalog
                 string commandsJson = "{\"commands\":[]}";
@@ -315,29 +309,27 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                 }
 
-                // Gather dynamic target options (rooms, characters, objects, variables) for properties autocomplete dropdown mapping
-                var catalogsObj = new
+                var catalogsObj = new CatalogsDto
                 {
-                    Rooms = vm.CurrentGame.Rooms.Select(r => new { Id = r.Id.ToString(), Name = r.Name, Attributes = r.Attributes.Select(a => a.Name).ToList() }).ToList(),
-                    Characters = vm.CurrentGame.Characters.Select(c => new { Id = c.Id.ToString(), Name = c.Name, Attributes = c.Attributes.Select(a => a.Name).ToList() }).ToList(),
-                    GameObjects = vm.CurrentGame.Objects.Select(o => new { Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer, Attributes = o.Attributes.Select(a => a.Name).ToList() }).ToList(),
-                    Variables = vm.CurrentGame.Variables.Select(v => new { Id = v.Name, Name = v.Name, Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
-                    Player = new { Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList() },
-                    Owner = new { Attributes = ownerAttributes },
-                    Media = vm.CurrentGame.MediaAssets.Select(m => new { Id = m.RelativePath, Name = string.IsNullOrWhiteSpace(m.OriginalFileName) ? m.RelativePath : m.OriginalFileName }).ToList(),
-                    Functions = vm.CurrentGame.Functions.Select(f => new { Id = f.Name, Name = f.Name }).ToList(),
-                    Timers = vm.CurrentGame.Timers.Select(t => new { Id = t.Name, Name = t.Name, Attributes = t.Attributes.Select(a => a.Name).ToList() }).ToList()
+                    Rooms = vm.CurrentGame.Rooms.Select(r => new CatalogEntityDto { Id = r.Id.ToString(), Name = r.Name, Attributes = r.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Characters = vm.CurrentGame.Characters.Select(c => new CatalogEntityDto { Id = c.Id.ToString(), Name = c.Name, Attributes = c.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    GameObjects = vm.CurrentGame.Objects.Select(o => new CatalogEntityDto { Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer, Attributes = o.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Player = new CatalogPlayerDto { Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList() },
+                    Owner = new CatalogPlayerDto { Attributes = ownerAttributes },
+                    Media = vm.CurrentGame.MediaAssets.Select(m => new CatalogEntityDto { Id = m.RelativePath, Name = string.IsNullOrWhiteSpace(m.OriginalFileName) ? m.RelativePath : m.OriginalFileName }).ToList(),
+                    Functions = vm.CurrentGame.Functions.Select(f => new CatalogEntityDto { Id = f.Name, Name = f.Name }).ToList(),
+                    Timers = vm.CurrentGame.Timers.Select(t => new CatalogEntityDto { Id = t.Name, Name = t.Name, Attributes = t.Attributes.Select(a => a.Name).ToList() }).ToList()
                 };
-                string catalogsJson = JsonSerializer.Serialize(catalogsObj);
+                string catalogsJson = JsonSerializer.Serialize(catalogsObj, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.CatalogsDto);
 
                 // Compile polymorphic reflection mapping
                 var reflectionList = AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(a => a.GetTypes())
                     .Where(t => typeof(ActionStep).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-                    .Select(t => {
-                        return new { TypeName = t.Name, Discriminator = t.Name };
-                    }).ToList();
-                string reflectionJson = JsonSerializer.Serialize(reflectionList);
+                    .Select(t => new ReflectionEntityDto { TypeName = t.Name, Discriminator = t.Name })
+                    .ToList();
+                string reflectionJson = JsonSerializer.Serialize(reflectionList, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.ListReflectionEntityDto);
 
                 string actionBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(actionJson));
                 string commandsBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(commandsJson));
@@ -487,13 +479,7 @@ namespace RagNext.Designer.Avalonia.Views
                 string json = Encoding.UTF8.GetString(bytes);
                 json = ActionStep.NormalizeLegacyDiscriminators(json);
 
-                var settings = new JsonSerializerOptions(JsonSerializerDefaults.Web)
-                {
-                    ReferenceHandler = ReferenceHandler.Preserve
-                };
-                settings.Converters.Add(new JsonStringEnumConverter());
-                settings.Converters.Add(new StepDefinitionBaseJsonConverter());
-                var imported = JsonSerializer.Deserialize<RagsCore.Models.Action>(json, settings);
+                var imported = JsonSerializer.Deserialize(json, RagsCore.RagsJsonContext.CustomDefault.Action);
 
                 if (imported != null)
                 {
@@ -619,18 +605,18 @@ namespace RagNext.Designer.Avalonia.Views
                 }
 
                 var finalPrompt = $"Here is the current game text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
-                var requestBody = new
+                var requestBody = new AICoAuthorRequest
                 {
                     model = model,
                     messages = new[]
                     {
-                        new { role = "system", content = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
-                        new { role = "user", content = finalPrompt }
+                        new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                        new AICoAuthorMessage { role = "user", content = finalPrompt }
                     },
                     temperature = 0.7
                 };
 
-                var requestJson = JsonSerializer.Serialize(requestBody);
+                var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
                 var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
                 var url = GetAiUrl(endpoint, port, provider);
@@ -702,18 +688,18 @@ namespace RagNext.Designer.Avalonia.Views
                 }
 
                 var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
-                var requestBody = new
+                var requestBody = new AICoAuthorRequest
                 {
                     model = model,
                     messages = new[]
                     {
-                        new { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
-                        new { role = "user", content = finalPrompt }
+                        new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                        new AICoAuthorMessage { role = "user", content = finalPrompt }
                     },
                     temperature = 0.7
                 };
 
-                var requestJson = JsonSerializer.Serialize(requestBody);
+                var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
                 var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
                 var url = GetAiUrl(endpoint, port, provider);
                 var response = await client.PostAsync(url, requestContent);
@@ -811,18 +797,18 @@ namespace RagNext.Designer.Avalonia.Views
                     }
 
                     var finalPrompt = $"Generate a vivid, sensory, second-person adventure game description for a {dataObj.GetType().Name.ToLower()} named \"{nameVal}\".";
-                    var requestBody = new
+                    var requestBody = new AICoAuthorRequest
                     {
                         model = model,
                         messages = new[]
                         {
-                            new { role = "system", content = vm.Preferences.AiCoAuthorAssistantPrompt },
-                            new { role = "user", content = finalPrompt }
+                            new AICoAuthorMessage { role = "system", content = vm.Preferences.AiCoAuthorAssistantPrompt },
+                            new AICoAuthorMessage { role = "user", content = finalPrompt }
                         },
                         temperature = 0.7
                     };
 
-                    var requestJson = JsonSerializer.Serialize(requestBody);
+                    var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
                     var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
                     var url = GetAiUrl(endpoint, port, provider);
@@ -1421,7 +1407,7 @@ namespace RagNext.Designer.Avalonia.Views
                         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
                     }
 
-                    var requestBody = new
+                    var requestBody = new ImageGenRequest
                     {
                         prompt = prompt,
                         width = width,
@@ -1429,7 +1415,7 @@ namespace RagNext.Designer.Avalonia.Views
                         steps = 20
                     };
 
-                    var requestJson = JsonSerializer.Serialize(requestBody);
+                    var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.ImageGenRequest);
                     var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
                     var response = await client.PostAsync(url, requestContent);
@@ -1469,7 +1455,7 @@ namespace RagNext.Designer.Avalonia.Views
                         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
                     }
 
-                    var requestBody = new
+                    var requestBody = new OpenAiImageGenRequest
                     {
                         prompt = prompt,
                         model = model,
@@ -1477,7 +1463,7 @@ namespace RagNext.Designer.Avalonia.Views
                         size = $"{width}x{height}"
                     };
 
-                    var requestJson = JsonSerializer.Serialize(requestBody);
+                    var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.OpenAiImageGenRequest);
                     var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
                     var response = await client.PostAsync(url, requestContent);
@@ -2645,18 +2631,18 @@ namespace RagNext.Designer.Avalonia.Views
                 }
 
                 var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
-                var requestBody = new
+                var requestBody = new AICoAuthorRequest
                 {
                     model = model,
                     messages = new[]
                     {
-                        new { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
-                        new { role = "user", content = finalPrompt }
+                        new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                        new AICoAuthorMessage { role = "user", content = finalPrompt }
                     },
                     temperature = 0.7
                 };
 
-                var requestJson = JsonSerializer.Serialize(requestBody);
+                var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
                 var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
                 var url = GetAiUrl(endpoint, port, provider);
                 var response = await client.PostAsync(url, requestContent);

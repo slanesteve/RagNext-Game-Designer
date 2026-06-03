@@ -457,7 +457,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             return node;
         }
 
-        private sealed class ActionTemplateCommand
+        internal sealed class ActionTemplateCommand
         {
             [System.Text.Json.Serialization.JsonPropertyName("$type")]
             public string? Type { get; set; }
@@ -466,7 +466,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             public string? RoomId { get; set; }
         }
 
-        private sealed class ActionTemplate
+        internal sealed class ActionTemplate
         {
             [System.Text.Json.Serialization.JsonPropertyName("name")]
             public string? Name { get; set; }
@@ -482,7 +482,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             try
             {
                 using var stream = await OpenAppPackageFileAsync("ActionTemplates.json");
-                templates = await System.Text.Json.JsonSerializer.DeserializeAsync<List<ActionTemplate>>(stream) ?? new();
+                templates = await System.Text.Json.JsonSerializer.DeserializeAsync(stream, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.ListActionTemplate) ?? new();
             }
             catch (Exception ex)
             {

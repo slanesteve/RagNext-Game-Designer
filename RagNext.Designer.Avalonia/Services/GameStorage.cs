@@ -17,23 +17,7 @@ namespace RagNext.Designer.Avalonia.Services
         private static string SavesDirectory =>
             Path.Combine(AppDataDirectory, "saves");
 
-        private static JsonSerializerOptions Options
-        {
-            get
-            {
-                var opts = new JsonSerializerOptions(JsonSerializerDefaults.Web)
-                {
-                    WriteIndented = true,
-                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve,
-                    MaxDepth = 128,
-                    PropertyNameCaseInsensitive = true
-                };
-                // Ensure polymorphic deserialization for steps
-                opts.Converters.Add(new StepDefinitionBaseJsonConverter());
-                opts.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-                return opts;
-            }
-        }
+
 
         // Optional: configured from MauiProgram
         private static ILogger? _logger;
@@ -73,7 +57,7 @@ namespace RagNext.Designer.Avalonia.Services
 
             EnsureDirectory();
             var fullPath = Path.Combine(SavesDirectory, $"{fileName}.json");
-            var json = JsonSerializer.Serialize(game, Options);
+            var json = JsonSerializer.Serialize(game, RagsCore.RagsJsonContext.CustomDefault.Game);
             await File.WriteAllTextAsync(fullPath, json).ConfigureAwait(false);
 
             // Track the successfully saved filename on the game object
@@ -82,7 +66,7 @@ namespace RagNext.Designer.Avalonia.Services
             // optionally keep legacy file for apps that expect it
             try
             {
-                var legacyJson = JsonSerializer.Serialize(game, Options);
+                var legacyJson = JsonSerializer.Serialize(game, RagsCore.RagsJsonContext.CustomDefault.Game);
                 await File.WriteAllTextAsync(LegacyFilePath, legacyJson).ConfigureAwait(false);
             }
             catch
@@ -106,7 +90,7 @@ namespace RagNext.Designer.Avalonia.Services
                     attemptedPath = latest;
                     var json = await File.ReadAllTextAsync(latest).ConfigureAwait(false);
                     json = ActionStep.NormalizeLegacyDiscriminators(json);
-                    var game = JsonSerializer.Deserialize<Game>(json, Options);
+                    var game = JsonSerializer.Deserialize(json, RagsCore.RagsJsonContext.CustomDefault.Game);
                     if (game is not null)
                     {
                         game.FileName = Path.GetFileNameWithoutExtension(latest);
@@ -121,7 +105,7 @@ namespace RagNext.Designer.Avalonia.Services
                 attemptedPath = LegacyFilePath;
                 var legacyJson = await File.ReadAllTextAsync(LegacyFilePath).ConfigureAwait(false);
                 legacyJson = ActionStep.NormalizeLegacyDiscriminators(legacyJson);
-                var legacyGame = JsonSerializer.Deserialize<Game>(legacyJson, Options);
+                var legacyGame = JsonSerializer.Deserialize(legacyJson, RagsCore.RagsJsonContext.CustomDefault.Game);
                 if (legacyGame is not null)
                 {
                     legacyGame.FileName = "game";
@@ -146,7 +130,7 @@ namespace RagNext.Designer.Avalonia.Services
 
             var json = await File.ReadAllTextAsync(candidate).ConfigureAwait(false);
             json = ActionStep.NormalizeLegacyDiscriminators(json);
-            var game = JsonSerializer.Deserialize<Game>(json, Options);
+            var game = JsonSerializer.Deserialize(json, RagsCore.RagsJsonContext.CustomDefault.Game);
             if (game is not null)
             {
                 game.FileName = fileName;

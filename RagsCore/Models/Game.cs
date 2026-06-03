@@ -22,7 +22,7 @@ namespace RagsCore.Models
         
 
 
-        public Guid Id { get; init; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [JsonIgnore]
         public string? FileName { get; set; }
@@ -54,15 +54,9 @@ namespace RagsCore.Models
 
         public SplashScreenSettings SplashScreen { get; set; } = new();
 
-        public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public Game() { }
-
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
 
         public static async Task EnsureAvailableCommandsAsync(
             Func<Task<Stream>> openStreamAsync,
@@ -73,7 +67,7 @@ namespace RagsCore.Models
                 if (AvailableCommands is not null) return;
 
                 await using var stream = await openStreamAsync().ConfigureAwait(false);
-                var catalog = await JsonSerializer.DeserializeAsync<CommandCatalog>(stream, JsonOptions, ct)
+                var catalog = await JsonSerializer.DeserializeAsync(stream, RagsJsonContext.CustomDefault.CommandCatalog, ct)
                                .ConfigureAwait(false);
                 AvailableCommands = catalog?.Commands ?? new List<CommandDefinition>();
             }
@@ -93,7 +87,7 @@ namespace RagsCore.Models
                 if (AvailableConditions is not null) return;
 
                 await using var stream = await openStreamAsync().ConfigureAwait(false);
-                var catalog = await JsonSerializer.DeserializeAsync<ConditionCatalog>(stream, JsonOptions, ct)
+                var catalog = await JsonSerializer.DeserializeAsync(stream, RagsJsonContext.CustomDefault.ConditionCatalog, ct)
                                .ConfigureAwait(false);
                 AvailableConditions = catalog?.Conditions ?? new List<ConditionDefinition>();
             }

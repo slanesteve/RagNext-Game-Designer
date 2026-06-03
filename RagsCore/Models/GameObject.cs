@@ -14,7 +14,7 @@ namespace RagsCore.Models
         public ObservableCollection<MediaReference> Media { get; set; } = new(); // reference by AssetId
         public ObservableCollection<Action> Actions { get; set; } = new(); // added
 
-        public Guid Id { get; init; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         private string _name = string.Empty;
         public string Name { get => _name; set => SetProperty(ref _name, value); }

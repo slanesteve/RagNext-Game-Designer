@@ -31,7 +31,7 @@ namespace RagNext.Designer.Avalonia.Services
             try
             {
                 var json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
-                return JsonSerializer.Deserialize<MediaTreeDocument>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web))
+                return JsonSerializer.Deserialize(json, DesignerJsonContext.Default.MediaTreeDocument)
                        ?? new MediaTreeDocument();
             }
             catch
@@ -43,7 +43,7 @@ namespace RagNext.Designer.Avalonia.Services
         public async Task SaveAsync(Game game, MediaTreeDocument doc)
         {
             Directory.CreateDirectory(GetFolder(game));
-            var json = JsonSerializer.Serialize(doc, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true });
+            var json = JsonSerializer.Serialize(doc, DesignerJsonContext.Default.MediaTreeDocument);
             await File.WriteAllTextAsync(GetPath(game), json).ConfigureAwait(false);
         }
     }

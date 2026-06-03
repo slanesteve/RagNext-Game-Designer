@@ -1,7 +1,10 @@
 using System;
 
+using System.Text.Json.Serialization;
+
 namespace RagsCore.Models
 {
+    [JsonConverter(typeof(JsonStringEnumConverter<ActionTrigger>))]
     public enum ActionTrigger
     {
         UserClicked = 0,

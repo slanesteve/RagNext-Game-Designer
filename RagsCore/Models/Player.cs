@@ -13,7 +13,7 @@ namespace RagsCore.Models
         public List<string> Genders { get => _genders; set => SetProperty(ref _genders, value); }
 
 
-        public Guid Id { get; init; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         private string _name = "Player";
         public string Name { get => _name; set => SetProperty(ref _name, value); }

@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace RagsCore.Actions
 {
+    [JsonConverter(typeof(JsonStringEnumConverter<ActionStepKind>))]
     public enum ActionStepKind { Condition, Command }
     // Polymorphic base for both conditions and commands.
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]

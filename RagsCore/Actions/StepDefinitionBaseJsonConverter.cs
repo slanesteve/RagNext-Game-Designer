@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RagsCore;
 
 namespace RagsCore.Actions
 {
@@ -26,17 +27,17 @@ namespace RagsCore.Actions
             var json = root.GetRawText();
 
             if (string.Equals(kind, "Command", StringComparison.OrdinalIgnoreCase) || kind == "0")
-                return JsonSerializer.Deserialize<CommandDefinition>(json, options);
+                return JsonSerializer.Deserialize(json, RagsJsonContext.CustomDefault.CommandDefinition);
 
             if (string.Equals(kind, "Condition", StringComparison.OrdinalIgnoreCase) || kind == "1")
-                return JsonSerializer.Deserialize<ConditionDefinition>(json, options);
+                return JsonSerializer.Deserialize(json, RagsJsonContext.CustomDefault.ConditionDefinition);
 
             // Heuristic fallback: presence of "steps" means ConditionDefinition
             if (root.TryGetProperty("steps", out _))
-                return JsonSerializer.Deserialize<ConditionDefinition>(json, options);
+                return JsonSerializer.Deserialize(json, RagsJsonContext.CustomDefault.ConditionDefinition);
 
             // Default to CommandDefinition
-            return JsonSerializer.Deserialize<CommandDefinition>(json, options);
+            return JsonSerializer.Deserialize(json, RagsJsonContext.CustomDefault.CommandDefinition);
         }
 
         public override void Write(Utf8JsonWriter writer, StepDefinitionBase value, JsonSerializerOptions options)
@@ -44,10 +45,10 @@ namespace RagsCore.Actions
             switch (value)
             {
                 case CommandDefinition cmd:
-                    JsonSerializer.Serialize(writer, cmd, options);
+                    JsonSerializer.Serialize(writer, cmd, RagsJsonContext.CustomDefault.CommandDefinition);
                     break;
                 case ConditionDefinition cond:
-                    JsonSerializer.Serialize(writer, cond, options);
+                    JsonSerializer.Serialize(writer, cond, RagsJsonContext.CustomDefault.ConditionDefinition);
                     break;
                 default:
                     throw new NotSupportedException($"Unknown StepDefinitionBase type: {value.GetType().FullName}");

@@ -9,6 +9,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Styling;
 using RagNext.Designer.Avalonia.Models;
+using RagNext.Designer.Avalonia.Services;
 
 namespace RagNext.Designer.Avalonia.ViewModels
 {
@@ -707,7 +708,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (File.Exists(path))
                 {
                     var json = File.ReadAllText(path);
-                    var loaded = JsonSerializer.Deserialize<AppSettings>(json);
+                    var loaded = JsonSerializer.Deserialize(json, DesignerJsonContext.Default.AppSettings);
                     if (loaded != null)
                     {
                         _settings = loaded;
@@ -767,7 +768,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         {
             try
             {
-                var json = JsonSerializer.Serialize(_settings);
+                var json = JsonSerializer.Serialize(_settings, DesignerJsonContext.Default.AppSettings);
                 var path = SettingsFilePath;
                 var dir = Path.GetDirectoryName(path);
                 if (dir != null) Directory.CreateDirectory(dir);

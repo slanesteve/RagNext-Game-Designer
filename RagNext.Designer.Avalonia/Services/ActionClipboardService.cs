@@ -2,6 +2,7 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RagsCore.Actions;
+using RagsCore;
 
 namespace RagNext.Designer.Avalonia.Services
 {
@@ -10,22 +11,16 @@ namespace RagNext.Designer.Avalonia.Services
         public static string? CopiedNodeJson { get; private set; }
         public static string? CopiedNodeType { get; private set; } // "Action" or "ActionStep"
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            WriteIndented = false,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-
         public static void Copy(object model)
         {
             if (model is RagsCore.Models.Action action)
             {
-                CopiedNodeJson = JsonSerializer.Serialize(action, JsonOptions);
+                CopiedNodeJson = JsonSerializer.Serialize(action, RagsJsonContext.CustomDefault.Action);
                 CopiedNodeType = "Action";
             }
             else if (model is ActionStep step)
             {
-                CopiedNodeJson = JsonSerializer.Serialize(step, JsonOptions);
+                CopiedNodeJson = JsonSerializer.Serialize(step, RagsJsonContext.CustomDefault.ActionStep);
                 CopiedNodeType = "ActionStep";
             }
         }
@@ -39,7 +34,7 @@ namespace RagNext.Designer.Avalonia.Services
                 var normalizedJson = ActionStep.NormalizeLegacyDiscriminators(CopiedNodeJson);
                 if (CopiedNodeType == "Action")
                 {
-                    var action = JsonSerializer.Deserialize<RagsCore.Models.Action>(normalizedJson, JsonOptions);
+                    var action = JsonSerializer.Deserialize(normalizedJson, RagsJsonContext.CustomDefault.Action);
                     if (action != null)
                     {
                         var prop = action.GetType().GetProperty("Id");
@@ -52,7 +47,7 @@ namespace RagNext.Designer.Avalonia.Services
                 }
                 else if (CopiedNodeType == "ActionStep")
                 {
-                    var step = JsonSerializer.Deserialize<ActionStep>(normalizedJson, JsonOptions);
+                    var step = JsonSerializer.Deserialize(normalizedJson, RagsJsonContext.CustomDefault.ActionStep);
                     return step;
                 }
             }

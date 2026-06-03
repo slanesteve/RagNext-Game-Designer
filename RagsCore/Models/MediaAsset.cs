@@ -1,12 +1,13 @@
-using System;
+using System.Text.Json.Serialization;
 
 namespace RagsCore.Models
 {
+    [JsonConverter(typeof(JsonStringEnumConverter<MediaKind>))]
     public enum MediaKind { Image, Video, Audio, Other }
 
     public class MediaAsset : BaseModel
     {
-        public Guid Id { get; init; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string OriginalFileName { get; set; } = string.Empty;
 
         [System.Text.Json.Serialization.JsonIgnore]
@@ -19,7 +20,7 @@ namespace RagsCore.Models
         public string ContentType { get; set; } = "application/octet-stream";
         public MediaKind Kind { get; set; } = MediaKind.Other;
         public string Sha256 { get; set; } = string.Empty; // for de-dupe/integrity
-        public DateTime AddedAtUtc { get; init; } = DateTime.UtcNow;
+        public DateTime AddedAtUtc { get; set; } = DateTime.UtcNow;
 
         // Optional metadata
         public int? Width { get; set; }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 
 namespace RagsCore.Models
@@ -8,7 +8,7 @@ namespace RagsCore.Models
     /// </summary>
     public class GameVariable : BaseModel
     {
-        public Guid Id { get; init; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         private string _name = string.Empty;
         public string Name { get => _name; set => SetProperty(ref _name, value); }

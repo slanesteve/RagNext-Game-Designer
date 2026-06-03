@@ -27,7 +27,7 @@ namespace RagNext.Designer.Avalonia.Services
 
             var gameEntry = zip.CreateEntry("game.json", CompressionLevel.Fastest);
             await using (var s = gameEntry.Open())
-                await JsonSerializer.SerializeAsync(s, game, cancellationToken: ct);
+                await JsonSerializer.SerializeAsync(s, game, RagsCore.RagsJsonContext.CustomDefault.Game, cancellationToken: ct);
 
             var assetsDir = Path.Combine(root, "Assets");
             if (Directory.Exists(assetsDir))
@@ -51,7 +51,7 @@ namespace RagNext.Designer.Avalonia.Services
 
             var gameEntry = zip.CreateEntry("game.json", CompressionLevel.Optimal);
             await using (var s = gameEntry.Open())
-                await JsonSerializer.SerializeAsync(s, game, cancellationToken: ct);
+                await JsonSerializer.SerializeAsync(s, game, RagsCore.RagsJsonContext.CustomDefault.Game, cancellationToken: ct);
 
             var assetsDir = Path.Combine(root, "Assets");
             if (Directory.Exists(assetsDir))
@@ -78,7 +78,7 @@ namespace RagNext.Designer.Avalonia.Services
                 // write game.json
                 var entry = tempZip.CreateEntry("game.json", CompressionLevel.Optimal);
                 await using (var s = entry.Open())
-                    await JsonSerializer.SerializeAsync(s, game, cancellationToken: ct);
+                    await JsonSerializer.SerializeAsync(s, game, RagsCore.RagsJsonContext.CustomDefault.Game, cancellationToken: ct);
 
                 // write assets
                 var assetsDir = Path.Combine(AppDataDirectory, game.Id.ToString("N"), "Assets");

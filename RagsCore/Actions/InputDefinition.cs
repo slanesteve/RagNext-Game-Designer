@@ -6,10 +6,10 @@ using System.Text.Json.Serialization;
 
 namespace RagsCore.Actions
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter<InputControlType>))]
     public enum InputControlType { Text, TextArea, ComboBox, Radio, Checkbox, Number }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter<InputDataType>))]
     public enum InputDataType
     {
         String, Bool, Number, Variable, GameObject, Room, Media, Character,

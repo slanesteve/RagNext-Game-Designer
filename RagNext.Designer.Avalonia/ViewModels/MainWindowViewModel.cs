@@ -1494,7 +1494,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (File.Exists(path))
                 {
                     var json = File.ReadAllText(path);
-                    var list = JsonSerializer.Deserialize<List<string>>(json);
+                    var list = JsonSerializer.Deserialize(json, DesignerJsonContext.Default.ListString);
                     if (list != null)
                     {
                         foreach (var p in list)
@@ -1521,7 +1521,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 RecentProjects.Clear();
                 foreach (var p in list) RecentProjects.Add(p);
 
-                var json = JsonSerializer.Serialize(list);
+                var json = JsonSerializer.Serialize(list, DesignerJsonContext.Default.ListString);
                 Directory.CreateDirectory(Path.GetDirectoryName(RecentProjectsFilePath)!);
                 File.WriteAllText(RecentProjectsFilePath, json);
             }
@@ -1535,7 +1535,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (string.IsNullOrWhiteSpace(path)) return;
                 RecentProjects.Remove(path);
                 var list = RecentProjects.ToList();
-                var json = JsonSerializer.Serialize(list);
+                var json = JsonSerializer.Serialize(list, DesignerJsonContext.Default.ListString);
                 File.WriteAllText(RecentProjectsFilePath, json);
             }
             catch { }

@@ -9,32 +9,133 @@ using RagsCore.Models;
 
 namespace RagNext.Designer.Avalonia.Services
 {
+    public class ExportGameDto
+    {
+        public string? Title { get; set; }
+        public string? Author { get; set; }
+        public string? Version { get; set; }
+        public string Description { get; set; } = "";
+        public ExportPlayerDto? Player { get; set; }
+        public List<ExportRoomDto>? Rooms { get; set; }
+        public List<ExportObjectDto>? Objects { get; set; }
+        public List<ExportObjectDto>? Characters { get; set; }
+        public List<ExportVariableDto>? Variables { get; set; }
+        public List<ExportMediaAssetDto>? MediaAssets { get; set; }
+        public List<ExportFunctionDto>? Functions { get; set; }
+        public List<ExportTimerDto>? Timers { get; set; }
+        public ExportSplashScreenDto? SplashScreen { get; set; }
+    }
+
+    public class ExportPlayerDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public string? Gender { get; set; }
+        public string? PortraitImagePath { get; set; }
+        public string? StartingRoomId { get; set; }
+        public List<ExportObjectDto>? Inventory { get; set; }
+        public List<ExportActionDto>? Actions { get; set; }
+        public Dictionary<string, string>? Attributes { get; set; }
+    }
+
+    public class ExportRoomDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public string? PortraitImagePath { get; set; }
+        public Dictionary<string, string>? Exits { get; set; }
+        public Dictionary<string, bool>? LockedExits { get; set; }
+        public List<string>? ObjectIds { get; set; }
+        public List<ExportActionDto>? Actions { get; set; }
+        public Dictionary<string, string>? Attributes { get; set; }
+    }
+
+    public class ExportObjectDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public string? PortraitImagePath { get; set; }
+        public bool IsCollectible { get; set; }
+        public bool IsCharacter { get; set; }
+        public bool IsContainer { get; set; }
+        public bool ContainerOpen { get; set; }
+        public List<string>? ContainedObjectIds { get; set; }
+        public string? StartingRoomId { get; set; }
+        public List<ExportActionDto>? Actions { get; set; }
+        public List<ExportObjectDto>? Inventory { get; set; }
+        public Dictionary<string, string>? Properties { get; set; }
+        public Dictionary<string, string>? Attributes { get; set; }
+    }
+
+    public class ExportActionDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public bool InitallyActive { get; set; }
+        public string? Trigger { get; set; }
+        public List<ActionStep>? Nodes { get; set; }
+    }
+
+    public class ExportVariableDto
+    {
+        public string? Name { get; set; }
+        public string? Value { get; set; }
+    }
+
+    public class ExportMediaAssetDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? RelativePath { get; set; }
+        public string? MediaType { get; set; }
+        public string? OriginalFileName { get; set; }
+    }
+
+    public class ExportFunctionDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public List<ActionStep>? Nodes { get; set; }
+    }
+
+    public class ExportTimerDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public double IntervalSeconds { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsRepeating { get; set; }
+        public List<ActionStep>? Nodes { get; set; }
+        public Dictionary<string, string>? Attributes { get; set; }
+    }
+
+    public class ExportSplashScreenDto
+    {
+        public bool Enabled { get; set; }
+        public string? Mode { get; set; }
+        public string? ImageAssetId { get; set; }
+        public string? SoundAssetId { get; set; }
+        public string? Text { get; set; }
+        public string? FontName { get; set; }
+        public double FontSize { get; set; }
+        public string? FontColor { get; set; }
+        public double TextX { get; set; }
+        public double TextY { get; set; }
+        public double FadeInDuration { get; set; }
+        public double DisplayDuration { get; set; }
+        public double FadeOutDuration { get; set; }
+        public string? VideoAssetId { get; set; }
+        public string? TransitionStyle { get; set; }
+    }
+
     /// <summary>
     /// Produces Unity-compatible flat game.json with no $id/$ref reference tracking.
-    ///
-    /// The key difference from the Designer's internal save format:
-    ///   - No ReferenceHandler.Preserve  → clean, flat JSON Unity can deserialize
-    ///   - Player.StartingRoom → Player.StartingRoomId (Guid string) to break circular ref
-    ///   - All collections serialized as plain JSON arrays (not $values wrappers)
-    ///   - ActionStep polymorphism handled by StepDefinitionBaseJsonConverter ($type field)
     /// </summary>
     public static class GameJsonExporter
     {
-        private static readonly JsonSerializerOptions _options = BuildOptions();
-
-        private static JsonSerializerOptions BuildOptions()
-        {
-            var opts = new JsonSerializerOptions
-            {
-                WriteIndented        = true,
-                PropertyNamingPolicy = null,                // PascalCase to match C# models
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                MaxDepth             = 128
-            };
-            opts.Converters.Add(new StepDefinitionBaseJsonConverter());
-            return opts;
-        }
-
         /// <summary>
         /// Serializes the Game to a Unity-compatible flat JSON string.
         /// </summary>
@@ -42,67 +143,62 @@ namespace RagNext.Designer.Avalonia.Services
         {
             if (game is null) throw new ArgumentNullException(nameof(game));
 
-            // Build a plain DTO — avoids circular references without reference tracking
             var dto = BuildDto(game);
-            return JsonSerializer.Serialize(dto, _options);
+            return JsonSerializer.Serialize(dto, DesignerJsonContext.Default.ExportGameDto);
         }
 
-        // ── DTO construction ─────────────────────────────────────────────────
-        // We use anonymous objects / dictionaries to produce clean, flat JSON
-        // without carrying MAUI/ObservableCollection dependencies into the output.
-
-        private static object BuildDto(Game game) => new
+        private static ExportGameDto BuildDto(Game game) => new ExportGameDto
         {
-            game.Title,
-            game.Author,
-            game.Version,
+            Title = game.Title,
+            Author = game.Author,
+            Version = game.Version,
             Description = "",
             Player     = BuildPlayerDto(game.Player),
             Rooms      = game.Rooms.Select(r => BuildRoomDto(r)).ToList(),
             Objects    = game.Objects.Select(o => BuildObjectDto(o)).ToList(),
             Characters = game.Characters.Select(c => BuildObjectDto(c)).ToList(),
-            Variables  = game.Variables.Select(v => new { v.Name, v.Value }).ToList(),
-            MediaAssets= game.MediaAssets.Select(m => new
+            Variables  = game.Variables.Select(v => new ExportVariableDto { Name = v.Name, Value = v.Value }).ToList(),
+            MediaAssets= game.MediaAssets.Select(m => new ExportMediaAssetDto
             {
                 Id           = m.Id.ToString(),
-                m.Name,
-                m.RelativePath,
+                Name = m.Name,
+                RelativePath = m.RelativePath,
                 MediaType    = m.ContentType,
-                m.OriginalFileName
+                OriginalFileName = m.OriginalFileName
             }).ToList(),
-            Functions  = game.Functions.Select(f => new
+            Functions  = game.Functions.Select(f => new ExportFunctionDto
             {
                 Id    = f.Id.ToString(),
-                f.Name,
+                Name = f.Name,
                 Nodes = f.Nodes.ToList()
             }).ToList(),
-            Timers     = game.Timers.Select(t => new
+            Timers     = game.Timers.Select(t => new ExportTimerDto
             {
                 Id              = t.Id.ToString(),
-                t.Name,
-                t.IntervalSeconds,
-                t.IsActive,
-                t.IsRepeating,
+                Name = t.Name,
+                IntervalSeconds = t.IntervalSeconds,
+                IsActive = t.IsActive,
+                IsRepeating = t.IsRepeating,
                 Nodes           = t.Nodes.ToList(),
                 Attributes      = t.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
             }).ToList(),
-            SplashScreen = game.SplashScreen != null ? new
+            SplashScreen = game.SplashScreen != null ? new ExportSplashScreenDto
             {
-                game.SplashScreen.Enabled,
-                game.SplashScreen.Mode,
-                game.SplashScreen.ImageAssetId,
-                game.SplashScreen.SoundAssetId,
-                game.SplashScreen.Text,
-                game.SplashScreen.FontName,
-                game.SplashScreen.FontSize,
-                game.SplashScreen.FontColor,
-                game.SplashScreen.TextX,
-                game.SplashScreen.TextY,
-                game.SplashScreen.FadeInDuration,
-                game.SplashScreen.DisplayDuration,
-                game.SplashScreen.FadeOutDuration,
-                game.SplashScreen.VideoAssetId,
-                game.SplashScreen.TransitionStyle
+                Enabled = game.SplashScreen.Enabled,
+                Mode = game.SplashScreen.Mode,
+                ImageAssetId = game.SplashScreen.ImageAssetId,
+                SoundAssetId = game.SplashScreen.SoundAssetId,
+                Text = game.SplashScreen.Text,
+                FontName = game.SplashScreen.FontName,
+                FontSize = game.SplashScreen.FontSize,
+                FontColor = game.SplashScreen.FontColor,
+                TextX = game.SplashScreen.TextX,
+                TextY = game.SplashScreen.TextY,
+                FadeInDuration = game.SplashScreen.FadeInDuration,
+                DisplayDuration = game.SplashScreen.DisplayDuration,
+                FadeOutDuration = game.SplashScreen.FadeOutDuration,
+                VideoAssetId = game.SplashScreen.VideoAssetId,
+                TransitionStyle = game.SplashScreen.TransitionStyle
             } : null
         };
 
@@ -112,24 +208,23 @@ namespace RagNext.Designer.Avalonia.Services
             return val.Replace("\r\n", "\n").Replace("\r", "\n");
         }
 
-        private static object BuildPlayerDto(Player p) => new
+        private static ExportPlayerDto BuildPlayerDto(Player p) => new ExportPlayerDto
         {
             Id                = p.Id.ToString(),
-            p.Name,
+            Name = p.Name,
             Description       = NormalizeNewlines(p.Description),
-            p.Gender,
+            Gender = p.Gender,
             PortraitImagePath = p.PortraitImagePath,
-            // Avoid circular reference: store room ID, not the full Room object
             StartingRoomId    = p.StartingRoom?.Id.ToString(),
             Inventory         = p.Inventory.Select(o => BuildObjectDto(o)).ToList(),
             Actions           = p.Actions.Select(a => BuildActionDto(a)).ToList(),
             Attributes        = p.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
         };
 
-        private static object BuildRoomDto(Room r) => new
+        private static ExportRoomDto BuildRoomDto(Room r) => new ExportRoomDto
         {
             Id                = r.Id.ToString(),
-            r.Name,
+            Name = r.Name,
             Description       = NormalizeNewlines(r.Description),
             PortraitImagePath = r.PortraitImagePath,
             Exits             = r.Exits.ToDictionary(k => k.Key, v => v.Value.ToString()),
@@ -139,10 +234,10 @@ namespace RagNext.Designer.Avalonia.Services
             Attributes        = r.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
         };
 
-        private static object BuildObjectDto(GameObject o) => new
+        private static ExportObjectDto BuildObjectDto(GameObject o) => new ExportObjectDto
         {
             Id                = o.Id.ToString(),
-            o.Name,
+            Name = o.Name,
             Description       = NormalizeNewlines(o.Description),
             PortraitImagePath = (o as Character)?.PortraitImagePath ?? o.PortraitImagePath,
             IsCollectible     = o.IsCollectible,
@@ -154,18 +249,17 @@ namespace RagNext.Designer.Avalonia.Services
             Actions           = o.Actions.Select(a => BuildActionDto(a)).ToList(),
             Inventory         = o is Character ch
                                 ? ch.Inventory.Select(i => BuildObjectDto(i)).ToList()
-                                : new List<object>(),
+                                : new List<ExportObjectDto>(),
             Properties        = o.Properties,
             Attributes        = o.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
         };
 
-        private static object BuildActionDto(RagsCore.Models.Action a) => new
+        private static ExportActionDto BuildActionDto(RagsCore.Models.Action a) => new ExportActionDto
         {
             Id           = a.Id.ToString(),
-            a.Name,
-            a.InitallyActive,
+            Name = a.Name,
+            InitallyActive = a.InitallyActive,
             Trigger      = a.Trigger.ToString(),
-            // ActionSteps are already serializable via StepDefinitionBaseJsonConverter
             Nodes        = a.Nodes.ToList()
         };
     }
