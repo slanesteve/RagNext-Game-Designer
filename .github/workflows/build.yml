@@ -1,4 +1,4 @@
-name: Build & Package RagNext Designer Distributions
+name: Build RagNext Designer (Windows & macOS)
 
 on:
   push:
