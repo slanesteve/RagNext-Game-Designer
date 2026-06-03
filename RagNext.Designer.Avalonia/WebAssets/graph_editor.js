@@ -85,7 +85,7 @@ const fallbackDiscriminators = {
     "itemmovetocharacter": "object.moveToCharacter",
     "itemmovetoinventory": "object.moveToInventory",
     "itemmoveinsideobject": "object.moveInsideObject",
-    "itemmovetoroom": "item.inRoom",
+    "itemmovetoroom": "room.addObject",
     "itemsetattribute": "item.setAttribute",
     "playerdisplaydescription": "player.displayDescription",
     "playermoveinventorytocharacter": "player.moveInventoryToChar",
@@ -1726,9 +1726,6 @@ function refreshCommandFields(node) {
                 aliases.forEach(alias => {
                     node.data[alias] = textInput.value;
                 });
-                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer') {
-                    refreshCommandFields(node);
-                }
                 triggerAutoSave();
             });
 
@@ -2557,6 +2554,23 @@ function getAutocompleteSuggestions(triggerChar) {
             });
         }
     }
+    
+    if (triggerChar === '{') {
+        list.sort((a, b) => {
+            const getGroup = (item) => {
+                if (item.token.startsWith("this.")) return 0;
+                if (item.token.startsWith("player.")) return 1;
+                if (item.token.startsWith("room.")) return 2;
+                if (item.token.startsWith("focus.")) return 3;
+                return 4;
+            };
+            const gA = getGroup(a);
+            const gB = getGroup(b);
+            if (gA !== gB) return gA - gB;
+            return a.token.localeCompare(b.token);
+        });
+    }
+    
     return list;
 }
 
@@ -2573,7 +2587,7 @@ function showAutocompletePopup(input, triggerChar, index) {
         popup.id = 'autocomplete-popup';
         popup.className = 'glass-dropdown';
         popup.style.cssText = `
-            position: absolute;
+            position: fixed;
             z-index: 10000;
             max-height: 220px;
             overflow-y: auto;
@@ -2592,6 +2606,7 @@ function showAutocompletePopup(input, triggerChar, index) {
         `;
         document.body.appendChild(popup);
     }
+    popup.style.position = 'fixed';
 
     renderAutocompleteItems("");
 }
@@ -2678,16 +2693,19 @@ function renderAutocompleteItems(query) {
     });
 
     const rect = activeAutocomplete.targetInput.getBoundingClientRect();
-    popup.style.left = `${rect.left + window.scrollX}px`;
+    popup.style.left = `${rect.left}px`;
     
     const popupHeight = Math.min(220, filtered.length * 48 + 8);
     if (rect.bottom + popupHeight > window.innerHeight) {
-        popup.style.top = `${rect.top + window.scrollY - popupHeight - 4}px`;
+        popup.style.top = `${rect.top - popupHeight - 4}px`;
     } else {
-        popup.style.top = `${rect.bottom + window.scrollY + 4}px`;
+        popup.style.top = `${rect.bottom + 4}px`;
     }
     
     popup.style.display = 'block';
+    
+    // Explicitly restore focus to target input to prevent typing lockout
+    activeAutocomplete.targetInput.focus();
 }
 
 function applyAutocompleteChoice(item) {

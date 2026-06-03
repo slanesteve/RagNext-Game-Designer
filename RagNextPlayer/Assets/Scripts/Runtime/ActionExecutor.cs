@@ -232,6 +232,7 @@ namespace RagNextPlayer.Runtime
                     {
                         var resolvedRoom = ctx.Resolve(c.RoomId);
                         var resolvedObj  = ctx.Resolve(c.ObjectId);
+                        RemoveObjectFromEverywhere(resolvedObj, ctx);
                         var room = ctx.Game.Rooms.Find(r => r.Id == resolvedRoom);
                         if (room is not null && !room.ObjectIds.Contains(resolvedObj))
                             room.ObjectIds.Add(resolvedObj);

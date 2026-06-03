@@ -1925,9 +1925,9 @@
                 </StackPanel>
             </Border>
         </Border>
-        <Popup Name="AutocompletePopup" IsOpen="False" Placement="Top" IsLightDismissEnabled="True">
-            <Border Background="#16161E" BorderBrush="#333344" BorderThickness="1" CornerRadius="8" Padding="4" MaxHeight="220" Width="280">
-                <ListBox Name="AutocompleteListBox" Background="Transparent" BorderThickness="0" Foreground="White" Tapped="OnAutocompleteListBoxTapped">
+        <Popup Name="AutocompletePopup" IsOpen="False" Placement="Bottom" IsLightDismissEnabled="True" Focusable="False">
+            <Border Background="#16161E" BorderBrush="#333344" BorderThickness="1" CornerRadius="8" Padding="4" MaxHeight="220" Width="280" Focusable="False">
+                <ListBox Name="AutocompleteListBox" Background="Transparent" BorderThickness="0" Foreground="White" Tapped="OnAutocompleteListBoxTapped" Focusable="False" IsTabStop="False">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="views:AutocompleteItem">
                             <StackPanel Spacing="2" Margin="2">

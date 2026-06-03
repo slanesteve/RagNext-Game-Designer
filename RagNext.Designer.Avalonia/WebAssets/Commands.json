@@ -324,6 +324,11 @@
       "category": "Item",
       "inputs": [
         {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        },
+        {
           "label": "Room",
           "controlType": "ComboBox",
           "dataType": "Room"

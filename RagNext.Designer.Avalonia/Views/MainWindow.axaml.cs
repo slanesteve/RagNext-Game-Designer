@@ -2327,6 +2327,19 @@ namespace RagNext.Designer.Avalonia.Views
                 }
             }
 
+            if (trigger == '{')
+            {
+                filtered = filtered
+                    .OrderBy(item => {
+                        if (item.Token.StartsWith("this.", StringComparison.OrdinalIgnoreCase)) return 0;
+                        if (item.Token.StartsWith("player.", StringComparison.OrdinalIgnoreCase)) return 1;
+                        if (item.Token.StartsWith("room.", StringComparison.OrdinalIgnoreCase)) return 2;
+                        if (item.Token.StartsWith("focus.", StringComparison.OrdinalIgnoreCase)) return 3;
+                        return 4;
+                    })
+                    .ToList();
+            }
+
             if (filtered.Count == 0)
             {
                 HideAutocomplete();
