@@ -2421,6 +2421,7 @@ function getAutocompleteSuggestions(triggerChar) {
     const list = [];
     if (triggerChar === '{') {
         // Current Object Property (this.*)
+        list.push({ token: "this.Id", typeName: "Current Object Property", desc: "Unique ID of this object." });
         list.push({ token: "this.Name", typeName: "Current Object Property", desc: "Name of this object." });
         list.push({ token: "this.Description", typeName: "Current Object Property", desc: "Description of this object." });
         list.push({ token: "this.portrait", typeName: "Current Object Property", desc: "Portrait or image path." });

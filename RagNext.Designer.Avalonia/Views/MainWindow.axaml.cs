@@ -2138,6 +2138,7 @@ namespace RagNext.Designer.Avalonia.Views
                 if (trigger == '{')
                 {
                     // Add local / context properties
+                    list.Add(new AutocompleteItem { Token = "this.Id", DisplayToken = "{this.Id}", TypeName = "Current Object Property", Description = "Unique ID of this object." });
                     list.Add(new AutocompleteItem { Token = "this.Name", DisplayToken = "{this.Name}", TypeName = "Current Object Property", Description = "Name of this object." });
                     list.Add(new AutocompleteItem { Token = "this.Description", DisplayToken = "{this.Description}", TypeName = "Current Object Property", Description = "Description of this object." });
                     list.Add(new AutocompleteItem { Token = "this.portrait", DisplayToken = "{this.portrait}", TypeName = "Current Object Property", Description = "Portrait or image path." });
