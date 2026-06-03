@@ -105,6 +105,7 @@ namespace RagNext.Designer.Avalonia.Services
                     var latest = files.OrderByDescending(f => File.GetLastWriteTimeUtc(f)).First();
                     attemptedPath = latest;
                     var json = await File.ReadAllTextAsync(latest).ConfigureAwait(false);
+                    json = ActionStep.NormalizeLegacyDiscriminators(json);
                     var game = JsonSerializer.Deserialize<Game>(json, Options);
                     if (game is not null)
                     {
@@ -119,6 +120,7 @@ namespace RagNext.Designer.Avalonia.Services
 
                 attemptedPath = LegacyFilePath;
                 var legacyJson = await File.ReadAllTextAsync(LegacyFilePath).ConfigureAwait(false);
+                legacyJson = ActionStep.NormalizeLegacyDiscriminators(legacyJson);
                 var legacyGame = JsonSerializer.Deserialize<Game>(legacyJson, Options);
                 if (legacyGame is not null)
                 {
@@ -143,6 +145,7 @@ namespace RagNext.Designer.Avalonia.Services
                 return null;
 
             var json = await File.ReadAllTextAsync(candidate).ConfigureAwait(false);
+            json = ActionStep.NormalizeLegacyDiscriminators(json);
             var game = JsonSerializer.Deserialize<Game>(json, Options);
             if (game is not null)
             {

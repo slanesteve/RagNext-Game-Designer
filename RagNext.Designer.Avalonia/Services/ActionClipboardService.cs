@@ -36,9 +36,10 @@ namespace RagNext.Designer.Avalonia.Services
 
             try
             {
+                var normalizedJson = ActionStep.NormalizeLegacyDiscriminators(CopiedNodeJson);
                 if (CopiedNodeType == "Action")
                 {
-                    var action = JsonSerializer.Deserialize<RagsCore.Models.Action>(CopiedNodeJson, JsonOptions);
+                    var action = JsonSerializer.Deserialize<RagsCore.Models.Action>(normalizedJson, JsonOptions);
                     if (action != null)
                     {
                         var prop = action.GetType().GetProperty("Id");
@@ -51,7 +52,7 @@ namespace RagNext.Designer.Avalonia.Services
                 }
                 else if (CopiedNodeType == "ActionStep")
                 {
-                    var step = JsonSerializer.Deserialize<ActionStep>(CopiedNodeJson, JsonOptions);
+                    var step = JsonSerializer.Deserialize<ActionStep>(normalizedJson, JsonOptions);
                     return step;
                 }
             }

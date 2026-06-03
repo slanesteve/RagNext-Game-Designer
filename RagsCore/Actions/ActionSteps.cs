@@ -27,13 +27,9 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(VariableComparisonToVariableCondition), "var.compareVar")]
     [JsonDerivedType(typeof(IsRoomExitLockedCondition), "room.isExitLocked")]
     [JsonDerivedType(typeof(CharacterAttributeCheckCondition), "char.attributeCheck")]
-    [JsonDerivedType(typeof(CharacterAttributeCheckCondition), "char.customPropertyCheck")]
     [JsonDerivedType(typeof(ItemAttributeCheckCondition), "item.attributeCheck")]
-    [JsonDerivedType(typeof(ItemAttributeCheckCondition), "item.customPropertyCheck")]
     [JsonDerivedType(typeof(PlayerAttributeCheckCondition), "player.attributeCheck")]
-    [JsonDerivedType(typeof(PlayerAttributeCheckCondition), "player.customPropertyCheck")]
     [JsonDerivedType(typeof(RoomAttributeCheckCondition), "room.attributeCheck")]
-    [JsonDerivedType(typeof(RoomAttributeCheckCondition), "room.customPropertyCheck")]
     [JsonDerivedType(typeof(TimerActiveCondition), "timer.isActive")]
     // Commands
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
@@ -83,6 +79,16 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SetItemAttributeCommand), "item.setAttribute")]
     public abstract class ActionStep
     {
+        public static string NormalizeLegacyDiscriminators(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return json;
+            return json
+                .Replace("\"char.customPropertyCheck\"", "\"char.attributeCheck\"")
+                .Replace("\"item.customPropertyCheck\"", "\"item.attributeCheck\"")
+                .Replace("\"player.customPropertyCheck\"", "\"player.attributeCheck\"")
+                .Replace("\"room.customPropertyCheck\"", "\"room.attributeCheck\"");
+        }
+
         public abstract ActionStepKind Kind { get; }
         // Optional user label common to both
         public string? Label { get; set; }

@@ -435,6 +435,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                 var bytes = Convert.FromBase64String(cleanBase64);
                 string json = Encoding.UTF8.GetString(bytes);
+                json = ActionStep.NormalizeLegacyDiscriminators(json);
 
                 var settings = new JsonSerializerOptions(JsonSerializerDefaults.Web)
                 {
