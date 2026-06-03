@@ -83,7 +83,8 @@ namespace RagNext.Designer.Avalonia.Services
                 t.IntervalSeconds,
                 t.IsActive,
                 t.IsRepeating,
-                Nodes           = t.Nodes.ToList()
+                Nodes           = t.Nodes.ToList(),
+                Attributes      = t.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
             }).ToList(),
             SplashScreen = game.SplashScreen != null ? new
             {
@@ -121,7 +122,8 @@ namespace RagNext.Designer.Avalonia.Services
             // Avoid circular reference: store room ID, not the full Room object
             StartingRoomId    = p.StartingRoom?.Id.ToString(),
             Inventory         = p.Inventory.Select(o => BuildObjectDto(o)).ToList(),
-            Actions           = p.Actions.Select(a => BuildActionDto(a)).ToList()
+            Actions           = p.Actions.Select(a => BuildActionDto(a)).ToList(),
+            Attributes        = p.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
         };
 
         private static object BuildRoomDto(Room r) => new
@@ -133,7 +135,8 @@ namespace RagNext.Designer.Avalonia.Services
             Exits             = r.Exits.ToDictionary(k => k.Key, v => v.Value.ToString()),
             LockedExits       = r.LockedExits.ToDictionary(k => k.Key, v => v.Value),
             ObjectIds         = r.ObjectIds.Select(id => id.ToString()).ToList(),
-            Actions           = r.Actions.Select(a => BuildActionDto(a)).ToList()
+            Actions           = r.Actions.Select(a => BuildActionDto(a)).ToList(),
+            Attributes        = r.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
         };
 
         private static object BuildObjectDto(GameObject o) => new
@@ -152,7 +155,8 @@ namespace RagNext.Designer.Avalonia.Services
             Inventory         = o is Character ch
                                 ? ch.Inventory.Select(i => BuildObjectDto(i)).ToList()
                                 : new List<object>(),
-            Properties        = o.Properties
+            Properties        = o.Properties,
+            Attributes        = o.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
         };
 
         private static object BuildActionDto(RagsCore.Models.Action a) => new

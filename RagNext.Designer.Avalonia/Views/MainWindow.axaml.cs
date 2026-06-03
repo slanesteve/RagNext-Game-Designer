@@ -1258,8 +1258,12 @@ namespace RagNext.Designer.Avalonia.Views
             var vm = DataContext as MainWindowViewModel;
             if (vm == null) return;
 
-            var prompt = await PromptDialog.ShowAsync(this, "🎨 Generate Portrait with AI", $"Enter a visual prompt for the {dropType.ToLower()}:");
-            if (string.IsNullOrWhiteSpace(prompt)) return;
+            var promptResult = await GenerateImageDialog.ShowAsync(this, "🎨 Generate Portrait with AI", $"Enter a visual prompt for the {dropType.ToLower()}:");
+            if (promptResult == null || promptResult.IsCancelled || string.IsNullOrWhiteSpace(promptResult.Prompt)) return;
+
+            string prompt = promptResult.Prompt;
+            int width = promptResult.Width;
+            int height = promptResult.Height;
 
             string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".png");
             try
@@ -1281,8 +1285,56 @@ namespace RagNext.Designer.Avalonia.Views
                 if (string.Equals(provider, "Pollinations.ai", StringComparison.OrdinalIgnoreCase))
                 {
                     var encodedPrompt = Uri.EscapeDataString(prompt);
-                    var url = $"https://image.pollinations.ai/prompt/{encodedPrompt}?width=512&height=512&model={Uri.EscapeDataString(model)}&nologo=true&enhance=true";
+                    var url = $"https://image.pollinations.ai/prompt/{encodedPrompt}?width={width}&height={height}&model={Uri.EscapeDataString(model)}&nologo=true&enhance=true";
                     imageBytes = await client.GetByteArrayAsync(url);
+                }
+                else if (string.Equals(provider, "Local Stable Diffusion", StringComparison.OrdinalIgnoreCase))
+                {
+                    var resolvedEndpoint = endpoint;
+                    if (!string.IsNullOrWhiteSpace(port) && port != "0")
+                    {
+                        resolvedEndpoint = AppendPortToEndpoint(endpoint, port);
+                    }
+                    var url = resolvedEndpoint.TrimEnd('/') + "/sdapi/v1/txt2img";
+
+                    if (!string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    }
+
+                    var requestBody = new
+                    {
+                        prompt = prompt,
+                        width = width,
+                        height = height,
+                        steps = 20
+                    };
+
+                    var requestJson = JsonSerializer.Serialize(requestBody);
+                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(url, requestContent);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Image generation failed: {response.StatusCode} - {responseJson}");
+                    }
+
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("images", out var imagesArray) && imagesArray.ValueKind == JsonValueKind.Array && imagesArray.GetArrayLength() > 0)
+                    {
+                        var base64Str = imagesArray[0].GetString();
+                        if (string.IsNullOrWhiteSpace(base64Str))
+                        {
+                            throw new Exception("No image data returned from local Stable Diffusion.");
+                        }
+                        imageBytes = Convert.FromBase64String(base64Str);
+                    }
+                    else
+                    {
+                        throw new Exception("Invalid local Stable Diffusion API response structure.");
+                    }
                 }
                 else
                 {
@@ -1303,7 +1355,7 @@ namespace RagNext.Designer.Avalonia.Views
                         prompt = prompt,
                         model = model,
                         n = 1,
-                        size = "512x512"
+                        size = $"{width}x{height}"
                     };
 
                     var requestJson = JsonSerializer.Serialize(requestBody);
@@ -2195,6 +2247,152 @@ namespace RagNext.Designer.Avalonia.Views
             Id = id;
             Name = name;
             IsChecked = isChecked;
+        }
+    }
+    public class GenerateImageResult
+    {
+        public bool IsCancelled { get; set; }
+        public string Prompt { get; set; } = "";
+        public int Width { get; set; } = 512;
+        public int Height { get; set; } = 512;
+    }
+
+    public static class GenerateImageDialog
+    {
+        public static Task<GenerateImageResult> ShowAsync(Window parent, string title, string message)
+        {
+            var tcs = new TaskCompletionSource<GenerateImageResult>();
+            var dialog = new Window
+            {
+                Title = title,
+                Width = 450,
+                Height = 240,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Background = global::Avalonia.Media.Brush.Parse("#14141E"),
+                Foreground = global::Avalonia.Media.Brushes.White,
+                Padding = new global::Avalonia.Thickness(20)
+            };
+
+            var stack = new StackPanel { Spacing = 12 };
+            stack.Children.Add(new TextBlock { Text = message, Foreground = global::Avalonia.Media.Brushes.Gray });
+
+            var input = new TextBox
+            {
+                PlaceholderText = "Enter visual prompt (e.g. realistic warrior, dark fantasy)...",
+                Background = global::Avalonia.Media.Brush.Parse("#13131F"),
+                Foreground = global::Avalonia.Media.Brushes.White,
+                BorderBrush = global::Avalonia.Media.Brush.Parse("#33334A")
+            };
+            stack.Children.Add(input);
+
+            // Size Selector Stack
+            var sizeStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Left };
+            sizeStack.Children.Add(new TextBlock { Text = "Size:", VerticalAlignment = VerticalAlignment.Center, Foreground = global::Avalonia.Media.Brushes.Gray });
+
+            var sizeCombo = new ComboBox
+            {
+                Background = global::Avalonia.Media.Brush.Parse("#13131F"),
+                Foreground = global::Avalonia.Media.Brushes.White,
+                BorderBrush = global::Avalonia.Media.Brush.Parse("#33334A"),
+                Width = 200
+            };
+
+            var sizes = new[]
+            {
+                "512 x 512 (Square)",
+                "1024 x 1024 (HD Square)",
+                "768 x 512 (Landscape)",
+                "512 x 768 (Portrait)",
+                "1280 x 720 (HD Landscape)",
+                "720 x 1280 (HD Portrait)",
+                "Custom..."
+            };
+            sizeCombo.ItemsSource = sizes;
+            sizeCombo.SelectedIndex = 0;
+            sizeStack.Children.Add(sizeCombo);
+            stack.Children.Add(sizeStack);
+
+            // Custom Size Inputs (Grid)
+            var customSizeGrid = new Grid
+            {
+                IsVisible = false,
+                ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,*"),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 5, 0, 5)
+            };
+
+            var wLabel = new TextBlock { Text = "Width:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,5,0), Foreground = global::Avalonia.Media.Brushes.Gray };
+            var wInput = new NumericUpDown { Value = 512, Minimum = 64, Maximum = 2048, Increment = 64, Width = 110, Margin = new Thickness(0,0,15,0) };
+            var hLabel = new TextBlock { Text = "Height:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,5,0), Foreground = global::Avalonia.Media.Brushes.Gray };
+            var hInput = new NumericUpDown { Value = 512, Minimum = 64, Maximum = 2048, Increment = 64, Width = 110 };
+
+            Grid.SetColumn(wLabel, 0);
+            Grid.SetColumn(wInput, 1);
+            Grid.SetColumn(hLabel, 2);
+            Grid.SetColumn(hInput, 3);
+
+            customSizeGrid.Children.Add(wLabel);
+            customSizeGrid.Children.Add(wInput);
+            customSizeGrid.Children.Add(hLabel);
+            customSizeGrid.Children.Add(hInput);
+
+            stack.Children.Add(customSizeGrid);
+
+            // Event to show/hide custom sizes
+            sizeCombo.SelectionChanged += (s, e) =>
+            {
+                bool isCustom = sizeCombo.SelectedItem as string == "Custom...";
+                customSizeGrid.IsVisible = isCustom;
+                dialog.Height = isCustom ? 300 : 240;
+            };
+
+            // Buttons
+            var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 10, Margin = new Thickness(0, 10, 0, 0) };
+            var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
+            var cancelBtn = new Button { Content = "Cancel", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#2B2B3A"), Foreground = global::Avalonia.Media.Brushes.White };
+
+            void Submit()
+            {
+                var promptVal = input.Text ?? "";
+                int w = 512;
+                int h = 512;
+
+                var selectedOption = sizeCombo.SelectedItem as string;
+                if (selectedOption == "512 x 512 (Square)") { w = 512; h = 512; }
+                else if (selectedOption == "1024 x 1024 (HD Square)") { w = 1024; h = 1024; }
+                else if (selectedOption == "768 x 512 (Landscape)") { w = 768; h = 512; }
+                else if (selectedOption == "512 x 768 (Portrait)") { w = 512; h = 768; }
+                else if (selectedOption == "1280 x 720 (HD Landscape)") { w = 1280; h = 720; }
+                else if (selectedOption == "720 x 1280 (HD Portrait)") { w = 720; h = 1280; }
+                else if (selectedOption == "Custom...")
+                {
+                    w = (int)(wInput.Value ?? 512);
+                    h = (int)(hInput.Value ?? 512);
+                }
+
+                tcs.SetResult(new GenerateImageResult { IsCancelled = false, Prompt = promptVal, Width = w, Height = h });
+                dialog.Close();
+            }
+
+            okBtn.Click += (s, e) => Submit();
+            cancelBtn.Click += (s, e) => { tcs.SetResult(new GenerateImageResult { IsCancelled = true }); dialog.Close(); };
+
+            input.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Enter)
+                {
+                    e.Handled = true;
+                    Submit();
+                }
+            };
+
+            buttons.Children.Add(okBtn);
+            buttons.Children.Add(cancelBtn);
+            stack.Children.Add(buttons);
+
+            dialog.Content = stack;
+            dialog.ShowDialog(parent);
+            return tcs.Task;
         }
     }
 

@@ -284,12 +284,29 @@
     {
       "name": "Item: Move To Inventory",
       "category": "Item",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        }
+      ]
     },
     {
       "name": "Item: Move Inside Object",
       "category": "Item",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        },
+        {
+          "label": "Container Object",
+          "controlType": "ComboBox",
+          "dataType": "GameObject"
+        }
+      ]
     },
     {
       "name": "Item: Move To Room",

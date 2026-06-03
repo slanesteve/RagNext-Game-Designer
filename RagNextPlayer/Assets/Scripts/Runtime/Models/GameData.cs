@@ -58,6 +58,7 @@ namespace RagNextPlayer.Runtime.Models
         public string? StartingRoomId   { get; set; }
         public List<GameObjectData>  Inventory  { get; set; } = new List<GameObjectData>();
         public List<ActionData>      Actions    { get; set; } = new List<ActionData>();
+        public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
 
     // ── Room ──────────────────────────────────────────────────────────────────
@@ -71,6 +72,7 @@ namespace RagNextPlayer.Runtime.Models
         public Dictionary<string, bool>   LockedExits { get; set; } = new Dictionary<string, bool>();
         public List<string>               ObjectIds { get; set; } = new List<string>();
         public List<ActionData>           Actions   { get; set; } = new List<ActionData>();
+        public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
 
     // ── Game Object / Character ───────────────────────────────────────────────
@@ -89,6 +91,7 @@ namespace RagNextPlayer.Runtime.Models
         public bool                        ContainerOpen      { get; set; }
         public List<string>                ContainedObjectIds { get; set; } = new List<string>();
         public string?                     StartingRoomId     { get; set; }
+        public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -248,6 +251,7 @@ namespace RagNextPlayer.Runtime.Models
 
         [JsonIgnore]
         public float ElapsedSeconds { get; set; }
+        public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
 
     // ── Supporting ────────────────────────────────────────────────────────────

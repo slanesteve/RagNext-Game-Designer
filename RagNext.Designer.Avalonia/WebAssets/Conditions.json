@@ -1,22 +1,6 @@
 {
   "conditions": [
     {
-      "name": "Additional Data Check",
-      "category": "General",
-      "inputs": [
-        {
-          "label": "Data Key",
-          "controlType": "Text",
-          "dataType": "String"
-        },
-        {
-          "label": "Expected Value",
-          "controlType": "Text",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
       "name": "Character: Custom Property Check",
       "category": "Character",
       "inputs": [

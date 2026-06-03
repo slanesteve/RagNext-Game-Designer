@@ -568,6 +568,57 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case SetCharacterAttributeCommandData c:
+                    {
+                        var resolvedChar = ctx.Resolve(c.CharacterId);
+                        var resolvedVal = ctx.Resolve(c.Value);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
+                        if (character == null)
+                        {
+                            character = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (character is not null)
+                        {
+                            character.Attributes[c.AttributeName] = resolvedVal;
+                            ctx.SetVariable($"char.{resolvedChar}.{c.AttributeName}", resolvedVal);
+                        }
+                    }
+                    break;
+
+                case SetPlayerAttributeCommandData c:
+                    {
+                        var resolvedVal = ctx.Resolve(c.Value);
+                        ctx.Player.Attributes[c.AttributeName] = resolvedVal;
+                        ctx.SetVariable($"player.{c.AttributeName}", resolvedVal);
+                    }
+                    break;
+
+                case SetTimerAttributeCommandData c:
+                    {
+                        var resolvedTimer = ctx.Resolve(c.TimerId);
+                        var resolvedVal = ctx.Resolve(c.Value);
+                        var timer = ctx.Game.Timers.Find(t => string.Equals(t.Name, resolvedTimer, StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id, resolvedTimer, StringComparison.OrdinalIgnoreCase));
+                        if (timer is not null)
+                        {
+                            timer.Attributes[c.AttributeName] = resolvedVal;
+                            ctx.SetVariable($"timer.{resolvedTimer}.{c.AttributeName}", resolvedVal);
+                        }
+                    }
+                    break;
+
+                case SetItemAttributeCommandData c:
+                    {
+                        var resolvedItem = ctx.Resolve(c.ItemId);
+                        var resolvedVal = ctx.Resolve(c.Value);
+                        var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase));
+                        if (obj is not null)
+                        {
+                            obj.Attributes[c.AttributeName] = resolvedVal;
+                            ctx.SetVariable($"obj.{resolvedItem}.{c.AttributeName}", resolvedVal);
+                        }
+                    }
+                    break;
+
                 default:
                     Debug.LogWarning($"[ActionExecutor] Unhandled command type: {cmd.Type}");
                     break;

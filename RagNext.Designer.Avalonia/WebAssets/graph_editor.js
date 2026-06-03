@@ -116,7 +116,6 @@ const fallbackDiscriminators = {
     "endthegame": "general.endGame",
     "itemopencontainer": "general.openContainer",
     "itemclosecontainer": "general.closeContainer",
-    "additionaldatacheck": "general.additionalDataCheck",
     "charactercustompropertycheck": "char.customPropertyCheck",
     "charactergender": "char.gender",
     "characterinroom": "char.inRoom",
@@ -1336,6 +1335,36 @@ function addNewConditionNode(x = null, y = null) {
     return node;
 }
 
+function getAttributesForNode(node) {
+    const type = node.type === 'command' ? node.data.commandType : node.data.conditionType;
+    let attrs = [];
+    
+    if (type === 'char.setAttribute' || type === 'Dialogue: Damage / Heal' || type === 'Dialogue: Set State' || type === 'character.setAttribute' || type === 'SetCharacterAttributeCommandData') {
+        const charId = getPropertyValue(node.data, "Character");
+        if (charId && catalogs.Characters) {
+            const char = catalogs.Characters.find(c => c.Id === charId);
+            if (char && char.Attributes) attrs = char.Attributes;
+        }
+    } else if (type === 'player.setAttribute' || type === 'SetPlayerAttributeCommandData') {
+        if (catalogs.Player && catalogs.Player.Attributes) {
+            attrs = catalogs.Player.Attributes;
+        }
+    } else if (type === 'timer.setAttribute' || type === 'SetTimerAttributeCommandData') {
+        const timerId = getPropertyValue(node.data, "Timer");
+        if (timerId && catalogs.Timers) {
+            const timer = catalogs.Timers.find(t => t.Id === timerId || t.Name === timerId);
+            if (timer && timer.Attributes) attrs = timer.Attributes;
+        }
+    } else if (type === 'item.setAttribute' || type === 'SetItemAttributeCommandData') {
+        const itemId = getPropertyValue(node.data, "Item") || getPropertyValue(node.data, "Object");
+        if (itemId && catalogs.GameObjects) {
+            const obj = catalogs.GameObjects.find(o => o.Id === itemId);
+            if (obj && obj.Attributes) attrs = obj.Attributes;
+        }
+    }
+    return attrs;
+}
+
 function refreshCommandFields(node) {
     const fieldsContainer = document.getElementById(`${node.id}_fields`);
     if (!fieldsContainer) return;
@@ -1530,7 +1559,7 @@ function refreshCommandFields(node) {
             listWrapper.appendChild(addGroup);
 
             inputElement = listWrapper;
-        } else if (inputSchema.controlType === 'ComboBox' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'PromptName') {
+        } else if (inputSchema.controlType === 'ComboBox' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'PromptName') {
             // Container for both controls
             const fieldWrapper = document.createElement('div');
             fieldWrapper.className = 'toggle-field-wrapper';
@@ -1576,6 +1605,10 @@ function refreshCommandFields(node) {
                     return true;
                 });
             }
+            else if (inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') {
+                const attrs = getAttributesForNode(node);
+                optionsList = attrs.map(a => ({ Id: a, Name: a }));
+            }
             else if (inputSchema.label === 'Gender') {
                 optionsList = [
                     { Id: "Male", Name: "Male" },
@@ -1616,7 +1649,7 @@ function refreshCommandFields(node) {
                 const o = document.createElement('option');
                 const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
                 const idVal = opt.Id !== undefined ? opt.Id : opt.id;
-                if (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName') {
+                if (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') {
                     o.value = nameVal;
                     o.innerText = nameVal;
                 } else {
@@ -1634,7 +1667,7 @@ function refreshCommandFields(node) {
             const existsInOptions = optionsList.some(opt => {
                 const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
                 const idVal = opt.Id !== undefined ? opt.Id : opt.id;
-                return (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName') ? nameVal === initialVal : idVal === initialVal;
+                return (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') ? nameVal === initialVal : idVal === initialVal;
             });
             let isExprMode = (initialVal && (initialVal.includes('{') || initialVal.includes('}') || !existsInOptions));
 
@@ -1681,7 +1714,7 @@ function refreshCommandFields(node) {
                 aliases.forEach(alias => {
                     node.data[alias] = pickerSelect.value;
                 });
-                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType') {
+                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer') {
                     refreshCommandFields(node);
                 }
                 triggerAutoSave();
@@ -1694,7 +1727,7 @@ function refreshCommandFields(node) {
                 aliases.forEach(alias => {
                     node.data[alias] = textInput.value;
                 });
-                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType') {
+                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer') {
                     refreshCommandFields(node);
                 }
                 triggerAutoSave();
@@ -1924,7 +1957,11 @@ function buildNodeJsonWithoutNext(node) {
                 
                 // Override property mapping for C# commands which expect ObjectId/ContainerObjectId
                 if (inp.label === 'Item') {
-                    primaryCsharpProp = 'ObjectId';
+                    if (node.data.commandType && node.data.commandType.startsWith('item.')) {
+                        primaryCsharpProp = 'ItemId';
+                    } else {
+                        primaryCsharpProp = 'ObjectId';
+                    }
                 } else if (inp.label === 'Container Object' && node.data.commandType === 'object.moveInsideObject') {
                     primaryCsharpProp = 'ContainerObjectId';
                 }

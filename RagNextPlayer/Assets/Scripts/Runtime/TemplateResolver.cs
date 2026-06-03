@@ -75,6 +75,11 @@ namespace RagNextPlayer.Runtime
                         case "portraitimagepath":
                         case "portraitimage":
                             return game.Player?.PortraitImagePath;
+                        case "attributes":
+                        case "attribute":
+                            if (parts.Length < 3 || game.Player?.Attributes == null) return null;
+                            game.Player.Attributes.TryGetValue(parts[2].Trim(), out var attrVal);
+                            return attrVal;
                         default:            return null;
                     }
 
@@ -93,6 +98,11 @@ namespace RagNextPlayer.Runtime
                         case "portraitimagepath":
                         case "portraitimage":
                             return room.PortraitImagePath;
+                        case "attributes":
+                        case "attribute":
+                            if (parts.Length < 3 || room.Attributes == null) return null;
+                            room.Attributes.TryGetValue(parts[2].Trim(), out var attrVal);
+                            return attrVal;
                         default:            return null;
                     }
                 }
@@ -108,6 +118,7 @@ namespace RagNextPlayer.Runtime
                     string? description = null;
                     string? portraitImagePath = null;
                     System.Collections.Generic.Dictionary<string, string>? properties = null;
+                    System.Collections.Generic.Dictionary<string, string>? attributes = null;
 
                     if (entity is GameObjectData go)
                     {
@@ -115,18 +126,21 @@ namespace RagNextPlayer.Runtime
                         description = go.Description;
                         portraitImagePath = go.PortraitImagePath;
                         properties = go.Properties;
+                        attributes = go.Attributes;
                     }
                     else if (entity is PlayerData pl)
                     {
                         name = pl.Name;
                         description = pl.Description;
                         portraitImagePath = pl.PortraitImagePath;
+                        attributes = pl.Attributes;
                     }
                     else if (entity is RoomData rm)
                     {
                         name = rm.Name;
                         description = rm.Description;
                         portraitImagePath = rm.PortraitImagePath;
+                        attributes = rm.Attributes;
                     }
 
                     if (parts.Length < 2) return name;
@@ -139,6 +153,11 @@ namespace RagNextPlayer.Runtime
                         case "portraitimagepath":
                         case "portraitimage":
                             return portraitImagePath;
+                        case "attributes":
+                        case "attribute":
+                            if (parts.Length < 3 || attributes == null) return null;
+                            attributes.TryGetValue(parts[2].Trim(), out var attrVal);
+                            return attrVal;
                         default:
                             if (properties is not null && properties.TryGetValue(parts[1], out var prop))
                             {
