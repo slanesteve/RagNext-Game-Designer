@@ -67,6 +67,10 @@ namespace RagNextPlayer.Runtime
                     if (parts.Length < 2) return game.Player?.Name;
                     switch (parts[1].Trim().ToLowerInvariant())
                     {
+                        case "id":          return game.Player?.Id;
+                        case "currentroom":
+                        case "currentroomid":
+                            return currentRoom?.Id ?? FindVariable(game, "player.currentRoomId");
                         case "name":        return game.Player?.Name;
                         case "gender":      return game.Player?.Gender;
                         case "description": return game.Player?.Description;
@@ -91,6 +95,7 @@ namespace RagNextPlayer.Runtime
                     if (parts.Length < 2) return room.Name;
                     switch (parts[1].Trim().ToLowerInvariant())
                     {
+                        case "id":          return room.Id;
                         case "name":        return room.Name;
                         case "description": return room.Description;
                         case "portrait":
@@ -114,6 +119,7 @@ namespace RagNextPlayer.Runtime
                     var entity = focusEntity;
                     if (entity is null) return null;
 
+                    string? id = null;
                     string? name = null;
                     string? description = null;
                     string? portraitImagePath = null;
@@ -122,6 +128,7 @@ namespace RagNextPlayer.Runtime
 
                     if (entity is GameObjectData go)
                     {
+                        id = go.Id;
                         name = go.Name;
                         description = go.Description;
                         portraitImagePath = go.PortraitImagePath;
@@ -130,6 +137,7 @@ namespace RagNextPlayer.Runtime
                     }
                     else if (entity is PlayerData pl)
                     {
+                        id = pl.Id;
                         name = pl.Name;
                         description = pl.Description;
                         portraitImagePath = pl.PortraitImagePath;
@@ -137,6 +145,7 @@ namespace RagNextPlayer.Runtime
                     }
                     else if (entity is RoomData rm)
                     {
+                        id = rm.Id;
                         name = rm.Name;
                         description = rm.Description;
                         portraitImagePath = rm.PortraitImagePath;
@@ -146,6 +155,7 @@ namespace RagNextPlayer.Runtime
                     if (parts.Length < 2) return name;
                     switch (parts[1].Trim().ToLowerInvariant())
                     {
+                        case "id":          return id ?? entity.GetType().GetProperty("Id")?.GetValue(entity)?.ToString();
                         case "name":        return name;
                         case "description": return description;
                         case "portrait":
