@@ -162,7 +162,8 @@ const propertyMappings = {
     "Prompt Name": ["PromptName", "promptName"],
     "Attribute Name": ["AttributeName", "attributeName"],
     "Timer": ["TimerId", "timerId", "Timer"],
-    "Function": ["FunctionId", "functionId", "Function"]
+    "Function": ["FunctionId", "functionId", "Function"],
+    "Expected Value": ["ExpectedValue", "expectedValue"]
 };
 
 function getPropertyValue(nodeData, label) {
@@ -1338,13 +1339,22 @@ function getAttributesForNode(node) {
     const type = node.type === 'command' ? node.data.commandType : node.data.conditionType;
     let attrs = [];
     
-    if (type === 'char.setAttribute' || type === 'Dialogue: Damage / Heal' || type === 'Dialogue: Set State' || type === 'character.setAttribute' || type === 'SetCharacterAttributeCommandData') {
+    if (type === 'char.setAttribute' || type === 'Dialogue: Damage / Heal' || type === 'Dialogue: Set State' || type === 'character.setAttribute' || type === 'SetCharacterAttributeCommandData' || type === 'char.attributeCheck' || type === 'CharacterAttributeCheckCondition') {
         const charId = getPropertyValue(node.data, "Character");
         if (charId && catalogs.Characters) {
             const char = catalogs.Characters.find(c => c.Id === charId);
             if (char && char.Attributes) attrs = char.Attributes;
         }
-    } else if (type === 'player.setAttribute' || type === 'SetPlayerAttributeCommandData') {
+        if (attrs.length === 0 && catalogs.Characters) {
+            const allAttrs = new Set();
+            catalogs.Characters.forEach(c => {
+                if (c.Attributes) {
+                    c.Attributes.forEach(a => allAttrs.add(a));
+                }
+            });
+            attrs = Array.from(allAttrs);
+        }
+    } else if (type === 'player.setAttribute' || type === 'SetPlayerAttributeCommandData' || type === 'player.attributeCheck' || type === 'PlayerAttributeCheckCondition') {
         if (catalogs.Player && catalogs.Player.Attributes) {
             attrs = catalogs.Player.Attributes;
         }
@@ -1354,11 +1364,35 @@ function getAttributesForNode(node) {
             const timer = catalogs.Timers.find(t => t.Id === timerId || t.Name === timerId);
             if (timer && timer.Attributes) attrs = timer.Attributes;
         }
-    } else if (type === 'item.setAttribute' || type === 'SetItemAttributeCommandData') {
+    } else if (type === 'item.setAttribute' || type === 'SetItemAttributeCommandData' || type === 'item.attributeCheck' || type === 'ItemAttributeCheckCondition') {
         const itemId = getPropertyValue(node.data, "Item") || getPropertyValue(node.data, "Object");
         if (itemId && catalogs.GameObjects) {
             const obj = catalogs.GameObjects.find(o => o.Id === itemId);
             if (obj && obj.Attributes) attrs = obj.Attributes;
+        }
+        if (attrs.length === 0 && catalogs.GameObjects) {
+            const allAttrs = new Set();
+            catalogs.GameObjects.forEach(o => {
+                if (o.Attributes) {
+                    o.Attributes.forEach(a => allAttrs.add(a));
+                }
+            });
+            attrs = Array.from(allAttrs);
+        }
+    } else if (type === 'room.attributeCheck' || type === 'RoomAttributeCheckCondition') {
+        const roomId = getPropertyValue(node.data, "Room");
+        if (roomId && catalogs.Rooms) {
+            const room = catalogs.Rooms.find(r => r.Id === roomId);
+            if (room && room.Attributes) attrs = room.Attributes;
+        }
+        if (attrs.length === 0 && catalogs.Rooms) {
+            const allAttrs = new Set();
+            catalogs.Rooms.forEach(r => {
+                if (r.Attributes) {
+                    r.Attributes.forEach(a => allAttrs.add(a));
+                }
+            });
+            attrs = Array.from(allAttrs);
         }
     }
     return attrs;
