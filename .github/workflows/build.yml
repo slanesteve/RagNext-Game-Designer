@@ -101,36 +101,33 @@ jobs:
         fi
 
         # 5. Write standard Apple Info.plist metadata
-        cat << 'EOF' > Publish/RagNext_Arm64.app/Contents/Info.plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>English</string>
-    <key>CFBundleExecutable</key>
-    <string>RagNext.Designer.Avalonia</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.slanesteve.ragnext</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>RagNext</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleVersion</key>
-    <string>1.0.0</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>10.12</string>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-</dict>
-</plist>
-EOF
+        echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '<plist version="1.0">' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '<dict>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleDevelopmentRegion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>English</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleExecutable</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>RagNext.Designer.Avalonia</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleIdentifier</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>com.slanesteve.ragnext</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleInfoDictionaryVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>6.0</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleName</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>RagNext</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundlePackageType</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>APPL</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleShortVersionString</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>1.0.0</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleSignature</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>????</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>1.0.0</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>LSMinimumSystemVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>NSHighResolutionCapable</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <true/>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '</dict>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '</plist>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
 
         # 6. Restore RagsCore back to multi-targeting temporarily (to ensure clean slate or keep it net9.0 for the next build)
         sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
@@ -155,36 +152,33 @@ EOF
         fi
 
         # 5. Write standard Apple Info.plist metadata
-        cat << 'EOF' > Publish/RagNext_Intel.app/Contents/Info.plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>English</string>
-    <key>CFBundleExecutable</key>
-    <string>RagNext.Designer.Avalonia</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.slanesteve.ragnext</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>RagNext</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleVersion</key>
-    <string>1.0.0</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>10.12</string>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-</dict>
-</plist>
-EOF
+        echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '<plist version="1.0">' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '<dict>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleDevelopmentRegion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>English</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleExecutable</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>RagNext.Designer.Avalonia</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleIdentifier</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>com.slanesteve.ragnext</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleInfoDictionaryVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>6.0</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleName</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>RagNext</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundlePackageType</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>APPL</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleShortVersionString</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>1.0.0</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleSignature</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>????</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>1.0.0</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>LSMinimumSystemVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>NSHighResolutionCapable</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <true/>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '</dict>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '</plist>' >> Publish/RagNext_Intel.app/Contents/Info.plist
 
         # 6. Restore RagsCore back to multi-targeting
         sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
