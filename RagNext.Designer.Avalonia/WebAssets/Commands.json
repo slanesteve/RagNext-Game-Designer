@@ -173,6 +173,17 @@
       ]
     },
     {
+      "name": "General: Call Function",
+      "category": "General",
+      "inputs": [
+        {
+          "label": "Function",
+          "controlType": "ComboBox",
+          "dataType": "Function"
+        }
+      ]
+    },
+    {
       "name": "Add A Comment",
       "category": "General",
       "inputs": [

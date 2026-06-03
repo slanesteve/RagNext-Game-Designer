@@ -73,6 +73,7 @@ const fallbackDiscriminators = {
     "charactersetgender": "char.setGender",
     "charactersetdisplayname": "char.setDisplayName",
     "addacomment": "general.addComment",
+    "generalcallfunction": "general.callFunction",
     "debugtext": "general.debugText",
     "displaytext": "general.displayText",
     "mediadisplaylayeredpicture": "media.displayLayeredPicture",
@@ -160,7 +161,8 @@ const propertyMappings = {
     "Store Variable": ["StoreVariableName", "storeVariableName"],
     "Prompt Name": ["PromptName", "promptName"],
     "Attribute Name": ["AttributeName", "attributeName"],
-    "Timer": ["TimerId", "timerId", "Timer"]
+    "Timer": ["TimerId", "timerId", "Timer"],
+    "Function": ["FunctionId", "functionId", "Function"]
 };
 
 function getPropertyValue(nodeData, label) {
