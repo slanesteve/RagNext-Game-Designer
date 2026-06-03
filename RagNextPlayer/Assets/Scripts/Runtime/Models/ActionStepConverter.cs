@@ -59,6 +59,15 @@ namespace RagNextPlayer.Runtime.Models
                 "char.gender"       => typeof(CharacterGenderConditionData),
                 "player.gender"     => typeof(PlayerGenderConditionData),
                 "room.isExitLocked" => typeof(IsRoomExitLockedConditionData),
+                "char.attributeCheck" => typeof(CharacterAttributeCheckConditionData),
+                "char.customPropertyCheck" => typeof(CharacterAttributeCheckConditionData),
+                "item.attributeCheck" => typeof(ItemAttributeCheckConditionData),
+                "item.customPropertyCheck" => typeof(ItemAttributeCheckConditionData),
+                "player.attributeCheck" => typeof(PlayerAttributeCheckConditionData),
+                "player.customPropertyCheck" => typeof(PlayerAttributeCheckConditionData),
+                "room.attributeCheck" => typeof(RoomAttributeCheckConditionData),
+                "room.customPropertyCheck" => typeof(RoomAttributeCheckConditionData),
+                "timer.isActive"    => typeof(TimerActiveConditionData),
 
                 // ── Commands ───────────────────────────────────────────────
                 "general.displayText"    => typeof(DisplayTextCommandData),

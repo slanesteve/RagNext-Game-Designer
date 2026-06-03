@@ -26,6 +26,15 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(ItemNotInObjectCondition), "item.notInObject")]
     [JsonDerivedType(typeof(VariableComparisonToVariableCondition), "var.compareVar")]
     [JsonDerivedType(typeof(IsRoomExitLockedCondition), "room.isExitLocked")]
+    [JsonDerivedType(typeof(CharacterAttributeCheckCondition), "char.attributeCheck")]
+    [JsonDerivedType(typeof(CharacterAttributeCheckCondition), "char.customPropertyCheck")]
+    [JsonDerivedType(typeof(ItemAttributeCheckCondition), "item.attributeCheck")]
+    [JsonDerivedType(typeof(ItemAttributeCheckCondition), "item.customPropertyCheck")]
+    [JsonDerivedType(typeof(PlayerAttributeCheckCondition), "player.attributeCheck")]
+    [JsonDerivedType(typeof(PlayerAttributeCheckCondition), "player.customPropertyCheck")]
+    [JsonDerivedType(typeof(RoomAttributeCheckCondition), "room.attributeCheck")]
+    [JsonDerivedType(typeof(RoomAttributeCheckCondition), "room.customPropertyCheck")]
+    [JsonDerivedType(typeof(TimerActiveCondition), "timer.isActive")]
     // Commands
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
@@ -124,6 +133,91 @@ namespace RagsCore.Actions
         {
             var resolved = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
             return Guid.TryParse(resolved, out var g) && ctx.CurrentRoom?.Id == g;
+        }
+    }
+
+    public sealed class CharacterAttributeCheckCondition : Condition
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string AttributeName { get; set; } = string.Empty;
+        public string ExpectedValue { get; set; } = string.Empty;
+        public override string TypeName => "Character: Attribute Check";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(ExpectedValue, ctx);
+            var resolvedAttr = RagsCore.Services.TemplateResolver.Resolve(AttributeName, ctx);
+            
+            var character = ctx.Game.Characters.FirstOrDefault(c => string.Equals(c.Id.ToString(), resolvedChar, StringComparison.OrdinalIgnoreCase));
+            if (character == null)
+            {
+                var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (obj != null)
+                {
+                    return string.Equals(CustomAttribute.GetAttribute(resolvedAttr, obj.Attributes), resolvedVal, StringComparison.OrdinalIgnoreCase);
+                }
+                return false;
+            }
+            return string.Equals(CustomAttribute.GetAttribute(resolvedAttr, character.Attributes), resolvedVal, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class ItemAttributeCheckCondition : Condition
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public string AttributeName { get; set; } = string.Empty;
+        public string ExpectedValue { get; set; } = string.Empty;
+        public override string TypeName => "Item: Attribute Check";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedItem = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(ExpectedValue, ctx);
+            var resolvedAttr = RagsCore.Services.TemplateResolver.Resolve(AttributeName, ctx);
+
+            var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolvedItem, StringComparison.OrdinalIgnoreCase));
+            return obj != null && string.Equals(CustomAttribute.GetAttribute(resolvedAttr, obj.Attributes), resolvedVal, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class PlayerAttributeCheckCondition : Condition
+    {
+        public string AttributeName { get; set; } = string.Empty;
+        public string ExpectedValue { get; set; } = string.Empty;
+        public override string TypeName => "Player: Attribute Check";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(ExpectedValue, ctx);
+            var resolvedAttr = RagsCore.Services.TemplateResolver.Resolve(AttributeName, ctx);
+            return string.Equals(CustomAttribute.GetAttribute(resolvedAttr, ctx.Player.Attributes), resolvedVal, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class RoomAttributeCheckCondition : Condition
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public string AttributeName { get; set; } = string.Empty;
+        public string ExpectedValue { get; set; } = string.Empty;
+        public override string TypeName => "Room: Attribute Check";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(ExpectedValue, ctx);
+            var resolvedAttr = RagsCore.Services.TemplateResolver.Resolve(AttributeName, ctx);
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => string.Equals(r.Id.ToString(), resolvedRoom, StringComparison.OrdinalIgnoreCase));
+            return room != null && string.Equals(CustomAttribute.GetAttribute(resolvedAttr, room.Attributes), resolvedVal, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class TimerActiveCondition : Condition
+    {
+        public string TimerId { get; set; } = string.Empty;
+        public override string TypeName => "Timer: Is Active";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolvedTimer = RagsCore.Services.TemplateResolver.Resolve(TimerId, ctx);
+            var timer = ctx.Game.Timers.FirstOrDefault(t => string.Equals(t.Name, resolvedTimer, StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id.ToString(), resolvedTimer, StringComparison.OrdinalIgnoreCase));
+            return timer != null && timer.IsActive;
         }
     }
 

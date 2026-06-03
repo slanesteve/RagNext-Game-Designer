@@ -159,7 +159,11 @@ namespace RagNextPlayer.Runtime
                             attributes.TryGetValue(parts[2].Trim(), out var attrVal);
                             return attrVal;
                         default:
-                            if (properties is not null && properties.TryGetValue(parts[1], out var prop))
+                            if (attributes is not null && attributes.TryGetValue(parts[1].Trim(), out var attrVal))
+                            {
+                                return attrVal;
+                            }
+                            if (properties is not null && properties.TryGetValue(parts[1].Trim(), out var prop))
                             {
                                 return prop;
                             }

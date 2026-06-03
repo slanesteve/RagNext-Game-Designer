@@ -1,7 +1,7 @@
 {
   "conditions": [
     {
-      "name": "Character: Custom Property Check",
+      "name": "Character: Attribute Check",
       "category": "Character",
       "inputs": [
         {
@@ -10,7 +10,7 @@
           "dataType": "Character"
         },
         {
-          "label": "Property Name",
+          "label": "Attribute Name",
           "controlType": "Text",
           "dataType": "String"
         },
@@ -54,23 +54,7 @@
       ]
     },
     {
-      "name": "Character: In Room Group",
-      "category": "Character",
-      "inputs": [
-        {
-          "label": "Character",
-          "controlType": "ComboBox",
-          "dataType": "Character"
-        },
-        {
-          "label": "Room Group",
-          "controlType": "ComboBox",
-          "dataType": "RoomGroup"
-        }
-      ]
-    },
-    {
-      "name": "Item: Custom Property Check",
+      "name": "Item: Attribute Check",
       "category": "Item",
       "inputs": [
         {
@@ -79,7 +63,7 @@
           "dataType": "Item"
         },
         {
-          "label": "Property",
+          "label": "Attribute Name",
           "controlType": "Text",
           "dataType": "String"
         },
@@ -87,22 +71,6 @@
           "label": "Expected Value",
           "controlType": "Text",
           "dataType": "String"
-        }
-      ]
-    },
-    {
-      "name": "Item: In Group",
-      "category": "Item",
-      "inputs": [
-        {
-          "label": "Item",
-          "controlType": "ComboBox",
-          "dataType": "Item"
-        },
-        {
-          "label": "Group",
-          "controlType": "ComboBox",
-          "dataType": "Group"
         }
       ]
     },
@@ -166,22 +134,6 @@
       ]
     },
     {
-      "name": "Item: In Room Group",
-      "category": "Item",
-      "inputs": [
-        {
-          "label": "Item",
-          "controlType": "ComboBox",
-          "dataType": "Item"
-        },
-        {
-          "label": "Room Group",
-          "controlType": "ComboBox",
-          "dataType": "RoomGroup"
-        }
-      ]
-    },
-    {
       "name": "Item: Not Held By Player",
       "category": "Item",
       "inputs": [
@@ -209,27 +161,11 @@
       ]
     },
     {
-      "name": "Item: State Check",
-      "category": "Item",
-      "inputs": [
-        {
-          "label": "Item",
-          "controlType": "ComboBox",
-          "dataType": "Item"
-        },
-        {
-          "label": "State",
-          "controlType": "ComboBox",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
-      "name": "Player: Custom Property Check",
+      "name": "Player: Attribute Check",
       "category": "Player",
       "inputs": [
         {
-          "label": "Property Name",
+          "label": "Attribute Name",
           "controlType": "Text",
           "dataType": "String"
         },
@@ -263,17 +199,6 @@
       ]
     },
     {
-      "name": "Player: In Room Group",
-      "category": "Player",
-      "inputs": [
-        {
-          "label": "Room Group",
-          "controlType": "ComboBox",
-          "dataType": "RoomGroup"
-        }
-      ]
-    },
-    {
       "name": "Player: In Same Room As",
       "category": "Player",
       "inputs": [
@@ -285,18 +210,7 @@
       ]
     },
     {
-      "name": "Player: Moving In Direction",
-      "category": "Player",
-      "inputs": [
-        {
-          "label": "Direction",
-          "controlType": "ComboBox",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
-      "name": "Room: Custom Property Check",
+      "name": "Room: Attribute Check",
       "category": "Room",
       "inputs": [
         {
@@ -305,7 +219,7 @@
           "dataType": "Room"
         },
         {
-          "label": "Property Name",
+          "label": "Attribute Name",
           "controlType": "Text",
           "dataType": "String"
         },
@@ -333,23 +247,13 @@
       ]
     },
     {
-      "name": "Timer: Custom Property Check",
+      "name": "Timer: Is Active",
       "category": "Timer",
       "inputs": [
         {
           "label": "Timer",
           "controlType": "ComboBox",
           "dataType": "Timer"
-        },
-        {
-          "label": "Property Name",
-          "controlType": "Text",
-          "dataType": "String"
-        },
-        {
-          "label": "Expected Value",
-          "controlType": "Text",
-          "dataType": "String"
         }
       ]
     },
@@ -392,27 +296,6 @@
           "label": "Variable B",
           "controlType": "ComboBox",
           "dataType": "Variable"
-        }
-      ]
-    },
-    {
-      "name": "Variable: Custom Property Check",
-      "category": "Variable",
-      "inputs": [
-        {
-          "label": "Variable",
-          "controlType": "ComboBox",
-          "dataType": "Variable"
-        },
-        {
-          "label": "Property Name",
-          "controlType": "Text",
-          "dataType": "String"
-        },
-        {
-          "label": "Expected Value",
-          "controlType": "Text",
-          "dataType": "String"
         }
       ]
     }

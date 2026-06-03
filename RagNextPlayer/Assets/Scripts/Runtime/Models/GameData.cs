@@ -144,6 +144,11 @@ namespace RagNextPlayer.Runtime.Models
     public class CharacterGenderConditionData             : ConditionData { public string CharacterId { get; set; } = string.Empty; public string Gender { get; set; } = "Male"; }
     public class PlayerGenderConditionData                : ConditionData { public string Gender { get; set; } = "Male"; }
     public class IsRoomExitLockedConditionData            : ConditionData { public string RoomId { get; set; } = string.Empty; public string Direction { get; set; } = string.Empty; }
+    public class CharacterAttributeCheckConditionData    : ConditionData { public string CharacterId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string ExpectedValue { get; set; } = string.Empty; }
+    public class ItemAttributeCheckConditionData         : ConditionData { public string ItemId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string ExpectedValue { get; set; } = string.Empty; }
+    public class PlayerAttributeCheckConditionData       : ConditionData { public string AttributeName { get; set; } = string.Empty; public string ExpectedValue { get; set; } = string.Empty; }
+    public class RoomAttributeCheckConditionData         : ConditionData { public string RoomId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string ExpectedValue { get; set; } = string.Empty; }
+    public class TimerActiveConditionData                : ConditionData { public string TimerId { get; set; } = string.Empty; }
 
     // ── Concrete Commands ─────────────────────────────────────────────────────
     public class DisplayTextCommandData              : CommandData { public string Text { get; set; } = string.Empty; }

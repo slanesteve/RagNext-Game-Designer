@@ -686,8 +686,56 @@ namespace RagNextPlayer.Runtime
                     (ctx.Game.Rooms.Find(r => r.Id == (string.IsNullOrWhiteSpace(c.RoomId) ? ctx.CurrentRoom?.Id : ctx.Resolve(c.RoomId)))
                         ?.LockedExits.TryGetValue(ctx.Resolve(c.Direction), out var isLocked) ?? false) && isLocked,
 
+                CharacterAttributeCheckConditionData c =>
+                    EvaluateAttribute(
+                        ctx.Game.Characters.Find(ch => string.Equals(ch.Id, ctx.Resolve(c.CharacterId), StringComparison.OrdinalIgnoreCase)) ??
+                        ctx.Game.Objects.Find(o => string.Equals(o.Id, ctx.Resolve(c.CharacterId), StringComparison.OrdinalIgnoreCase)) as object,
+                        ctx.Resolve(c.AttributeName),
+                        ctx.Resolve(c.ExpectedValue)),
+
+                ItemAttributeCheckConditionData c =>
+                    EvaluateAttribute(
+                        ctx.Game.Objects.Find(o => string.Equals(o.Id, ctx.Resolve(c.ItemId), StringComparison.OrdinalIgnoreCase)),
+                        ctx.Resolve(c.AttributeName),
+                        ctx.Resolve(c.ExpectedValue)),
+
+                PlayerAttributeCheckConditionData c =>
+                    EvaluateAttribute(
+                        ctx.Player,
+                        ctx.Resolve(c.AttributeName),
+                        ctx.Resolve(c.ExpectedValue)),
+
+                RoomAttributeCheckConditionData c =>
+                    EvaluateAttribute(
+                        ctx.Game.Rooms.Find(r => string.Equals(r.Id, ctx.Resolve(c.RoomId), StringComparison.OrdinalIgnoreCase)),
+                        ctx.Resolve(c.AttributeName),
+                        ctx.Resolve(c.ExpectedValue)),
+
+                TimerActiveConditionData c =>
+                    ctx.Game.Timers.Find(t => string.Equals(t.Name, ctx.Resolve(c.TimerId), StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id, ctx.Resolve(c.TimerId), StringComparison.OrdinalIgnoreCase))
+                        ?.IsActive ?? false,
+
                 _ => false
             };
+        }
+
+        private static bool EvaluateAttribute(object? entity, string attributeName, string expectedValue)
+        {
+            if (entity is null) return false;
+            System.Collections.Generic.Dictionary<string, string>? attributes = null;
+            if (entity is GameObjectData go) attributes = go.Attributes;
+            else if (entity is PlayerData pl) attributes = pl.Attributes;
+            else if (entity is RoomData rm) attributes = rm.Attributes;
+
+            if (attributes is null) return false;
+            foreach (var kvp in attributes)
+            {
+                if (string.Equals(kvp.Key, attributeName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return string.Equals(kvp.Value, expectedValue, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            return string.IsNullOrEmpty(expectedValue);
         }
 
         private static void RemoveObjectFromEverywhere(string oId, GameExecutionContext ctx)

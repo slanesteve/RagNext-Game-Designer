@@ -214,6 +214,11 @@ namespace RagsCore.Services
                     }
                     return null;
                 default:
+                    if (attributes is System.Collections.ObjectModel.ObservableCollection<CustomAttribute> defaultAttrs)
+                    {
+                        var directVal = CustomAttribute.GetAttribute(parts[1], defaultAttrs);
+                        if (directVal != null) return directVal;
+                    }
                     return null;
             }
         }
