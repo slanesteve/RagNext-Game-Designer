@@ -96,6 +96,11 @@ namespace RagsCore.Services
             var prop = parts[1].ToLowerInvariant();
             switch (prop)
             {
+                case "id":
+                    return ctx.Player.Id.ToString();
+                case "currentroom":
+                case "currentroomid":
+                    return ctx.CurrentRoom?.Id.ToString() ?? ctx.GetVariable("player.currentRoomId")?.Value;
                 case "name":
                     return ctx.Player.Name;
                 case "description":
@@ -127,6 +132,8 @@ namespace RagsCore.Services
             var prop = parts[1].ToLowerInvariant();
             switch (prop)
             {
+                case "id":
+                    return room.Id.ToString();
                 case "name":
                     return room.Name;
                 case "description":
@@ -192,6 +199,12 @@ namespace RagsCore.Services
             var prop = parts[1].ToLowerInvariant();
             switch (prop)
             {
+                case "id":
+                    if (focus is GameObject goObj) return goObj.Id.ToString();
+                    if (focus is Player plObj) return plObj.Id.ToString();
+                    if (focus is Room rmObj) return rmObj.Id.ToString();
+                    if (focus is Character chObj) return chObj.Id.ToString();
+                    return focus.GetType().GetProperty("Id")?.GetValue(focus)?.ToString();
                 case "name":
                     return name;
                 case "description":

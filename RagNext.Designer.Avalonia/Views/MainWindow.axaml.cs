@@ -2142,6 +2142,8 @@ namespace RagNext.Designer.Avalonia.Views
                     list.Add(new AutocompleteItem { Token = "this.Name", DisplayToken = "{this.Name}", TypeName = "Current Object Property", Description = "Name of this object." });
                     list.Add(new AutocompleteItem { Token = "this.Description", DisplayToken = "{this.Description}", TypeName = "Current Object Property", Description = "Description of this object." });
                     list.Add(new AutocompleteItem { Token = "this.portrait", DisplayToken = "{this.portrait}", TypeName = "Current Object Property", Description = "Portrait or image path." });
+                    list.Add(new AutocompleteItem { Token = "room.Id", DisplayToken = "{room.Id}", TypeName = "Current Room Property", Description = "Unique ID of the current room." });
+                    list.Add(new AutocompleteItem { Token = "player.currentroom", DisplayToken = "{player.currentroom}", TypeName = "Player Property", Description = "ID of the room the player is currently in." });
 
                     // Add local attributes on the current context object (only attributes belonging to "this" context)
                     var attrProp = textBox.DataContext?.GetType().GetProperty("Attributes");

@@ -2425,6 +2425,8 @@ function getAutocompleteSuggestions(triggerChar) {
         list.push({ token: "this.Name", typeName: "Current Object Property", desc: "Name of this object." });
         list.push({ token: "this.Description", typeName: "Current Object Property", desc: "Description of this object." });
         list.push({ token: "this.portrait", typeName: "Current Object Property", desc: "Portrait or image path." });
+        list.push({ token: "room.Id", typeName: "Current Room Property", desc: "Unique ID of the current room." });
+        list.push({ token: "player.currentroom", typeName: "Player Property", desc: "ID of the room the player is currently in." });
         
         // Populate this.attributes.* only from catalogs.Owner.Attributes (matching context of the active action owner)
         if (catalogs.Owner && catalogs.Owner.Attributes) {
