@@ -92,13 +92,17 @@ jobs:
         
         # 3. Create macOS .app Bundle Structure for Arm64
         mkdir -p Publish/RagNext_Arm64.app/Contents/MacOS
+        mkdir -p Publish/RagNext_Arm64.app/Contents/Resources
         
         # 4. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Arm64/* Publish/RagNext_Arm64.app/Contents/MacOS/
         cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets
         if [ -d "Templates" ]; then
-          cp -R Templates Publish/RagNext_Arm64.app/Contents/MacOS/Templates
+          cp -R Templates Publish/RagNext_Arm64.app/Contents/Resources/Templates
         fi
+
+        # Ensure core executable has +x execution rights
+        chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext.Designer.Avalonia
 
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -143,13 +147,17 @@ jobs:
         
         # 3. Create macOS .app Bundle Structure for Intel x64
         mkdir -p Publish/RagNext_Intel.app/Contents/MacOS
+        mkdir -p Publish/RagNext_Intel.app/Contents/Resources
         
         # 4. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Intel/* Publish/RagNext_Intel.app/Contents/MacOS/
         cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Intel.app/Contents/MacOS/WebAssets
         if [ -d "Templates" ]; then
-          cp -R Templates Publish/RagNext_Intel.app/Contents/MacOS/Templates
+          cp -R Templates Publish/RagNext_Intel.app/Contents/Resources/Templates
         fi
+
+        # Ensure core executable has +x execution rights
+        chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext.Designer.Avalonia
 
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Intel.app/Contents/Info.plist

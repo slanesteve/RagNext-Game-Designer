@@ -128,11 +128,35 @@ namespace RagNext.Designer.Avalonia.Services
         {
             Report("Copying macOS shell player...");
             string appBundle = Path.Combine(outputDir, $"{title}.app");
-            CopyDirectory(templateDir, appBundle);
+
+            // Avoid nested .app directory (inception structure)
+            string sourceApp = Path.Combine(templateDir, "MacOS.app");
+            if (!Directory.Exists(sourceApp))
+            {
+                sourceApp = Directory.GetDirectories(templateDir, "*.app").FirstOrDefault() ?? templateDir;
+            }
+            CopyDirectory(sourceApp, appBundle);
 
             // Unity macOS .app has the binary in Contents/MacOS/RagNextPlayer
             string macOsDir = Path.Combine(appBundle, "Contents", "MacOS");
+            string targetBinary = Path.Combine(macOsDir, title);
             RenameFile(macOsDir, "RagNextPlayer", title);
+
+            // Set +x execution permissions for Unix filesystems
+            try
+            {
+                if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
+                {
+                    File.SetUnixFileMode(targetBinary,
+                        UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                        UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                        UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+                }
+            }
+            catch (Exception ex)
+            {
+                Report($"Warning: Failed to set executable permissions: {ex.Message}");
+            }
 
             // Update the Info.plist CFBundleName (simple string replacement — no XML lib needed)
             string plistPath = Path.Combine(appBundle, "Contents", "Info.plist");
@@ -146,7 +170,6 @@ namespace RagNext.Designer.Avalonia.Services
             // StreamingAssets lives under Contents/Resources/Data/
             string streamingDir = Path.Combine(appBundle, "Contents", "Resources", "Data", "StreamingAssets");
             await InjectGameDataAsync(game, streamingDir);
-
         }
 
         // ── Linux ─────────────────────────────────────────────────────────────
@@ -157,8 +180,25 @@ namespace RagNext.Designer.Avalonia.Services
             Report("Copying Linux shell player...");
             CopyDirectory(templateDir, outputDir);
 
+            string targetBinary = Path.Combine(outputDir, title);
             RenameFile(outputDir, "RagNextPlayer", title);
             RenameDirectory(outputDir, "RagNextPlayer_Data", $"{title}_Data");
+
+            // Set +x execution permissions for Unix filesystems
+            try
+            {
+                if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
+                {
+                    File.SetUnixFileMode(targetBinary,
+                        UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                        UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                        UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+                }
+            }
+            catch (Exception ex)
+            {
+                Report($"Warning: Failed to set executable permissions: {ex.Message}");
+            }
 
             string streamingDir = Path.Combine(outputDir, $"{title}_Data", "StreamingAssets");
             await InjectGameDataAsync(game, streamingDir);
@@ -251,9 +291,17 @@ namespace RagNext.Designer.Avalonia.Services
                 _ => throw new ArgumentOutOfRangeException(nameof(target))
             };
 
+            string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+
+            // On macOS inside an app bundle, check Contents/Resources/Templates
+            if (OperatingSystem.IsMacOS())
+            {
+                string resourcesTemplates = Path.Combine(exeDir, "..", "Resources", "Templates", subDir);
+                if (Directory.Exists(resourcesTemplates)) return resourcesTemplates;
+            }
+
             // Primary: Templates/ folder next to the running Designer exe
-            string exeDir    = AppDomain.CurrentDomain.BaseDirectory;
-            string primary   = Path.Combine(exeDir, "Templates", subDir);
+            string primary = Path.Combine(exeDir, "Templates", subDir);
             if (Directory.Exists(primary)) return primary;
 
             // Developer fallback: workspace root Templates/
