@@ -197,8 +197,43 @@ namespace RagNextPlayer.Runtime
             }
         }
 
-        private static string? FindVariable(GameData game, string name) =>
-            game.Variables.Find(v =>
-                string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase))?.Value;
+        private static string? FindVariable(GameData game, string name)
+        {
+            if (name != null && name.Contains(':'))
+            {
+                var index = name.IndexOf(':');
+                var realName = name.Substring(0, index);
+                var modifier = name.Substring(index + 1).ToLowerInvariant();
+                var modifierVar = game.Variables.Find(v => string.Equals(v.Name, realName, StringComparison.OrdinalIgnoreCase));
+                if (modifierVar != null && DateTime.TryParse(modifierVar.Value, out var dt))
+                {
+                    return modifier switch
+                    {
+                        "year" => dt.Year.ToString(),
+                        "month" => dt.Month.ToString(),
+                        "day" => dt.Day.ToString(),
+                        "hour" => dt.Hour.ToString(),
+                        "minute" => dt.Minute.ToString(),
+                        "second" => dt.Second.ToString(),
+                        "dayofweek" => ((int)dt.DayOfWeek).ToString(),
+                        "date" => dt.ToString("yyyy-MM-dd"),
+                        "time" => dt.ToString("HH:mm:ss"),
+                        "datetime" => dt.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        _ => null
+                    };
+                }
+            }
+            var baseVar = game.Variables.Find(v =>
+                string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (baseVar != null)
+            {
+                if (DateTime.TryParse(baseVar.Value, out var dt))
+                {
+                    return dt.ToString("MMMM d, yyyy h:mm tt");
+                }
+                return baseVar.Value;
+            }
+            return null;
+        }
     }
 }

@@ -14,6 +14,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ObservableCollection<Room> Rooms => App.CurrentGame?.Rooms ?? _emptyRooms;
 
         public ICommand AddRoomCommand { get; }
+        public ICommand DeleteRoomCommand { get; }
 
         public RoomsViewModel(IGameStorage storage)
         {
@@ -33,6 +34,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 else
                 {
                     _emptyRooms.Add(newRoom);
+                }
+            });
+
+            DeleteRoomCommand = new Command<Room>(async (room) =>
+            {
+                if (room is null) return;
+                if (App.CurrentGame?.Rooms is not null)
+                {
+                    App.CurrentGame.Rooms.Remove(room);
+                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    OnPropertyChanged(nameof(Rooms));
                 }
             });
         }

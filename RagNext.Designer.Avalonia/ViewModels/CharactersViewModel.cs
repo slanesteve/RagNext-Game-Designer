@@ -14,6 +14,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ObservableCollection<Character> Characters => App.CurrentGame?.Characters ?? _empty;
 
         public ICommand AddCharacterCommand { get; }
+        public ICommand DeleteCharacterCommand { get; }
 
         public CharactersViewModel(IGameStorage storage)
         {
@@ -34,6 +35,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 else
                 {
                     _empty.Add(newChar);
+                }
+            });
+
+            DeleteCharacterCommand = new Command<Character>(async (c) =>
+            {
+                if (c is null) return;
+                if (App.CurrentGame?.Characters is not null)
+                {
+                    App.CurrentGame.Characters.Remove(c);
+                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    OnPropertyChanged(nameof(Characters));
                 }
             });
         }

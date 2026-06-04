@@ -38,6 +38,9 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(AddObjectToRoomCommand), "room.addObject")]
     [JsonDerivedType(typeof(RemoveObjectFromRoomCommand), "room.removeObject")]
     [JsonDerivedType(typeof(ObjectDisplayDescriptionCommand), "object.displayDescription")]
+    [JsonDerivedType(typeof(PlayerDisplayDescriptionCommand), "player.displayDescription")]
+    [JsonDerivedType(typeof(CharacterDisplayDescriptionCommand), "char.displayDescription")]
+    [JsonDerivedType(typeof(RoomDisplayDescriptionCommand), "room.displayDescription")]
     [JsonDerivedType(typeof(ObjectMoveToCharacterCommand), "object.moveToCharacter")]
     [JsonDerivedType(typeof(ObjectMoveToInventoryCommand), "object.moveToInventory")]
     [JsonDerivedType(typeof(ObjectMoveInsideObjectCommand), "object.moveInsideObject")]
@@ -443,6 +446,60 @@ namespace RagsCore.Actions
         }
     }
 
+    internal static class DateTimeHelper
+    {
+        public static DateTime? AddToDateTime(DateTime dt, string value, bool isAddition)
+        {
+            var cleanValue = value.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(cleanValue)) return null;
+
+            double amount = 0;
+            string unit = "minutes"; // default
+
+            var match = System.Text.RegularExpressions.Regex.Match(cleanValue, @"^(-?\d+(?:\.\d+)?)\s*([a-zA-Z]+)?$");
+            if (match.Success)
+            {
+                if (double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedAmount))
+                {
+                    amount = parsedAmount;
+                }
+                if (match.Groups[2].Success)
+                {
+                    var unitStr = match.Groups[2].Value;
+                    if (unitStr.StartsWith("s")) unit = "seconds";
+                    else if (unitStr.StartsWith("h")) unit = "hours";
+                    else if (unitStr.StartsWith("d")) unit = "days";
+                    else if (unitStr.StartsWith("mo") || unitStr == "mth") unit = "months";
+                    else if (unitStr.StartsWith("y")) unit = "years";
+                    else if (unitStr.StartsWith("m")) unit = "minutes";
+                }
+            }
+            else
+            {
+                return null;
+            }
+
+            if (!isAddition) amount = -amount;
+
+            try
+            {
+                return unit switch
+                {
+                    "seconds" => dt.AddSeconds(amount),
+                    "hours" => dt.AddHours(amount),
+                    "days" => dt.AddDays(amount),
+                    "months" => dt.AddMonths((int)amount),
+                    "years" => dt.AddYears((int)amount),
+                    _ => dt.AddMinutes(amount)
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
     public sealed class VariableIncrementCommand : GameCommand
     {
         public string Name { get; set; } = string.Empty;
@@ -453,6 +510,16 @@ namespace RagsCore.Actions
             if (string.IsNullOrWhiteSpace(Name)) return;
             var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
             var existing = ctx.GetVariable(Name)?.Value;
+
+            if (existing != null && DateTime.TryParse(existing, out var existingDt))
+            {
+                var newDt = DateTimeHelper.AddToDateTime(existingDt, resolvedVal, true);
+                if (newDt.HasValue)
+                {
+                    ctx.SetVariable(Name, newDt.Value.ToString("yyyy-MM-ddTHH:mm:ss"));
+                    return;
+                }
+            }
             
             if (double.TryParse(existing, out var existingNum) && double.TryParse(resolvedVal, out var addNum))
             {
@@ -475,6 +542,16 @@ namespace RagsCore.Actions
             if (string.IsNullOrWhiteSpace(Name)) return;
             var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
             var existing = ctx.GetVariable(Name)?.Value;
+
+            if (existing != null && DateTime.TryParse(existing, out var existingDt))
+            {
+                var newDt = DateTimeHelper.AddToDateTime(existingDt, resolvedVal, false);
+                if (newDt.HasValue)
+                {
+                    ctx.SetVariable(Name, newDt.Value.ToString("yyyy-MM-ddTHH:mm:ss"));
+                    return;
+                }
+            }
             
             if (double.TryParse(existing, out var existingNum) && double.TryParse(resolvedVal, out var subNum))
             {
@@ -1268,6 +1345,42 @@ namespace RagsCore.Actions
                     obj.Properties["ParentContainerId"] = containerId.ToString();
                 }
             }
+        }
+    }
+
+    public sealed class PlayerDisplayDescriptionCommand : GameCommand
+    {
+        public override string TypeName => "Player: Display Description";
+        public override void Execute(ActionContext ctx)
+        {
+            ctx.SetVariable("system.lastDisplayedText", RagsCore.Services.TemplateResolver.Resolve(ctx.Player.Description, ctx));
+        }
+    }
+
+    public sealed class CharacterDisplayDescriptionCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public override string TypeName => "Character: Display Description";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (Guid.TryParse(resolved, out var cId))
+            {
+                var chr = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+                if (chr != null)
+                {
+                    ctx.SetVariable("system.lastDisplayedText", RagsCore.Services.TemplateResolver.Resolve(chr.Description, ctx));
+                }
+            }
+        }
+    }
+
+    public sealed class RoomDisplayDescriptionCommand : GameCommand
+    {
+        public override string TypeName => "Room: Display Description";
+        public override void Execute(ActionContext ctx)
+        {
+            ctx.SetVariable("system.lastDisplayedText", RagsCore.Services.TemplateResolver.Resolve(ctx.CurrentRoom?.Description ?? string.Empty, ctx));
         }
     }
 }

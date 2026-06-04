@@ -49,6 +49,13 @@ let typeToInputsMap = {};
 let AVAILABLE_COMMANDS = [];
 let AVAILABLE_CONDITIONS = [];
 
+let lastActionJson = null;
+let lastCommandsDb = null;
+let lastConditionsDb = null;
+let lastCatalogsDb = null;
+let lastTypesMap = null;
+let previousGraphState = null;
+
 // Debounced auto-saving on the fly
 let autoSaveTimeout = null;
 function triggerAutoSave() {
@@ -2051,6 +2058,13 @@ function buildNodeJsonWithoutNext(node) {
 // C# Hook to populate existing JSON action trees and databases
 window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogsDb, typesMap) {
     try {
+        // Cache parameters for AI revert
+        lastActionJson = actionJson;
+        lastCommandsDb = commandsDb;
+        lastConditionsDb = conditionsDb;
+        lastCatalogsDb = catalogsDb;
+        lastTypesMap = typesMap;
+
         // Reset panning and zoom to center and show the Start Node
         panX = 0;
         panY = 0;
@@ -2156,7 +2170,7 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
         }
 
         // Render the sequential node-graph connected list starting from Start Node
-        const firstNode = parseFlatSequence(nodesList, 250, 150);
+        const firstNode = parseFlatSequence(nodesList, 430, 150);
         if (firstNode) {
             connections.push({
                 fromPinId: "start_out",
@@ -2182,8 +2196,9 @@ function parseFlatSequence(nodeList, x, y) {
     let prevNode = null;
 
     list.forEach((stepData, idx) => {
-        const nodeX = stepData.X !== undefined ? stepData.X : (stepData.x !== undefined ? stepData.x : x + idx * 360);
-        const nodeY = stepData.Y !== undefined ? stepData.Y : (stepData.y !== undefined ? stepData.y : y);
+        // Force automatic layout mapping to prevent LLM overlapping/clustering coordinates
+        const nodeX = x + idx * 380;
+        const nodeY = y;
         const currNode = parseAndCreateNode(stepData, nodeX, nodeY);
         if (!firstNode) firstNode = currNode;
 
@@ -2545,7 +2560,14 @@ function getAutocompleteSuggestions(triggerChar) {
         // Variables
         if (catalogs.Variables) {
             catalogs.Variables.forEach(v => {
-                list.push({ token: `variables.${v.Name}`, typeName: "Global Variable", desc: `State variable. Current: ${v.Value || '0'}` });
+                if (v.Type === "datetime") {
+                    list.push({ token: `variables.${v.Name}`, typeName: "Datetime Variable (Default)", desc: "Friendly: October 31, 2026 8:00 AM" });
+                    list.push({ token: `variables.${v.Name}:date`, typeName: "Datetime Date-only", desc: "Displays date portion: 2026-10-31" });
+                    list.push({ token: `variables.${v.Name}:time`, typeName: "Datetime Time-only", desc: "Displays time portion: 08:00:00" });
+                    list.push({ token: `variables.${v.Name}:datetime`, typeName: "Datetime Raw ISO-8601", desc: `Raw value: ${v.Value || ''}` });
+                } else {
+                    list.push({ token: `variables.${v.Name}`, typeName: "Global Variable", desc: `State variable. Current: ${v.Value || '0'}` });
+                }
             });
         }
 
@@ -2904,4 +2926,175 @@ document.addEventListener('drop', (e) => {
         }
     }
 });
+
+// AI Action Assistant Frontend Controls & Callback Bridge
+
+window.useAiExample = function(text) {
+    const input = document.getElementById("ai-prompt-input");
+    if (input) {
+        input.value = text;
+        input.focus();
+    }
+};
+
+window.openAiAssistantModal = function() {
+    document.getElementById("ai-prompt-input").value = "";
+    document.getElementById("ai-modal").classList.remove("hide");
+    document.getElementById("ai-prompt-input").focus();
+};
+
+window.closeAiAssistantModal = function() {
+    document.getElementById("ai-modal").classList.add("hide");
+};
+
+window.submitAiPrompt = function() {
+    const prompt = document.getElementById("ai-prompt-input").value.trim();
+    if (!prompt) return;
+
+    const replace = document.getElementById("ai-replace-checkbox").checked;
+
+    // Save current graph state for revert
+    const currentGraph = serializeGraph();
+    previousGraphState = {
+        actionJson: currentGraph
+    };
+
+    const json = JSON.stringify(currentGraph);
+    const base64 = btoa(unescape(encodeURIComponent(json)));
+
+    closeAiAssistantModal();
+
+    // Show loading spinner status on the AI button
+    const btn = document.querySelector(".ai-btn");
+    if (btn) {
+        btn.innerText = "✨ Generating...";
+        btn.disabled = true;
+        btn.classList.add("generating");
+    }
+
+    const actionUrl = "graph-ai?prompt=" + encodeURIComponent(prompt) + "&replace=" + replace + "&data=" + base64;
+    if (typeof invokeCSharpAction === 'function') {
+        invokeCSharpAction(actionUrl);
+    } else {
+        window.location.href = "rags-action://" + actionUrl;
+    }
+};
+
+window.updateGraphAIResult = function(newNodesJsonBase64) {
+    try {
+        const btn = document.querySelector(".ai-btn");
+        if (btn) {
+            btn.innerText = "✨ AI Assistant";
+            btn.disabled = false;
+            btn.classList.remove("generating");
+        }
+
+        const jsonText = decodeURIComponent(escape(atob(newNodesJsonBase64)));
+        const newNodesList = JSON.parse(jsonText);
+
+        // Show the accept/revert banner
+        document.getElementById("ai-preview-banner").classList.remove("hide");
+
+        // If we choose to replace, clear the graph nodes connected to start
+        const replace = document.getElementById("ai-replace-checkbox").checked;
+        if (replace) {
+            // Delete all nodes completely to force full recreation of start node state and DOM
+            nodes = [];
+            connections = [];
+            document.getElementById("nodes-layer").innerHTML = "";
+            createStartNode();
+        }
+
+        // Parse and render the new nodes list
+        let startX = 430;
+        let startY = 150;
+
+        if (!replace && nodes.length > 1) {
+            // Find rightmost node position to prevent overlap
+            let maxX = 100;
+            nodes.forEach(n => {
+                if (n.x > maxX) maxX = n.x;
+            });
+            startX = maxX + 360;
+        }
+
+        const firstNewNode = parseFlatSequence(newNodesList, startX, startY);
+
+        if (firstNewNode) {
+            // Mark all newly created nodes with the 'preview-node' class to style them with dashed borders
+            const allNewNodeIds = new Set();
+
+            function collectIds(list) {
+                if (!list) return;
+                list.forEach(item => {
+                    const id = item.id || item.dialogueId || item.functionId;
+                    if (id) allNewNodeIds.add(id);
+                    if (item.trueBranch) collectIds(item.trueBranch);
+                    if (item.falseBranch) collectIds(item.falseBranch);
+                    if (item.choices) {
+                        item.choices.forEach(ch => {
+                            if (ch.destinationNodeId) allNewNodeIds.add(ch.destinationNodeId);
+                            if (ch.commands) collectIds(ch.commands);
+                        });
+                    }
+                });
+            }
+            collectIds(newNodesList);
+
+            // Loop through nodes array and add class to newly created node elements
+            nodes.forEach(n => {
+                if (allNewNodeIds.has(n.id)) {
+                    const el = document.getElementById(n.id);
+                    if (el) el.classList.add("preview-node");
+                }
+            });
+
+            if (replace) {
+                connections.push({
+                    fromPinId: "start_out",
+                    toPinId: `${firstNewNode.id}_in`,
+                    type: 'exec'
+                });
+            } else {
+                const startConn = connections.find(c => c.fromPinId === "start_out");
+                if (!startConn) {
+                    connections.push({
+                        fromPinId: "start_out",
+                        toPinId: `${firstNewNode.id}_in`,
+                        type: 'exec'
+                    });
+                }
+            }
+        }
+
+        redrawConnections();
+        updateTransform();
+    } catch (e) {
+        console.error("AI node rendering failed: ", e);
+        alert("Failed to render AI nodes: " + e.message);
+    }
+};
+
+window.acceptAiChanges = function() {
+    // Remove dashed border class from all preview nodes
+    document.querySelectorAll(".preview-node").forEach(el => {
+        el.classList.remove("preview-node");
+    });
+
+    document.getElementById("ai-preview-banner").classList.add("hide");
+    previousGraphState = null;
+
+    // Trigger auto-save
+    saveAndSyncCsharp(true);
+};
+
+window.revertAiChanges = function() {
+    if (!previousGraphState) return;
+
+    // Call loadActionGraph with the original graph representation
+    window.loadActionGraph(previousGraphState.actionJson, lastCommandsDb, lastConditionsDb, lastCatalogsDb, lastTypesMap);
+
+    document.getElementById("ai-preview-banner").classList.add("hide");
+    previousGraphState = null;
+};
 

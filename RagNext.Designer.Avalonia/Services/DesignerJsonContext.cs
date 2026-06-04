@@ -28,6 +28,7 @@ namespace RagNext.Designer.Avalonia.Services
     [JsonSerializable(typeof(ExportSplashScreenDto))]
     [JsonSerializable(typeof(AICoAuthorRequest))]
     [JsonSerializable(typeof(AICoAuthorMessage))]
+    [JsonSerializable(typeof(AIResponseFormat))]
     [JsonSerializable(typeof(ImageGenRequest))]
     [JsonSerializable(typeof(OpenAiImageGenRequest))]
     [JsonSerializable(typeof(CatalogsDto))]

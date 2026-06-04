@@ -79,6 +79,9 @@ namespace RagNextPlayer.Managers
                     break;
 
                 case ObjectDisplayDescriptionCommandData:
+                case PlayerDisplayDescriptionCommandData:
+                case CharacterDisplayDescriptionCommandData:
+                case RoomDisplayDescriptionCommandData:
                     {
                         var text = ctx.GetVariable("system.lastDisplayedText")?.Value;
                         if (!string.IsNullOrEmpty(text))

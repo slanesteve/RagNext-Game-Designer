@@ -7,12 +7,18 @@ namespace RagNext.Designer.Avalonia.Views
         public string? model { get; set; }
         public AICoAuthorMessage[]? messages { get; set; }
         public double temperature { get; set; }
+        public AIResponseFormat? response_format { get; set; }
     }
 
     public class AICoAuthorMessage
     {
         public string? role { get; set; }
         public string? content { get; set; }
+    }
+
+    public class AIResponseFormat
+    {
+        public string? type { get; set; }
     }
 
     public class ImageGenRequest

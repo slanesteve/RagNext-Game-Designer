@@ -355,6 +355,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
             set => SetProperty(ref _isVisualEditing, value);
         }
 
+        private bool _isAiGenerating = false;
+        public bool IsAiGenerating
+        {
+            get => _isAiGenerating;
+            set
+            {
+                if (SetProperty(ref _isAiGenerating, value))
+                {
+                    OnPropertyChanged(nameof(IsNotAiGenerating));
+                }
+            }
+        }
+
+        public bool IsNotAiGenerating => !_isAiGenerating;
+
         private RagsCore.Models.Action? _activeAction;
         public RagsCore.Models.Action? ActiveAction
         {
@@ -662,6 +677,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand AddRoomCommand => Rooms.AddRoomCommand;
         public ICommand AddCharacterCommand => Characters.AddCharacterCommand;
         public ICommand AddObjectCommand => Objects.AddObjectCommand;
+
+        // Items Deletion Command delegation
+        public ICommand DeleteRoomCommand => Rooms.DeleteRoomCommand;
+        public ICommand DeleteCharacterCommand => Characters.DeleteCharacterCommand;
+        public ICommand DeleteObjectCommand => Objects.DeleteObjectCommand;
+        public ICommand DeleteVariableCommand => Variables.DeleteVariableCommand;
+        public ICommand DeleteTimerCommand => Timers.DeleteTimerCommand;
+        public ICommand DeleteFunctionCommand => Functions.DeleteFunctionCommand;
 
         public MainWindowViewModel()
         {

@@ -14,6 +14,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ObservableCollection<GameTimer> Timers => App.CurrentGame?.Timers ?? _empty;
 
         public ICommand AddTimerCommand { get; }
+        public ICommand DeleteTimerCommand { get; }
 
         public GameTimersViewModel(IGameStorage storage)
         {
@@ -33,6 +34,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 else
                 {
                     _empty.Add(newTimer);
+                }
+            });
+
+            DeleteTimerCommand = new Command<GameTimer>(async (t) =>
+            {
+                if (t is null) return;
+                if (App.CurrentGame?.Timers is not null)
+                {
+                    App.CurrentGame.Timers.Remove(t);
+                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    OnPropertyChanged(nameof(Timers));
                 }
             });
         }

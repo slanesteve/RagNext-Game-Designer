@@ -14,6 +14,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ObservableCollection<GlobalFunction> Functions => App.CurrentGame?.Functions ?? _empty;
 
         public ICommand AddFunctionCommand { get; }
+        public ICommand DeleteFunctionCommand { get; }
 
         public GlobalFunctionsViewModel(IGameStorage storage)
         {
@@ -33,6 +34,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 else
                 {
                     _empty.Add(newFunc);
+                }
+            });
+
+            DeleteFunctionCommand = new Command<GlobalFunction>(async (f) =>
+            {
+                if (f is null) return;
+                if (App.CurrentGame?.Functions is not null)
+                {
+                    App.CurrentGame.Functions.Remove(f);
+                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    OnPropertyChanged(nameof(Functions));
                 }
             });
         }

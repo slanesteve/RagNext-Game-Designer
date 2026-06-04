@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using RagNextPlayer.Runtime.Models;
@@ -27,8 +28,38 @@ namespace RagNextPlayer.Runtime
             FocusEntity = focusEntity ?? focusObject;
         }
 
-        public GameVariableData? GetVariable(string name) =>
-            Game.Variables.Find(v => string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
+        public GameVariableData? GetVariable(string name)
+        {
+            if (name != null && name.Contains(':'))
+            {
+                var index = name.IndexOf(':');
+                var realName = name.Substring(0, index);
+                var modifier = name.Substring(index + 1).ToLowerInvariant();
+                var baseVar = Game.Variables.Find(v => string.Equals(v.Name, realName, StringComparison.OrdinalIgnoreCase));
+                if (baseVar != null && DateTime.TryParse(baseVar.Value, out var dt))
+                {
+                    string? val = modifier switch
+                    {
+                        "year" => dt.Year.ToString(),
+                        "month" => dt.Month.ToString(),
+                        "day" => dt.Day.ToString(),
+                        "hour" => dt.Hour.ToString(),
+                        "minute" => dt.Minute.ToString(),
+                        "second" => dt.Second.ToString(),
+                        "dayofweek" => ((int)dt.DayOfWeek).ToString(),
+                        "date" => dt.ToString("yyyy-MM-dd"),
+                        "time" => dt.ToString("HH:mm:ss"),
+                        "datetime" => dt.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        _ => null
+                    };
+                    if (val != null)
+                    {
+                        return new GameVariableData { Name = name, Value = val };
+                    }
+                }
+            }
+            return Game.Variables.Find(v => string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
+        }
 
         public void SetVariable(string name, string? value)
         {
@@ -194,6 +225,17 @@ namespace RagNextPlayer.Runtime
                     {
                         var resolvedVal = ctx.Resolve(c.Value);
                         var existing = ctx.GetVariable(c.Name)?.Value;
+
+                        if (existing != null && DateTime.TryParse(existing, out var existingDt))
+                        {
+                            var newDt = DateTimeHelper.AddToDateTime(existingDt, resolvedVal, true);
+                            if (newDt.HasValue)
+                            {
+                                ctx.SetVariable(c.Name, newDt.Value.ToString("yyyy-MM-ddTHH:mm:ss"));
+                                break;
+                            }
+                        }
+
                         if (double.TryParse(existing, out double a) && double.TryParse(resolvedVal, out double b))
                             ctx.SetVariable(c.Name, (a + b).ToString(System.Globalization.CultureInfo.InvariantCulture));
                         else
@@ -205,6 +247,17 @@ namespace RagNextPlayer.Runtime
                     {
                         var resolvedVal = ctx.Resolve(c.Value);
                         var existing = ctx.GetVariable(c.Name)?.Value;
+
+                        if (existing != null && DateTime.TryParse(existing, out var existingDt))
+                        {
+                            var newDt = DateTimeHelper.AddToDateTime(existingDt, resolvedVal, false);
+                            if (newDt.HasValue)
+                            {
+                                ctx.SetVariable(c.Name, newDt.Value.ToString("yyyy-MM-ddTHH:mm:ss"));
+                                break;
+                            }
+                        }
+
                         if (double.TryParse(existing, out double a) && double.TryParse(resolvedVal, out double b))
                             ctx.SetVariable(c.Name, (a - b).ToString(System.Globalization.CultureInfo.InvariantCulture));
                     }
@@ -524,6 +577,33 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case PlayerDisplayDescriptionCommandData:
+                    ctx.SetVariable("system.lastDisplayedText", ctx.Resolve(ctx.Player.Description));
+                    break;
+
+                case CharacterDisplayDescriptionCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.CharacterId);
+                        var ch = ctx.Game.Characters.Find(charac => string.Equals(charac.Id, resolved, StringComparison.OrdinalIgnoreCase));
+                        if (ch != null)
+                        {
+                            ctx.SetVariable("system.lastDisplayedText", ctx.Resolve(ch.Description));
+                        }
+                    }
+                    break;
+
+                case RoomDisplayDescriptionCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.RoomId);
+                        var rId = string.IsNullOrWhiteSpace(resolved) ? ctx.CurrentRoom?.Id : resolved;
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, rId, StringComparison.OrdinalIgnoreCase));
+                        if (room != null)
+                        {
+                            ctx.SetVariable("system.lastDisplayedText", ctx.Resolve(room.Description));
+                        }
+                    }
+                    break;
+
                 case ObjectMoveToCharacterCommandData c:
                     {
                         var resolvedObj = ctx.Resolve(c.ObjectId);
@@ -787,6 +867,60 @@ namespace RagNextPlayer.Runtime
                 "!=" => !string.Equals(a, b, StringComparison.OrdinalIgnoreCase),
                 _    => false
             };
+        }
+    }
+
+    internal static class DateTimeHelper
+    {
+        public static DateTime? AddToDateTime(DateTime dt, string value, bool isAddition)
+        {
+            var cleanValue = value.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(cleanValue)) return null;
+
+            double amount = 0;
+            string unit = "minutes"; // default
+
+            var match = System.Text.RegularExpressions.Regex.Match(cleanValue, @"^(-?\d+(?:\.\d+)?)\s*([a-zA-Z]+)?$");
+            if (match.Success)
+            {
+                if (double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedAmount))
+                {
+                    amount = parsedAmount;
+                }
+                if (match.Groups[2].Success)
+                {
+                    var unitStr = match.Groups[2].Value;
+                    if (unitStr.StartsWith("s")) unit = "seconds";
+                    else if (unitStr.StartsWith("h")) unit = "hours";
+                    else if (unitStr.StartsWith("d")) unit = "days";
+                    else if (unitStr.StartsWith("mo") || unitStr == "mth") unit = "months";
+                    else if (unitStr.StartsWith("y")) unit = "years";
+                    else if (unitStr.StartsWith("m")) unit = "minutes";
+                }
+            }
+            else
+            {
+                return null;
+            }
+
+            if (!isAddition) amount = -amount;
+
+            try
+            {
+                return unit switch
+                {
+                    "seconds" => dt.AddSeconds(amount),
+                    "hours" => dt.AddHours(amount),
+                    "days" => dt.AddDays(amount),
+                    "months" => dt.AddMonths((int)amount),
+                    "years" => dt.AddYears((int)amount),
+                    _ => dt.AddMinutes(amount)
+                };
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

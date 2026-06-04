@@ -113,6 +113,9 @@ namespace RagNextPlayer.Runtime.Models
                 "item.setAttribute"      => typeof(SetItemAttributeCommandData),
 
                 "object.displayDescription" => typeof(ObjectDisplayDescriptionCommandData),
+                "player.displayDescription" => typeof(PlayerDisplayDescriptionCommandData),
+                "char.displayDescription"   => typeof(CharacterDisplayDescriptionCommandData),
+                "room.displayDescription"   => typeof(RoomDisplayDescriptionCommandData),
                 "object.moveToCharacter"    => typeof(ObjectMoveToCharacterCommandData),
                 "object.moveToInventory"    => typeof(ObjectMoveToInventoryCommandData),
                 "object.moveInsideObject"   => typeof(ObjectMoveInsideObjectCommandData),

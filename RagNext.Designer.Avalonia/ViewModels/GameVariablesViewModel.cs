@@ -12,8 +12,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private readonly ObservableCollection<GameVariable> _empty = new();
 
         public ObservableCollection<GameVariable> Variables => App.CurrentGame?.Variables ?? _empty;
+        public ObservableCollection<string> VariableTypes { get; } = new() { "string", "number", "bool", "datetime" };
 
         public ICommand AddVariableCommand { get; }
+        public ICommand DeleteVariableCommand { get; }
 
         public GameVariablesViewModel(IGameStorage storage)
         {
@@ -33,6 +35,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 else
                 {
                     _empty.Add(newVar);
+                }
+            });
+
+            DeleteVariableCommand = new Command<GameVariable>(async (v) =>
+            {
+                if (v is null) return;
+                if (App.CurrentGame?.Variables is not null)
+                {
+                    App.CurrentGame.Variables.Remove(v);
+                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    OnPropertyChanged(nameof(Variables));
                 }
             });
         }

@@ -317,7 +317,7 @@ namespace RagNext.Designer.Avalonia.Views
                     Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
                     Player = new CatalogPlayerDto { Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList() },
                     Owner = new CatalogPlayerDto { Attributes = ownerAttributes },
-                    Media = vm.CurrentGame.MediaAssets.Select(m => new CatalogEntityDto { Id = m.RelativePath, Name = string.IsNullOrWhiteSpace(m.OriginalFileName) ? m.RelativePath : m.OriginalFileName }).ToList(),
+                    Media = vm.CurrentGame.MediaAssets.Select(m => new CatalogEntityDto { Id = m.Id.ToString(), Name = string.IsNullOrWhiteSpace(m.OriginalFileName) ? m.RelativePath : m.OriginalFileName }).ToList(),
                     Functions = vm.CurrentGame.Functions.Select(f => new CatalogEntityDto { Id = f.Name, Name = f.Name }).ToList(),
                     Timers = vm.CurrentGame.Timers.Select(t => new CatalogEntityDto { Id = t.Name, Name = t.Name, Attributes = t.Attributes.Select(a => a.Name).ToList() }).ToList()
                 };
@@ -408,6 +408,13 @@ namespace RagNext.Designer.Avalonia.Views
                             await SyncGraphData(base64);
                         }
                     }
+                    else if (url.StartsWith("rags-action://graph-ai"))
+                    {
+                        string prompt = query["prompt"] ?? "";
+                        string replace = query["replace"] ?? "";
+                        string currentGraph = query["data"] ?? "";
+                        TriggerGraphAI(prompt, replace, currentGraph);
+                    }
                     else if (url.StartsWith("rags-action://ai"))
                     {
                         string nodeId = query["nodeId"] ?? "";
@@ -438,6 +445,14 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     string base64 = msg.Substring("sync?data=".Length);
                     await SyncGraphData(base64);
+                }
+                else if (msg.StartsWith("graph-ai?"))
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("graph-ai?".Length));
+                    string prompt = query["prompt"] ?? "";
+                    string replace = query["replace"] ?? "";
+                    string currentGraph = query["data"] ?? "";
+                    TriggerGraphAI(prompt, replace, currentGraph);
                 }
                 else if (msg.StartsWith("ai?"))
                 {
@@ -966,6 +981,19 @@ namespace RagNext.Designer.Avalonia.Views
             finally
             {
                 _suppressExitEvents = false;
+            }
+        }
+
+        private void OnClearExitClick(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+            var direction = btn.Tag as string;
+            if (string.IsNullOrEmpty(direction)) return;
+
+            var ec = _exitControls?.FirstOrDefault(x => string.Equals(x.Direction, direction, StringComparison.OrdinalIgnoreCase));
+            if (ec != null)
+            {
+                ec.Picker.SelectedItem = null;
             }
         }
 
@@ -2240,12 +2268,42 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         foreach (var v in game.Variables)
                         {
-                            list.Add(new AutocompleteItem { 
-                                Token = $"variables.{v.Name}", 
-                                DisplayToken = $"{{variables.{v.Name}}}", 
-                                TypeName = "Player Variable", 
-                                Description = $"Value: {v.Value}" 
-                            });
+                            if (v.Type == "datetime")
+                            {
+                                list.Add(new AutocompleteItem { 
+                                    Token = $"variables.{v.Name}", 
+                                    DisplayToken = $"{{variables.{v.Name}}}", 
+                                    TypeName = "Datetime (Default)", 
+                                    Description = "Friendly: October 31, 2026 8:00 AM" 
+                                });
+                                list.Add(new AutocompleteItem { 
+                                    Token = $"variables.{v.Name}:date", 
+                                    DisplayToken = $"{{variables.{v.Name}:date}}", 
+                                    TypeName = "Datetime Date-only", 
+                                    Description = "Displays date portion: 2026-10-31" 
+                                });
+                                list.Add(new AutocompleteItem { 
+                                    Token = $"variables.{v.Name}:time", 
+                                    DisplayToken = $"{{variables.{v.Name}:time}}", 
+                                    TypeName = "Datetime Time-only", 
+                                    Description = "Displays time portion: 08:00:00" 
+                                });
+                                list.Add(new AutocompleteItem { 
+                                    Token = $"variables.{v.Name}:datetime", 
+                                    DisplayToken = $"{{variables.{v.Name}:datetime}}", 
+                                    TypeName = "Datetime Raw ISO-8601", 
+                                    Description = "Raw value: 2026-10-31T08:00:00" 
+                                });
+                            }
+                            else
+                            {
+                                list.Add(new AutocompleteItem { 
+                                    Token = $"variables.{v.Name}", 
+                                    DisplayToken = $"{{variables.{v.Name}}}", 
+                                    TypeName = "Player Variable", 
+                                    Description = $"Value: {v.Value}" 
+                                });
+                            }
                         }
                     }
 
@@ -2445,6 +2503,415 @@ namespace RagNext.Designer.Avalonia.Views
 
             html = html.Replace("\n", "<br>");
             return html;
+        }
+
+        private async Task<string> BuildAiGraphSystemPromptAsync()
+        {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var commandsJson = "";
+            var conditionsJson = "";
+
+            try
+            {
+                var cmdsPath = Path.Combine(baseDir, "Commands.json");
+                if (!File.Exists(cmdsPath)) cmdsPath = Path.Combine(baseDir, "WebAssets", "Commands.json");
+                if (!File.Exists(cmdsPath)) cmdsPath = Path.Combine(baseDir, "Resources", "Raw", "Commands.json");
+                if (!File.Exists(cmdsPath)) cmdsPath = Path.Combine(baseDir, "..", "..", "..", "..", "RagNext", "Resources", "Raw", "Commands.json");
+                if (File.Exists(cmdsPath)) commandsJson = await File.ReadAllTextAsync(cmdsPath);
+
+                var condsPath = Path.Combine(baseDir, "Conditions.json");
+                if (!File.Exists(condsPath)) condsPath = Path.Combine(baseDir, "WebAssets", "Conditions.json");
+                if (!File.Exists(condsPath)) condsPath = Path.Combine(baseDir, "Resources", "Raw", "Conditions.json");
+                if (!File.Exists(condsPath)) condsPath = Path.Combine(baseDir, "..", "..", "..", "..", "RagNext", "Resources", "Raw", "Conditions.json");
+                if (File.Exists(condsPath)) conditionsJson = await File.ReadAllTextAsync(condsPath);
+            }
+            catch {}
+
+            var sb = new StringBuilder();
+            sb.AppendLine("You are an expert C# / Javascript node graph script compiler for the RagNext Game Engine.");
+            sb.AppendLine("You must read the user's natural language request and output a valid JSON array of Action Nodes.");
+            sb.AppendLine("Output ONLY the raw JSON array. Do not include markdown blocks, introductory conversational remarks, explanations, or quotes. Start with [ and end with ].");
+            sb.AppendLine();
+            sb.AppendLine("Available Commands (output \"$type\" exactly as shown in parentheses):");
+
+            if (!string.IsNullOrEmpty(commandsJson))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(commandsJson);
+                    if (doc.RootElement.TryGetProperty("commands", out var cmds) && cmds.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var cmd in cmds.EnumerateArray())
+                        {
+                            var name = cmd.GetProperty("name").GetString() ?? "";
+                            var category = cmd.GetProperty("category").GetString() ?? "";
+                            var type = GetTypeDiscriminator(name, category, true);
+                            sb.AppendLine($"- {name} (type identifier: \"{type}\")");
+                            if (cmd.TryGetProperty("inputs", out var inputs) && inputs.ValueKind == JsonValueKind.Array)
+                            {
+                                sb.AppendLine("  Parameters:");
+                                foreach (var input in inputs.EnumerateArray())
+                                {
+                                    var label = input.GetProperty("label").GetString() ?? "";
+                                    var dataType = input.GetProperty("dataType").GetString() ?? "";
+                                    var controlType = input.GetProperty("controlType").GetString() ?? "";
+                                    var propName = GetCsharpPropertyAlias(label);
+                                    sb.AppendLine($"    * \"{propName}\": data type: {dataType} (rendered in UI as {controlType} labeled '{label}')");
+                                }
+                            }
+                        }
+                    }
+                }
+                catch {}
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Available Conditions (output \"$type\" exactly as shown in parentheses):");
+            if (!string.IsNullOrEmpty(conditionsJson))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(conditionsJson);
+                    if (doc.RootElement.TryGetProperty("conditions", out var conds) && conds.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var cond in conds.EnumerateArray())
+                        {
+                            var name = cond.GetProperty("name").GetString() ?? "";
+                            var category = cond.GetProperty("category").GetString() ?? "";
+                            var type = GetTypeDiscriminator(name, category, false);
+                            sb.AppendLine($"- {name} (type identifier: \"{type}\")");
+                            sb.AppendLine("  Like commands, conditions can have inputs. Conditions also support branch outputs:");
+                            sb.AppendLine("    * \"trueBranch\": Array of connected Command/Condition nodes executed if condition passes.");
+                            sb.AppendLine("    * \"falseBranch\": Array of connected Command/Condition nodes executed if condition fails.");
+                            if (cond.TryGetProperty("inputs", out var inputs) && inputs.ValueKind == JsonValueKind.Array)
+                            {
+                                sb.AppendLine("  Parameters:");
+                                foreach (var input in inputs.EnumerateArray())
+                                {
+                                    var label = input.GetProperty("label").GetString() ?? "";
+                                    var dataType = input.GetProperty("dataType").GetString() ?? "";
+                                    var controlType = input.GetProperty("controlType").GetString() ?? "";
+                                    var propName = GetCsharpPropertyAlias(label);
+                                    sb.AppendLine($"    * \"{propName}\": data type: {dataType} (rendered in UI as {controlType} labeled '{label}')");
+                                }
+                            }
+                        }
+                    }
+                }
+                catch {}
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Grammar rules:");
+            sb.AppendLine("1. All nodes must have \"$type\" (matching the identifier specified in parentheses above).");
+            sb.AppendLine("2. Dialogue nodes are represented by \"$type\": \"general.startDialogue\" and support:");
+            sb.AppendLine("   * \"dialogueId\": Unique string / GUID identifier.");
+            sb.AppendLine("   * \"characterLines\": Dialogue speech text.");
+            sb.AppendLine("   * \"choices\": Array of choices matching: { \"text\": \"Choice Text\", \"destinationNodeId\": \"...\", \"commands\": [ ... ] }");
+            sb.AppendLine("3. If variables, items, or exits are checked/modified, match properties exactly. If you generate IDs, use realistic IDs or GUIDs.");
+            sb.AppendLine("4. Coordinates (\"x\", \"y\") must be assigned sequentially (e.g. increment x by 360 for sequential nodes) so nodes lay out cleanly.");
+            sb.AppendLine("5. Distinction between displaying media vs setting properties:");
+            sb.AppendLine("   * To show, render, draw, or display any image, picture, photo, or portrait media directly on the screen for the player to see, use \"media.displayMultimedia\" (Display Multimedia) and set the parameter \"mediaId\" to the media asset's GUID.");
+            sb.AppendLine("   * To configure, update, assign, or change the active/default portrait image of the player or a character behind the scenes (without drawing it as screen multimedia), use \"player.setPortraitMedia\" or \"char.setPortraitMedia\" respectively.");
+            sb.AppendLine("6. Using generic contextual placeholders:");
+            sb.AppendLine("   * You can use parameter placeholders wrapped in curly braces like \"{this.id}\" or \"{this.Name}\" to represent the ID or Name of the object/character executing the action.");
+            sb.AppendLine("   * E.g. to check if the item running the action is held, you can use \"{this.id}\" as the item parameter.");
+
+            var vm = DataContext as MainWindowViewModel;
+            if (vm?.CurrentGame != null)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Active Project Entities Context (If matching these in commands/conditions parameters, output their GUID Id EXACTLY as shown):");
+                if (vm.CurrentGame.Rooms?.Count > 0)
+                {
+                    sb.AppendLine("Rooms:");
+                    foreach (var r in vm.CurrentGame.Rooms)
+                    {
+                        sb.AppendLine($"  - Name: \"{r.Name}\", Id: \"{r.Id}\"");
+                    }
+                }
+                if (vm.CurrentGame.Characters?.Count > 0)
+                {
+                    sb.AppendLine("Characters:");
+                    foreach (var c in vm.CurrentGame.Characters)
+                    {
+                        sb.AppendLine($"  - Name: \"{c.Name}\", Id: \"{c.Id}\"");
+                    }
+                }
+                if (vm.CurrentGame.Objects?.Count > 0)
+                {
+                    sb.AppendLine("Items/Objects:");
+                    foreach (var o in vm.CurrentGame.Objects)
+                    {
+                        sb.AppendLine($"  - Name: \"{o.Name}\", Id: \"{o.Id}\"");
+                    }
+                }
+                if (vm.CurrentGame.Variables?.Count > 0)
+                {
+                    sb.AppendLine("Variables:");
+                    foreach (var v in vm.CurrentGame.Variables)
+                    {
+                        sb.AppendLine($"  - Name: \"{v.Name}\"");
+                    }
+                }
+                if (vm.CurrentGame.MediaAssets?.Count > 0)
+                {
+                    sb.AppendLine("Media Assets:");
+                    foreach (var m in vm.CurrentGame.MediaAssets)
+                    {
+                        sb.AppendLine($"  - Name: \"{m.Name}\", Id: \"{m.Id}\"");
+                    }
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private string GetTypeDiscriminator(string name, string category, bool isCommand)
+        {
+            var combined = name;
+            var key = combined.Replace(" ", "").Replace(":", "").ToLower();
+            
+            switch (key)
+            {
+                case "actionaddcustomchoice": return "general.addCustomChoice";
+                case "actionclearcustomchoice": return "general.clearCustomChoice";
+                case "actionremovecustomchoice": return "general.removeCustomChoice";
+                case "characterdisplaydescription": return "char.displayDescription";
+                case "charactermovetoroom": return "char.moveToRoom";
+                case "charactermoveinventorytoplayer": return "char.moveInventoryToPlayer";
+                case "charactermovetoobject": return "char.moveToObject";
+                case "charactersetportraitmedia": return "char.setPortraitMedia";
+                case "charactersetactiontoactiveinactive": return "char.setActionActive";
+                case "charactersetattribute": return "char.setAttribute";
+                case "charactersetdescription": return "char.setDescription";
+                case "charactersetgender": return "char.setGender";
+                case "charactersetdisplayname": return "char.setDisplayName";
+                case "addacomment": return "general.addComment";
+                case "generalcallfunction": return "general.callFunction";
+                case "debugtext": return "general.debugText";
+                case "displaytext": return "general.displayText";
+                case "mediadisplaylayeredpicture": return "media.displayLayeredPicture";
+                case "mediadisplaymultimedia": return "media.displayMultimedia";
+                case "mediasetbackgroundmusic": return "media.setBackgroundMusic";
+                case "mediastopbackgroundmusic": return "media.stopBackgroundMusic";
+                case "mediaplaysoundeffect": return "media.playSound";
+                case "itemdisplaydescription": return "object.displayDescription";
+                case "itemmovetocharacter": return "object.moveToCharacter";
+                case "itemmovetoinventory": return "object.moveToInventory";
+                case "itemmoveinsideobject": return "object.moveInsideObject";
+                case "itemmovetoroom": return "room.addObject";
+                case "itemsetattribute": return "item.setAttribute";
+                case "playerdisplaydescription": return "player.displayDescription";
+                case "playermoveinventorytocharacter": return "player.moveInventoryToChar";
+                case "playermoveinventorytoroom": return "player.moveInventoryToRoom";
+                case "playermovetoroom": return "player.moveTo";
+                case "playermovetocharacter": return "player.moveToChar";
+                case "playermovetoobject": return "player.moveToObject";
+                case "playersetattribute": return "player.setAttribute";
+                case "playersetdescription": return "player.setDescription";
+                case "playersetname": return "player.setName";
+                case "playersetgender": return "player.setGender";
+                case "playersetportraitmedia": return "player.setPortraitMedia";
+                case "roomdisplaydescription": return "room.displayDescription";
+                case "roomdisplaypicture": return "room.displayPicture";
+                case "roommoveitemstoplayer": return "room.moveItemsToPlayer";
+                case "roomsetdescription": return "room.setDescription";
+                case "roomsetpicture": return "room.setPicture";
+                case "roomlockexit": return "room.lockExit";
+                case "roomunlockexit": return "room.unlockExit";
+                case "statusbarsetvisibleinvisible": return "ui.setStatusBarVisible";
+                case "timerexecutetimer": return "timer.executeTimer";
+                case "timerresettimer": return "timer.resetTimer";
+                case "timerstarttimer": return "timer.startTimer";
+                case "timerstoptimer": return "timer.stopTimer";
+                case "timersetattribute": return "timer.setAttribute";
+                case "variableincrement": return "var.inc";
+                case "variabledecrement": return "var.dec";
+                case "variablesetto": return "var.set";
+                case "variablesettovariable": return "var.setToVar";
+                case "variablesetnumericrandomly": return "var.setRandom";
+                case "variablecompare": return "var.compare";
+                case "variablecomparetovariable": return "var.compareVar";
+                case "variableequals": return "var.equals";
+                case "playerinroom": return "player.inRoom";
+                case "roomhasobject": return "room.hasObject";
+                case "playerinsameroom": return "player.sameRoom";
+                case "itemheldbyplayer": return "item.heldByPlayer";
+                case "itemheldbycharacter": return "item.heldByChar";
+                case "iteminroom": return "item.inRoom";
+                case "iteminobject": return "item.inObject";
+                case "itemnotheldbyplayer": return "item.notHeldByPlayer";
+                case "itemnotinobject": return "item.notInObject";
+                case "isroomexitlocked": return "room.isExitLocked";
+                case "charactergender": return "char.gender";
+                case "characterinroom": return "char.inRoom";
+                case "playergender": return "player.gender";
+                case "characterattributecheck": return "char.attributeCheck";
+                case "itemattributecheck": return "item.attributeCheck";
+                case "playerattributecheck": return "player.attributeCheck";
+                case "roomattributecheck": return "room.attributeCheck";
+                case "timeractivecheck": return "timer.isActive";
+            }
+            
+            var fallback = isCommand ? "general.command" : "general.condition";
+            return fallback;
+        }
+
+        private string GetCsharpPropertyAlias(string label)
+        {
+            switch (label)
+            {
+                case "Prompt Name": return "promptName";
+                case "Choice Text": return "choiceText";
+                case "Target Variable": return "targetVariable";
+                case "Character": return "characterId";
+                case "Room": return "roomId";
+                case "Sound Effect": return "mediaAssetId";
+                case "Volume": return "volume";
+                case "Loop": return "loop";
+                case "Text": return "text";
+                case "Comment": return "comment";
+                case "Function": return "functionId";
+                case "Value": return "value";
+                case "Media File": return "mediaId";
+                case "Image": return "mediaAssetId";
+                case "Transition": return "transitionStyle";
+                case "Duration": return "duration";
+                case "Volume Scale": return "volume";
+                case "Object": return "objectId";
+                case "Item": return "itemId";
+                case "Destination": return "destinationId";
+                case "Is Container": return "isContainer";
+                case "Is Container Open": return "containerOpen";
+                case "Description": return "description";
+                case "Gender": return "gender";
+                case "Display Name": return "displayName";
+                case "Name": return "name";
+                case "Exit Direction": return "exitDirection";
+                case "Status Bar Visible": return "statusBarVisible";
+                case "Timer": return "timerId";
+                case "Variable": return "variableName";
+                case "Variable A": return "variableNameA";
+                case "Variable B": return "variableNameB";
+                case "Operator": return "compareOperator";
+                case "Expected Value": return "expectedValue";
+                case "Min Value": return "minValue";
+                case "Max Value": return "maxValue";
+                case "Attribute": return "attributeName";
+            }
+            if (string.IsNullOrEmpty(label)) return "value";
+            return label.Substring(0, 1).ToLower() + label.Substring(1).Replace(" ", "");
+        }
+
+        private async void TriggerGraphAI(string prompt, string replace, string currentGraphBase64)
+        {
+            if (DataContext is not MainWindowViewModel vm) return;
+
+            var endpoint = vm.Preferences.AiCoAuthorEndpoint;
+            var apiKey = vm.Preferences.AiCoAuthorKey;
+            var model = vm.Preferences.AiCoAuthorModel;
+            var port = vm.Preferences.AiCoAuthorPort;
+            var provider = vm.Preferences.AiCoAuthorProvider;
+            
+            bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+
+            if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
+            {
+                await ConfirmDialog.ShowAsync(this, "AI Action Assistant", "Please set your AI Co-Author API Key in Preferences / Settings first.");
+                try { await CanvasWebView.InvokeScript("if (typeof updateGraphAIResult === 'function') { updateGraphAIResult(btoa('[]')); }"); } catch {}
+                return;
+            }
+
+            try
+            {
+                vm.IsAiGenerating = true;
+                using var client = new HttpClient();
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                }
+
+                var currentGraphJson = Encoding.UTF8.GetString(Convert.FromBase64String(currentGraphBase64));
+                var systemInstructions = await BuildAiGraphSystemPromptAsync();
+
+                var finalPrompt = $"Generate nodes based on this request:\n\"{prompt}\"\n\nCurrent Graph Data context:\n{currentGraphJson}\n\nRemember: Output ONLY valid JSON array containing nodes.";
+                
+                var requestBody = new AICoAuthorRequest
+                {
+                    model = model,
+                    messages = new[]
+                    {
+                        new AICoAuthorMessage { role = "system", content = systemInstructions },
+                        new AICoAuthorMessage { role = "user", content = finalPrompt }
+                    },
+                    temperature = 0.5
+                };
+
+                var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
+                var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                var url = GetAiUrl(endpoint, port, provider);
+                var response = await client.PostAsync(url, requestContent);
+                var responseJson = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
+                }
+
+                using var doc = JsonDocument.Parse(responseJson);
+                if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                {
+                    var content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        // Clean up markdown block fences if present
+                        if (content.StartsWith("```json"))
+                        {
+                            content = content.Substring("```json".Length);
+                        }
+                        if (content.StartsWith("```"))
+                        {
+                            content = content.Substring("```".Length);
+                        }
+                        if (content.EndsWith("```"))
+                        {
+                            content = content.Substring(0, content.Length - "```".Length);
+                        }
+                        content = content.Trim();
+
+                        // Robust fallback parser: extract only the text between the first '[' and last ']'
+                        int firstBracket = content.IndexOf('[');
+                        int lastBracket = content.LastIndexOf(']');
+                        if (firstBracket >= 0 && lastBracket > firstBracket)
+                        {
+                            content = content.Substring(firstBracket, lastBracket - firstBracket + 1);
+                        }
+
+                        var base64Result = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
+                        await CanvasWebView.InvokeScript($"if (typeof updateGraphAIResult === 'function') {{ updateGraphAIResult('{base64Result}'); }}");
+                    }
+                    else
+                    {
+                        throw new Exception("AI returned empty result.");
+                    }
+                }
+                else
+                {
+                    throw new Exception("AI returned empty choice list.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ConfirmDialog.ShowAsync(this, "AI Assist Error", ex.Message);
+                try { await CanvasWebView.InvokeScript("if (typeof updateGraphAIResult === 'function') { updateGraphAIResult(btoa('[]')); }"); } catch {}
+            }
+            finally
+            {
+                vm.IsAiGenerating = false;
+            }
         }
 
         private void WrapComposeSelection(string startTag, string endTag)

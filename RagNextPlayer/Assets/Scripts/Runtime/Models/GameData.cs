@@ -213,6 +213,9 @@ namespace RagNextPlayer.Runtime.Models
     }
     
     public class ObjectDisplayDescriptionCommandData : CommandData { public string ObjectId { get; set; } = string.Empty; }
+    public class PlayerDisplayDescriptionCommandData : CommandData { }
+    public class CharacterDisplayDescriptionCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }
+    public class RoomDisplayDescriptionCommandData : CommandData { public string RoomId { get; set; } = string.Empty; }
     public class ObjectMoveToCharacterCommandData    : CommandData { public string ObjectId { get; set; } = string.Empty; public string CharacterId { get; set; } = string.Empty; }
     public class ObjectMoveToInventoryCommandData    : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class ObjectMoveInsideObjectCommandData   : CommandData { public string ObjectId { get; set; } = string.Empty; public string ContainerObjectId { get; set; } = string.Empty; }

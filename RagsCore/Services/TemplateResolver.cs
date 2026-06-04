@@ -66,11 +66,25 @@ namespace RagsCore.Services
 
                 default:
                     // If no prefix, check if it matches a variable name directly
-                    var directVar = ctx.GetVariable(path)?.Value;
-                    if (directVar != null) return directVar;
+                    var directVar = ctx.GetVariable(path);
+                    if (directVar != null)
+                    {
+                        if (!path.Contains(':') && directVar.Type == "datetime" && DateTime.TryParse(directVar.Value, out var dt))
+                        {
+                            return dt.ToString("MMMM d, yyyy h:mm tt");
+                        }
+                        return directVar.Value;
+                    }
 
                     var gameVarDirect = ctx.Game.Variables.FirstOrDefault(v => string.Equals(v.Name, path, StringComparison.OrdinalIgnoreCase));
-                    if (gameVarDirect != null) return gameVarDirect.Value;
+                    if (gameVarDirect != null)
+                    {
+                        if (!path.Contains(':') && gameVarDirect.Type == "datetime" && DateTime.TryParse(gameVarDirect.Value, out var dt))
+                        {
+                            return dt.ToString("MMMM d, yyyy h:mm tt");
+                        }
+                        return gameVarDirect.Value;
+                    }
 
                     // Also support direct suffix fallback e.g. {my_var.value}
                     if (path.EndsWith(".value", StringComparison.OrdinalIgnoreCase))
@@ -243,11 +257,25 @@ namespace RagsCore.Services
             
             // First check exact match in ActionContext
             var exactVar = ctx.GetVariable(varName);
-            if (exactVar != null) return exactVar.Value;
+            if (exactVar != null)
+            {
+                if (!varName.Contains(':') && exactVar.Type == "datetime" && DateTime.TryParse(exactVar.Value, out var dt))
+                {
+                    return dt.ToString("MMMM d, yyyy h:mm tt");
+                }
+                return exactVar.Value;
+            }
 
             // Otherwise check case-insensitive match in game variables list
             var gameVar = ctx.Game.Variables.FirstOrDefault(v => string.Equals(v.Name, varName, StringComparison.OrdinalIgnoreCase));
-            if (gameVar != null) return gameVar.Value;
+            if (gameVar != null)
+            {
+                if (!varName.Contains(':') && gameVar.Type == "datetime" && DateTime.TryParse(gameVar.Value, out var dt))
+                {
+                    return dt.ToString("MMMM d, yyyy h:mm tt");
+                }
+                return gameVar.Value;
+            }
 
             // If not found, and varName ends with .value or .name, handle accordingly
             if (varName.EndsWith(".value", StringComparison.OrdinalIgnoreCase))

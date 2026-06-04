@@ -13,6 +13,7 @@
         <button class="btn" onclick="addNewCommandNode()">+ Command Node</button>
         <button class="btn" onclick="addNewConditionNode()">+ Condition Node</button>
         <button class="btn" onclick="saveAndSyncCsharp()">💾 Save & Sync</button>
+        <button class="btn ai-btn" onclick="openAiAssistantModal()">✨ AI Assistant</button>
         <span id="editor-title" style="margin-left: 20px; font-size: 13px; font-weight: 600; color: var(--text-muted); align-self: center; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--node-border);">Editing Action: ...</span>
     </div>
 
@@ -40,6 +41,56 @@
         <hr id="menu-sep" style="border-color: rgba(255,255,255,0.08); margin: 4px 0;">
         <div class="context-item" id="menu-copy" onclick="copyNodeAtCursor()">📄 Copy Selected Node</div>
         <div class="context-item" id="menu-delete" style="color: #ef4444;" onclick="clearSelectedNode()">Delete Selected Node</div>
+    </div>
+
+    <!-- Floating AI Preview Control Banner -->
+    <div id="ai-preview-banner" class="ai-banner hide">
+        <span class="ai-banner-title">✨ Previewing AI Generated Script Changes</span>
+        <div class="ai-banner-actions">
+            <button class="btn primary" onclick="acceptAiChanges()">Accept Changes</button>
+            <button class="btn danger" onclick="revertAiChanges()">Revert</button>
+        </div>
+    </div>
+
+    <!-- AI Assistant Prompt Modal -->
+    <div id="ai-modal" class="modal-overlay hide">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title">✨ AI Action Graph Builder</span>
+                <button class="modal-close" onclick="closeAiAssistantModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">Describe what you want this script to do. The AI will generate the node structure automatically.</p>
+                <textarea id="ai-prompt-input" placeholder="e.g. If the player is holding the key, move them to the next room, otherwise display 'You need a key' and play a buzzer sound."></textarea>
+                <div class="modal-row">
+                    <label class="modal-checkbox-label">
+                        <input type="checkbox" id="ai-replace-checkbox" checked> Replace existing nodes completely
+                    </label>
+                </div>
+                
+                <details class="ai-examples">
+                    <summary>💡 View Prompt Examples</summary>
+                    <div class="ai-examples-list">
+                        <div class="ai-example-item" onclick="useAiExample('display multimedia the player\'s portrait, then display the player\'s description')">
+                            <strong>Display Portrait & Description:</strong><br>
+                            "display multimedia the player's portrait, then display the player's description"
+                        </div>
+                        <div class="ai-example-item" onclick="useAiExample('If the item {this.id} is held by the player, display text \'You already have this.\', otherwise move {this.id} to inventory and display \'You pick it up.\'')">
+                            <strong>Generic Item Action (FuncTake):</strong><br>
+                            "If the item {this.id} is held by the player, display text 'You already have this.', otherwise move {this.id} to inventory and display 'You pick it up.'"
+                        </div>
+                        <div class="ai-example-item" onclick="useAiExample('If character character_id is in Starting Chamber, play sound effect creak, otherwise move player to Starting Chamber')">
+                            <strong>Conditional Logic, Sounds & Movement:</strong><br>
+                            "If character character_id is in Starting Chamber, play sound effect creak, otherwise move player to Starting Chamber"
+                        </div>
+                    </div>
+                </details>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeAiAssistantModal()">Cancel</button>
+                <button id="ai-submit-btn" class="btn primary" onclick="submitAiPrompt()">Generate</button>
+            </div>
+        </div>
     </div>
 
     <script src="graph_editor.js?v=1.0.7"></script>

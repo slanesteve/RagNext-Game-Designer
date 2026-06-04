@@ -109,7 +109,7 @@
                 
                 <!-- 1. Dashboard View -->
                 <ScrollViewer IsVisible="{Binding ActiveView, ConverterParameter=Dashboard, Converter={x:Static ObjectConverters.Equal}}">
-                    <StackPanel Spacing="24" MaxWidth="800" HorizontalAlignment="Left">
+                    <StackPanel Spacing="24" HorizontalAlignment="Stretch">
                         <TextBlock Text="Project Dashboard" FontSize="26" FontWeight="Bold" Foreground="White"/>
                         
                         <!-- Metadata Card -->
@@ -167,7 +167,7 @@
 
                 <!-- 1b. Player & Start Config Tab -->
                 <ScrollViewer x:Name="PlayerDetailsScrollViewer" IsVisible="{Binding ActiveView, ConverterParameter=Player, Converter={x:Static ObjectConverters.Equal}}">
-                    <StackPanel Spacing="24" MaxWidth="800" HorizontalAlignment="Left" DataContext="{Binding Player}" x:DataType="models:Player">
+                    <StackPanel Spacing="24" HorizontalAlignment="Stretch" DataContext="{Binding Player}" x:DataType="models:Player">
                         <TextBlock Text="Player &amp; Start Config" FontSize="26" FontWeight="Bold" Foreground="White"/>
                         
                         <Border Background="#1C1C28" BorderBrush="#2A2A3A" BorderThickness="1" CornerRadius="8" Padding="20">
@@ -355,7 +355,10 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Add Room" Command="{Binding AddRoomCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
+                                <Button Grid.Column="0" Content="+ Add Room" Command="{Binding AddRoomCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteRoomCommand}" CommandParameter="{Binding #RoomsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            </Grid>
                         </Grid>
                     </Border>
                     <!-- Right Room Fields -->
@@ -422,9 +425,8 @@
                                                     <TextBlock Text="Select target rooms and toggles for exits directions:" FontSize="11" Foreground="Gray"/>
                                                     
                                                     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" RowSpacing="12" ColumnSpacing="16">
-                                                        <!-- Helper macros to inject direction block. -->
                                                         <!-- North -->
-                                                        <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="North →" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -433,12 +435,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="NorthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="North" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- South -->
-                                                        <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="South ←" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -447,12 +450,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="SouthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="South" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- East -->
-                                                        <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="East →" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="EastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -461,12 +465,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="EastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="EastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="East" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="EastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="EastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- West -->
-                                                        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="West ←" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="WestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -475,12 +480,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="WestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="WestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="West" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="WestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="WestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- Northwest -->
-                                                        <Grid Grid.Row="2" Grid.Column="0" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="2" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Northwest ↖" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -489,12 +495,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="NorthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthWestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="NorthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthWestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- Northeast -->
-                                                        <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Northeast ↗" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -503,12 +510,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="NorthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthEastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="NorthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthEastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- Southwest -->
-                                                        <Grid Grid.Row="3" Grid.Column="0" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="3" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Southwest ↙" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -517,12 +525,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="SouthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthWestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="SouthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthWestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- Southeast -->
-                                                        <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Southeast ↘" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -531,12 +540,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="SouthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthEastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="SouthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthEastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- Up -->
-                                                        <Grid Grid.Row="4" Grid.Column="0" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="4" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Up ▲" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -545,12 +555,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="UpOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="UpLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Up" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="UpOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="UpLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- Down -->
-                                                        <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Down ▼" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -559,12 +570,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="DownOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="DownLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Down" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="DownOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="DownLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- In -->
-                                                        <Grid Grid.Row="5" Grid.Column="0" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="5" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="In ↵" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -573,12 +585,13 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="InOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="InLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="In" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="InOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="InLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
 
                                                         <!-- Out -->
-                                                        <Grid Grid.Row="5" Grid.Column="1" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                        <Grid Grid.Row="5" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Out ↳" FontSize="11" Foreground="Gray"/>
                                                             <ComboBox Grid.Row="1" Grid.Column="0" x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
@@ -587,8 +600,9 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="OutOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="OutLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Out" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="#2B2B3A" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="OutOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
+                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="OutLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
                                                     </Grid>
                                                 </StackPanel>
@@ -708,7 +722,10 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Create Character" Command="{Binding AddCharacterCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
+                                <Button Grid.Column="0" Content="+ Create Character" Command="{Binding AddCharacterCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteCharacterCommand}" CommandParameter="{Binding #CharsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            </Grid>
                         </Grid>
                     </Border>
                     <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20" IsVisible="{Binding #CharsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -887,7 +904,10 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Create Object" Command="{Binding AddObjectCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
+                                <Button Grid.Column="0" Content="+ Create Object" Command="{Binding AddObjectCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteObjectCommand}" CommandParameter="{Binding #ObjectsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            </Grid>
                         </Grid>
                     </Border>
                     <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20" IsVisible="{Binding #ObjectsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -1061,7 +1081,10 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Define Variable" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.AddVariableCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
+                                <Button Grid.Column="0" Content="+ Define Variable" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.AddVariableCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteVariableCommand}" CommandParameter="{Binding #VarsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            </Grid>
                         </Grid>
                     </Border>
                     <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20">
@@ -1071,8 +1094,71 @@
                             <TextBlock Text="Name:" Foreground="Gray"/>
                             <TextBox Text="{Binding Name, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A"/>
                             
+                            <TextBlock Text="Type Hint:" Foreground="Gray"/>
+                            <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.VariableTypes}"
+                                      SelectedItem="{Binding Type, Mode=TwoWay}"
+                                      HorizontalAlignment="Stretch"
+                                      Background="#13131F" BorderBrush="#33334A"/>
+
                             <TextBlock Text="Initial Value:" Foreground="Gray"/>
                             <TextBox Text="{Binding Value, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A"/>
+
+                            <!-- Validation Warning -->
+                            <TextBlock Text="{Binding ValidationWarning}" Foreground="#FF6B6B" FontWeight="SemiBold" FontSize="12"
+                                       IsVisible="{Binding ValidationWarning, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                            <!-- Type Instructions Helper Cards -->
+                            <!-- text / string -->
+                            <Border Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="12"
+                                    IsVisible="{Binding Type, ConverterParameter=string, Converter={x:Static ObjectConverters.Equal}}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="💡 String Variable Info" FontWeight="Bold" Foreground="#8E2DE2" FontSize="13"/>
+                                    <TextBlock Text="• Stores raw text, descriptions, or choices." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Use in messages/descriptions with: {variable_name}" FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- int / number -->
+                            <Border Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="12"
+                                    IsVisible="{Binding Type, ConverterParameter=int, Converter={x:Static ObjectConverters.Equal}}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="💡 Numeric Variable Info" FontWeight="Bold" Foreground="#8E2DE2" FontSize="13"/>
+                                    <TextBlock Text="• Stores integer or floating point numbers (e.g. gold, health, level)." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Check value in actions using mathematical conditions." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Embed in text with: {variable_name}" FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="12"
+                                    IsVisible="{Binding Type, ConverterParameter=number, Converter={x:Static ObjectConverters.Equal}}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="💡 Numeric Variable Info" FontWeight="Bold" Foreground="#8E2DE2" FontSize="13"/>
+                                    <TextBlock Text="• Stores integer or floating point numbers (e.g. gold, health, level)." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Check value in actions using mathematical conditions." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Embed in text with: {variable_name}" FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- bool / boolean -->
+                            <Border Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="12"
+                                    IsVisible="{Binding Type, ConverterParameter=bool, Converter={x:Static ObjectConverters.Equal}}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="💡 True / False Variable Info" FontWeight="Bold" Foreground="#8E2DE2" FontSize="13"/>
+                                    <TextBlock Text="• Stores boolean status. Initial value must be 'true' or 'false'." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Avoid numeric 1 or 0 values to prevent logic errors." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- datetime -->
+                            <Border Background="#13131F" BorderBrush="#33334A" BorderThickness="1" CornerRadius="4" Padding="12"
+                                    IsVisible="{Binding Type, ConverterParameter=datetime, Converter={x:Static ObjectConverters.Equal}}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="💡 Date &amp; Time Variable Info" FontWeight="Bold" Foreground="#8E2DE2" FontSize="13"/>
+                                    <TextBlock Text="• Must be formatted as ISO-8601 (e.g. 2026-06-04T12:00:00)." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Display just the Date part using: {variable_name:date}" FontSize="11" Foreground="LightGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Display just the Time part using: {variable_name:time}" FontSize="11" Foreground="LightGray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Display full Date &amp; Time using: {variable_name:datetime}" FontSize="11" Foreground="LightGray" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -1089,7 +1175,10 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Add Timer" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Timers.AddTimerCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
+                                <Button Grid.Column="0" Content="+ Add Timer" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Timers.AddTimerCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteTimerCommand}" CommandParameter="{Binding #TimersList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            </Grid>
                         </Grid>
                     </Border>
                     <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20" IsVisible="{Binding #TimersList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -1132,7 +1221,10 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Row="2" Content="+ Create Function" Command="{Binding Functions.AddFunctionCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,10,0,0"/>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
+                                <Button Grid.Column="0" Content="+ Create Function" Command="{Binding Functions.AddFunctionCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteFunctionCommand}" CommandParameter="{Binding #FuncsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            </Grid>
                         </Grid>
                     </Border>
                     <Border Grid.Column="1" Background="#1C1C28" CornerRadius="8" Padding="20">
@@ -1423,7 +1515,7 @@
 
                 <!-- 9. Standalone Compiler (Publish target) -->
                 <ScrollViewer IsVisible="{Binding ActiveView, ConverterParameter=Publish, Converter={x:Static ObjectConverters.Equal}}">
-                    <StackPanel Spacing="24" MaxWidth="800">
+                    <StackPanel Spacing="24" HorizontalAlignment="Stretch">
                         <TextBlock Text="🚀 .NET Native AOT Package Publisher" FontSize="26" FontWeight="Bold" Foreground="White"/>
                         
                         <Border Background="#1C1C28" BorderBrush="#2A2A3A" BorderThickness="1" CornerRadius="8" Padding="20">
@@ -1510,7 +1602,7 @@
 
                 <!-- 10. Workspace Preferences -->
                 <ScrollViewer IsVisible="{Binding ActiveView, ConverterParameter=Preferences, Converter={x:Static ObjectConverters.Equal}}">
-                    <StackPanel Spacing="24" MaxWidth="800" Margin="10,0,10,20">
+                    <StackPanel Spacing="24" HorizontalAlignment="Stretch" Margin="10,0,10,20">
                         <TextBlock Text="⚙️ Workspace Preferences" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
 
                         <!-- Visual Appearance Card -->
@@ -1745,8 +1837,8 @@
                         </StackPanel>
                         
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Button Content="❌ Cancel" Command="{Binding StopEditingActionCommand}" FontSize="12" Background="#262635" BorderBrush="#3D3D5A" BorderThickness="1" CornerRadius="4" Padding="12,6"/>
-                            <Button Content="💾 Save &amp; Return" Click="OnSyncGraphClicked" FontSize="12" Foreground="White" FontWeight="Bold" CornerRadius="4" Padding="14,6">
+                            <Button Content="❌ Cancel" Command="{Binding StopEditingActionCommand}" IsEnabled="{Binding IsNotAiGenerating}" FontSize="12" Background="#262635" BorderBrush="#3D3D5A" BorderThickness="1" CornerRadius="4" Padding="12,6"/>
+                            <Button Content="💾 Save &amp; Return" Click="OnSyncGraphClicked" IsEnabled="{Binding IsNotAiGenerating}" FontSize="12" Foreground="White" FontWeight="Bold" CornerRadius="4" Padding="14,6">
                                 <Button.Background>
                                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
                                         <GradientStop Color="#8E2DE2" Offset="0.0"/>
