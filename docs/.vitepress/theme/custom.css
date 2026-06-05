@@ -1,17 +1,46 @@
-/* Custom style overrides for zoomed images */
+/* Custom zoom modal styles */
+.custom-zoom-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(10, 10, 15, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  cursor: zoom-out;
+  animation: zoom-fade-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-zoom-image {
+  max-width: 95vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: zoom-scale-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes zoom-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoom-scale-in {
+  from { transform: scale(0.92); }
+  to { transform: scale(1); }
+}
+
+/* Document image hover style */
 .vp-doc img {
   cursor: zoom-in;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.medium-zoom-overlay,
-.medium-zoom-image--zoomed {
-  z-index: 9999;
+.vp-doc img:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
-
-.medium-zoom-image--zoomed {
-  cursor: zoom-out;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
