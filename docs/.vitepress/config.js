@@ -15,7 +15,8 @@ export default defineConfig({
       {
         text: 'Introduction',
         items: [
-          { text: 'Getting Started', link: '/guide/getting-started' }
+          { text: 'Getting Started', link: '/guide/getting-started' },
+          { text: 'Cross-Platform Player', link: '/guide/cross-platform-player' }
         ]
       },
       {
