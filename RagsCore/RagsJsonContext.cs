@@ -9,6 +9,7 @@ namespace RagsCore
     [JsonSourceGenerationOptions(
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonSerializable(typeof(Game))]
     [JsonSerializable(typeof(CommandCatalog))]
@@ -38,6 +39,7 @@ namespace RagsCore
                     {
                         WriteIndented = true,
                         PropertyNameCaseInsensitive = true,
+                        NumberHandling = JsonNumberHandling.AllowReadingFromString,
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                         ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
                     };
