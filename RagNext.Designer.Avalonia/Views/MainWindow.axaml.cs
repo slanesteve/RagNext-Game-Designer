@@ -2741,6 +2741,10 @@ namespace RagNext.Designer.Avalonia.Views
             sb.AppendLine("   * E.g. to check if the item running the action is held, you can use \"{this.id}\" as the item parameter.");
             sb.AppendLine("7. References to variables in display text templates must use the format {variables.VariableName}. Do NOT use {this.variables.VariableName} or {variables.variables.VariableName} or {this.value}.");
             sb.AppendLine("8. To modify, increment, or decrement variables, use the specific type identifier commands \"var.set\" (Variable: Set), \"var.inc\" (Variable: Increment), or \"var.dec\" (Variable: Decrement). Do NOT use \"general.command\".");
+            sb.AppendLine("9. When incrementing or decrementing variables (commands \"var.inc\" and \"var.dec\"):");
+            sb.AppendLine("   * If the variable is numeric, set the \"value\" parameter to a standard numeric string (e.g. \"10\", \"-5\").");
+            sb.AppendLine("   * If the variable is a date & time (datetime), the value MUST include a unit of time to indicate what is being changed (e.g., \"10 seconds\", \"5 minutes\", \"2 hours\", \"1 day\", \"-30 seconds\"). Do NOT output just a raw number for date/time increments unless you specifically want minutes, which is the fallback unit.");
+
 
             var vm = DataContext as MainWindowViewModel;
             if (vm?.CurrentGame != null)
