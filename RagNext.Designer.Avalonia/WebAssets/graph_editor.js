@@ -119,6 +119,8 @@ const fallbackDiscriminators = {
     "timersettimertoactiveinactive": "timer.setTimerActive",
     "variabledisplaydata": "var.displayData",
     "variableset": "var.set",
+    "variableincrement": "var.inc",
+    "variabledecrement": "var.dec",
     "promptplayerinput": "general.promptInput",
     "variablesetnumericrandomly": "var.setRandom",
     "endthegame": "general.endGame",
@@ -142,7 +144,14 @@ const fallbackDiscriminators = {
     "roomisexitlocked": "room.isExitLocked",
     "timerisactive": "timer.isActive",
     "variablecomparison": "var.compare",
-    "variablecomparisontovariable": "var.compareVar"
+    "variablecomparisontovariable": "var.compareVar",
+    "variabledatetimepartcomparison": "date.partCompare",
+    "datetimeispast": "date.isPast",
+    "datetimeisfuture": "date.isFuture",
+    "datetimecomparetwovariables": "date.compareVars",
+    "datetimecomparedifference": "date.diffCompare",
+    "datetimecompareconstant": "date.compareConst",
+    "datetimeisvalid": "date.isValid"
 };
 
 const propertyMappings = {
@@ -170,7 +179,10 @@ const propertyMappings = {
     "Attribute Name": ["AttributeName", "attributeName"],
     "Timer": ["TimerId", "timerId", "Timer"],
     "Function": ["FunctionId", "functionId", "Function"],
-    "Expected Value": ["ExpectedValue", "expectedValue"]
+    "Expected Value": ["ExpectedValue", "expectedValue"],
+    "DateTime Component": ["DateTimeComponent", "dateTimeComponent"],
+    "Duration": ["Duration", "duration"],
+    "Constant Value": ["ConstantValue", "constantValue"]
 };
 
 function getPropertyValue(nodeData, label) {
