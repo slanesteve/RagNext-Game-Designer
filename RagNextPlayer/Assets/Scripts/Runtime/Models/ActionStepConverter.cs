@@ -68,6 +68,13 @@ namespace RagNextPlayer.Runtime.Models
                 "room.attributeCheck" => typeof(RoomAttributeCheckConditionData),
                 "room.customPropertyCheck" => typeof(RoomAttributeCheckConditionData),
                 "timer.isActive"    => typeof(TimerActiveConditionData),
+                "date.partCompare"  => typeof(DateTimePartComparisonConditionData),
+                "date.isPast"       => typeof(DateTimeIsPastConditionData),
+                "date.isFuture"     => typeof(DateTimeIsFutureConditionData),
+                "date.compareVars"  => typeof(DateTimeCompareVariablesConditionData),
+                "date.diffCompare"  => typeof(DateTimeCompareDifferenceConditionData),
+                "date.compareConst" => typeof(DateTimeCompareConstantConditionData),
+                "date.isValid"      => typeof(DateTimeIsValidConditionData),
 
                 // ── Commands ───────────────────────────────────────────────
                 "general.displayText"    => typeof(DisplayTextCommandData),

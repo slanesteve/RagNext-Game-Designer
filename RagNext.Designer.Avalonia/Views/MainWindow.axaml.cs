@@ -2862,6 +2862,13 @@ namespace RagNext.Designer.Avalonia.Views
                 case "variablecomparisontovariable": return "var.compareVar";
                 case "variablecomparetovariable": return "var.compareVar";
                 case "variableequals": return "var.equals";
+                case "variabledatetimepartcomparison": return "date.partCompare";
+                case "datetimeispast": return "date.isPast";
+                case "datetimeisfuture": return "date.isFuture";
+                case "datetimecomparetwovariables": return "date.compareVars";
+                case "datetimecomparedifference": return "date.diffCompare";
+                case "datetimecompareconstant": return "date.compareConst";
+                case "datetimeisvalid": return "date.isValid";
                 case "playerinroom": return "player.inRoom";
                 case "roomhasobject": return "room.hasObject";
                 case "playerinsameroom": return "player.sameRoom";

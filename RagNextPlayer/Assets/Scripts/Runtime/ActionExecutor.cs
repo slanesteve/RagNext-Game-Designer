@@ -796,8 +796,122 @@ namespace RagNextPlayer.Runtime
                     ctx.Game.Timers.Find(t => string.Equals(t.Name, ctx.Resolve(c.TimerId), StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id, ctx.Resolve(c.TimerId), StringComparison.OrdinalIgnoreCase))
                         ?.IsActive ?? false,
 
+                DateTimePartComparisonConditionData or
+                DateTimeIsPastConditionData or
+                DateTimeIsFutureConditionData or
+                DateTimeCompareVariablesConditionData or
+                DateTimeCompareDifferenceConditionData or
+                DateTimeCompareConstantConditionData or
+                DateTimeIsValidConditionData =>
+                    EvaluateDateTimeCondition(cond, ctx),
+
                 _ => false
             };
+        }
+
+        private static bool EvaluateDateTimeCondition(ConditionData cond, GameExecutionContext ctx)
+        {
+            switch (cond)
+            {
+                case DateTimePartComparisonConditionData c:
+                    if (string.IsNullOrWhiteSpace(c.VariableName)) return false;
+                    var rawVal = ctx.GetVariable(c.VariableName)?.Value;
+                    if (string.IsNullOrWhiteSpace(rawVal) || !DateTime.TryParse(rawVal, out var dt)) return false;
+                    double actualVal = (c.DateTimeComponent ?? "").ToLowerInvariant() switch
+                    {
+                        "second" => dt.Second,
+                        "hour" => dt.Hour,
+                        "day" => dt.Day,
+                        "month" => dt.Month,
+                        "year" => dt.Year,
+                        _ => dt.Minute
+                    };
+                    return c.Comparison switch
+                    {
+                        "=" => actualVal == c.ExpectedValue,
+                        "!=" => actualVal != c.ExpectedValue,
+                        ">" => actualVal > c.ExpectedValue,
+                        ">=" => actualVal >= c.ExpectedValue,
+                        "<" => actualVal < c.ExpectedValue,
+                        "<=" => actualVal <= c.ExpectedValue,
+                        _ => false
+                    };
+
+                case DateTimeIsPastConditionData c:
+                    if (string.IsNullOrWhiteSpace(c.VariableName)) return false;
+                    var rawValPast = ctx.GetVariable(c.VariableName)?.Value;
+                    if (string.IsNullOrWhiteSpace(rawValPast) || !DateTime.TryParse(rawValPast, out var dtPast)) return false;
+                    return dtPast < DateTime.Now;
+
+                case DateTimeIsFutureConditionData c:
+                    if (string.IsNullOrWhiteSpace(c.VariableName)) return false;
+                    var rawValFuture = ctx.GetVariable(c.VariableName)?.Value;
+                    if (string.IsNullOrWhiteSpace(rawValFuture) || !DateTime.TryParse(rawValFuture, out var dtFuture)) return false;
+                    return dtFuture > DateTime.Now;
+
+                case DateTimeCompareVariablesConditionData c:
+                    if (string.IsNullOrWhiteSpace(c.VariableNameA) || string.IsNullOrWhiteSpace(c.VariableNameB)) return false;
+                    var valA = ctx.GetVariable(c.VariableNameA)?.Value;
+                    var valB = ctx.GetVariable(c.VariableNameB)?.Value;
+                    if (string.IsNullOrWhiteSpace(valA) || !DateTime.TryParse(valA, out var dtA)) return false;
+                    if (string.IsNullOrWhiteSpace(valB) || !DateTime.TryParse(valB, out var dtB)) return false;
+                    return c.Comparison switch
+                    {
+                        "=" => dtA == dtB,
+                        "!=" => dtA != dtB,
+                        ">" => dtA > dtB,
+                        ">=" => dtA >= dtB,
+                        "<" => dtA < dtB,
+                        "<=" => dtA <= dtB,
+                        _ => false
+                    };
+
+                case DateTimeCompareDifferenceConditionData c:
+                    if (string.IsNullOrWhiteSpace(c.VariableNameA) || string.IsNullOrWhiteSpace(c.VariableNameB)) return false;
+                    var diffA = ctx.GetVariable(c.VariableNameA)?.Value;
+                    var diffB = ctx.GetVariable(c.VariableNameB)?.Value;
+                    if (string.IsNullOrWhiteSpace(diffA) || !DateTime.TryParse(diffA, out var dtDiffA)) return false;
+                    if (string.IsNullOrWhiteSpace(diffB) || !DateTime.TryParse(diffB, out var dtDiffB)) return false;
+                    var resolvedDuration = ctx.Resolve(c.Duration ?? "");
+                    var tsOpt = DateTimeHelper.ParseDuration(resolvedDuration);
+                    if (!tsOpt.HasValue) return false;
+                    var targetSpan = tsOpt.Value;
+                    var actualSpan = dtDiffA - dtDiffB;
+                    return c.Comparison switch
+                    {
+                        "=" => actualSpan == targetSpan,
+                        "!=" => actualSpan != targetSpan,
+                        ">" => actualSpan > targetSpan,
+                        ">=" => actualSpan >= targetSpan,
+                        "<" => actualSpan < targetSpan,
+                        "<=" => actualSpan <= targetSpan,
+                        _ => false
+                    };
+
+                case DateTimeCompareConstantConditionData c:
+                    if (string.IsNullOrWhiteSpace(c.VariableName)) return false;
+                    var constRaw = ctx.GetVariable(c.VariableName)?.Value;
+                    if (string.IsNullOrWhiteSpace(constRaw) || !DateTime.TryParse(constRaw, out var dtConstVar)) return false;
+                    var resolvedConst = ctx.Resolve(c.ConstantValue ?? "");
+                    if (!DateTime.TryParse(resolvedConst, out var dtConstVal)) return false;
+                    return c.Comparison switch
+                    {
+                        "=" => dtConstVar == dtConstVal,
+                        "!=" => dtConstVar != dtConstVal,
+                        ">" => dtConstVar > dtConstVal,
+                        ">=" => dtConstVar >= dtConstVal,
+                        "<" => dtConstVar < dtConstVal,
+                        "<=" => dtConstVar <= dtConstVal,
+                        _ => false
+                    };
+
+                case DateTimeIsValidConditionData c:
+                    if (string.IsNullOrWhiteSpace(c.VariableName)) return false;
+                    var validRaw = ctx.GetVariable(c.VariableName)?.Value;
+                    if (string.IsNullOrWhiteSpace(validRaw)) return false;
+                    return DateTime.TryParse(validRaw, out _);
+            }
+            return false;
         }
 
         private static bool EvaluateAttribute(object? entity, string attributeName, string expectedValue)
@@ -921,6 +1035,45 @@ namespace RagNextPlayer.Runtime
             {
                 return null;
             }
+        }
+
+        public static TimeSpan? ParseDuration(string value)
+        {
+            var cleanValue = value.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(cleanValue)) return null;
+
+            double amount = 0;
+            string unit = "minutes"; // default
+
+            var match = System.Text.RegularExpressions.Regex.Match(cleanValue, @"^(-?\d+(?:\.\d+)?)\s*([a-zA-Z]+)?$");
+            if (match.Success)
+            {
+                if (double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedAmount))
+                {
+                    amount = parsedAmount;
+                }
+                if (match.Groups[2].Success)
+                {
+                    var unitStr = match.Groups[2].Value;
+                    if (unitStr.StartsWith("s")) unit = "seconds";
+                    else if (unitStr.StartsWith("h")) unit = "hours";
+                    else if (unitStr.StartsWith("d")) unit = "days";
+                    else if (unitStr.StartsWith("mo") || unitStr == "mth") unit = "months";
+                    else if (unitStr.StartsWith("y")) unit = "years";
+                    else if (unitStr.StartsWith("m")) unit = "minutes";
+                }
+
+                return unit switch
+                {
+                    "seconds" => TimeSpan.FromSeconds(amount),
+                    "hours" => TimeSpan.FromHours(amount),
+                    "days" => TimeSpan.FromDays(amount),
+                    "months" => TimeSpan.FromDays(amount * 30),
+                    "years" => TimeSpan.FromDays(amount * 365),
+                    _ => TimeSpan.FromMinutes(amount)
+                };
+            }
+            return null;
         }
     }
 }

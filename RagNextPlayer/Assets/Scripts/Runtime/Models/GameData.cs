@@ -152,6 +152,13 @@ namespace RagNextPlayer.Runtime.Models
     public class PlayerAttributeCheckConditionData       : ConditionData { public string AttributeName { get; set; } = string.Empty; public string ExpectedValue { get; set; } = string.Empty; }
     public class RoomAttributeCheckConditionData         : ConditionData { public string RoomId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string ExpectedValue { get; set; } = string.Empty; }
     public class TimerActiveConditionData                : ConditionData { public string TimerId { get; set; } = string.Empty; }
+    public class DateTimePartComparisonConditionData     : ConditionData { public string VariableName { get; set; } = string.Empty; public string DateTimeComponent { get; set; } = "minute"; public string Comparison { get; set; } = "="; public double ExpectedValue { get; set; } }
+    public class DateTimeIsPastConditionData             : ConditionData { public string VariableName { get; set; } = string.Empty; }
+    public class DateTimeIsFutureConditionData           : ConditionData { public string VariableName { get; set; } = string.Empty; }
+    public class DateTimeCompareVariablesConditionData   : ConditionData { public string VariableNameA { get; set; } = string.Empty; public string Comparison { get; set; } = "="; public string VariableNameB { get; set; } = string.Empty; }
+    public class DateTimeCompareDifferenceConditionData  : ConditionData { public string VariableNameA { get; set; } = string.Empty; public string VariableNameB { get; set; } = string.Empty; public string Comparison { get; set; } = "="; public string Duration { get; set; } = string.Empty; }
+    public class DateTimeCompareConstantConditionData    : ConditionData { public string VariableName { get; set; } = string.Empty; public string Comparison { get; set; } = "="; public string ConstantValue { get; set; } = string.Empty; }
+    public class DateTimeIsValidConditionData            : ConditionData { public string VariableName { get; set; } = string.Empty; }
 
     // ── Concrete Commands ─────────────────────────────────────────────────────
     public class DisplayTextCommandData              : CommandData { public string Text { get; set; } = string.Empty; }

@@ -32,6 +32,13 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(PlayerAttributeCheckCondition), "player.attributeCheck")]
     [JsonDerivedType(typeof(RoomAttributeCheckCondition), "room.attributeCheck")]
     [JsonDerivedType(typeof(TimerActiveCondition), "timer.isActive")]
+    [JsonDerivedType(typeof(DateTimePartComparisonCondition), "date.partCompare")]
+    [JsonDerivedType(typeof(DateTimeIsPastCondition), "date.isPast")]
+    [JsonDerivedType(typeof(DateTimeIsFutureCondition), "date.isFuture")]
+    [JsonDerivedType(typeof(DateTimeCompareVariablesCondition), "date.compareVars")]
+    [JsonDerivedType(typeof(DateTimeCompareDifferenceCondition), "date.diffCompare")]
+    [JsonDerivedType(typeof(DateTimeCompareConstantCondition), "date.compareConst")]
+    [JsonDerivedType(typeof(DateTimeIsValidCondition), "date.isValid")]
     // Commands
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
@@ -498,6 +505,45 @@ namespace RagsCore.Actions
                 return null;
             }
         }
+
+        public static TimeSpan? ParseDuration(string value)
+        {
+            var cleanValue = value.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(cleanValue)) return null;
+
+            double amount = 0;
+            string unit = "minutes"; // default
+
+            var match = System.Text.RegularExpressions.Regex.Match(cleanValue, @"^(-?\d+(?:\.\d+)?)\s*([a-zA-Z]+)?$");
+            if (match.Success)
+            {
+                if (double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedAmount))
+                {
+                    amount = parsedAmount;
+                }
+                if (match.Groups[2].Success)
+                {
+                    var unitStr = match.Groups[2].Value;
+                    if (unitStr.StartsWith("s")) unit = "seconds";
+                    else if (unitStr.StartsWith("h")) unit = "hours";
+                    else if (unitStr.StartsWith("d")) unit = "days";
+                    else if (unitStr.StartsWith("mo") || unitStr == "mth") unit = "months";
+                    else if (unitStr.StartsWith("y")) unit = "years";
+                    else if (unitStr.StartsWith("m")) unit = "minutes";
+                }
+
+                return unit switch
+                {
+                    "seconds" => TimeSpan.FromSeconds(amount),
+                    "hours" => TimeSpan.FromHours(amount),
+                    "days" => TimeSpan.FromDays(amount),
+                    "months" => TimeSpan.FromDays(amount * 30),
+                    "years" => TimeSpan.FromDays(amount * 365),
+                    _ => TimeSpan.FromMinutes(amount)
+                };
+            }
+            return null;
+        }
     }
 
     public sealed class VariableIncrementCommand : GameCommand
@@ -648,6 +694,176 @@ namespace RagsCore.Actions
                 "!=" => !string.Equals(varVal, compVal, StringComparison.OrdinalIgnoreCase),
                 _ => false
             };
+        }
+    }
+
+    public sealed class DateTimePartComparisonCondition : Condition
+    {
+        public string VariableName { get; set; } = string.Empty;
+        public string DateTimeComponent { get; set; } = "minute";
+        public string Comparison { get; set; } = "=";
+        public double ExpectedValue { get; set; }
+        public override string TypeName => "Variable: DateTime Part Comparison";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(VariableName)) return false;
+            var rawVal = ctx.GetVariable(VariableName)?.Value;
+            if (string.IsNullOrWhiteSpace(rawVal) || !DateTime.TryParse(rawVal, out var dt)) return false;
+
+            double actualVal = (DateTimeComponent ?? "").ToLowerInvariant() switch
+            {
+                "second" => dt.Second,
+                "hour" => dt.Hour,
+                "day" => dt.Day,
+                "month" => dt.Month,
+                "year" => dt.Year,
+                _ => dt.Minute
+            };
+
+            return Comparison switch
+            {
+                "=" => actualVal == ExpectedValue,
+                "!=" => actualVal != ExpectedValue,
+                ">" => actualVal > ExpectedValue,
+                ">=" => actualVal >= ExpectedValue,
+                "<" => actualVal < ExpectedValue,
+                "<=" => actualVal <= ExpectedValue,
+                _ => false
+            };
+        }
+    }
+
+    public sealed class DateTimeIsPastCondition : Condition
+    {
+        public string VariableName { get; set; } = string.Empty;
+        public override string TypeName => "DateTime: Is Past";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(VariableName)) return false;
+            var rawVal = ctx.GetVariable(VariableName)?.Value;
+            if (string.IsNullOrWhiteSpace(rawVal) || !DateTime.TryParse(rawVal, out var dt)) return false;
+            return dt < DateTime.Now;
+        }
+    }
+
+    public sealed class DateTimeIsFutureCondition : Condition
+    {
+        public string VariableName { get; set; } = string.Empty;
+        public override string TypeName => "DateTime: Is Future";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(VariableName)) return false;
+            var rawVal = ctx.GetVariable(VariableName)?.Value;
+            if (string.IsNullOrWhiteSpace(rawVal) || !DateTime.TryParse(rawVal, out var dt)) return false;
+            return dt > DateTime.Now;
+        }
+    }
+
+    public sealed class DateTimeCompareVariablesCondition : Condition
+    {
+        public string VariableNameA { get; set; } = string.Empty;
+        public string Comparison { get; set; } = "=";
+        public string VariableNameB { get; set; } = string.Empty;
+        public override string TypeName => "DateTime: Compare Two Variables";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(VariableNameA) || string.IsNullOrWhiteSpace(VariableNameB)) return false;
+            var valA = ctx.GetVariable(VariableNameA)?.Value;
+            var valB = ctx.GetVariable(VariableNameB)?.Value;
+
+            if (string.IsNullOrWhiteSpace(valA) || !DateTime.TryParse(valA, out var dtA)) return false;
+            if (string.IsNullOrWhiteSpace(valB) || !DateTime.TryParse(valB, out var dtB)) return false;
+
+            return Comparison switch
+            {
+                "=" => dtA == dtB,
+                "!=" => dtA != dtB,
+                ">" => dtA > dtB,
+                ">=" => dtA >= dtB,
+                "<" => dtA < dtB,
+                "<=" => dtA <= dtB,
+                _ => false
+            };
+        }
+    }
+
+    public sealed class DateTimeCompareDifferenceCondition : Condition
+    {
+        public string VariableNameA { get; set; } = string.Empty;
+        public string VariableNameB { get; set; } = string.Empty;
+        public string Comparison { get; set; } = "=";
+        public string Duration { get; set; } = string.Empty;
+        public override string TypeName => "DateTime: Compare Difference";
+
+        public override bool Evaluate(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(VariableNameA) || string.IsNullOrWhiteSpace(VariableNameB)) return false;
+            var valA = ctx.GetVariable(VariableNameA)?.Value;
+            var valB = ctx.GetVariable(VariableNameB)?.Value;
+
+            if (string.IsNullOrWhiteSpace(valA) || !DateTime.TryParse(valA, out var dtA)) return false;
+            if (string.IsNullOrWhiteSpace(valB) || !DateTime.TryParse(valB, out var dtB)) return false;
+
+            var resolvedDuration = RagsCore.Services.TemplateResolver.Resolve(Duration ?? "", ctx);
+            var tsOpt = DateTimeHelper.ParseDuration(resolvedDuration);
+            if (!tsOpt.HasValue) return false;
+            var targetSpan = tsOpt.Value;
+
+            var actualSpan = dtA - dtB;
+
+            return Comparison switch
+            {
+                "=" => actualSpan == targetSpan,
+                "!=" => actualSpan != targetSpan,
+                ">" => actualSpan > targetSpan,
+                ">=" => actualSpan >= targetSpan,
+                "<" => actualSpan < targetSpan,
+                "<=" => actualSpan <= targetSpan,
+                _ => false
+            };
+        }
+    }
+
+    public sealed class DateTimeCompareConstantCondition : Condition
+    {
+        public string VariableName { get; set; } = string.Empty;
+        public string Comparison { get; set; } = "=";
+        public string ConstantValue { get; set; } = string.Empty;
+        public override string TypeName => "DateTime: Compare Constant";
+
+        public override bool Evaluate(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(VariableName)) return false;
+            var rawVal = ctx.GetVariable(VariableName)?.Value;
+            if (string.IsNullOrWhiteSpace(rawVal) || !DateTime.TryParse(rawVal, out var dt)) return false;
+
+            var resolvedConst = RagsCore.Services.TemplateResolver.Resolve(ConstantValue ?? "", ctx);
+            if (!DateTime.TryParse(resolvedConst, out var dtConst)) return false;
+
+            return Comparison switch
+            {
+                "=" => dt == dtConst,
+                "!=" => dt != dtConst,
+                ">" => dt > dtConst,
+                ">=" => dt >= dtConst,
+                "<" => dt < dtConst,
+                "<=" => dt <= dtConst,
+                _ => false
+            };
+        }
+    }
+
+    public sealed class DateTimeIsValidCondition : Condition
+    {
+        public string VariableName { get; set; } = string.Empty;
+        public override string TypeName => "DateTime: Is Valid";
+
+        public override bool Evaluate(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(VariableName)) return false;
+            var rawVal = ctx.GetVariable(VariableName)?.Value;
+            if (string.IsNullOrWhiteSpace(rawVal)) return false;
+            return DateTime.TryParse(rawVal, out _);
         }
     }
 

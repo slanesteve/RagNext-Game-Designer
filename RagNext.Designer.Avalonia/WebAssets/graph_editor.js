@@ -1687,6 +1687,15 @@ function refreshCommandFields(node) {
                     { Id: "<", Name: "<" },
                     { Id: "<=", Name: "<=" }
                 ];
+            } else if (inputSchema.label === 'DateTime Component' || inputSchema.label === 'DateTimeComponent') {
+                optionsList = [
+                    { Id: "second", Name: "Second" },
+                    { Id: "minute", Name: "Minute" },
+                    { Id: "hour", Name: "Hour" },
+                    { Id: "day", Name: "Day" },
+                    { Id: "month", Name: "Month" },
+                    { Id: "year", Name: "Year" }
+                ];
             } else if (inputSchema.label === 'Direction') {
                 optionsList = [
                     { Id: "North", Name: "North" },

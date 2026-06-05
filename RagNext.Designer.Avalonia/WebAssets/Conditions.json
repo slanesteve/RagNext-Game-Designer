@@ -298,6 +298,133 @@
           "dataType": "Variable"
         }
       ]
+    },
+    {
+      "name": "Variable: DateTime Part Comparison",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "DateTime Component",
+          "controlType": "ComboBox",
+          "dataType": "String"
+        },
+        {
+          "label": "Comparison",
+          "controlType": "ComboBox",
+          "dataType": "Operator"
+        },
+        {
+          "label": "Expected Value",
+          "controlType": "Number",
+          "dataType": "Number"
+        }
+      ]
+    },
+    {
+      "name": "DateTime: Is Past",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        }
+      ]
+    },
+    {
+      "name": "DateTime: Is Future",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        }
+      ]
+    },
+    {
+      "name": "DateTime: Compare Two Variables",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable A",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Comparison",
+          "controlType": "ComboBox",
+          "dataType": "Operator"
+        },
+        {
+          "label": "Variable B",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        }
+      ]
+    },
+    {
+      "name": "DateTime: Compare Difference",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable A",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Variable B",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Comparison",
+          "controlType": "ComboBox",
+          "dataType": "Operator"
+        },
+        {
+          "label": "Duration",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "DateTime: Compare Constant",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Comparison",
+          "controlType": "ComboBox",
+          "dataType": "Operator"
+        },
+        {
+          "label": "Constant Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "DateTime: Is Valid",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        }
+      ]
     }
   ]
 }
