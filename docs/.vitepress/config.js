@@ -5,6 +5,7 @@ export default defineConfig({
   description: "Official Documentation for the RagNext Game Engine Node Editor",
   base: '/RagNext-Game-Designer/',
   themeConfig: {
+    logo: '/logo.png',
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/getting-started' }

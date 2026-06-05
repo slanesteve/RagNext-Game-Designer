@@ -4,7 +4,10 @@ layout: home
 hero:
   name: "RagNext"
   text: "Game Designer"
-  tagline: "Visual node graph editor and runtime scripting compiler for next-gen narrative games."
+  tagline: "PREMIUM STORY ENGINE & RPG PLAYER"
+  image:
+    src: /logo.png
+    alt: RagNext Logo
   actions:
     - theme: brand
       text: Get Started
