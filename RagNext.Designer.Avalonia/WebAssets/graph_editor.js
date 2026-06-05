@@ -166,8 +166,8 @@ const propertyMappings = {
     "Choice Text": ["ChoiceText", "choiceText", "Text", "text"],
     "Target Variable": ["VariableName", "variableName", "Name", "name", "TargetVariable", "targetVariable"],
     "Variable": ["Name", "name", "VariableName", "variableName", "Variable", "variable"],
-    "Variable A": ["NameA", "nameA", "VariableA", "variableA"],
-    "Variable B": ["NameB", "nameB", "VariableB", "variableB"],
+    "Variable A": ["VariableNameA", "NameA", "nameA", "VariableA", "variableA", "variableNameA"],
+    "Variable B": ["VariableNameB", "NameB", "nameB", "VariableB", "variableB", "variableNameB"],
     "Text": ["Text", "text"],
     "Amount": ["Amount", "amount"],
     "Direction": ["Direction", "direction"],
@@ -2271,7 +2271,18 @@ function buildNodeJsonWithoutNext(node) {
                 
                 // Map to primary C# property name
                 const aliases = propertyMappings[inp.label] || [];
-                const primaryCsharpProp = aliases[0] || inp.label;
+                let primaryCsharpProp = aliases[0] || inp.label;
+
+                if (node.data.conditionType && node.data.conditionType.startsWith('date.')) {
+                    if (inp.label === 'Variable') {
+                        primaryCsharpProp = 'VariableName';
+                    } else if (inp.label === 'Variable A') {
+                        primaryCsharpProp = 'VariableNameA';
+                    } else if (inp.label === 'Variable B') {
+                        primaryCsharpProp = 'VariableNameB';
+                    }
+                }
+                
                 conditionJson[primaryCsharpProp] = val;
                 
                 // Keep original label for JS graph canvas reload consistency
