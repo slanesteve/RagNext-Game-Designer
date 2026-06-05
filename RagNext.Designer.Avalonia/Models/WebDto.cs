@@ -55,6 +55,7 @@ namespace RagNext.Designer.Avalonia.Views
         public string? Id { get; set; }
         public string? Name { get; set; }
         public bool? IsContainer { get; set; }
+        public string? VarType { get; set; }
         public List<string>? Attributes { get; set; }
     }
 

@@ -195,6 +195,17 @@ function getPropertyValue(nodeData, label) {
     return "";
 }
 
+function getSelectedVariableType(node) {
+    const varName = node.data["Name"] || node.data["name"] || node.data["VariableName"] || node.data["variableName"] || "";
+    if (varName && catalogs.Variables) {
+        const matchingVar = catalogs.Variables.find(v => v.Name === varName || v.id === varName || v.Id === varName);
+        if (matchingVar) {
+            return (matchingVar.varType || matchingVar.VarType || matchingVar.Type || matchingVar.type || "").toLowerCase();
+        }
+    }
+    return "";
+}
+
 function getNodeIdFromPinId(pinId) {
     if (!pinId) return null;
     if (pinId.startsWith('choice_')) {
@@ -1758,7 +1769,7 @@ function refreshCommandFields(node) {
                 aliases.forEach(alias => {
                     node.data[alias] = pickerSelect.value;
                 });
-                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer') {
+                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable') {
                     refreshCommandFields(node);
                 }
                 triggerAutoSave();
@@ -1793,6 +1804,204 @@ function refreshCommandFields(node) {
             });
 
             row.appendChild(createFormattingToolbar(inputElement, null, inputSchema.label, node));
+            row.appendChild(inputElement);
+        } else if (inputSchema.label === 'Value' || inputSchema.label === 'Expected Value' || inputSchema.label === 'ExpectedValue') {
+            const varType = getSelectedVariableType(node);
+            if (varType === 'boolean' || varType === 'bool' || varType === 'true / false') {
+                const fieldWrapper = document.createElement('div');
+                fieldWrapper.className = 'toggle-field-wrapper';
+                fieldWrapper.style.display = 'flex';
+                fieldWrapper.style.flexDirection = 'column';
+                fieldWrapper.style.gap = '4px';
+
+                const pickerSelect = document.createElement('select');
+                pickerSelect.style.width = "100%";
+                
+                const optTrue = document.createElement('option');
+                optTrue.value = "true";
+                optTrue.innerText = "True";
+                pickerSelect.appendChild(optTrue);
+
+                const optFalse = document.createElement('option');
+                optFalse.value = "false";
+                optFalse.innerText = "False";
+                pickerSelect.appendChild(optFalse);
+
+                const textInput = document.createElement('input');
+                textInput.type = 'text';
+                textInput.placeholder = `Enter expression / {this.name}...`;
+                textInput.style.width = "100%";
+
+                const cleanInitial = (initialVal || "").toLowerCase().trim();
+                const existsInOptions = cleanInitial === 'true' || cleanInitial === 'false';
+                let isExprMode = (initialVal && !existsInOptions);
+
+                pickerSelect.style.display = isExprMode ? 'none' : 'block';
+                textInput.style.display = isExprMode ? 'block' : 'none';
+
+                label.style.display = 'flex';
+                label.style.justifyContent = 'space-between';
+                label.style.alignItems = 'center';
+
+                const toggleLink = document.createElement('span');
+                toggleLink.className = 'field-toggle-mode';
+                toggleLink.style.fontSize = '9px';
+                toggleLink.style.cursor = 'pointer';
+                toggleLink.style.textDecoration = 'underline';
+                toggleLink.style.color = '#a855f7';
+                toggleLink.style.marginLeft = 'auto';
+                toggleLink.innerText = isExprMode ? "👁️ Boolean Dropdown" : "📝 Text Mode";
+
+                toggleLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    isExprMode = !isExprMode;
+                    if (isExprMode) {
+                        textInput.style.display = 'block';
+                        pickerSelect.style.display = 'none';
+                        toggleLink.innerText = "👁️ Boolean Dropdown";
+                        textInput.value = pickerSelect.value;
+                    } else {
+                        textInput.style.display = 'none';
+                        pickerSelect.style.display = 'block';
+                        toggleLink.innerText = "📝 Text Mode";
+                        pickerSelect.value = textInput.value;
+                    }
+                });
+                label.appendChild(toggleLink);
+
+                pickerSelect.value = existsInOptions ? cleanInitial : "false";
+                textInput.value = initialVal || "";
+
+                pickerSelect.addEventListener('change', () => {
+                    textInput.value = pickerSelect.value;
+                    node.data[inputSchema.label] = pickerSelect.value;
+                    const aliases = propertyMappings[inputSchema.label] || [];
+                    aliases.forEach(alias => {
+                        node.data[alias] = pickerSelect.value;
+                    });
+                    triggerAutoSave();
+                });
+
+                textInput.addEventListener('input', () => {
+                    pickerSelect.value = textInput.value;
+                    node.data[inputSchema.label] = textInput.value;
+                    const aliases = propertyMappings[inputSchema.label] || [];
+                    aliases.forEach(alias => {
+                        node.data[alias] = textInput.value;
+                    });
+                    triggerAutoSave();
+                });
+
+                fieldWrapper.appendChild(pickerSelect);
+                fieldWrapper.appendChild(textInput);
+                inputElement = fieldWrapper;
+            } else if (varType === 'number') {
+                const fieldWrapper = document.createElement('div');
+                fieldWrapper.className = 'toggle-field-wrapper';
+                fieldWrapper.style.display = 'flex';
+                fieldWrapper.style.flexDirection = 'column';
+                fieldWrapper.style.gap = '4px';
+
+                const numberInput = document.createElement('input');
+                numberInput.type = 'number';
+                numberInput.style.width = "100%";
+                numberInput.placeholder = "Enter number...";
+
+                const textInput = document.createElement('input');
+                textInput.type = 'text';
+                textInput.placeholder = `Enter expression / {this.name}...`;
+                textInput.style.width = "100%";
+
+                let isExprMode = (initialVal && isNaN(initialVal));
+
+                numberInput.style.display = isExprMode ? 'none' : 'block';
+                textInput.style.display = isExprMode ? 'block' : 'none';
+
+                label.style.display = 'flex';
+                label.style.justifyContent = 'space-between';
+                label.style.alignItems = 'center';
+
+                const toggleLink = document.createElement('span');
+                toggleLink.className = 'field-toggle-mode';
+                toggleLink.style.fontSize = '9px';
+                toggleLink.style.cursor = 'pointer';
+                toggleLink.style.textDecoration = 'underline';
+                toggleLink.style.color = '#a855f7';
+                toggleLink.style.marginLeft = 'auto';
+                toggleLink.innerText = isExprMode ? "👁️ Number Input" : "📝 Text Mode";
+
+                toggleLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    isExprMode = !isExprMode;
+                    if (isExprMode) {
+                        textInput.style.display = 'block';
+                        numberInput.style.display = 'none';
+                        toggleLink.innerText = "👁️ Number Input";
+                        textInput.value = numberInput.value;
+                    } else {
+                        textInput.style.display = 'none';
+                        numberInput.style.display = 'block';
+                        toggleLink.innerText = "📝 Text Mode";
+                        numberInput.value = textInput.value;
+                    }
+                });
+                label.appendChild(toggleLink);
+
+                numberInput.value = isExprMode ? "" : initialVal;
+                textInput.value = initialVal || "";
+
+                numberInput.addEventListener('input', () => {
+                    textInput.value = numberInput.value;
+                    node.data[inputSchema.label] = numberInput.value;
+                    const aliases = propertyMappings[inputSchema.label] || [];
+                    aliases.forEach(alias => {
+                        node.data[alias] = numberInput.value;
+                    });
+                    triggerAutoSave();
+                });
+
+                textInput.addEventListener('input', () => {
+                    numberInput.value = textInput.value;
+                    node.data[inputSchema.label] = textInput.value;
+                    const aliases = propertyMappings[inputSchema.label] || [];
+                    aliases.forEach(alias => {
+                        node.data[alias] = textInput.value;
+                    });
+                    triggerAutoSave();
+                });
+
+                fieldWrapper.appendChild(numberInput);
+                fieldWrapper.appendChild(textInput);
+                inputElement = fieldWrapper;
+            } else if (varType === 'datetime') {
+                inputElement = document.createElement('input');
+                inputElement.type = 'text';
+                inputElement.placeholder = `e.g. 10 seconds, 1 hour, or YYYY-MM-DDTHH:MM:SS`;
+                inputElement.value = initialVal;
+                inputElement.style.width = "100%";
+                inputElement.addEventListener('input', () => {
+                    node.data[inputSchema.label] = inputElement.value;
+                    const aliases = propertyMappings[inputSchema.label] || [];
+                    aliases.forEach(alias => {
+                        node.data[alias] = inputElement.value;
+                    });
+                    triggerAutoSave();
+                });
+            } else {
+                inputElement = document.createElement('input');
+                inputElement.type = 'text';
+                inputElement.placeholder = `Enter ${inputSchema.label}...`;
+                inputElement.value = initialVal;
+                inputElement.style.width = "100%";
+                inputElement.addEventListener('input', () => {
+                    node.data[inputSchema.label] = inputElement.value;
+                    const aliases = propertyMappings[inputSchema.label] || [];
+                    aliases.forEach(alias => {
+                        node.data[alias] = inputElement.value;
+                    });
+                    triggerAutoSave();
+                });
+            }
             row.appendChild(inputElement);
         } else {
             // Standard Text / Input field
@@ -2560,7 +2769,8 @@ function getAutocompleteSuggestions(triggerChar) {
         // Variables
         if (catalogs.Variables) {
             catalogs.Variables.forEach(v => {
-                if (v.Type === "datetime") {
+                const vt = (v.varType || v.VarType || v.Type || v.type || "").toLowerCase();
+                if (vt === "datetime") {
                     list.push({ token: `variables.${v.Name}`, typeName: "Datetime Variable (Default)", desc: "Friendly: October 31, 2026 8:00 AM" });
                     list.push({ token: `variables.${v.Name}:date`, typeName: "Datetime Date-only", desc: "Displays date portion: 2026-10-31" });
                     list.push({ token: `variables.${v.Name}:time`, typeName: "Datetime Time-only", desc: "Displays time portion: 08:00:00" });

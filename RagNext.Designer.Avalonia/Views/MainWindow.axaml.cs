@@ -315,7 +315,7 @@ namespace RagNext.Designer.Avalonia.Views
                     Rooms = vm.CurrentGame.Rooms.Select(r => new CatalogEntityDto { Id = r.Id.ToString(), Name = r.Name, Attributes = r.Attributes.Select(a => a.Name).ToList() }).ToList(),
                     Characters = vm.CurrentGame.Characters.Select(c => new CatalogEntityDto { Id = c.Id.ToString(), Name = c.Name, Attributes = c.Attributes.Select(a => a.Name).ToList() }).ToList(),
                     GameObjects = vm.CurrentGame.Objects.Select(o => new CatalogEntityDto { Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer, Attributes = o.Attributes.Select(a => a.Name).ToList() }).ToList(),
-                    Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, VarType = v.Type, Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
                     Player = new CatalogPlayerDto { Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList() },
                     Owner = new CatalogPlayerDto { Attributes = ownerAttributes },
                     Media = vm.CurrentGame.MediaAssets.Select(m => new CatalogEntityDto { Id = m.Id.ToString(), Name = string.IsNullOrWhiteSpace(m.OriginalFileName) ? m.RelativePath : m.OriginalFileName }).ToList(),
