@@ -26,10 +26,6 @@ export default defineConfig({
       }
     ],
 
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/slanesteve/RagNext' }
-    ],
-
     footer: {
       message: 'Released under the MIT License.',
       copyright: 'Copyright © 2026-present Steve Lane'
