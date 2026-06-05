@@ -4,6 +4,14 @@
   transition: transform 0.3s ease;
 }
 
+.medium-zoom-overlay,
+.medium-zoom-image--zoomed {
+  z-index: 9999;
+}
+
 .medium-zoom-image--zoomed {
   cursor: zoom-out;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
+

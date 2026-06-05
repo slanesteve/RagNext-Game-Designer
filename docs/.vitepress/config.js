@@ -16,7 +16,9 @@ export default defineConfig({
         text: 'Introduction',
         items: [
           { text: 'Getting Started', link: '/guide/getting-started' },
-          { text: 'Cross-Platform Player', link: '/guide/cross-platform-player' }
+          { text: 'Cross-Platform Player', link: '/guide/cross-platform-player' },
+          { text: 'Visual Scripts & Triggers', link: '/guide/actions-and-triggers' },
+          { text: 'AI Assistance', link: '/guide/ai-assistance' }
         ]
       },
       {
