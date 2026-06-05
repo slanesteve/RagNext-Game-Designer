@@ -38,6 +38,10 @@ namespace RagNext.Designer.Avalonia.Services
     [JsonSerializable(typeof(List<ReflectionEntityDto>))]
     [JsonSerializable(typeof(GeminiRequest))]
     [JsonSerializable(typeof(GeminiResponse))]
+    [JsonSerializable(typeof(GeminiImageRequest))]
+    [JsonSerializable(typeof(GeminiImageResponse))]
+    [JsonSerializable(typeof(GeminiPredictRequest))]
+    [JsonSerializable(typeof(GeminiPredictResponse))]
     internal partial class DesignerJsonContext : JsonSerializerContext
     {
     }

@@ -662,6 +662,27 @@ namespace RagNext.Designer.Avalonia.Views
 
             if (!response.IsSuccessStatusCode)
             {
+                string cleanMessage = null;
+                try
+                {
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("error", out var errorEl) &&
+                        errorEl.TryGetProperty("message", out var msgEl))
+                    {
+                        cleanMessage = msgEl.GetString();
+                    }
+                }
+                catch { }
+
+                if (!string.IsNullOrEmpty(cleanMessage))
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                    {
+                        throw new Exception($"Gemini API Rate Limit Exceeded (429):\n\n{cleanMessage}\n\nPlease wait a few seconds before trying again.");
+                    }
+                    throw new Exception($"Gemini API Error ({response.StatusCode}): {cleanMessage}");
+                }
+
                 throw new Exception($"Gemini API error: {response.StatusCode} - {responseJson}");
             }
 
@@ -1590,6 +1611,93 @@ namespace RagNext.Designer.Avalonia.Views
                     else
                     {
                         throw new Exception("Invalid local Stable Diffusion API response structure.");
+                    }
+                }
+                else if (string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        throw new Exception("API Key is required for Google Gemini Image generation.");
+                    }
+                    var baseUrl = string.IsNullOrWhiteSpace(endpoint) ? "https://generativelanguage.googleapis.com" : endpoint.TrimEnd('/');
+                    var resolvedModel = string.IsNullOrWhiteSpace(model) ? "imagen-3.0-generate-002" : model;
+                    var url = $"{baseUrl}/v1beta/models/{resolvedModel}:predict?key={apiKey}";
+                    client.DefaultRequestHeaders.Add("x-goog-api-key", apiKey);
+
+                    string resolvedAspectRatio = "1:1";
+                    if (width > 0 && height > 0)
+                    {
+                        double ratio = (double)width / height;
+                        if (Math.Abs(ratio - 1.0) < 0.1) resolvedAspectRatio = "1:1";
+                        else if (Math.Abs(ratio - 1.33) < 0.1) resolvedAspectRatio = "4:3";
+                        else if (Math.Abs(ratio - 0.75) < 0.1) resolvedAspectRatio = "3:4";
+                        else if (Math.Abs(ratio - 1.77) < 0.15) resolvedAspectRatio = "16:9";
+                        else if (Math.Abs(ratio - 0.56) < 0.15) resolvedAspectRatio = "9:16";
+                    }
+
+                    var requestBody = new GeminiPredictRequest
+                    {
+                        instances = new[]
+                        {
+                            new GeminiPredictInstance { prompt = prompt }
+                        },
+                        parameters = new GeminiPredictParameters
+                        {
+                            sampleCount = 1,
+                            aspectRatio = resolvedAspectRatio,
+                            outputMimeType = "image/jpeg"
+                        }
+                    };
+
+                    var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.GeminiPredictRequest);
+                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(url, requestContent);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        string cleanMessage = null;
+                        try
+                        {
+                            using var doc = JsonDocument.Parse(responseJson);
+                            if (doc.RootElement.TryGetProperty("error", out var errorEl) &&
+                                errorEl.TryGetProperty("message", out var msgEl))
+                            {
+                                cleanMessage = msgEl.GetString();
+                            }
+                        }
+                        catch { }
+
+                        if (!string.IsNullOrEmpty(cleanMessage))
+                        {
+                            throw new Exception($"Image generation failed ({response.StatusCode}): {cleanMessage}");
+                        }
+                        throw new Exception($"Image generation failed: {response.StatusCode} - {responseJson}");
+                    }
+
+                    GeminiPredictResponse? geminiPredictResponse = null;
+                    try
+                    {
+                        geminiPredictResponse = JsonSerializer.Deserialize(responseJson, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.GeminiPredictResponse);
+                    }
+                    catch (Exception jsonEx)
+                    {
+                        throw new Exception($"Failed to parse Google Gemini predict response. Status: {response.StatusCode}.\n\nRaw Response:\n{responseJson}\n\nJSON Error: {jsonEx.Message}");
+                    }
+
+                    if (geminiPredictResponse?.predictions != null && geminiPredictResponse.predictions.Length > 0)
+                    {
+                        var base64Str = geminiPredictResponse.predictions[0].bytesBase64Encoded;
+                        if (string.IsNullOrWhiteSpace(base64Str))
+                        {
+                            throw new Exception("No image bytes returned from Google Gemini.");
+                        }
+                        imageBytes = Convert.FromBase64String(base64Str);
+                    }
+                    else
+                    {
+                        throw new Exception($"Invalid Google Gemini image response structure. Raw Response:\n\n{responseJson}");
                     }
                 }
                 else
@@ -2947,11 +3055,13 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (DataContext is not MainWindowViewModel vm) return;
 
-            var endpoint = vm.Preferences.AiCoAuthorEndpoint;
-            var apiKey = vm.Preferences.AiCoAuthorKey;
-            var model = vm.Preferences.AiCoAuthorModel;
-            var port = vm.Preferences.AiCoAuthorPort;
-            var provider = vm.Preferences.AiCoAuthorProvider;
+            var useCustom = vm.Preferences.AiNodeAssistantUseCustom;
+            var endpoint = useCustom ? vm.Preferences.AiNodeAssistantEndpoint : vm.Preferences.AiCoAuthorEndpoint;
+            var apiKey = useCustom ? vm.Preferences.AiNodeAssistantKey : vm.Preferences.AiCoAuthorKey;
+            var model = useCustom ? vm.Preferences.AiNodeAssistantModel : vm.Preferences.AiCoAuthorModel;
+            var port = useCustom ? vm.Preferences.AiNodeAssistantPort : vm.Preferences.AiCoAuthorPort;
+            var provider = useCustom ? vm.Preferences.AiNodeAssistantProvider : vm.Preferences.AiCoAuthorProvider;
+            var temperature = useCustom ? vm.Preferences.AiNodeAssistantTemperature : 0.5;
             
             bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
                                    string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase) ||
@@ -2959,7 +3069,8 @@ namespace RagNext.Designer.Avalonia.Views
 
             if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
             {
-                await ConfirmDialog.ShowAsync(this, "AI Action Assistant", "Please set your AI Co-Author API Key in Preferences / Settings first.");
+                string msgWord = useCustom ? "AI Node Assistant" : "AI Co-Author";
+                await ConfirmDialog.ShowAsync(this, "AI Action Assistant", $"Please set your {msgWord} API Key in Preferences / Settings first.");
                 try { await CanvasWebView.InvokeScript("if (typeof updateGraphAIResult === 'function') { updateGraphAIResult(btoa('[]')); }"); } catch {}
                 return;
             }
@@ -2976,7 +3087,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                 if (string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase))
                 {
-                    content = await CallGeminiAsync(client, endpoint, apiKey, model, systemInstructions, finalPrompt, 0.5);
+                    content = await CallGeminiAsync(client, endpoint, apiKey, model, systemInstructions, finalPrompt, temperature);
                 }
                 else
                 {
@@ -2993,7 +3104,7 @@ namespace RagNext.Designer.Avalonia.Views
                             new AICoAuthorMessage { role = "system", content = systemInstructions },
                             new AICoAuthorMessage { role = "user", content = finalPrompt }
                         },
-                        temperature = 0.5
+                        temperature = temperature
                     };
 
                     var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
@@ -3673,5 +3784,31 @@ namespace RagNext.Designer.Avalonia.Views
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class HexToColorConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly HexToColorConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string hex && !string.IsNullOrWhiteSpace(hex))
+            {
+                if (global::Avalonia.Media.Color.TryParse(hex, out var color))
+                {
+                    return color;
+                }
+            }
+            return global::Avalonia.Media.Colors.White;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is global::Avalonia.Media.Color color)
+            {
+                return color.ToString();
+            }
+            return "#FFFFFF";
+        }
     }
 }

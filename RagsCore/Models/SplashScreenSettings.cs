@@ -48,5 +48,14 @@ namespace RagsCore.Models
 
         private string _transitionStyle = "Fade"; // Fade, Rise, Cinematic, Glitch, Exposure
         public string TransitionStyle { get => _transitionStyle; set => SetProperty(ref _transitionStyle, value); }
+
+        private double _borderWidth = 6;
+        public double BorderWidth { get => _borderWidth; set => SetProperty(ref _borderWidth, value); }
+
+        private string _borderColor = "#2A2A38";
+        public string BorderColor { get => _borderColor; set => SetProperty(ref _borderColor, value); }
+
+        private double _borderRadius = 12;
+        public double BorderRadius { get => _borderRadius; set => SetProperty(ref _borderRadius, value); }
     }
 }

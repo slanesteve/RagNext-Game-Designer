@@ -17,11 +17,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
     {
         private AppSettings _settings = new();
         private ObservableCollection<string> _availableModels = new();
+        private ObservableCollection<string> _availableCoAuthorModels = new();
+        private ObservableCollection<string> _availableNodeAssistantModels = new();
+        private ObservableCollection<string> _availableImageGenModels = new();
         private bool _isFetchingModels;
 
         public PreferencesViewModel()
         {
-            FetchModelsCommand = new Command(async () => await FetchModelsAsync());
+            FetchModelsCommand = new Command<string>(async (mode) => await FetchModelsAsync(mode));
             OpenHelpCommand = new Command<string>(OpenHelpUrl);
             LoadSettings();
         }
@@ -35,6 +38,24 @@ namespace RagNext.Designer.Avalonia.ViewModels
         {
             get => _availableModels;
             set => SetProperty(ref _availableModels, value);
+        }
+
+        public ObservableCollection<string> AvailableCoAuthorModels
+        {
+            get => _availableCoAuthorModels;
+            set => SetProperty(ref _availableCoAuthorModels, value);
+        }
+
+        public ObservableCollection<string> AvailableNodeAssistantModels
+        {
+            get => _availableNodeAssistantModels;
+            set => SetProperty(ref _availableNodeAssistantModels, value);
+        }
+
+        public ObservableCollection<string> AvailableImageGenModels
+        {
+            get => _availableImageGenModels;
+            set => SetProperty(ref _availableImageGenModels, value);
         }
 
         public bool IsFetchingModels
@@ -308,6 +329,137 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
+        // AI Node Assistant Settings
+        public bool AiNodeAssistantUseCustom
+        {
+            get => _settings.AiNodeAssistantUseCustom;
+            set
+            {
+                if (_settings.AiNodeAssistantUseCustom != value)
+                {
+                    _settings.AiNodeAssistantUseCustom = value;
+                    OnPropertyChanged();
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string AiNodeAssistantProvider
+        {
+            get => _settings.AiNodeAssistantProvider;
+            set
+            {
+                if (_settings.AiNodeAssistantProvider != value)
+                {
+                    _settings.AiNodeAssistantProvider = value;
+                    OnPropertyChanged();
+                    ApplyNodeAssistantProviderDefaults(value);
+                    OnPropertyChanged(nameof(ShowNodeAssistantHostPort));
+                    OnPropertyChanged(nameof(ShowNodeAssistantEndpoint));
+                    OnPropertyChanged(nameof(ShowNodeAssistantApiKey));
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string AiNodeAssistantEndpoint
+        {
+            get => _settings.AiNodeAssistantEndpoint;
+            set
+            {
+                if (_settings.AiNodeAssistantEndpoint != value)
+                {
+                    _settings.AiNodeAssistantEndpoint = value;
+                    OnPropertyChanged();
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string AiNodeAssistantKey
+        {
+            get => _settings.AiNodeAssistantKey;
+            set
+            {
+                if (_settings.AiNodeAssistantKey != value)
+                {
+                    _settings.AiNodeAssistantKey = value;
+                    OnPropertyChanged();
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string AiNodeAssistantModel
+        {
+            get => _settings.AiNodeAssistantModel;
+            set
+            {
+                if (_settings.AiNodeAssistantModel != value)
+                {
+                    _settings.AiNodeAssistantModel = value;
+                    OnPropertyChanged();
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string AiNodeAssistantHost
+        {
+            get => _settings.AiNodeAssistantHost;
+            set
+            {
+                if (_settings.AiNodeAssistantHost != value)
+                {
+                    _settings.AiNodeAssistantHost = value;
+                    OnPropertyChanged();
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string AiNodeAssistantPort
+        {
+            get => _settings.AiNodeAssistantPort;
+            set
+            {
+                if (_settings.AiNodeAssistantPort != value)
+                {
+                    _settings.AiNodeAssistantPort = value;
+                    OnPropertyChanged();
+                    SaveSettings();
+                }
+            }
+        }
+
+        public double AiNodeAssistantTemperature
+        {
+            get => _settings.AiNodeAssistantTemperature;
+            set
+            {
+                if (_settings.AiNodeAssistantTemperature != value)
+                {
+                    _settings.AiNodeAssistantTemperature = value;
+                    OnPropertyChanged();
+                    SaveSettings();
+                }
+            }
+        }
+
+        public int AiNodeAssistantMaxTokens
+        {
+            get => _settings.AiNodeAssistantMaxTokens;
+            set
+            {
+                if (_settings.AiNodeAssistantMaxTokens != value)
+                {
+                    _settings.AiNodeAssistantMaxTokens = value;
+                    OnPropertyChanged();
+                    SaveSettings();
+                }
+            }
+        }
+
         // Last Published Directory
         public string LastPublishDirectory
         {
@@ -364,6 +516,24 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
+        public bool ShowNodeAssistantHostPort
+        {
+            get
+            {
+                var provider = AiNodeAssistantProvider;
+                return string.Equals(provider, "Ollama", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(provider, "LMStudio", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        public bool ShowNodeAssistantEndpoint => !ShowNodeAssistantHostPort;
+
+        public bool ShowNodeAssistantApiKey => string.Equals(AiNodeAssistantProvider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
+                                              string.Equals(AiNodeAssistantProvider, "OpenRouter", StringComparison.OrdinalIgnoreCase) ||
+                                              string.Equals(AiNodeAssistantProvider, "Google Gemini", StringComparison.OrdinalIgnoreCase);
+
+
         // Help Instructions Support (Co-Author)
         public string CoAuthorSetupStepsTitle => AiCoAuthorProvider switch
         {
@@ -397,7 +567,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Ollama" => "3. Click Refresh (↻) below to pick a pulled model, or type one in.",
             "LMStudio" => "3. Keep LM Studio running in the background while designing.",
             "OpenRouter" => "3. Select free creative writing models like Gemma 2!",
-            "Google Gemini" => "3. Specify a model ID (e.g. 'gemini-1.5-pro' for complex reasoning, or 'gemini-1.5-flash' for speed).",
+            "Google Gemini" => "3. Click Refresh (↻) below to pull available models, and select the latest Flash variant (e.g., 'gemini-3.5-flash').",
             _ => "3. Enter the exact model identifier code required by the provider."
         };
 
@@ -427,7 +597,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Pollinations.ai" => "Pollinations.ai Setup (Free & Cloud-Based):",
             "ChatGPT" => "ChatGPT / OpenAI Setup (Paid Cloud):",
             "Azure OpenAI Images" => "Azure OpenAI Setup (Enterprise Cloud):",
-            "Google Gemini" => "Google Gemini / Vertex Setup (Cloud):",
+            "Google Gemini" => "Google Gemini Setup (Cloud - Paid/Billing Plan Required):",
             "Local Stable Diffusion" => "Stable Diffusion (Automatic1111 - Local & Free):",
             "Local ComfyUI" => "ComfyUI (Local & Free):",
             _ => "AI Image Provider Connection Details:"
@@ -438,7 +608,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Pollinations.ai" => "1. Completely free and anonymous by default (leave API Key empty to use your local IP's quota).",
             "ChatGPT" => "1. Requires an active OpenAI Developer account with paid API billing.",
             "Azure OpenAI Images" => "1. Deploy an Azure OpenAI instance in your Microsoft Azure Portal.",
-            "Google Gemini" => "1. Enable the Vertex AI API inside your Google Cloud Console.",
+            "Google Gemini" => "1. Get a Gemini API Key from Google AI Studio (NOTE: Imagen API requires billing/paid plan enabled).",
             "Local Stable Diffusion" => "1. Ensure Automatic1111's WebUI is installed and running on your local computer.",
             "Local ComfyUI" => "1. Install ComfyUI and run it locally (uses port 8000 or 8188 by default).",
             _ => "1. Configure the API endpoint host for the chosen provider."
@@ -449,7 +619,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Pollinations.ai" => "2. Optional: If you hit IP rate limits, log in at enter.pollinations.ai with GitHub to get a key.",
             "ChatGPT" => "2. Go to the API Keys tab in your dashboard, generate a key, and copy it.",
             "Azure OpenAI Images" => "2. Copy your deployed endpoint (e.g. https://YOUR-RESOURCE.openai.azure.com/) into Host.",
-            "Google Gemini" => "2. Setup your billing project and copy your project endpoints.",
+            "Google Gemini" => "2. Paste the API Key in the box below. The API Endpoint should remain at the default Google URL.",
             "Local Stable Diffusion" => "2. Crucial: Launch the WebUI with the '--api' flag enabled to allow external connections.",
             "Local ComfyUI" => "2. Setup a custom image-generation workflow JSON and save it to your disk.",
             _ => "2. Set up your authentication keys / project credentials."
@@ -460,7 +630,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Pollinations.ai" => "3. Note: Generated Secret Keys (sk_...) require a funded balance, so anonymous mode is recommended.",
             "ChatGPT" => "3. Paste the key in the API Key box below and use DALL-E 3 (default).",
             "Azure OpenAI Images" => "3. Enter your resource-specific auth key in the API Key field below.",
-            "Google Gemini" => "3. Configure your API token or service key credentials in the fields below.",
+            "Google Gemini" => "3. Click Refresh (↻) to pull models (e.g. 'imagen-4.0-generate-001'). Billing must be active in Google Cloud.",
             "Local Stable Diffusion" => "3. Keep your local instance active at http://localhost:7860 while generating.",
             "Local ComfyUI" => "3. Keep ComfyUI running in the background and configure workflow path.",
             _ => "3. Specify the target model / checkpoint variant name."
@@ -471,7 +641,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Pollinations.ai" => "Open Pollinations.ai ↗",
             "ChatGPT" => "Get OpenAI API Key ↗",
             "Azure OpenAI Images" => "Open Azure Portal ↗",
-            "Google Gemini" => "Google Cloud Console ↗",
+            "Google Gemini" => "Get Gemini API Key ↗",
             "Local Stable Diffusion" => "View Automatic1111 Guide ↗",
             "Local ComfyUI" => "Download ComfyUI ↗",
             _ => "Open Dashboard ↗"
@@ -482,7 +652,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Pollinations.ai" => "https://pollinations.ai",
             "ChatGPT" => "https://platform.openai.com/api-keys",
             "Azure OpenAI Images" => "https://portal.azure.com",
-            "Google Gemini" => "https://console.cloud.google.com",
+            "Google Gemini" => "https://aistudio.google.com/",
             "Local Stable Diffusion" => "https://github.com/AUTOMATIC1111/stable-diffusion-webui",
             "Local ComfyUI" => "https://github.com/comfyanonymous/ComfyUI",
             _ => "https://platform.openai.com"
@@ -518,7 +688,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 case "Google Gemini":
                     AiCoAuthorEndpoint = "https://generativelanguage.googleapis.com";
                     AiCoAuthorPort = "0";
-                    AiCoAuthorModel = "gemini-1.5-pro";
+                    AiCoAuthorModel = "gemini-3.5-flash";
                     break;
             }
             OnPropertyChanged(nameof(CoAuthorSetupStepsTitle));
@@ -552,7 +722,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 case "Google Gemini":
                     AiImageGenEndpoint = "https://generativelanguage.googleapis.com";
                     AiImageGenPort = "0";
-                    AiImageGenModel = "imagen-3";
+                    AiImageGenModel = "imagen-3.0-generate-002";
                     break;
                 case "Local Stable Diffusion":
                     AiImageGenEndpoint = "http://localhost";
@@ -576,11 +746,54 @@ namespace RagNext.Designer.Avalonia.ViewModels
             OnPropertyChanged(nameof(ShowImageGenApiKey));
         }
 
-        public async Task FetchModelsAsync()
+        public void ApplyNodeAssistantProviderDefaults(string provider)
+        {
+            switch (provider)
+            {
+                case "Ollama":
+                    AiNodeAssistantEndpoint = "http://localhost";
+                    AiNodeAssistantPort = "11434";
+                    AiNodeAssistantModel = "llama3";
+                    break;
+                case "LMStudio":
+                    AiNodeAssistantEndpoint = "http://localhost";
+                    AiNodeAssistantPort = "1234";
+                    AiNodeAssistantModel = "llama3";
+                    break;
+                case "OpenAICompatible":
+                    AiNodeAssistantEndpoint = "https://api.openai.com/v1";
+                    AiNodeAssistantPort = "0";
+                    AiNodeAssistantModel = "gpt-4o";
+                    break;
+                case "OpenRouter":
+                    AiNodeAssistantEndpoint = "https://openrouter.ai/api";
+                    AiNodeAssistantPort = "0";
+                    AiNodeAssistantModel = "google/gemma-2-9b-it:free";
+                    break;
+                case "Google Gemini":
+                    AiNodeAssistantEndpoint = "https://generativelanguage.googleapis.com";
+                    AiNodeAssistantPort = "0";
+                    AiNodeAssistantModel = "gemini-3.5-flash";
+                    break;
+            }
+        }
+
+        public async Task FetchModelsAsync(string mode)
         {
             if (IsFetchingModels) return;
 
             IsFetchingModels = true;
+            
+            var targetList = mode switch
+            {
+                "NodeAssistant" => AvailableNodeAssistantModels,
+                "ImageGen" => AvailableImageGenModels,
+                _ => AvailableCoAuthorModels
+            };
+
+            targetList.Clear();
+            targetList.Add("Fetching...");
+
             AvailableModels.Clear();
             AvailableModels.Add("Fetching...");
 
@@ -589,96 +802,238 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 using var http = new System.Net.Http.HttpClient();
                 http.Timeout = TimeSpan.FromSeconds(10);
 
-                string baseUri = "";
-                if (AiCoAuthorProvider == "Ollama")
+                string provider = "";
+                string endpoint = "";
+                string key = "";
+                string portStr = "";
+
+                if (mode == "NodeAssistant")
                 {
-                    var portStr = string.IsNullOrEmpty(AiCoAuthorPort) ? "11434" : AiCoAuthorPort;
-                    baseUri = $"http://localhost:{portStr}/";
-                    var resp = await http.GetAsync(new Uri(new Uri(baseUri), "api/tags"));
-                    if (resp.IsSuccessStatusCode)
+                    provider = AiNodeAssistantProvider;
+                    endpoint = AiNodeAssistantEndpoint;
+                    key = AiNodeAssistantKey;
+                    portStr = string.IsNullOrEmpty(AiNodeAssistantPort) ? "1234" : AiNodeAssistantPort;
+                }
+                else if (mode == "ImageGen")
+                {
+                    provider = AiImageGenProvider;
+                    endpoint = AiImageGenEndpoint;
+                    key = AiImageGenKey;
+                    portStr = string.IsNullOrEmpty(AiImageGenPort) ? "7860" : AiImageGenPort;
+                }
+                else
+                {
+                    provider = AiCoAuthorProvider;
+                    endpoint = AiCoAuthorEndpoint;
+                    key = AiCoAuthorKey;
+                    portStr = string.IsNullOrEmpty(AiCoAuthorPort) ? "1234" : AiCoAuthorPort;
+                }
+
+                var list = new List<string>();
+
+                if (mode == "ImageGen")
+                {
+                    if (provider == "Google Gemini")
                     {
-                        var txt = await resp.Content.ReadAsStringAsync();
-                        using var doc = JsonDocument.Parse(txt);
-                        if (doc.RootElement.TryGetProperty("models", out var models) && models.ValueKind == JsonValueKind.Array)
+                        if (string.IsNullOrEmpty(key))
                         {
-                            var list = new List<string>();
-                            foreach (var m in models.EnumerateArray())
+                            targetList.Clear();
+                            targetList.Add("Enter API Key first.");
+                            return;
+                        }
+                        try
+                        {
+                            var url = $"https://generativelanguage.googleapis.com/v1beta/models?key={key}";
+                            var resp = await http.GetAsync(url);
+                            if (resp.IsSuccessStatusCode)
                             {
-                                if (m.TryGetProperty("name", out var name))
-                                    list.Add(name.GetString() ?? "");
+                                var txt = await resp.Content.ReadAsStringAsync();
+                                using var doc = JsonDocument.Parse(txt);
+                                if (doc.RootElement.TryGetProperty("models", out var models) && models.ValueKind == JsonValueKind.Array)
+                                {
+                                    foreach (var m in models.EnumerateArray())
+                                    {
+                                        if (m.TryGetProperty("name", out var nameEl))
+                                        {
+                                            var name = nameEl.GetString() ?? "";
+                                            if (name.StartsWith("models/"))
+                                            {
+                                                name = name.Substring("models/".Length);
+                                            }
+                                            if (name.Contains("imagen", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                list.Add(name);
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            AvailableModels.Clear();
-                            foreach (var m in list.Distinct().OrderBy(x => x))
-                                AvailableModels.Add(m);
+                        }
+                        catch {}
+
+                        if (list.Count == 0)
+                        {
+                            list.Add("imagen-3.0-generate-002");
+                            list.Add("imagen-3.0-fast-generate-001");
+                            list.Add("imagen-4.0-generate-001");
+                            list.Add("imagen-4.0-fast-generate-001");
+                        }
+                    }
+                    else if (provider == "Pollinations.ai")
+                    {
+                        list.Add("flux");
+                        list.Add("flux-realism");
+                        list.Add("flux-anime");
+                        list.Add("flux-3d");
+                    }
+                    else if (provider == "ChatGPT")
+                    {
+                        list.Add("dall-e-3");
+                        list.Add("dall-e-2");
+                    }
+                    else if (provider == "Local Stable Diffusion")
+                    {
+                        var localPort = string.Equals(portStr, "0") || string.IsNullOrEmpty(portStr) ? "7860" : portStr;
+                        var baseUri = $"http://localhost:{localPort}/";
+                        var resp = await http.GetAsync(new Uri(new Uri(baseUri), "sdapi/v1/sd-models"));
+                        if (resp.IsSuccessStatusCode)
+                        {
+                            var txt = await resp.Content.ReadAsStringAsync();
+                            using var doc = JsonDocument.Parse(txt);
+                            foreach (var m in doc.RootElement.EnumerateArray())
+                            {
+                                if (m.TryGetProperty("title", out var title))
+                                    list.Add(title.GetString() ?? "");
+                            }
                         }
                     }
                 }
                 else
                 {
-                    // LMStudio / OpenAICompatible / OpenRouter
-                    var portStr = string.IsNullOrEmpty(AiCoAuthorPort) ? "1234" : AiCoAuthorPort;
-                    if (AiCoAuthorProvider == "OpenAICompatible")
+                    // Text models: Ollama / LMStudio / OpenAICompatible / OpenRouter / Google Gemini
+                    if (provider == "Google Gemini")
                     {
-                        baseUri = AiCoAuthorEndpoint; 
-                    }
-                    else if (AiCoAuthorProvider == "OpenRouter")
-                    {
-                        baseUri = "https://openrouter.ai/api/";
-                    }
-                    else if (AiCoAuthorProvider == "LMStudio")
-                    {
-                        baseUri = $"http://localhost:{portStr}/";
-                    }
-
-                    if (string.IsNullOrEmpty(baseUri)) return;
-                    if (!baseUri.EndsWith("/")) baseUri += "/";
-
-                    using var req = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, new Uri(new Uri(baseUri), "v1/models"));
-                    if (!string.IsNullOrEmpty(AiCoAuthorKey))
-                    {
-                        req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AiCoAuthorKey);
-                    }
-
-                    var resp = await http.SendAsync(req);
-                    if (resp.IsSuccessStatusCode)
-                    {
-                        var txt = await resp.Content.ReadAsStringAsync();
-                        using var doc = JsonDocument.Parse(txt);
-                        var list = new List<string>();
-                        if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+                        if (string.IsNullOrEmpty(key))
                         {
-                            foreach (var m in data.EnumerateArray())
+                            targetList.Clear();
+                            targetList.Add("Enter API Key first.");
+                            return;
+                        }
+                        var url = $"https://generativelanguage.googleapis.com/v1beta/models?key={key}";
+                        var resp = await http.GetAsync(url);
+                        if (resp.IsSuccessStatusCode)
+                        {
+                            var txt = await resp.Content.ReadAsStringAsync();
+                            using var doc = JsonDocument.Parse(txt);
+                            if (doc.RootElement.TryGetProperty("models", out var models) && models.ValueKind == JsonValueKind.Array)
                             {
-                                if (m.TryGetProperty("id", out var idEl))
-                                    list.Add(idEl.GetString() ?? "");
+                                foreach (var m in models.EnumerateArray())
+                                {
+                                    if (m.TryGetProperty("name", out var nameEl))
+                                    {
+                                        var name = nameEl.GetString() ?? "";
+                                        if (name.StartsWith("models/"))
+                                        {
+                                            name = name.Substring("models/".Length);
+                                        }
+                                        if (name.Contains("gemini"))
+                                        {
+                                            list.Add(name);
+                                        }
+                                    }
+                                }
                             }
                         }
-                        
-                        AvailableModels.Clear();
-                        if (AiCoAuthorProvider == "OpenRouter")
+                    }
+                    else if (provider == "Ollama")
+                    {
+                        var localPort = string.Equals(portStr, "0") || string.IsNullOrEmpty(portStr) ? "11434" : portStr;
+                        var baseUri = $"http://localhost:{localPort}/";
+                        var resp = await http.GetAsync(new Uri(new Uri(baseUri), "api/tags"));
+                        if (resp.IsSuccessStatusCode)
                         {
-                            foreach (var m in list.Where(x => x.Contains(":free") || x == "gryphe/mythomax-l2-13b").Distinct().OrderBy(x => x))
-                                AvailableModels.Add(m);
-                        }
-                        else
-                        {
-                            foreach (var m in list.Distinct().OrderBy(x => x))
-                                AvailableModels.Add(m);
+                            var txt = await resp.Content.ReadAsStringAsync();
+                            using var doc = JsonDocument.Parse(txt);
+                            if (doc.RootElement.TryGetProperty("models", out var models) && models.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var m in models.EnumerateArray())
+                                {
+                                    if (m.TryGetProperty("name", out var name))
+                                        list.Add(name.GetString() ?? "");
+                                }
+                            }
                         }
                     }
+                    else
+                    {
+                        string baseUri = "";
+                        if (provider == "OpenAICompatible")
+                        {
+                            baseUri = endpoint;
+                        }
+                        else if (provider == "OpenRouter")
+                        {
+                            baseUri = "https://openrouter.ai/api/";
+                        }
+                        else if (provider == "LMStudio")
+                        {
+                            baseUri = $"http://localhost:{portStr}/";
+                        }
+
+                        if (!string.IsNullOrEmpty(baseUri))
+                        {
+                            if (!baseUri.EndsWith("/")) baseUri += "/";
+                            using var req = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, new Uri(new Uri(baseUri), "v1/models"));
+                            if (!string.IsNullOrEmpty(key))
+                            {
+                                req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", key);
+                            }
+
+                            var resp = await http.SendAsync(req);
+                            if (resp.IsSuccessStatusCode)
+                            {
+                                var txt = await resp.Content.ReadAsStringAsync();
+                                using var doc = JsonDocument.Parse(txt);
+                                if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+                                {
+                                    foreach (var m in data.EnumerateArray())
+                                    {
+                                        if (m.TryGetProperty("id", out var idEl))
+                                            list.Add(idEl.GetString() ?? "");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                targetList.Clear();
+                AvailableModels.Clear();
+                var sorted = list.Distinct().OrderBy(x => x).ToList();
+                if (provider == "OpenRouter" && mode != "ImageGen")
+                {
+                    sorted = list.Where(x => x.Contains(":free") || x == "gryphe/mythomax-l2-13b").Distinct().OrderBy(x => x).ToList();
+                }
+
+                foreach (var m in sorted)
+                {
+                    targetList.Add(m);
+                    AvailableModels.Add(m);
                 }
             }
             catch (Exception ex)
             {
+                targetList.Clear();
+                targetList.Add($"Error: {ex.Message}");
                 AvailableModels.Clear();
                 AvailableModels.Add($"Error: {ex.Message}");
             }
             finally
             {
                 IsFetchingModels = false;
-                if (AvailableModels.Count == 0)
+                if (targetList.Count == 0)
                 {
-                    AvailableModels.Add("No models found. Check provider connection.");
+                    targetList.Add("No models found. Check provider connection.");
                 }
             }
         }
@@ -744,12 +1099,24 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         OnPropertyChanged(nameof(AiImageGenHost));
                         OnPropertyChanged(nameof(AiImageGenPort));
                         OnPropertyChanged(nameof(AiImageGenEnableHelper));
+                        OnPropertyChanged(nameof(AiNodeAssistantUseCustom));
+                        OnPropertyChanged(nameof(AiNodeAssistantProvider));
+                        OnPropertyChanged(nameof(AiNodeAssistantEndpoint));
+                        OnPropertyChanged(nameof(AiNodeAssistantKey));
+                        OnPropertyChanged(nameof(AiNodeAssistantModel));
+                        OnPropertyChanged(nameof(AiNodeAssistantHost));
+                        OnPropertyChanged(nameof(AiNodeAssistantPort));
+                        OnPropertyChanged(nameof(AiNodeAssistantTemperature));
+                        OnPropertyChanged(nameof(AiNodeAssistantMaxTokens));
                         OnPropertyChanged(nameof(ShowCoAuthorHostPort));
                         OnPropertyChanged(nameof(ShowCoAuthorEndpoint));
                         OnPropertyChanged(nameof(ShowCoAuthorApiKey));
                         OnPropertyChanged(nameof(ShowImageGenHostPort));
                         OnPropertyChanged(nameof(ShowImageGenEndpoint));
                         OnPropertyChanged(nameof(ShowImageGenApiKey));
+                        OnPropertyChanged(nameof(ShowNodeAssistantHostPort));
+                        OnPropertyChanged(nameof(ShowNodeAssistantEndpoint));
+                        OnPropertyChanged(nameof(ShowNodeAssistantApiKey));
                         OnPropertyChanged(nameof(LastPublishDirectory));
 
                         OnPropertyChanged(nameof(CoAuthorSetupStepsTitle));
@@ -769,6 +1136,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         OnPropertyChanged(nameof(IsImageGenHelpVisible));
                         OnPropertyChanged(nameof(IsComfyUiVisible));
                         OnPropertyChanged(nameof(ShowImageGenApiKey));
+                        OnPropertyChanged(nameof(AvailableModels));
+                        OnPropertyChanged(nameof(AvailableCoAuthorModels));
+                        OnPropertyChanged(nameof(AvailableNodeAssistantModels));
+                        OnPropertyChanged(nameof(AvailableImageGenModels));
                         OnPropertyChanged(nameof(LastPublishDirectory));
                     }
                 }

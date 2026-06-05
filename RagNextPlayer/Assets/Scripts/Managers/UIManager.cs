@@ -23,6 +23,7 @@ namespace RagNextPlayer.Managers
 
         // ── UXML Element References ───────────────────────────────────────────
         private VisualElement  _root;
+        private VisualElement  _roomPortrait;
         private Label          _roomTitleLabel;
         private Label          _gameInfoLabel;
         private ScrollView     _narrativeScroll;
@@ -211,6 +212,13 @@ namespace RagNextPlayer.Managers
             {
                 _roomTitleLabel.pickingMode = PickingMode.Position;
                 _roomTitleLabel.RegisterCallback<ClickEvent>(OnRoomTitleClicked);
+            }
+
+            _roomPortrait = _root.Q<VisualElement>("room-portrait");
+            if (_roomPortrait is not null)
+            {
+                _roomPortrait.pickingMode = PickingMode.Position;
+                _roomPortrait.RegisterCallback<ClickEvent>(OnRoomTitleClicked);
             }
 
             if (_playerPortrait is not null)
@@ -458,7 +466,12 @@ namespace RagNextPlayer.Managers
                             titleLabel.style.fontSize = (float)sizeVal;
                         }
 
-                        if (ColorUtility.TryParseHtmlString(settings.FontColor, out var clr))
+                        string fontColorHex = settings.FontColor;
+                        if (fontColorHex != null && fontColorHex.StartsWith("#") && fontColorHex.Length == 9)
+                        {
+                            fontColorHex = "#" + fontColorHex.Substring(3, 6) + fontColorHex.Substring(1, 2);
+                        }
+                        if (ColorUtility.TryParseHtmlString(fontColorHex, out var clr))
                         {
                             titleLabel.style.color = clr;
                         }
@@ -537,7 +550,12 @@ namespace RagNextPlayer.Managers
                         titleLabel.style.fontSize = (float)sizeVal;
                     }
 
-                    if (ColorUtility.TryParseHtmlString(settings.FontColor, out var clr))
+                    string fontColorHex = settings.FontColor;
+                    if (fontColorHex != null && fontColorHex.StartsWith("#") && fontColorHex.Length == 9)
+                    {
+                        fontColorHex = "#" + fontColorHex.Substring(3, 6) + fontColorHex.Substring(1, 2);
+                    }
+                    if (ColorUtility.TryParseHtmlString(fontColorHex, out var clr))
                     {
                         titleLabel.style.color = clr;
                     }
@@ -833,6 +851,11 @@ namespace RagNextPlayer.Managers
                 _roomTitleLabel.UnregisterCallback<ClickEvent>(OnRoomTitleClicked);
             }
 
+            if (_roomPortrait is not null)
+            {
+                _roomPortrait.UnregisterCallback<ClickEvent>(OnRoomTitleClicked);
+            }
+
             if (_playerPortrait is not null)
             {
                 _playerPortrait.UnregisterCallback<ClickEvent>(OnPlayerPortraitClicked);
@@ -847,6 +870,37 @@ namespace RagNextPlayer.Managers
         {
             if (_gameInfoLabel is not null)
                 _gameInfoLabel.text = $"by {game.Author}  ·  v{game.Version}";
+
+            // Apply customized viewport border
+            var rootEl = _root?.Q<VisualElement>("root");
+            if (rootEl is not null && game.SplashScreen is not null)
+            {
+                float borderWidth = (float)game.SplashScreen.BorderWidth;
+                float borderRadius = (float)game.SplashScreen.BorderRadius;
+                
+                rootEl.style.borderLeftWidth = borderWidth;
+                rootEl.style.borderRightWidth = borderWidth;
+                rootEl.style.borderTopWidth = borderWidth;
+                rootEl.style.borderBottomWidth = borderWidth;
+                
+                rootEl.style.borderTopLeftRadius = borderRadius;
+                rootEl.style.borderTopRightRadius = borderRadius;
+                rootEl.style.borderBottomLeftRadius = borderRadius;
+                rootEl.style.borderBottomRightRadius = borderRadius;
+                
+                string hexColor = game.SplashScreen.BorderColor;
+                if (hexColor != null && hexColor.StartsWith("#") && hexColor.Length == 9)
+                {
+                    hexColor = "#" + hexColor.Substring(3, 6) + hexColor.Substring(1, 2);
+                }
+                if (ColorUtility.TryParseHtmlString(hexColor, out var clr))
+                {
+                    rootEl.style.borderLeftColor = clr;
+                    rootEl.style.borderRightColor = clr;
+                    rootEl.style.borderTopColor = clr;
+                    rootEl.style.borderBottomColor = clr;
+                }
+            }
 
             // Clear narrative history on game load to restore pristine log state
             _narrativeScroll?.Clear();
@@ -876,6 +930,21 @@ namespace RagNextPlayer.Managers
                 _roomTitleLabel.text = game is not null
                     ? TemplateResolver.Resolve(room.Name, game, room, room)
                     : room.Name;
+            }
+
+            // Room portrait (circle next to room name)
+            if (_roomPortrait is not null)
+            {
+                if (!string.IsNullOrWhiteSpace(room.PortraitImagePath))
+                {
+                    _roomPortrait.style.display = DisplayStyle.Flex;
+                    LoadAndDisplayImage(room.PortraitImagePath, "room-portrait");
+                }
+                else
+                {
+                    _roomPortrait.style.backgroundImage = null;
+                    _roomPortrait.style.display = DisplayStyle.None;
+                }
             }
 
             // Scene image (preserve aspect ratio scale and hide placeholder)
@@ -1552,10 +1621,22 @@ namespace RagNextPlayer.Managers
 
         private void ToggleFullscreen()
         {
-            Screen.fullScreen = !Screen.fullScreen;
-            if (_fullscreenToggleBtn is not null)
+            if (Screen.fullScreen)
             {
-                _fullscreenToggleBtn.text = Screen.fullScreen ? "Fullscreen" : "Windowed";
+                Screen.SetResolution(1280, 720, FullScreenMode.Windowed);
+                if (_fullscreenToggleBtn is not null)
+                {
+                    _fullscreenToggleBtn.text = "Fullscreen";
+                }
+            }
+            else
+            {
+                Resolution res = Screen.currentResolution;
+                Screen.SetResolution(res.width, res.height, FullScreenMode.FullScreenWindow);
+                if (_fullscreenToggleBtn is not null)
+                {
+                    _fullscreenToggleBtn.text = "Windowed";
+                }
             }
         }
 

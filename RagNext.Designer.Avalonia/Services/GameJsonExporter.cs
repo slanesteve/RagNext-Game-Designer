@@ -129,6 +129,9 @@ namespace RagNext.Designer.Avalonia.Services
         public double FadeOutDuration { get; set; }
         public string? VideoAssetId { get; set; }
         public string? TransitionStyle { get; set; }
+        public double BorderWidth { get; set; }
+        public string? BorderColor { get; set; }
+        public double BorderRadius { get; set; }
     }
 
     /// <summary>
@@ -198,7 +201,10 @@ namespace RagNext.Designer.Avalonia.Services
                 DisplayDuration = game.SplashScreen.DisplayDuration,
                 FadeOutDuration = game.SplashScreen.FadeOutDuration,
                 VideoAssetId = game.SplashScreen.VideoAssetId,
-                TransitionStyle = game.SplashScreen.TransitionStyle
+                TransitionStyle = game.SplashScreen.TransitionStyle,
+                BorderWidth = game.SplashScreen.BorderWidth,
+                BorderColor = game.SplashScreen.BorderColor,
+                BorderRadius = game.SplashScreen.BorderRadius
             } : null
         };
 

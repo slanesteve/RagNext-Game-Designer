@@ -27,6 +27,17 @@ namespace RagNext.Designer.Avalonia.Models
         public string AiImageGenPort { get; set; } = "7860";
         public bool AiImageGenEnableHelper { get; set; } = true;
 
+        // AI Node Assistant Settings (Hybrid Override)
+        public bool AiNodeAssistantUseCustom { get; set; } = false;
+        public string AiNodeAssistantProvider { get; set; } = "OpenAICompatible";
+        public string AiNodeAssistantEndpoint { get; set; } = "https://api.openai.com/v1";
+        public string AiNodeAssistantKey { get; set; } = string.Empty;
+        public string AiNodeAssistantModel { get; set; } = "gpt-4o";
+        public string AiNodeAssistantHost { get; set; } = "http://localhost";
+        public string AiNodeAssistantPort { get; set; } = "1234";
+        public double AiNodeAssistantTemperature { get; set; } = 0.2;
+        public int AiNodeAssistantMaxTokens { get; set; } = 2048;
+
         // Last Published Directory
         public string LastPublishDirectory { get; set; } = string.Empty;
     }

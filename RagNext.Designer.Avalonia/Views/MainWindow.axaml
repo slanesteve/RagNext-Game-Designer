@@ -181,13 +181,25 @@
                                     </Grid>
                                     
                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" VerticalAlignment="Top" Margin="0,6,0,0" Foreground="Gray"/>
-                                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
-                                        <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
-                                            <Button Content="?" Click="OnSuggestDescriptionClicked" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                                            <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                                        </StackPanel>
-                                    </Grid>
+                                    <StackPanel Grid.Row="1" Grid.Column="1">
+                                         <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                             <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#262635" Foreground="White" FontSize="11"/>
+                                             <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#262635" Foreground="White" FontSize="11"/>
+                                             <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#262635" Foreground="White" FontSize="11"/>
+                                             <Button Content="🎨 Color" Height="28" Background="#262635" Foreground="White" FontSize="11" Padding="8,0"/>
+                                             <Button Content="🖌️ Highlight" Height="28" Background="#262635" Foreground="White" FontSize="11" Padding="8,0"/>
+                                             <Button Content="Clear" Height="28" Background="#2B2B3A" Foreground="Gray" FontSize="11" Padding="8,0"/>
+                                             <Button Content="📝 Compose Description" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
+                                         </StackPanel>
+                                         <Grid ColumnDefinitions="*,Auto">
+                                             <TextBox Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
+                                             <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                                                 <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
+                                                 
+                                                 <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                             </StackPanel>
+                                         </Grid>
+                                    </StackPanel>
                                     
                                     <!-- Prompt for Name switch -->
                                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Prompt for Name:" VerticalAlignment="Center" Foreground="Gray"/>
@@ -387,11 +399,12 @@
                                                 <Button Content="🎨 Color" Height="28" Background="#262635" Foreground="White" FontSize="11" Padding="8,0"/>
                                                 <Button Content="🖌️ Highlight" Height="28" Background="#262635" Foreground="White" FontSize="11" Padding="8,0"/>
                                                 <Button Content="Clear" Height="28" Background="#2B2B3A" Foreground="Gray" FontSize="11" Padding="8,0"/>
+                                                <Button Content="📝 Compose Description" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
                                             </StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBox Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
                                                 <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
-                                                    <Button Content="?" Click="OnSuggestDescriptionClicked" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                    <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
                                                     <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                                 </StackPanel>
                                             </Grid>
@@ -740,10 +753,20 @@
                                 </Grid>
                                 
                                 <TextBlock Text="Description:" Foreground="Gray"/>
+                                 <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                     <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#262635" Foreground="White" FontSize="11"/>
+                                     <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#262635" Foreground="White" FontSize="11"/>
+                                     <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#262635" Foreground="White" FontSize="11"/>
+                                     <Button Content="🎨 Color" Height="28" Background="#262635" Foreground="White" FontSize="11" Padding="8,0"/>
+                                     <Button Content="🖌️ Highlight" Height="28" Background="#262635" Foreground="White" FontSize="11" Padding="8,0"/>
+                                     <Button Content="Clear" Height="28" Background="#2B2B3A" Foreground="Gray" FontSize="11" Padding="8,0"/>
+                                     <Button Content="📝 Compose Description" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
+                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBox Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
                                     <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
-                                        <Button Content="?" Click="OnSuggestDescriptionClicked" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                        <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
+                                        
                                         <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
@@ -935,11 +958,12 @@
                                                 <Button Content="🎨 Color" Height="28" Background="#262635" Foreground="White" FontSize="11" Padding="8,0"/>
                                                 <Button Content="🖌️ Highlight" Height="28" Background="#262635" Foreground="White" FontSize="11" Padding="8,0"/>
                                                 <Button Content="Clear" Height="28" Background="#2B2B3A" Foreground="Gray" FontSize="11" Padding="8,0"/>
+                                                <Button Content="📝 Compose Description" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
                                             </StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBox Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="#13131F" BorderBrush="#33334A" TextWrapping="Wrap"/>
                                                 <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
-                                                    <Button Content="?" Click="OnSuggestDescriptionClicked" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                    <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="#262635" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
                                                     <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                                 </StackPanel>
                                             </Grid>
@@ -1317,7 +1341,10 @@
                                         <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Text, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Margin="0,10,0,0"/>
  
                                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Font Color (Hex):" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
-                                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding FontColor, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A" Margin="0,10,0,0"/>
+                                        <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                                            <TextBox Grid.Column="0" Text="{Binding FontColor, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A"/>
+                                            <ColorPicker Grid.Column="1" Color="{Binding FontColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0"/>
+                                        </Grid>
  
                                         <TextBlock Grid.Row="5" Grid.Column="0" Text="Font Size (pt):" VerticalAlignment="Center" Foreground="Gray" Margin="0,10,0,0"/>
                                         <NumericUpDown Grid.Row="5" Grid.Column="1" Value="{Binding FontSize, Mode=TwoWay}" Minimum="10" Maximum="120" Background="#13131F" Margin="0,10,0,0"/>
@@ -1345,6 +1372,30 @@
                                     <Grid ColumnDefinitions="*,Auto">
                                         <Slider Grid.Column="0" Value="{Binding FadeOutDuration, Mode=TwoWay}" Minimum="0.1" Maximum="10.0"/>
                                         <TextBlock Grid.Column="1" Text="{Binding FadeOutDuration, StringFormat='{}{0:F1}s'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="White"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#1C1C28" BorderBrush="#2A2A3A" BorderThickness="1" CornerRadius="8" Padding="20">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="🖼️ Viewport Border Customization" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
+                                    
+                                    <TextBlock Text="Border Color (Hex):" Foreground="Gray" FontSize="12"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding BorderColor, Mode=TwoWay}" Background="#13131F" BorderBrush="#33334A"/>
+                                        <ColorPicker Grid.Column="1" Color="{Binding BorderColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0"/>
+                                    </Grid>
+                                    
+                                    <TextBlock Text="Border Thickness (px):" Foreground="Gray" FontSize="12" Margin="0,6,0,0"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Slider Grid.Column="0" Value="{Binding BorderWidth, Mode=TwoWay}" Minimum="0" Maximum="24" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding BorderWidth, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="White"/>
+                                    </Grid>
+                                    
+                                    <TextBlock Text="Corner Radius (Rounding):" Foreground="Gray" FontSize="12" Margin="0,6,0,0"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Slider Grid.Column="0" Value="{Binding BorderRadius, Mode=TwoWay}" Minimum="0" Maximum="40" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding BorderRadius, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="White"/>
                                     </Grid>
                                 </StackPanel>
                             </Border>
@@ -2033,6 +2084,79 @@
                 </ListBox>
             </Border>
         </Popup>
+
+        <!-- Compose Overlay -->
+        <Border Background="#A0000000" IsVisible="{Binding ShowComposeOverlay}" ZIndex="1000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Border Background="#14141E" BorderBrush="#3D3D5A" BorderThickness="1" CornerRadius="12" Width="850" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+                    <!-- Header -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                        <TextBlock Grid.Column="0" Text="{Binding ComposeTitle}" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="✕" Command="{Binding CloseComposeCommand}" Background="Transparent" BorderThickness="0" FontSize="16" Foreground="Gray" HotKey="Escape"/>
+                    </Grid>
+                    
+                    <!-- Body: Split editor and preview -->
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,16">
+                        <!-- Left side: Editor -->
+                        <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,12,0">
+                            <!-- Formatting Toolbar -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6" Margin="0,0,0,8">
+                                <Button Content="B" FontWeight="Bold" Click="OnComposeBoldClicked" Width="32" Height="30" Background="#262635" Foreground="White" HorizontalContentAlignment="Center"/>
+                                <Button Content="I" FontStyle="Italic" Click="OnComposeItalicClicked" Width="32" Height="30" Background="#262635" Foreground="White" HorizontalContentAlignment="Center"/>
+                                <Button Content="U" Click="OnComposeUnderlineClicked" Width="32" Height="30" Background="#262635" Foreground="White" HorizontalContentAlignment="Center">
+                                    <TextBlock Text="U" TextDecorations="Underline" HorizontalAlignment="Center"/>
+                                </Button>
+                                <Button Content="🎨 Color" Height="30" Background="#262635" Foreground="White" Padding="8,4" FontSize="11">
+                                    <Button.Flyout>
+                                        <MenuFlyout>
+                                            <MenuItem Header="Red" CommandParameter="#EF4444" Click="OnComposeColorSelected"/>
+                                            <MenuItem Header="Orange" CommandParameter="#F97316" Click="OnComposeColorSelected"/>
+                                            <MenuItem Header="Yellow" CommandParameter="#F59E0B" Click="OnComposeColorSelected"/>
+                                            <MenuItem Header="Green" CommandParameter="#10B981" Click="OnComposeColorSelected"/>
+                                            <MenuItem Header="Blue" CommandParameter="#3B82F6" Click="OnComposeColorSelected"/>
+                                            <MenuItem Header="Purple" CommandParameter="#8B5CF6" Click="OnComposeColorSelected"/>
+                                            <MenuItem Header="Pink" CommandParameter="#EC4899" Click="OnComposeColorSelected"/>
+                                            <MenuItem Header="White" CommandParameter="#FFFFFF" Click="OnComposeColorSelected"/>
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                                <Button Content="🖊️ Highlight" Height="30" Background="#262635" Foreground="White" Padding="8,4" FontSize="11">
+                                    <Button.Flyout>
+                                        <MenuFlyout>
+                                            <MenuItem Header="Red" CommandParameter="#EF4444" Click="OnComposeHighlightSelected"/>
+                                            <MenuItem Header="Orange" CommandParameter="#F97316" Click="OnComposeHighlightSelected"/>
+                                            <MenuItem Header="Yellow" CommandParameter="#F59E0B" Click="OnComposeHighlightSelected"/>
+                                            <MenuItem Header="Green" CommandParameter="#10B981" Click="OnComposeHighlightSelected"/>
+                                            <MenuItem Header="Blue" CommandParameter="#3B82F6" Click="OnComposeHighlightSelected"/>
+                                            <MenuItem Header="Purple" CommandParameter="#8B5CF6" Click="OnComposeHighlightSelected"/>
+                                            <MenuItem Header="Pink" CommandParameter="#EC4899" Click="OnComposeHighlightSelected"/>
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                                <Button Content="✕ Clear" Click="OnComposeClearClicked" Height="30" Background="#262635" Foreground="White" Padding="8,4" FontSize="11"/>
+                                <Button Content="✨ AI Rewrite" Click="OnComposeAIClicked" Height="30" Background="#8E2DE2" Foreground="White" Padding="8,4" FontSize="11" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <!-- Editor TextBox -->
+                            <TextBox Grid.Row="1" x:Name="ComposeTextBox" Text="{Binding ComposeText, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" Watermark="Enter rich text description..." Background="#0C0C14" BorderBrush="#2A2A38" BorderThickness="1" CornerRadius="4" Padding="12" AcceptsTab="True"/>
+                        </Grid>
+                        
+                        <!-- Right side: Preview -->
+                        <Grid Grid.Column="1" RowDefinitions="Auto,*" Margin="12,0,0,0">
+                            <TextBlock Grid.Row="0" Text="👁️ Live Preview" Foreground="Gray" FontSize="12" Margin="0,6,0,8" FontWeight="SemiBold"/>
+                            <Border Grid.Row="1" Background="#0C0C14" BorderBrush="#2A2A38" BorderThickness="1" CornerRadius="4">
+                                <wv:NativeWebView x:Name="ComposePreviewWebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                    
+                    <!-- Footer Actions -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                        <Button Content="Cancel" Command="{Binding CloseComposeCommand}" Background="Transparent" Foreground="Gray" Padding="16,8"/>
+                        <Button Content="Save &amp; Close" Command="{Binding CloseComposeCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" Padding="20,8" CornerRadius="4"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Border>
     </Grid>
 
     <Window.Styles>

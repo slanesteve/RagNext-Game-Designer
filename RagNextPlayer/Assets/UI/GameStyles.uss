@@ -30,6 +30,10 @@
     height: 100%;
     background-color: #0D0D0F;
     color: #E0E0E8;
+    border-width: 6px;
+    border-color: #2A2A38;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 /* ── Top Bar ──────────────────────────────────────────────────────────────── */
@@ -49,6 +53,23 @@
     -unity-font-style: bold;
     letter-spacing: 1px;
     cursor: link;
+}
+
+.room-portrait {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    border-width: 1.5px;
+    border-color: #4AABFF;
+    background-color: #1E1E28;
+    -unity-background-scale-mode: scale-and-crop;
+    flex-shrink: 0;
+    margin-right: 8px;
+    cursor: link;
+}
+
+.room-portrait:hover {
+    border-color: #FFB84A;
 }
 
 .room-title:hover {
@@ -402,9 +423,9 @@
 }
 
 .player-portrait {
-    width: 64px;
-    height: 64px;
-    border-radius: 32px;
+    height: 90%;
+    aspect-ratio: 1;
+    border-radius: 100px;
     border-width: 2px;
     border-color: #FFB84A;
     background-color: #1E1E28;

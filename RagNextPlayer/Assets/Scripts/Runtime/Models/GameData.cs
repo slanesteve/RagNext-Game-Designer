@@ -43,6 +43,9 @@ namespace RagNextPlayer.Runtime.Models
         public double FadeOutDuration { get; set; } = 1.0;
         public string VideoAssetId { get; set; } = string.Empty;
         public string TransitionStyle { get; set; } = "Fade"; // Fade, Rise, Cinematic, Glitch, Exposure
+        public double BorderWidth { get; set; } = 6;
+        public string BorderColor { get; set; } = "#2A2A38";
+        public double BorderRadius { get; set; } = 12;
     }
 
     // ── Player ────────────────────────────────────────────────────────────────
