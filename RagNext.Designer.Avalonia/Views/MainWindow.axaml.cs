@@ -3070,16 +3070,16 @@ namespace RagNext.Designer.Avalonia.Views
                 if (clipboard != null)
                 {
                     await clipboard.SetTextAsync(fullPrompt);
-                    await ConfirmDialog.ShowAsync(this, "AI Prompt Copied", "📋 The complete system instructions, context variables, project entities list, and prompt have been copied to your clipboard!\n\nYou can now paste this directly into Gemini, ChatGPT, Claude, or any web LLM, and paste the resulting JSON array back using the 'External Model Pipeline' section.");
+                    await AlertDialog.ShowAsync(this, "AI Prompt Copied", "📋 The complete system instructions, context variables, project entities list, and prompt have been copied to your clipboard!\n\nYou can now paste this directly into Gemini, ChatGPT, Claude, or any web LLM, and paste the resulting JSON array back using the 'External Model Pipeline' section.");
                 }
                 else
                 {
-                    await ConfirmDialog.ShowAsync(this, "Clipboard Error", "Unable to access system clipboard.");
+                    await AlertDialog.ShowAsync(this, "Clipboard Error", "Unable to access system clipboard.");
                 }
             }
             catch (Exception ex)
             {
-                await ConfirmDialog.ShowAsync(this, "AI Copy Error", ex.Message);
+                await AlertDialog.ShowAsync(this, "AI Copy Error", ex.Message);
             }
         }
 
@@ -3536,8 +3536,8 @@ namespace RagNext.Designer.Avalonia.Views
             var dialog = new Window
             {
                 Title = title,
-                Width = 400,
-                Height = 150,
+                Width = 480,
+                SizeToContent = global::Avalonia.Controls.SizeToContent.Height,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Background = global::Avalonia.Media.Brush.Parse("#14141E"),
                 Foreground = global::Avalonia.Media.Brushes.White,
@@ -3572,8 +3572,8 @@ namespace RagNext.Designer.Avalonia.Views
             var dialog = new Window
             {
                 Title = title,
-                Width = 400,
-                Height = 150,
+                Width = 480,
+                SizeToContent = global::Avalonia.Controls.SizeToContent.Height,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Background = global::Avalonia.Media.Brush.Parse("#14141E"),
                 Foreground = global::Avalonia.Media.Brushes.White,
