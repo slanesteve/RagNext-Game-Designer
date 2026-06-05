@@ -12,6 +12,8 @@ The RagNext editor organizes your adventure game using five principal structures
 4. **Variables**: Global variables that store state, numbers, flags, or time offsets (e.g., `HeroAge`, `SampleTime`).
 5. **Timers**: Background ticking entities that trigger action events at specific turn intervals.
 
+![RagNext Editor Database & Properties](/properties-panel.png)
+
 ---
 
 ## Creating Action Scripts
@@ -21,6 +23,8 @@ Actions define the behavior and gameplay logic of your entities. An Action is bu
 * **Start Node**: Defines the trigger event (e.g. *User Clicked*, *Room Entered*, *Turn Tick*).
 * **Command Nodes**: Actions that modify the state, play audio, move entities, or display text.
 * **Condition Nodes**: Branches that check properties (e.g. gender, attributes, variables) and execute a `True` or `False` branch.
+
+![Visual Action Graph Canvas Editor](/action-graph.png)
 
 ---
 
@@ -44,3 +48,4 @@ In description boxes and text nodes, you can output formatted date/time strings 
 * `{variables.MyTime:date}` $\rightarrow$ Outputs only the date (`October 31, 2026`).
 * `{variables.MyTime:time}` $\rightarrow$ Outputs only the time (`8:00 AM`).
 * `{variables.MyTime:datetime}` $\rightarrow$ Outputs the raw ISO-8601 string.
+
