@@ -596,6 +596,38 @@
       ]
     },
     {
+      "name": "Variable: Increment",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Variable: Decrement",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
       "name": "Prompt Player Input",
       "category": "General",
       "inputs": [
