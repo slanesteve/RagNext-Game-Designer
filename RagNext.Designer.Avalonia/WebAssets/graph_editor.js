@@ -2980,6 +2980,75 @@ window.submitAiPrompt = function() {
     }
 };
 
+window.copyAiPromptToClipboard = function() {
+    const prompt = document.getElementById("ai-prompt-input").value.trim();
+    if (!prompt) {
+        alert("Please describe your script prompt first before copying.");
+        return;
+    }
+    const currentGraph = serializeGraph();
+    const json = JSON.stringify(currentGraph);
+    const base64 = btoa(unescape(encodeURIComponent(json)));
+
+    const actionUrl = "copy-ai-prompt?prompt=" + encodeURIComponent(prompt) + "&data=" + base64;
+    if (typeof invokeCSharpAction === 'function') {
+        invokeCSharpAction(actionUrl);
+    } else {
+        window.location.href = "rags-action://" + actionUrl;
+    }
+};
+
+window.applyPastedAiJson = function() {
+    const rawText = document.getElementById("ai-paste-json").value.trim();
+    if (!rawText) {
+        alert("Please paste the JSON response first.");
+        return;
+    }
+    try {
+        // Robust fallback JSON block extractor
+        let cleaned = rawText;
+        if (cleaned.startsWith("```json")) {
+            cleaned = cleaned.substring("```json".Length);
+        }
+        if (cleaned.startsWith("```")) {
+            cleaned = cleaned.substring("```".Length);
+        }
+        if (cleaned.endsWith("```")) {
+            cleaned = cleaned.substring(0, cleaned.length - "```".Length);
+        }
+        cleaned = cleaned.trim();
+
+        const firstBracket = cleaned.indexOf('[');
+        const lastBracket = cleaned.lastIndexOf(']');
+        if (firstBracket >= 0 && lastBracket > firstBracket) {
+            cleaned = cleaned.substring(firstBracket, lastBracket - firstBracket + 1);
+        }
+
+        const nodesList = JSON.parse(cleaned);
+        if (!Array.isArray(nodesList)) {
+            alert("Pasted JSON must be an array of nodes: [ ... ]");
+            return;
+        }
+
+        // Save current graph state for revert
+        const currentGraph = serializeGraph();
+        previousGraphState = {
+            actionJson: currentGraph
+        };
+
+        const jsonText = JSON.stringify(nodesList);
+        const base64 = btoa(unescape(encodeURIComponent(jsonText)));
+        
+        closeAiAssistantModal();
+        updateGraphAIResult(base64);
+        
+        // Reset the paste input for next time
+        document.getElementById("ai-paste-json").value = "";
+    } catch(e) {
+        alert("Failed to parse JSON. Please make sure the pasted text is a valid JSON array. Error: " + e.message);
+    }
+};
+
 window.updateGraphAIResult = function(newNodesJsonBase64) {
     try {
         const btn = document.querySelector(".ai-btn");

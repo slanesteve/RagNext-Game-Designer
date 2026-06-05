@@ -68,4 +68,43 @@ namespace RagNext.Designer.Avalonia.Views
         public string? TypeName { get; set; }
         public string? Discriminator { get; set; }
     }
+
+    public class GeminiRequest
+    {
+        public GeminiContent[]? contents { get; set; }
+        public GeminiSystemInstruction? systemInstruction { get; set; }
+        public GeminiGenerationConfig? generationConfig { get; set; }
+    }
+
+    public class GeminiContent
+    {
+        public string? role { get; set; }
+        public GeminiPart[]? parts { get; set; }
+    }
+
+    public class GeminiPart
+    {
+        public string? text { get; set; }
+    }
+
+    public class GeminiSystemInstruction
+    {
+        public GeminiPart[]? parts { get; set; }
+    }
+
+    public class GeminiGenerationConfig
+    {
+        public double? temperature { get; set; }
+    }
+
+    public class GeminiResponse
+    {
+        public GeminiCandidate[]? candidates { get; set; }
+    }
+
+    public class GeminiCandidate
+    {
+        public GeminiContent? content { get; set; }
+        public string? finishReason { get; set; }
+    }
 }

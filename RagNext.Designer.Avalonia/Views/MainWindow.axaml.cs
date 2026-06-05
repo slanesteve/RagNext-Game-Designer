@@ -13,6 +13,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using RagNext.Designer.Avalonia.ViewModels;
 using RagNext.Designer.Avalonia.Services;
 using RagsCore.Models;
@@ -454,6 +455,13 @@ namespace RagNext.Designer.Avalonia.Views
                     string currentGraph = query["data"] ?? "";
                     TriggerGraphAI(prompt, replace, currentGraph);
                 }
+                else if (msg.StartsWith("copy-ai-prompt?"))
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("copy-ai-prompt?".Length));
+                    string prompt = query["prompt"] ?? "";
+                    string currentGraph = query["data"] ?? "";
+                    TriggerCopyAiPrompt(prompt, currentGraph);
+                }
                 else if (msg.StartsWith("ai?"))
                 {
                     var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("ai?".Length));
@@ -581,6 +589,95 @@ namespace RagNext.Designer.Avalonia.Views
             return resolvedEndpoint.TrimEnd('/') + "/chat/completions";
         }
 
+        private async Task<string> CallGeminiAsync(HttpClient client, string endpoint, string apiKey, string model, string systemPrompt, string userPrompt, double temperature)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new Exception("Google Gemini API Key is not configured in Settings.");
+            }
+
+            var modelName = model;
+            if (string.IsNullOrWhiteSpace(modelName))
+            {
+                modelName = "gemini-1.5-pro";
+            }
+
+            var baseEndpoint = endpoint;
+            if (string.IsNullOrWhiteSpace(baseEndpoint))
+            {
+                baseEndpoint = "https://generativelanguage.googleapis.com";
+            }
+            baseEndpoint = baseEndpoint.TrimEnd('/');
+
+            if (!baseEndpoint.StartsWith("http://") && !baseEndpoint.StartsWith("https://"))
+            {
+                baseEndpoint = "https://" + baseEndpoint;
+            }
+
+            string url;
+            if (baseEndpoint.Contains("/v1") || baseEndpoint.Contains("/v1beta"))
+            {
+                url = $"{baseEndpoint}/models/{modelName}:generateContent?key={apiKey}";
+            }
+            else
+            {
+                url = $"{baseEndpoint}/v1beta/models/{modelName}:generateContent?key={apiKey}";
+            }
+
+            var requestBody = new GeminiRequest
+            {
+                contents = new[]
+                {
+                    new GeminiContent
+                    {
+                        role = "user",
+                        parts = new[]
+                        {
+                            new GeminiPart { text = userPrompt }
+                        }
+                    }
+                },
+                generationConfig = new GeminiGenerationConfig
+                {
+                    temperature = temperature
+                }
+            };
+
+            if (!string.IsNullOrWhiteSpace(systemPrompt))
+            {
+                requestBody.systemInstruction = new GeminiSystemInstruction
+                {
+                    parts = new[]
+                    {
+                        new GeminiPart { text = systemPrompt }
+                    }
+                };
+            }
+
+            var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.GeminiRequest);
+            var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync(url, requestContent);
+            var responseJson = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Gemini API error: {response.StatusCode} - {responseJson}");
+            }
+
+            var geminiResponse = JsonSerializer.Deserialize(responseJson, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.GeminiResponse);
+            if (geminiResponse?.candidates != null && geminiResponse.candidates.Length > 0)
+            {
+                var parts = geminiResponse.candidates[0].content?.parts;
+                if (parts != null && parts.Length > 0)
+                {
+                    return parts[0].text ?? string.Empty;
+                }
+            }
+
+            throw new Exception("Gemini returned empty candidates.");
+        }
+
         private async void TriggerAICoAuthor(string nodeId, string fieldName, string currentText)
         {
             if (DataContext is not MainWindowViewModel vm) return;
@@ -592,7 +689,8 @@ namespace RagNext.Designer.Avalonia.Views
 
             var provider = vm.Preferences.AiCoAuthorProvider;
             bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
-                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase);
 
             if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
             {
@@ -614,44 +712,56 @@ namespace RagNext.Designer.Avalonia.Views
                 catch {}
 
                 using var client = new HttpClient();
-                if (!string.IsNullOrWhiteSpace(apiKey))
+                string content = null;
+
+                if (string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase))
                 {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    var systemPrompt = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes.";
+                    var finalPrompt = $"Here is the current game text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
+                    content = await CallGeminiAsync(client, endpoint, apiKey, model, systemPrompt, finalPrompt, 0.7);
                 }
-
-                var finalPrompt = $"Here is the current game text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
-                var requestBody = new AICoAuthorRequest
+                else
                 {
-                    model = model,
-                    messages = new[]
+                    if (!string.IsNullOrWhiteSpace(apiKey))
                     {
-                        new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
-                        new AICoAuthorMessage { role = "user", content = finalPrompt }
-                    },
-                    temperature = 0.7
-                };
-
-                var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
-                var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
-
-                var url = GetAiUrl(endpoint, port, provider);
-                var response = await client.PostAsync(url, requestContent);
-                var responseJson = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
-                }
-
-                using var doc = JsonDocument.Parse(responseJson);
-                if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
-                {
-                    var content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
-                    if (!string.IsNullOrEmpty(content))
-                    {
-                        var base64Result = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
-                        await CanvasWebView.InvokeScript($"if (typeof updateNodeAIResult === 'function') {{ updateNodeAIResult('{nodeId}', '{fieldName}', atob('{base64Result}')); }}");
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
                     }
+
+                    var finalPrompt = $"Here is the current game text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
+                    var requestBody = new AICoAuthorRequest
+                    {
+                        model = model,
+                        messages = new[]
+                        {
+                            new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                            new AICoAuthorMessage { role = "user", content = finalPrompt }
+                        },
+                        temperature = 0.7
+                    };
+
+                    var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
+                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                    var url = GetAiUrl(endpoint, port, provider);
+                    var response = await client.PostAsync(url, requestContent);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
+                    }
+
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                    {
+                        content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(content))
+                {
+                    var base64Result = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
+                    await CanvasWebView.InvokeScript($"if (typeof updateNodeAIResult === 'function') {{ updateNodeAIResult('{nodeId}', '{fieldName}', atob('{base64Result}')); }}");
                 }
             }
             catch (Exception ex)
@@ -683,7 +793,8 @@ namespace RagNext.Designer.Avalonia.Views
             var port = vm.Preferences.AiCoAuthorPort;
             var provider = vm.Preferences.AiCoAuthorProvider;
             bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
-                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase);
 
             if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
             {
@@ -697,45 +808,57 @@ namespace RagNext.Designer.Avalonia.Views
             try
             {
                 using var client = new HttpClient();
-                if (!string.IsNullOrWhiteSpace(apiKey))
+                string content = null;
+
+                if (string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase))
                 {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    var systemPrompt = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes.";
+                    var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
+                    content = await CallGeminiAsync(client, endpoint, apiKey, model, systemPrompt, finalPrompt, 0.7);
                 }
-
-                var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
-                var requestBody = new AICoAuthorRequest
+                else
                 {
-                    model = model,
-                    messages = new[]
+                    if (!string.IsNullOrWhiteSpace(apiKey))
                     {
-                        new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
-                        new AICoAuthorMessage { role = "user", content = finalPrompt }
-                    },
-                    temperature = 0.7
-                };
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    }
 
-                var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
-                var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
-                var url = GetAiUrl(endpoint, port, provider);
-                var response = await client.PostAsync(url, requestContent);
-                var responseJson = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
-                }
-
-                using var doc = JsonDocument.Parse(responseJson);
-                if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
-                {
-                    var content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
-                    if (!string.IsNullOrEmpty(content))
+                    var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
+                    var requestBody = new AICoAuthorRequest
                     {
-                        prop.SetValue(dataObj, content);
-                        if (dataObj is RagsCore.Models.BaseModel bm)
+                        model = model,
+                        messages = new[]
                         {
-                            bm.GetType().GetMethod("OnPropertyChanged")?.Invoke(bm, new object[] { propertyName });
-                        }
+                            new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                            new AICoAuthorMessage { role = "user", content = finalPrompt }
+                        },
+                        temperature = 0.7
+                    };
+
+                    var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
+                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+                    var url = GetAiUrl(endpoint, port, provider);
+                    var response = await client.PostAsync(url, requestContent);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
+                    }
+
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                    {
+                        content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(content))
+                {
+                    prop.SetValue(dataObj, content);
+                    if (dataObj is RagsCore.Models.BaseModel bm)
+                    {
+                        bm.GetType().GetMethod("OnPropertyChanged")?.Invoke(bm, new object[] { propertyName });
                     }
                 }
             }
@@ -2616,6 +2739,8 @@ namespace RagNext.Designer.Avalonia.Views
             sb.AppendLine("6. Using generic contextual placeholders:");
             sb.AppendLine("   * You can use parameter placeholders wrapped in curly braces like \"{this.id}\" or \"{this.Name}\" to represent the ID or Name of the object/character executing the action.");
             sb.AppendLine("   * E.g. to check if the item running the action is held, you can use \"{this.id}\" as the item parameter.");
+            sb.AppendLine("7. References to variables in display text templates must use the format {variables.VariableName}. Do NOT use {this.variables.VariableName} or {variables.variables.VariableName} or {this.value}.");
+            sb.AppendLine("8. To modify, increment, or decrement variables, use the specific type identifier commands \"var.set\" (Variable: Set), \"var.inc\" (Variable: Increment), or \"var.dec\" (Variable: Decrement). Do NOT use \"general.command\".");
 
             var vm = DataContext as MainWindowViewModel;
             if (vm?.CurrentGame != null)
@@ -2728,10 +2853,13 @@ namespace RagNext.Designer.Avalonia.Views
                 case "timersetattribute": return "timer.setAttribute";
                 case "variableincrement": return "var.inc";
                 case "variabledecrement": return "var.dec";
+                case "variableset": return "var.set";
                 case "variablesetto": return "var.set";
                 case "variablesettovariable": return "var.setToVar";
                 case "variablesetnumericrandomly": return "var.setRandom";
+                case "variablecomparison": return "var.compare";
                 case "variablecompare": return "var.compare";
+                case "variablecomparisontovariable": return "var.compareVar";
                 case "variablecomparetovariable": return "var.compareVar";
                 case "variableequals": return "var.equals";
                 case "playerinroom": return "player.inRoom";
@@ -2815,7 +2943,8 @@ namespace RagNext.Designer.Avalonia.Views
             var provider = vm.Preferences.AiCoAuthorProvider;
             
             bool apiKeyRequired = string.Equals(provider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
-                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+                                   string.Equals(provider, "OpenRouter", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase);
 
             if (apiKeyRequired && string.IsNullOrWhiteSpace(apiKey))
             {
@@ -2828,79 +2957,84 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 vm.IsAiGenerating = true;
                 using var client = new HttpClient();
-                if (!string.IsNullOrWhiteSpace(apiKey))
-                {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
-                }
+                string content = null;
 
                 var currentGraphJson = Encoding.UTF8.GetString(Convert.FromBase64String(currentGraphBase64));
                 var systemInstructions = await BuildAiGraphSystemPromptAsync();
-
                 var finalPrompt = $"Generate nodes based on this request:\n\"{prompt}\"\n\nCurrent Graph Data context:\n{currentGraphJson}\n\nRemember: Output ONLY valid JSON array containing nodes.";
-                
-                var requestBody = new AICoAuthorRequest
+
+                if (string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase))
                 {
-                    model = model,
-                    messages = new[]
-                    {
-                        new AICoAuthorMessage { role = "system", content = systemInstructions },
-                        new AICoAuthorMessage { role = "user", content = finalPrompt }
-                    },
-                    temperature = 0.5
-                };
-
-                var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
-                var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
-
-                var url = GetAiUrl(endpoint, port, provider);
-                var response = await client.PostAsync(url, requestContent);
-                var responseJson = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
-                }
-
-                using var doc = JsonDocument.Parse(responseJson);
-                if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
-                {
-                    var content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
-                    if (!string.IsNullOrEmpty(content))
-                    {
-                        // Clean up markdown block fences if present
-                        if (content.StartsWith("```json"))
-                        {
-                            content = content.Substring("```json".Length);
-                        }
-                        if (content.StartsWith("```"))
-                        {
-                            content = content.Substring("```".Length);
-                        }
-                        if (content.EndsWith("```"))
-                        {
-                            content = content.Substring(0, content.Length - "```".Length);
-                        }
-                        content = content.Trim();
-
-                        // Robust fallback parser: extract only the text between the first '[' and last ']'
-                        int firstBracket = content.IndexOf('[');
-                        int lastBracket = content.LastIndexOf(']');
-                        if (firstBracket >= 0 && lastBracket > firstBracket)
-                        {
-                            content = content.Substring(firstBracket, lastBracket - firstBracket + 1);
-                        }
-
-                        var base64Result = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
-                        await CanvasWebView.InvokeScript($"if (typeof updateGraphAIResult === 'function') {{ updateGraphAIResult('{base64Result}'); }}");
-                    }
-                    else
-                    {
-                        throw new Exception("AI returned empty result.");
-                    }
+                    content = await CallGeminiAsync(client, endpoint, apiKey, model, systemInstructions, finalPrompt, 0.5);
                 }
                 else
                 {
-                    throw new Exception("AI returned empty choice list.");
+                    if (!string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    }
+
+                    var requestBody = new AICoAuthorRequest
+                    {
+                        model = model,
+                        messages = new[]
+                        {
+                            new AICoAuthorMessage { role = "system", content = systemInstructions },
+                            new AICoAuthorMessage { role = "user", content = finalPrompt }
+                        },
+                        temperature = 0.5
+                    };
+
+                    var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
+                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                    var url = GetAiUrl(endpoint, port, provider);
+                    var response = await client.PostAsync(url, requestContent);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
+                    }
+
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                    {
+                        content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(content))
+                {
+                    // Clean up markdown block fences if present
+                    if (content.StartsWith("```json"))
+                    {
+                        content = content.Substring("```json".Length);
+                    }
+                    if (content.StartsWith("```"))
+                    {
+                        content = content.Substring("```".Length);
+                    }
+                    if (content.EndsWith("```"))
+                    {
+                        content = content.Substring(0, content.Length - "```".Length);
+                    }
+                    content = content.Trim();
+
+                    // Robust fallback parser: extract only the text between the first '[' and last ']'
+                    int firstBracket = content.IndexOf('[');
+                    int lastBracket = content.LastIndexOf(']');
+                    if (firstBracket >= 0 && lastBracket > firstBracket)
+                    {
+                        content = content.Substring(firstBracket, lastBracket - firstBracket + 1);
+                    }
+
+                    var base64Result = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
+                    await CanvasWebView.InvokeScript($"if (typeof updateGraphAIResult === 'function') {{ updateGraphAIResult('{base64Result}'); }}");
+                }
+                else
+                {
+                    throw new Exception("AI returned empty result.");
                 }
             }
             catch (Exception ex)
@@ -2911,6 +3045,34 @@ namespace RagNext.Designer.Avalonia.Views
             finally
             {
                 vm.IsAiGenerating = false;
+            }
+        }
+
+        private async void TriggerCopyAiPrompt(string prompt, string currentGraphBase64)
+        {
+            if (DataContext is not MainWindowViewModel vm) return;
+
+            try
+            {
+                var currentGraphJson = Encoding.UTF8.GetString(Convert.FromBase64String(currentGraphBase64));
+                var systemInstructions = await BuildAiGraphSystemPromptAsync();
+
+                var fullPrompt = $"System Instructions:\n{systemInstructions}\n\nUser Request:\n\"{prompt}\"\n\nCurrent Graph Data context:\n{currentGraphJson}\n\nRemember: Output ONLY valid JSON array containing nodes.";
+
+                var clipboard = global::Avalonia.Controls.TopLevel.GetTopLevel(this)?.Clipboard;
+                if (clipboard != null)
+                {
+                    await clipboard.SetTextAsync(fullPrompt);
+                    await ConfirmDialog.ShowAsync(this, "AI Prompt Copied", "📋 The complete system instructions, context variables, project entities list, and prompt have been copied to your clipboard!\n\nYou can now paste this directly into Gemini, ChatGPT, Claude, or any web LLM, and paste the resulting JSON array back using the 'External Model Pipeline' section.");
+                }
+                else
+                {
+                    await ConfirmDialog.ShowAsync(this, "Clipboard Error", "Unable to access system clipboard.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ConfirmDialog.ShowAsync(this, "AI Copy Error", ex.Message);
             }
         }
 

@@ -1649,6 +1649,7 @@
                                             <x:String>LMStudio</x:String>
                                             <x:String>OpenAICompatible</x:String>
                                             <x:String>OpenRouter</x:String>
+                                            <x:String>Google Gemini</x:String>
                                         </ComboBox.Items>
                                     </ComboBox>
 

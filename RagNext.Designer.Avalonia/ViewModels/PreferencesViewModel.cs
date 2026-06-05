@@ -349,7 +349,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public bool ShowImageGenEndpoint => !ShowImageGenHostPort;
 
         public bool ShowCoAuthorApiKey => string.Equals(AiCoAuthorProvider, "OpenAICompatible", StringComparison.OrdinalIgnoreCase) ||
-                                          string.Equals(AiCoAuthorProvider, "OpenRouter", StringComparison.OrdinalIgnoreCase);
+                                          string.Equals(AiCoAuthorProvider, "OpenRouter", StringComparison.OrdinalIgnoreCase) ||
+                                          string.Equals(AiCoAuthorProvider, "Google Gemini", StringComparison.OrdinalIgnoreCase);
 
         public bool ShowImageGenApiKey
         {
@@ -369,6 +370,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Ollama" => "Ollama Setup (Local & Free):",
             "LMStudio" => "LM Studio Setup (Local & Free):",
             "OpenRouter" => "OpenRouter Setup (Cloud & Free Tier):",
+            "Google Gemini" => "Google Gemini Setup (Cloud & Free/Paid Tier):",
             _ => "AI Provider Connection Details:"
         };
 
@@ -377,6 +379,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Ollama" => "1. Make sure Ollama is installed and running on your computer.",
             "LMStudio" => "1. Start LM Studio and download a model from the Search tab.",
             "OpenRouter" => "1. Create an account at OpenRouter (no credit card required).",
+            "Google Gemini" => "1. Get a Gemini API Key from Google AI Studio (free for hobbyist use, subject to rate limits).",
             _ => "1. Set up your custom API gateway endpoint URL."
         };
 
@@ -385,6 +388,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Ollama" => "2. Pull a model using the command prompt (e.g. 'ollama run gemma2' or 'ollama run llama3').",
             "LMStudio" => "2. Go to the Developer tab (Server icon) and click 'Start Server'.",
             "OpenRouter" => "2. Create a new API Key, copy it, and paste it into the 'API Key' field below.",
+            "Google Gemini" => "2. Paste the API Key in the box below. The API Endpoint should remain at the default Google URL.",
             _ => "2. Input your user credentials / API Key in the field below."
         };
 
@@ -393,6 +397,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Ollama" => "3. Click Refresh (↻) below to pick a pulled model, or type one in.",
             "LMStudio" => "3. Keep LM Studio running in the background while designing.",
             "OpenRouter" => "3. Select free creative writing models like Gemma 2!",
+            "Google Gemini" => "3. Specify a model ID (e.g. 'gemini-1.5-pro' for complex reasoning, or 'gemini-1.5-flash' for speed).",
             _ => "3. Enter the exact model identifier code required by the provider."
         };
 
@@ -401,6 +406,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Ollama" => "Download Ollama ↗",
             "LMStudio" => "Download LM Studio ↗",
             "OpenRouter" => "Get Free API Key ↗",
+            "Google Gemini" => "Get Gemini API Key ↗",
             _ => "Open Dashboard ↗"
         };
 
@@ -409,6 +415,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "Ollama" => "https://ollama.com",
             "LMStudio" => "https://lmstudio.ai",
             "OpenRouter" => "https://openrouter.ai/keys",
+            "Google Gemini" => "https://aistudio.google.com/",
             _ => "https://platform.openai.com"
         };
 
@@ -507,6 +514,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     AiCoAuthorEndpoint = "https://openrouter.ai/api";
                     AiCoAuthorPort = "0";
                     AiCoAuthorModel = "google/gemma-2-9b-it:free";
+                    break;
+                case "Google Gemini":
+                    AiCoAuthorEndpoint = "https://generativelanguage.googleapis.com";
+                    AiCoAuthorPort = "0";
+                    AiCoAuthorModel = "gemini-1.5-pro";
                     break;
             }
             OnPropertyChanged(nameof(CoAuthorSetupStepsTitle));
