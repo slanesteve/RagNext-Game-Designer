@@ -2,6 +2,8 @@
 
 Welcome to the **RagNext Game Designer**! This guide will introduce you to the core components of the editor and help you create your very first narrative action step script.
 
+![RagNext Designer Splash Screen](/designer-splash.jpg)
+
 ## Core Concepts
 
 The RagNext editor organizes your adventure game using five principal structures:
