@@ -44,10 +44,94 @@ namespace RagsCore
                         ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
                     };
                     opts.Converters.Add(new StepDefinitionBaseJsonConverter());
+                    opts.Converters.Add(new LenientBooleanConverter());
+                    opts.Converters.Add(new LenientDoubleConverter());
+                    opts.Converters.Add(new LenientSingleConverter());
+                    opts.Converters.Add(new LenientInt32Converter());
                     _default = new RagsJsonContext(opts);
                 }
                 return _default;
             }
         }
+    }
+
+    public class LenientBooleanConverter : JsonConverter<bool>
+    {
+        public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.True) return true;
+            if (reader.TokenType == JsonTokenType.False) return false;
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var val = reader.GetString();
+                if (bool.TryParse(val, out var result))
+                {
+                    return result;
+                }
+                if (val == "1" || string.Equals(val, "true", StringComparison.OrdinalIgnoreCase)) return true;
+                if (val == "0" || string.Equals(val, "false", StringComparison.OrdinalIgnoreCase)) return false;
+            }
+            if (reader.TokenType == JsonTokenType.Number)
+            {
+                if (reader.TryGetInt32(out var intVal))
+                {
+                    return intVal != 0;
+                }
+            }
+            return false;
+        }
+
+        public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options)
+        {
+            writer.WriteBooleanValue(value);
+        }
+    }
+
+    public class LenientDoubleConverter : JsonConverter<double>
+    {
+        public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Number) return reader.GetDouble();
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var val = reader.GetString();
+                if (string.IsNullOrWhiteSpace(val)) return 0.0;
+                if (double.TryParse(val, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var res)) return res;
+            }
+            return 0.0;
+        }
+        public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options) => writer.WriteNumberValue(value);
+    }
+
+    public class LenientSingleConverter : JsonConverter<float>
+    {
+        public override float Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Number) return reader.GetSingle();
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var val = reader.GetString();
+                if (string.IsNullOrWhiteSpace(val)) return 0f;
+                if (float.TryParse(val, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var res)) return res;
+            }
+            return 0f;
+        }
+        public override void Write(Utf8JsonWriter writer, float value, JsonSerializerOptions options) => writer.WriteNumberValue(value);
+    }
+
+    public class LenientInt32Converter : JsonConverter<int>
+    {
+        public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Number) return reader.GetInt32();
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var val = reader.GetString();
+                if (string.IsNullOrWhiteSpace(val)) return 0;
+                if (int.TryParse(val, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var res)) return res;
+            }
+            return 0;
+        }
+        public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options) => writer.WriteNumberValue(value);
     }
 }

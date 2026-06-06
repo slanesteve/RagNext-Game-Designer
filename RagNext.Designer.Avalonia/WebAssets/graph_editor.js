@@ -3,6 +3,15 @@
  * Handles dragging, panning, drawing connections, dynamic catalog parsing, parameter inputs, and C# serialization.
  */
 
+// Global C# Bridge Helper using WebView2 postMessage or URL navigation fallback
+window.invokeCSharpAction = function(msg) {
+    if (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function') {
+        window.chrome.webview.postMessage(msg);
+    } else {
+        window.location.href = "rags-action://" + msg;
+    }
+};
+
 let nodes = [];
 let connections = [];
 let selectedNode = null;
@@ -75,6 +84,9 @@ const fallbackDiscriminators = {
     "charactermovetoobject": "char.moveToObject",
     "charactersetportraitmedia": "char.setPortraitMedia",
     "charactersetactiontoactiveinactive": "char.setActionActive",
+    "playersetactiontoactiveinactive": "char.setActionActive",
+    "roomsetactiontoactiveinactive": "char.setActionActive",
+    "itemsetactiontoactiveinactive": "char.setActionActive",
     "charactersetattribute": "char.setAttribute",
     "charactersetdescription": "char.setDescription",
     "charactersetgender": "char.setGender",
@@ -88,6 +100,7 @@ const fallbackDiscriminators = {
     "mediasetbackgroundmusic": "media.setBackgroundMusic",
     "mediastopbackgroundmusic": "media.stopBackgroundMusic",
     "mediaplaysoundeffect": "media.playSound",
+    "mediaplayvideo": "media.playVideo",
     "itemdisplaydescription": "object.displayDescription",
     "itemmovetocharacter": "object.moveToCharacter",
     "itemmovetoinventory": "object.moveToInventory",
@@ -182,7 +195,13 @@ const propertyMappings = {
     "Expected Value": ["ExpectedValue", "expectedValue"],
     "DateTime Component": ["DateTimeComponent", "dateTimeComponent"],
     "Duration": ["Duration", "duration"],
-    "Constant Value": ["ConstantValue", "constantValue"]
+    "Constant Value": ["ConstantValue", "constantValue"],
+    "Sound File": ["SoundId", "soundId"],
+    "Video File": ["VideoId", "videoId"],
+    "Volume": ["Volume", "volume"],
+    "Loop": ["Loop", "loop"],
+    "Start Time": ["StartTime", "startTime"],
+    "End Time": ["EndTime", "endTime"]
 };
 
 function getPropertyValue(nodeData, label) {
@@ -843,6 +862,18 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     };
     toolbar.appendChild(btnCompose);
 
+    const btnDictate = document.createElement('button');
+    btnDictate.innerHTML = '🎙️';
+    btnDictate.className = 'btn-format';
+    btnDictate.style.fontSize = '10px';
+    btnDictate.setAttribute('data-original-html', '🎙️');
+    btnDictate.onmousedown = (e) => { e.preventDefault(); };
+    btnDictate.onclick = (e) => {
+        e.preventDefault();
+        toggleSpeechRecognition(textarea, btnDictate);
+    };
+    toolbar.appendChild(btnDictate);
+
     // Glowing ✨ AI dialogue trigger calling native C# DI chat service co-author bridge
     const btnAI = document.createElement('button');
     btnAI.innerHTML = '✨ AI dialogue';
@@ -1315,6 +1346,12 @@ function addNewCommandNode(x = null, y = null) {
     populateSelectWithOptions(select, AVAILABLE_COMMANDS);
     select.addEventListener('change', () => { 
         node.data.commandType = select.value; 
+        if (select.value === 'media.playSound' || select.value === 'media.playVideo') {
+            node.data["Start Time"] = "0.00";
+            node.data["StartTime"] = "0.00";
+            node.data["End Time"] = "";
+            node.data["EndTime"] = "";
+        }
         refreshCommandFields(node); 
         triggerAutoSave();
     });
@@ -1484,8 +1521,15 @@ function refreshCommandFields(node) {
         label.style.color = 'var(--text-muted)';
         row.appendChild(label);
 
-        let inputElement;
         let initialVal = getPropertyValue(node.data, inputSchema.label);
+        if (inputSchema.label === 'Volume' && (initialVal === undefined || initialVal === null || initialVal === "")) {
+            initialVal = "100";
+            node.data[inputSchema.label] = "100";
+            const aliases = propertyMappings[inputSchema.label] || [];
+            aliases.forEach(alias => {
+                node.data[alias] = "100";
+            });
+        }
 
         // Normalize numeric enums serialized as integers
         if (inputSchema.label === 'InputType' || inputSchema.label === 'Input Type') {
@@ -1652,7 +1696,22 @@ function refreshCommandFields(node) {
             }
             else if (inputSchema.dataType === 'Character') optionsList = catalogs.Characters || [];
             else if (inputSchema.dataType === 'Variable') optionsList = catalogs.Variables || [];
-            else if (inputSchema.dataType === 'Media') optionsList = catalogs.Media || [];
+            else if (inputSchema.dataType === 'Media') {
+                optionsList = catalogs.Media || [];
+                const isSoundCommand = (type === 'media.playSound');
+                const isVideoCommand = (type === 'media.playVideo');
+                if (isSoundCommand) {
+                    optionsList = optionsList.filter(m => {
+                        const name = (m.Name || m.name || "").toLowerCase();
+                        return name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.ogg') || name.endsWith('.m4a') || name.endsWith('.aac') || name.endsWith('.flac');
+                    });
+                } else if (isVideoCommand) {
+                    optionsList = optionsList.filter(m => {
+                        const name = (m.Name || m.name || "").toLowerCase();
+                        return name.endsWith('.mp4') || name.endsWith('.mov') || name.endsWith('.avi') || name.endsWith('.mkv') || name.endsWith('.webm');
+                    });
+                }
+            }
             else if (inputSchema.dataType === 'Function') optionsList = catalogs.Functions || [];
             else if (inputSchema.dataType === 'Timer') optionsList = catalogs.Timers || [];
             else if (inputSchema.dataType === 'PromptName') {
@@ -1790,7 +1849,13 @@ function refreshCommandFields(node) {
                 aliases.forEach(alias => {
                     node.data[alias] = pickerSelect.value;
                 });
-                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable') {
+                if (inputSchema.dataType === 'Media') {
+                    node.data["Start Time"] = "0.00";
+                    node.data["StartTime"] = "0.00";
+                    node.data["End Time"] = "";
+                    node.data["EndTime"] = "";
+                }
+                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media') {
                     refreshCommandFields(node);
                 }
                 triggerAutoSave();
@@ -1803,6 +1868,13 @@ function refreshCommandFields(node) {
                 aliases.forEach(alias => {
                     node.data[alias] = textInput.value;
                 });
+                if (inputSchema.dataType === 'Media') {
+                    node.data["Start Time"] = "0.00";
+                    node.data["StartTime"] = "0.00";
+                    node.data["End Time"] = "";
+                    node.data["EndTime"] = "";
+                    refreshCommandFields(node);
+                }
                 triggerAutoSave();
             });
 
@@ -2025,20 +2097,43 @@ function refreshCommandFields(node) {
             }
             row.appendChild(inputElement);
         } else {
-            // Standard Text / Input field
+            // Standard Text / Input field or Checkbox
             inputElement = document.createElement('input');
-            inputElement.type = inputSchema.dataType === 'Integer' || inputSchema.dataType === 'Number' ? 'number' : 'text';
-            inputElement.placeholder = `Enter ${inputSchema.label}...`;
-            inputElement.value = initialVal;
-            inputElement.style.width = "100%";
-            inputElement.addEventListener('input', () => {
-                node.data[inputSchema.label] = inputElement.value;
-                const aliases = propertyMappings[inputSchema.label] || [];
-                aliases.forEach(alias => {
-                    node.data[alias] = inputElement.value;
+            if (inputSchema.controlType === 'Checkbox') {
+                inputElement.type = 'checkbox';
+                inputElement.checked = initialVal === true || initialVal === 'true';
+                inputElement.style.width = 'auto';
+                inputElement.style.margin = '4px 0';
+                inputElement.addEventListener('change', () => {
+                    node.data[inputSchema.label] = inputElement.checked;
+                    const aliases = propertyMappings[inputSchema.label] || [];
+                    aliases.forEach(alias => {
+                        node.data[alias] = inputElement.checked;
+                    });
+                    triggerAutoSave();
                 });
-                triggerAutoSave();
-            });
+                
+                // Align label and checkbox side-by-side for bento look
+                row.style.flexDirection = 'row';
+                row.style.alignItems = 'center';
+                row.style.gap = '8px';
+                label.style.order = '2';
+                inputElement.style.order = '1';
+                label.style.margin = '0';
+            } else {
+                inputElement.type = inputSchema.dataType === 'Integer' || inputSchema.dataType === 'Number' ? 'number' : 'text';
+                inputElement.placeholder = `Enter ${inputSchema.label}...`;
+                inputElement.value = initialVal;
+                inputElement.style.width = "100%";
+                inputElement.addEventListener('input', () => {
+                    node.data[inputSchema.label] = inputElement.value;
+                    const aliases = propertyMappings[inputSchema.label] || [];
+                    aliases.forEach(alias => {
+                        node.data[alias] = inputElement.value;
+                    });
+                    triggerAutoSave();
+                });
+            }
             row.appendChild(inputElement);
         }
 
@@ -2049,6 +2144,453 @@ function refreshCommandFields(node) {
         fieldsContainer.appendChild(row);
         node.inputs.push({ label: inputSchema.label, element: inputElement });
     });
+
+    if (type === 'media.playSound' || type === 'media.playVideo') {
+        const isSound = (type === 'media.playSound');
+        
+        // Helper to grab media ID directly from UI elements to bypass data mapping delays
+        const getActiveMediaId = () => {
+            const inputObj = node.inputs.find(inp => inp.label === (isSound ? "Sound File" : "Video File"));
+            if (inputObj && inputObj.element) {
+                const selectEl = inputObj.element.querySelector('select');
+                const textEl = inputObj.element.querySelector('input[type="text"]');
+                if (selectEl && selectEl.style.display !== 'none') {
+                    return selectEl.value;
+                } else if (textEl) {
+                    return textEl.value;
+                }
+            }
+            return isSound ? getPropertyValue(node.data, "Sound File") : getPropertyValue(node.data, "Video File");
+        };
+
+        const soundId = getActiveMediaId();
+
+        // Create container for Visual Waveform or timeline
+        const timelineWrapper = document.createElement('div');
+        timelineWrapper.style.marginTop = '8px';
+        timelineWrapper.style.padding = '8px';
+        timelineWrapper.style.background = '#11111b';
+        timelineWrapper.style.border = '1px solid #313244';
+        timelineWrapper.style.borderRadius = '6px';
+        timelineWrapper.style.position = 'relative';
+        
+        // Prevent click/drag on timeline container from dragging the entire node
+        timelineWrapper.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 240;
+        canvas.height = 40;
+        canvas.style.width = '100%';
+        canvas.style.height = '40px';
+        canvas.style.display = 'block';
+        canvas.style.borderRadius = '4px';
+        timelineWrapper.appendChild(canvas);
+
+        // HTML5 Video Preview Container inside the node
+        let videoPreview = null;
+        if (!isSound) {
+            videoPreview = document.createElement('video');
+            videoPreview.style.width = '100%';
+            videoPreview.style.maxHeight = '140px';
+            videoPreview.style.marginTop = '8px';
+            videoPreview.style.borderRadius = '4px';
+            videoPreview.style.background = '#000';
+            videoPreview.style.display = 'none'; // Only show during preview playback
+            timelineWrapper.appendChild(videoPreview);
+        }
+
+        const ctx = canvas.getContext('2d');
+        let clipDuration = 10.0;
+        let peaksData = null;
+        let playheadTime = null;
+
+        // Visual markers overlay
+        const startMarker = document.createElement('div');
+        startMarker.style.position = 'absolute';
+        startMarker.style.top = '0';
+        startMarker.style.width = '6px';
+        startMarker.style.height = '40px';
+        startMarker.style.background = '#00ffcc';
+        startMarker.style.cursor = 'ew-resize';
+        startMarker.style.zIndex = '5';
+        timelineWrapper.appendChild(startMarker);
+
+        const endMarker = document.createElement('div');
+        endMarker.style.position = 'absolute';
+        endMarker.style.top = '0';
+        endMarker.style.width = '6px';
+        endMarker.style.height = '40px';
+        endMarker.style.background = '#ff007f';
+        endMarker.style.cursor = 'ew-resize';
+        endMarker.style.zIndex = '5';
+        timelineWrapper.appendChild(endMarker);
+
+        // Value text displays
+        const durationText = document.createElement('div');
+        durationText.style.display = 'flex';
+        durationText.style.justifyContent = 'space-between';
+        durationText.style.fontSize = '9px';
+        durationText.style.color = '#cdd6f4';
+        durationText.style.marginTop = '4px';
+        durationText.innerHTML = `<span>Start: 0.0s</span><span>End: 10.0s</span>`;
+        timelineWrapper.appendChild(durationText);
+
+        function drawTimeline() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (isSound && peaksData && peaksData.length > 0) {
+                // Draw true waveform peaks
+                ctx.fillStyle = '#89b4fa';
+                const barWidth = canvas.width / peaksData.length;
+                for (let i = 0; i < peaksData.length; i++) {
+                    const h = peaksData[i] * canvas.height;
+                    const y = (canvas.height - h) / 2;
+                    ctx.fillRect(i * barWidth, y, barWidth - 1, h);
+                }
+            } else {
+                // Draw a simple modern grid for Video
+                ctx.strokeStyle = '#313244';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                ctx.fillStyle = 'rgba(137, 180, 250, 0.2)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Draw interactive playhead
+            if (playheadTime !== null && clipDuration > 0) {
+                const x = (playheadTime / clipDuration) * canvas.width;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+        }
+
+        function updateMarkersFromData() {
+            let startVal = parseFloat(getPropertyValue(node.data, "Start Time")) || 0;
+            let endVal = parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration;
+            
+            if (startVal < 0) startVal = 0;
+            if (endVal > clipDuration || endVal <= 0) endVal = clipDuration;
+            if (startVal > endVal) startVal = endVal;
+
+            const startPct = (startVal / clipDuration) * 100;
+            const endPct = (endVal / clipDuration) * 100;
+
+            startMarker.style.left = `calc(${startPct}% - 3px)`;
+            endMarker.style.left = `calc(${endPct}% - 3px)`;
+            durationText.innerHTML = `<span>Start: ${startVal.toFixed(1)}s</span><span>End: ${endVal.toFixed(1)}s</span>`;
+        }
+
+        // Drag markers behavior
+        function setupMarkerDrag(marker, isStart) {
+            let active = false;
+            marker.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Stop propagation to prevent dragging the entire node!
+                active = true;
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+
+            function onMove(e) {
+                if (!active) return;
+                const rect = canvas.getBoundingClientRect();
+                let x = e.clientX - rect.left;
+                if (x < 0) x = 0;
+                if (x > rect.width) x = rect.width;
+                const pct = x / rect.width;
+                const seconds = pct * clipDuration;
+
+                if (isStart) {
+                    let endVal = parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration;
+                    if (seconds > endVal) return;
+                    node.data["Start Time"] = seconds.toFixed(2);
+                    node.data["StartTime"] = seconds.toFixed(2);
+                } else {
+                    let startVal = parseFloat(getPropertyValue(node.data, "Start Time")) || 0;
+                    if (seconds < startVal) return;
+                    node.data["End Time"] = seconds.toFixed(2);
+                    node.data["EndTime"] = seconds.toFixed(2);
+                }
+                updateMarkersFromData();
+                
+                // Keep input field values in sync!
+                node.inputs.forEach(inp => {
+                    if (inp.label === 'Start Time' || inp.label === 'End Time') {
+                        const val = getPropertyValue(node.data, inp.label);
+                        const inputs = inp.element.querySelectorAll('input');
+                        inputs.forEach(i => i.value = val);
+                    }
+                });
+            }
+
+            function onUp() {
+                if (active) {
+                    active = false;
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    triggerAutoSave();
+                }
+            }
+        }
+
+        setupMarkerDrag(startMarker, true);
+        setupMarkerDrag(endMarker, false);
+
+        // Registry for waveform callbacks to support multiple nodes without overwrites
+        const canvasId = `wf_${node.id}`;
+        canvas.id = canvasId;
+        if (!window.waveformCallbacks) {
+            window.waveformCallbacks = {};
+        }
+        window.loadWaveformData = function(elementId, peaks, duration) {
+            if (window.waveformCallbacks[elementId]) {
+                window.waveformCallbacks[elementId](peaks, duration);
+            }
+        };
+        window.waveformCallbacks[canvasId] = function(peaks, duration) {
+            peaksData = peaks;
+            clipDuration = duration;
+
+            // Try to resolve exact duration using browser audio element as a safety net
+            if (isSound && resolvedFileUri) {
+                const aud = new Audio(resolvedFileUri);
+                aud.addEventListener('loadedmetadata', () => {
+                    if (aud.duration && aud.duration > 0 && Math.abs(clipDuration - aud.duration) > 0.5) {
+                        clipDuration = aud.duration;
+                        drawTimeline();
+                        updateMarkersFromData();
+                    }
+                }, { once: true });
+            }
+
+            drawTimeline();
+            updateMarkersFromData();
+        };
+
+        // File Path Resolution hooks for local previewing
+        let resolvedFileUri = null;
+        if (!window.mediaPathCallbacks) {
+            window.mediaPathCallbacks = {};
+        }
+        window.resolveMediaPath = function(mediaId, callbackId, fileUri) {
+            if (window.mediaPathCallbacks[callbackId]) {
+                window.mediaPathCallbacks[callbackId](fileUri);
+            }
+        };
+        window.mediaPathCallbacks[canvasId] = function(fileUri) {
+            resolvedFileUri = fileUri;
+            if (videoPreview) {
+                videoPreview.src = fileUri;
+            }
+
+            // Unconditional local metadata query as fallback/primary for accurate timeline bounds
+            if (isSound && fileUri) {
+                const aud = new Audio(fileUri);
+                aud.addEventListener('loadedmetadata', () => {
+                    if (aud.duration && aud.duration > 0) {
+                        clipDuration = aud.duration;
+                        drawTimeline();
+                        updateMarkersFromData();
+                    }
+                }, { once: true });
+            }
+
+            // Decode audio dynamically to build high-fidelity waveforms
+            if (isSound && fileUri) {
+                fetch(fileUri)
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => {
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        return audioCtx.decodeAudioData(arrayBuffer);
+                    })
+                    .then(audioBuffer => {
+                        const duration = audioBuffer.duration;
+                        const channelData = audioBuffer.getChannelData(0);
+                        const steps = 150;
+                        const blockSize = Math.floor(channelData.length / steps) || 1;
+                        const peaks = new Float32Array(steps);
+                        for (let i = 0; i < steps; i++) {
+                            let max = 0;
+                            for (let j = 0; j < blockSize; j++) {
+                                const val = Math.abs(channelData[i * blockSize + j] || 0);
+                                if (val > max) max = val;
+                            }
+                            peaks[i] = max;
+                        }
+                        let maxPeak = 0;
+                        for (let i = 0; i < steps; i++) if (peaks[i] > maxPeak) maxPeak = peaks[i];
+                        if (maxPeak > 0) {
+                            for (let i = 0; i < steps; i++) peaks[i] /= maxPeak;
+                        }
+                        if (window.waveformCallbacks[canvasId]) {
+                            window.waveformCallbacks[canvasId](Array.from(peaks), duration);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("WebView waveform decoding failed, falling back to C# thread:", err);
+                        window.invokeCSharpAction(`get-waveform?soundId=${encodeURIComponent(soundId)}&elementId=${canvasId}`);
+                    });
+            } else if (!isSound && fileUri) {
+                // For videos, automatically read duration metadata
+                if (videoPreview) {
+                    videoPreview.addEventListener('loadedmetadata', () => {
+                        clipDuration = videoPreview.duration || 10.0;
+                        drawTimeline();
+                        updateMarkersFromData();
+                    }, { once: true });
+                }
+            }
+        };
+
+        // Trigger C# data fetch
+        if (soundId) {
+            window.invokeCSharpAction(`get-media-path?mediaId=${encodeURIComponent(soundId)}&callbackId=${canvasId}`);
+        }
+
+        drawTimeline();
+        updateMarkersFromData();
+        fieldsContainer.appendChild(timelineWrapper);
+
+        const previewRow = document.createElement('div');
+        previewRow.className = 'field-row';
+        previewRow.style.marginTop = '10px';
+        previewRow.style.display = 'flex';
+        previewRow.style.gap = '8px';
+
+        const playBtn = document.createElement('button');
+        playBtn.innerText = "🔊 Play Preview";
+        playBtn.style.flex = "1";
+        playBtn.style.padding = "6px 8px";
+        playBtn.style.fontSize = "11px";
+        playBtn.style.background = "#8e2de2";
+        playBtn.style.color = "#ffffff";
+        playBtn.style.border = "none";
+        playBtn.style.borderRadius = "4px";
+        playBtn.style.cursor = "pointer";
+        playBtn.style.fontWeight = "bold";
+
+        // HTML5 Audio/Video player instance
+        const mediaElement = isSound ? document.createElement('audio') : videoPreview;
+        let animationFrameId = null;
+
+        function trackPlayhead() {
+            if (mediaElement && !mediaElement.paused) {
+                playheadTime = mediaElement.currentTime;
+                drawTimeline();
+
+                let endVal = parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration;
+                if (mediaElement.currentTime >= endVal) {
+                    stopPlayback();
+                    return;
+                }
+                animationFrameId = requestAnimationFrame(trackPlayhead);
+            }
+        }
+
+        function stopPlayback() {
+            if (mediaElement) {
+                mediaElement.pause();
+                mediaElement.currentTime = parseFloat(getPropertyValue(node.data, "Start Time")) || 0;
+            }
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            playheadTime = null;
+            drawTimeline();
+            if (!isSound && videoPreview) {
+                videoPreview.style.display = 'none';
+            }
+            playBtn.innerText = "🔊 Play Preview";
+        }
+
+        mediaElement.addEventListener('ended', stopPlayback);
+
+        playBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const currentId = getActiveMediaId();
+            if (!currentId || !resolvedFileUri) {
+                alert(isSound ? "Please select a sound file first." : "Please select a video file first.");
+                return;
+            }
+
+            // Play/Pause toggle logic
+            if (window.currentPlayingMedia === mediaElement && !mediaElement.paused) {
+                mediaElement.pause();
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                playBtn.innerText = "🔊 Play Preview";
+                return;
+            }
+
+            // Stop other playing previews first
+            if (window.currentPlayingMedia && window.currentPlayingMedia !== mediaElement) {
+                window.currentPlayingMedia.pause();
+                if (window.currentPlayingMedia.onStopCleanup) {
+                    window.currentPlayingMedia.onStopCleanup();
+                }
+            }
+
+            const volume = parseFloat(getPropertyValue(node.data, "Volume")) || 100;
+
+            if (!mediaElement.src || mediaElement.src === "" || mediaElement.ended || playheadTime === null) {
+                if (isSound) {
+                    mediaElement.src = resolvedFileUri;
+                }
+                const startTime = parseFloat(getPropertyValue(node.data, "Start Time")) || 0;
+                mediaElement.currentTime = startTime;
+            }
+
+            mediaElement.volume = volume / 100;
+
+            if (!isSound && videoPreview) {
+                videoPreview.style.display = 'block';
+            }
+
+            mediaElement.play().then(() => {
+                window.currentPlayingMedia = mediaElement;
+                mediaElement.onStopCleanup = stopPlayback;
+                playBtn.innerText = "⏸️ Pause Preview";
+                trackPlayhead();
+            }).catch(err => {
+                console.error("Playback failed", err);
+            });
+        });
+
+        const stopBtn = document.createElement('button');
+        stopBtn.innerText = "⏹️ Stop";
+        stopBtn.style.padding = "6px 8px";
+        stopBtn.style.fontSize = "11px";
+        stopBtn.style.background = "#3a3a4c";
+        stopBtn.style.color = "#ffffff";
+        stopBtn.style.border = "none";
+        stopBtn.style.borderRadius = "4px";
+        stopBtn.style.cursor = "pointer";
+
+        stopBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            stopPlayback();
+        });
+
+        previewRow.appendChild(playBtn);
+        previewRow.appendChild(stopBtn);
+        fieldsContainer.appendChild(previewRow);
+    }
 }
 
 // Node Position Context shortcuts
@@ -3407,5 +3949,140 @@ window.revertAiChanges = function() {
 
     document.getElementById("ai-preview-banner").classList.add("hide");
     previousGraphState = null;
+};
+
+
+// Speech Recognition Manager for native Browser Web Speech API (WebView2)
+let recognition = null;
+let activeSpeechTarget = null; // Can be a textarea/input element, or 'csharp'
+let activeSpeechButton = null;
+
+function initSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        console.warn("Speech recognition not supported in this browser/webview.");
+        return null;
+    }
+    const rec = new SpeechRecognition();
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.lang = 'en-US';
+
+    rec.onstart = () => {
+        console.log("Speech recognition started");
+        updateSpeechButtonVisuals(true);
+    };
+
+    rec.onend = () => {
+        console.log("Speech recognition ended");
+        updateSpeechButtonVisuals(false);
+        activeSpeechTarget = null;
+    };
+
+    rec.onerror = (e) => {
+        console.error("Speech recognition error", e);
+        updateSpeechButtonVisuals(false);
+        activeSpeechTarget = null;
+    };
+
+    rec.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log("Speech recognition result:", transcript);
+        
+        if (activeSpeechTarget === 'csharp') {
+            const resultUrl = "speech-result?text=" + encodeURIComponent(transcript);
+            if (typeof invokeCSharpAction === 'function') {
+                invokeCSharpAction(resultUrl);
+            } else {
+                window.location.href = "rags-action://" + resultUrl;
+            }
+        } else if (activeSpeechTarget && activeSpeechTarget.tagName) {
+            const start = activeSpeechTarget.selectionStart || 0;
+            const end = activeSpeechTarget.selectionEnd || 0;
+            const text = activeSpeechTarget.value;
+            const spaceBefore = (start > 0 && text[start - 1] !== ' ' && text[start - 1] !== '\n') ? ' ' : '';
+            const spaceAfter = (end < text.length && text[end] !== ' ' && text[end] !== '\n') ? ' ' : '';
+            activeSpeechTarget.value = text.substring(0, start) + spaceBefore + transcript + spaceAfter + text.substring(end);
+            
+            const ev = new Event('input', { bubbles: true });
+            activeSpeechTarget.dispatchEvent(ev);
+            
+            activeSpeechTarget.focus();
+            const newCursorPos = start + spaceBefore.length + transcript.length;
+            activeSpeechTarget.setSelectionRange(newCursorPos, newCursorPos);
+        }
+    };
+
+    return rec;
+}
+
+function toggleSpeechRecognition(target, buttonEl) {
+    if (!recognition) {
+        recognition = initSpeechRecognition();
+    }
+    if (!recognition) {
+        alert("Speech Recognition is not supported or permitted in this environment.");
+        return;
+    }
+
+    if (activeSpeechTarget) {
+        recognition.stop();
+        if (activeSpeechTarget === target) {
+            return;
+        }
+    }
+
+    activeSpeechTarget = target;
+    activeSpeechButton = buttonEl;
+    try {
+        recognition.start();
+    } catch (err) {
+        console.error("Failed to start speech recognition:", err);
+    }
+}
+
+function updateSpeechButtonVisuals(isRecording) {
+    if (activeSpeechButton) {
+        if (isRecording) {
+            activeSpeechButton.innerHTML = '🔴 Listening...';
+            activeSpeechButton.classList.add('recording');
+        } else {
+            activeSpeechButton.innerHTML = activeSpeechButton.getAttribute('data-original-html') || '🎙️';
+            activeSpeechButton.classList.remove('recording');
+            activeSpeechButton = null;
+        }
+    }
+    
+    if (activeSpeechTarget === 'csharp') {
+        const statusUrl = "speech-status?running=" + isRecording;
+        if (typeof invokeCSharpAction === 'function') {
+            invokeCSharpAction(statusUrl);
+        } else {
+            window.location.href = "rags-action://" + statusUrl;
+        }
+    }
+}
+
+// Global functions for C# WebView integration
+window.startSpeechRecognitionForCsharp = function() {
+    const dummyBtn = document.createElement('button');
+    dummyBtn.setAttribute('data-original-html', '🎙️');
+    toggleSpeechRecognition('csharp', dummyBtn);
+};
+
+// AI Modal speech helper
+window.toggleAiPromptDictation = function(e) {
+    if (e) e.preventDefault();
+    const txt = document.getElementById('ai-prompt-input');
+    const btn = document.getElementById('ai-modal-dictate-btn');
+    if (txt && btn) {
+        toggleSpeechRecognition(txt, btn);
+    }
+};
+
+window.stopSpeechRecognitionForCsharp = function() {
+    if (activeSpeechTarget === 'csharp' && recognition) {
+        recognition.stop();
+    }
 };
 

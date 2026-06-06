@@ -35,7 +35,7 @@ namespace RagNextPlayer.Managers
 
         private readonly Dictionary<AudioSource, string> _sourcePaths = new();
 
-        public void PlaySound(string soundId, float volume = 1f, bool loop = false)
+        public void PlaySound(string soundId, float volume = 1f, bool loop = false, float startTime = 0f, float endTime = 0f)
         {
             if (string.IsNullOrWhiteSpace(soundId)) return;
 
@@ -55,24 +55,61 @@ namespace RagNextPlayer.Managers
 
             if (_cache.TryGetValue(path, out var clip))
             {
-                PlayClip(clip, volume, loop, path);
+                PlayClip(clip, volume, loop, path, startTime, endTime);
             }
             else
             {
-                StartCoroutine(LoadAndPlayAudioRoutine(path, volume, loop));
+                StartCoroutine(LoadAndPlayAudioRoutine(path, volume, loop, startTime, endTime));
             }
         }
 
-        private void PlayClip(AudioClip clip, float volume, bool loop, string path)
+        private void PlayClip(AudioClip clip, float volume, bool loop, string path, float startTime = 0f, float endTime = 0f)
         {
             var src = GetFreeSource();
             if (src is null) return;
 
             src.clip   = clip;
             src.volume = Mathf.Clamp01(volume);
-            src.loop   = loop;
+            src.loop   = loop && (startTime <= 0f && endTime <= 0f);
+            
+            if (startTime > 0f && startTime < clip.length)
+            {
+                src.time = startTime;
+            }
+            else
+            {
+                src.time = 0f;
+            }
+
             src.Play();
             _sourcePaths[src] = path;
+
+            if (startTime > 0f || (endTime > 0f && endTime < clip.length))
+            {
+                StartCoroutine(MonitorTrimmedPlaybackRoutine(src, clip, startTime, endTime, loop));
+            }
+        }
+
+        private System.Collections.IEnumerator MonitorTrimmedPlaybackRoutine(AudioSource src, AudioClip clip, float startTime, float endTime, bool loop)
+        {
+            float targetEnd = (endTime > 0f && endTime < clip.length) ? endTime : clip.length;
+            while (src != null && src.isPlaying && src.clip == clip)
+            {
+                if (src.time >= targetEnd)
+                {
+                    if (loop)
+                    {
+                        src.time = (startTime > 0f && startTime < clip.length) ? startTime : 0f;
+                    }
+                    else
+                    {
+                        src.Stop();
+                        src.clip = null;
+                        yield break;
+                    }
+                }
+                yield return null;
+            }
         }
 
         public void StopSound(string soundId)
@@ -126,7 +163,7 @@ namespace RagNextPlayer.Managers
             }
         }
 
-        private System.Collections.IEnumerator LoadAndPlayAudioRoutine(string path, float volume, bool loop)
+        private System.Collections.IEnumerator LoadAndPlayAudioRoutine(string path, float volume, bool loop, float startTime = 0f, float endTime = 0f)
         {
             string url = FormatLocalPathForWeb(path);
             if (string.IsNullOrEmpty(url)) yield break;
@@ -147,7 +184,7 @@ namespace RagNextPlayer.Managers
                 if (clip != null)
                 {
                     _cache[path] = clip;
-                    PlayClip(clip, volume, loop, path);
+                    PlayClip(clip, volume, loop, path, startTime, endTime);
                     Debug.Log($"[AudioManager] Successfully loaded and played dynamic audio clip: '{path}'");
                 }
             }
@@ -158,7 +195,7 @@ namespace RagNextPlayer.Managers
                 if (clip != null)
                 {
                     _cache[path] = clip;
-                    PlayClip(clip, volume, loop, path);
+                    PlayClip(clip, volume, loop, path, startTime, endTime);
                 }
                 else
                 {

@@ -53,7 +53,9 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(ObjectMoveInsideObjectCommand), "object.moveInsideObject")]
     [JsonDerivedType(typeof(DisplayTextCommand), "general.displayText")]
     [JsonDerivedType(typeof(AddCommentCommand), "general.addComment")]
+    [JsonDerivedType(typeof(DebugTextCommand), "general.debugText")]
     [JsonDerivedType(typeof(PlaySoundEffectCommand), "media.playSound")]
+    [JsonDerivedType(typeof(PlayVideoCommand), "media.playVideo")]
     [JsonDerivedType(typeof(StopSoundEffectCommand), "media.stopSound")]
     [JsonDerivedType(typeof(PlayerSetNameCommand), "player.setName")]
     [JsonDerivedType(typeof(PlayerSetDescriptionCommand), "player.setDescription")]
@@ -88,6 +90,8 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SetPlayerAttributeCommand), "player.setAttribute")]
     [JsonDerivedType(typeof(SetTimerAttributeCommand), "timer.setAttribute")]
     [JsonDerivedType(typeof(SetItemAttributeCommand), "item.setAttribute")]
+    [JsonDerivedType(typeof(CharacterSetActionActiveCommand), "char.setActionActive")]
+    [JsonDerivedType(typeof(SetTimerActiveCommand), "timer.setTimerActive")]
     public abstract class ActionStep
     {
         public static string NormalizeLegacyDiscriminators(string json)
@@ -361,11 +365,70 @@ namespace RagsCore.Actions
         }
     }
 
+    public sealed class DebugTextCommand : GameCommand
+    {
+        public string Message { get; set; } = string.Empty;
+        public override string TypeName => "Debug Text";
+        public override void Execute(ActionContext ctx)
+        {
+            // Debug Text is a comment/log. No runtime execution needed.
+        }
+    }
+
+    public sealed class CharacterSetActionActiveCommand : GameCommand
+    {
+        public string ActionName { get; set; } = string.Empty;
+        public bool Active { get; set; } = true;
+        public override string TypeName => "Character: Set Action To Active/Inactive";
+        public override void Execute(ActionContext ctx)
+        {
+            foreach (var action in ctx.Game.Player.Actions)
+            {
+                if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                {
+                    action.InitallyActive = Active;
+                }
+            }
+            foreach (var room in ctx.Game.Rooms)
+            {
+                foreach (var action in room.Actions)
+                {
+                    if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        action.InitallyActive = Active;
+                    }
+                }
+            }
+            foreach (var obj in ctx.Game.Objects)
+            {
+                foreach (var action in obj.Actions)
+                {
+                    if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        action.InitallyActive = Active;
+                    }
+                }
+            }
+            foreach (var character in ctx.Game.Characters)
+            {
+                foreach (var action in character.Actions)
+                {
+                    if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        action.InitallyActive = Active;
+                    }
+                }
+            }
+        }
+    }
+
     public sealed class PlaySoundEffectCommand : GameCommand
     {
         public string SoundId { get; set; } = string.Empty;
         public double Volume { get; set; } = 100.0;
         public bool Loop { get; set; } = false;
+        public double StartTime { get; set; } = 0.0;
+        public double EndTime { get; set; } = 0.0;
         public override string TypeName => "Media: Play Sound Effect";
         public override void Execute(ActionContext ctx)
         {
@@ -373,6 +436,27 @@ namespace RagsCore.Actions
             ctx.SetVariable("media.lastSoundId", resolved);
             ctx.SetVariable("media.lastSoundVolume", Volume.ToString());
             ctx.SetVariable("media.lastSoundLoop", Loop.ToString().ToLower());
+            ctx.SetVariable("media.lastSoundStartTime", StartTime.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            ctx.SetVariable("media.lastSoundEndTime", EndTime.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+    }
+
+    public sealed class PlayVideoCommand : GameCommand
+    {
+        public string VideoId { get; set; } = string.Empty;
+        public double Volume { get; set; } = 100.0;
+        public bool Loop { get; set; } = false;
+        public double StartTime { get; set; } = 0.0;
+        public double EndTime { get; set; } = 0.0;
+        public override string TypeName => "Media: Play Video";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(VideoId, ctx);
+            ctx.SetVariable("media.lastVideoId", resolved);
+            ctx.SetVariable("media.lastVideoVolume", Volume.ToString());
+            ctx.SetVariable("media.lastVideoLoop", Loop.ToString().ToLower());
+            ctx.SetVariable("media.lastVideoStartTime", StartTime.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            ctx.SetVariable("media.lastVideoEndTime", EndTime.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
     }
 
@@ -1400,6 +1484,22 @@ namespace RagsCore.Actions
             }
         }
     }
+
+    public sealed class SetTimerActiveCommand : GameCommand
+    {
+        public string TimerId { get; set; } = string.Empty;
+        public bool Active { get; set; } = true;
+        public override string TypeName => "Timer: Set Timer To Active/Inactive";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedTimer = RagsCore.Services.TemplateResolver.Resolve(TimerId, ctx);
+            var timer = ctx.Game.Timers.FirstOrDefault(t => string.Equals(t.Name, resolvedTimer, StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id.ToString(), resolvedTimer, StringComparison.OrdinalIgnoreCase));
+            if (timer != null)
+            {
+                timer.IsActive = Active;
+            }
+        }
+     }
 
     public sealed class SetItemAttributeCommand : GameCommand
     {

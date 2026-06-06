@@ -15,6 +15,21 @@
     --pin-data: #3b82f6;
 }
 
+.light-theme {
+    --bg-color: #f5f5f7;
+    --grid-color: rgba(0, 0, 0, 0.04);
+    --grid-accent: rgba(0, 0, 0, 0.08);
+    --node-bg: rgba(255, 255, 255, 0.95);
+    --node-border: rgba(0, 0, 0, 0.12);
+    --node-selected: #8b5cf6;
+    --text-color: #1a1a24;
+    --text-muted: #62627a;
+    --pin-exec: #2a2a35;
+    --pin-true: #16a34a;
+    --pin-false: #dc2626;
+    --pin-data: #2563eb;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;

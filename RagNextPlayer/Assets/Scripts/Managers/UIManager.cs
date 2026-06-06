@@ -1103,6 +1103,12 @@ namespace RagNextPlayer.Managers
             LoadAndDisplayImage(path, "scene-image");
         }
 
+        public void PlaySceneVideo(string videoId, float volume, bool loop, float startTime, float endTime)
+        {
+            // Optional Unity player video execution
+            Debug.Log($"[PlaySceneVideo] Playing video ID: {videoId}, Volume: {volume}, Loop: {loop}, Start: {startTime}, End: {endTime}");
+        }
+
         // ── Narrative Fade (called by GameManager) ────────────────────────────
 
         public async System.Threading.Tasks.Task FadeNarrativeAsync(float targetOpacity, int durationMs)

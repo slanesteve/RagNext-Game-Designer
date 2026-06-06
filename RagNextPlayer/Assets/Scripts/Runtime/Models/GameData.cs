@@ -185,7 +185,8 @@ namespace RagNextPlayer.Runtime.Models
     public class CharacterMoveToRoomCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; public string RoomId { get; set; } = string.Empty; }
     public class CharacterDisplayPortraitCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string PortraitId { get; set; } = string.Empty; }
     public class CharacterSetPortraitMediaCommandData: CommandData { public string CharacterId { get; set; } = string.Empty; public string MediaId { get; set; } = string.Empty; }
-    public class PlaySoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; }
+    public class PlaySoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; public double StartTime { get; set; } = 0.0; public double EndTime { get; set; } = 0.0; }
+    public class PlayVideoCommandData                : CommandData { public string VideoId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; public double StartTime { get; set; } = 0.0; public double EndTime { get; set; } = 0.0; }
     public class StopSoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public bool StopAllLooping { get; set; } = false; }
     public class DisplayMultimediaCommandData        : CommandData { public string MediaId { get; set; } = string.Empty; }
     public class EndGameCommandData                  : CommandData { public string FinalMessage { get; set; } = string.Empty; }
@@ -196,6 +197,9 @@ namespace RagNextPlayer.Runtime.Models
     public class DamageCharacterCommandData         : CommandData { public string CharacterId { get; set; } = string.Empty; public int Amount { get; set; } }
     public class SetCharacterStateCommandData        : CommandData { public string CharacterId { get; set; } = string.Empty; public string State { get; set; } = "Alive"; }
     public class TriggerTurnTickCommandData         : CommandData { }
+    public class DebugTextCommandData               : CommandData { public string Message { get; set; } = string.Empty; }
+    public class CharacterSetActionActiveCommandData : CommandData { public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
+    public class SetTimerActiveCommandData          : CommandData { public string TimerId { get; set; } = string.Empty; public bool Active { get; set; } = true; }
 
     public class RuntimeCustomChoice
     {

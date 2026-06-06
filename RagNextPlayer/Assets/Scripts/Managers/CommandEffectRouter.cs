@@ -151,7 +151,15 @@ namespace RagNextPlayer.Managers
                 case PlaySoundEffectCommandData c:
                     {
                         var soundId = ctx.Resolve(c.SoundId);
-                        AudioManager.Instance?.PlaySound(soundId, (float)(c.Volume / 100.0), c.Loop);
+                        AudioManager.Instance?.PlaySound(soundId, (float)(c.Volume / 100.0), c.Loop, (float)c.StartTime, (float)c.EndTime);
+                    }
+                    break;
+
+                case PlayVideoCommandData c:
+                    {
+                        var videoId = ctx.Resolve(c.VideoId);
+                        // Route play video event to UIManager if it has video player controls
+                        UIManager.Instance?.PlaySceneVideo(videoId, (float)(c.Volume / 100.0), c.Loop, (float)c.StartTime, (float)c.EndTime);
                     }
                     break;
 

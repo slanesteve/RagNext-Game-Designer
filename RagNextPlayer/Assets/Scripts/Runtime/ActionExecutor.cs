@@ -386,6 +386,19 @@ namespace RagNextPlayer.Runtime
                         ctx.SetVariable("media.lastSoundId", resolved);
                         ctx.SetVariable("media.lastSoundVolume", c.Volume.ToString());
                         ctx.SetVariable("media.lastSoundLoop", c.Loop.ToString().ToLower());
+                        ctx.SetVariable("media.lastSoundStartTime", c.StartTime.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        ctx.SetVariable("media.lastSoundEndTime", c.EndTime.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    }
+                    break;
+
+                case PlayVideoCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.VideoId);
+                        ctx.SetVariable("media.lastVideoId", resolved);
+                        ctx.SetVariable("media.lastVideoVolume", c.Volume.ToString());
+                        ctx.SetVariable("media.lastVideoLoop", c.Loop.ToString().ToLower());
+                        ctx.SetVariable("media.lastVideoStartTime", c.StartTime.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        ctx.SetVariable("media.lastVideoEndTime", c.EndTime.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     }
                     break;
 
@@ -562,6 +575,80 @@ namespace RagNextPlayer.Runtime
                                     }
                                 }
                             }
+                        }
+                    }
+                    break;
+
+                case DebugTextCommandData:
+                    // Comment/log node, no execution needed.
+                    break;
+
+                case CharacterSetActionActiveCommandData c:
+                    {
+                        var actionName = ctx.Resolve(c.ActionName);
+                        // 1. Player actions
+                        if (ctx.Game.Player.Actions != null)
+                        {
+                            foreach (var act in ctx.Game.Player.Actions)
+                            {
+                                if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                    act.InitallyActive = c.Active;
+                            }
+                        }
+                        // 2. Room actions
+                        if (ctx.Game.Rooms != null)
+                        {
+                            foreach (var room in ctx.Game.Rooms)
+                            {
+                                if (room.Actions != null)
+                                {
+                                    foreach (var act in room.Actions)
+                                    {
+                                        if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                            act.InitallyActive = c.Active;
+                                    }
+                                }
+                            }
+                        }
+                        // 3. Characters & GameObjects
+                        if (ctx.Game.Characters != null)
+                        {
+                            foreach (var character in ctx.Game.Characters)
+                            {
+                                if (character.Actions != null)
+                                {
+                                    foreach (var act in character.Actions)
+                                    {
+                                        if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                            act.InitallyActive = c.Active;
+                                    }
+                                }
+                            }
+                        }
+                        if (ctx.Game.Objects != null)
+                        {
+                            foreach (var obj in ctx.Game.Objects)
+                            {
+                                if (obj.Actions != null)
+                                {
+                                    foreach (var act in obj.Actions)
+                                    {
+                                        if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                            act.InitallyActive = c.Active;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case SetTimerActiveCommandData c:
+                    {
+                        var timerId = ctx.Resolve(c.TimerId);
+                        var timer = ctx.Game.Timers.Find(t => string.Equals(t.Name, timerId, StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id, timerId, StringComparison.OrdinalIgnoreCase));
+                        if (timer != null)
+                        {
+                            timer.IsActive = c.Active;
                         }
                     }
                     break;

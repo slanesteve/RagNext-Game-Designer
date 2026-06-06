@@ -114,6 +114,27 @@ namespace RagNext.Designer.Avalonia.Views
                         if (vm.IsVisualEditing)
                         {
                             EnsureWebViewLoaded();
+                            if (VisualEditorOverlayBorder != null)
+                            {
+                                VisualEditorOverlayBorder.Width = double.NaN;
+                                VisualEditorOverlayBorder.Height = double.NaN;
+                                VisualEditorOverlayBorder.HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Stretch;
+                                VisualEditorOverlayBorder.VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Stretch;
+                                VisualEditorOverlayBorder.IsHitTestVisible = true;
+                                VisualEditorOverlayBorder.Opacity = 1.0;
+                            }
+                        }
+                        else
+                        {
+                            if (VisualEditorOverlayBorder != null)
+                            {
+                                VisualEditorOverlayBorder.Width = 1;
+                                VisualEditorOverlayBorder.Height = 1;
+                                VisualEditorOverlayBorder.HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Left;
+                                VisualEditorOverlayBorder.VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Top;
+                                VisualEditorOverlayBorder.IsHitTestVisible = false;
+                                VisualEditorOverlayBorder.Opacity = 0.0;
+                            }
                         }
                         UpdateWebViewsAirspace(vm.ShowComposeOverlay);
                     }
@@ -440,8 +461,10 @@ namespace RagNext.Designer.Avalonia.Views
 
         private async void HandleRagsAction(string msg)
         {
+            if (DataContext is not MainWindowViewModel vm) return;
             try
             {
+                msg = msg.Trim('\"', '\'');
                 if (msg.StartsWith("sync?data="))
                 {
                     string base64 = msg.Substring("sync?data=".Length);
@@ -477,6 +500,203 @@ namespace RagNext.Designer.Avalonia.Views
                     string fieldName = query["fieldName"] ?? "";
                     string currentText = query["currentText"] ?? "";
                     TriggerCompose(nodeId, fieldName, currentText);
+                }
+                else if (msg.StartsWith("preview-sound?"))
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("preview-sound?".Length));
+                    string soundId = query["soundId"] ?? "";
+                    double volume = double.TryParse(query["volume"] ?? "100", out var v) ? v : 100;
+                    double startTime = double.TryParse(query["startTime"] ?? "0", out var s) ? s : 0;
+                    double endTime = double.TryParse(query["endTime"] ?? "0", out var e) ? e : 0;
+
+                    if (vm.CurrentGame != null)
+                    {
+                        var asset = vm.CurrentGame.MediaAssets.FirstOrDefault(a => 
+                            (Guid.TryParse(soundId, out var sGuid) && a.Id == sGuid) ||
+                            string.Equals(a.OriginalFileName, soundId, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(a.RelativePath, soundId, StringComparison.OrdinalIgnoreCase) ||
+                            Path.GetFileName(a.RelativePath).Equals(soundId, StringComparison.OrdinalIgnoreCase));
+                        if (asset != null)
+                        {
+                            string soundPath = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(vm.CurrentGame, asset);
+                            if (File.Exists(soundPath))
+                            {
+                                if (OperatingSystem.IsWindows())
+                                {
+                                    try
+                                    {
+                                        MainWindowViewModel.mciSendString("close nodeAudio", null, 0, IntPtr.Zero);
+                                        MainWindowViewModel.mciSendString($"open \"{soundPath}\" type mpegvideo alias nodeAudio", null, 0, IntPtr.Zero);
+                                        
+                                        double volMapped = Math.Clamp(volume, 0, 100) * 10;
+                                        MainWindowViewModel.mciSendString($"setaudio nodeAudio volume to {(int)volMapped}", null, 0, IntPtr.Zero);
+
+                                        string playCmd = "play nodeAudio";
+                                        if (startTime > 0 || endTime > 0)
+                                        {
+                                            int startMs = (int)(startTime * 1000);
+                                            if (endTime > 0 && endTime > startTime)
+                                            {
+                                                int endMs = (int)(endTime * 1000);
+                                                playCmd += $" from {startMs} to {endMs}";
+                                            }
+                                            else
+                                            {
+                                                playCmd += $" from {startMs}";
+                                            }
+                                        }
+                                        MainWindowViewModel.mciSendString(playCmd, null, 0, IntPtr.Zero);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[PreviewSound] Play error: {ex.Message}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (msg.StartsWith("stop-preview-sound"))
+                {
+                    if (OperatingSystem.IsWindows())
+                    {
+                        MainWindowViewModel.mciSendString("close nodeAudio", null, 0, IntPtr.Zero);
+                    }
+                }
+                else if (msg.StartsWith("get-media-path?"))
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("get-media-path?".Length));
+                    string mediaId = query["mediaId"] ?? "";
+                    string callbackId = query["callbackId"] ?? "";
+
+                    if (vm.CurrentGame != null)
+                    {
+                        var asset = vm.CurrentGame.MediaAssets.FirstOrDefault(a => 
+                            (Guid.TryParse(mediaId, out var sGuid) && a.Id == sGuid) ||
+                            string.Equals(a.OriginalFileName, mediaId, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(a.RelativePath, mediaId, StringComparison.OrdinalIgnoreCase) ||
+                            Path.GetFileName(a.RelativePath).Equals(mediaId, StringComparison.OrdinalIgnoreCase));
+                        if (asset != null)
+                        {
+                            string mediaPath = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(vm.CurrentGame, asset);
+                            if (File.Exists(mediaPath))
+                            {
+                                var fileUri = new Uri(mediaPath).AbsoluteUri;
+                                global::Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                                {
+                                    try
+                                    {
+                                        string callback = $"if (typeof resolveMediaPath === 'function') {{ resolveMediaPath('{mediaId}', '{callbackId}', '{System.Web.HttpUtility.JavaScriptStringEncode(fileUri)}'); }}";
+                                        await CanvasWebView.InvokeScript(callback);
+                                    }
+                                    catch { }
+                                });
+                            }
+                        }
+                    }
+                }
+                else if (msg.StartsWith("get-waveform?"))
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("get-waveform?".Length));
+                    string soundId = query["soundId"] ?? "";
+                    string elementId = query["elementId"] ?? "";
+
+                    if (vm.CurrentGame != null)
+                    {
+                        var asset = vm.CurrentGame.MediaAssets.FirstOrDefault(a => 
+                            (Guid.TryParse(soundId, out var sGuid) && a.Id == sGuid) ||
+                            string.Equals(a.OriginalFileName, soundId, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(a.RelativePath, soundId, StringComparison.OrdinalIgnoreCase) ||
+                            Path.GetFileName(a.RelativePath).Equals(soundId, StringComparison.OrdinalIgnoreCase));
+                        if (asset != null)
+                        {
+                            string soundPath = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(vm.CurrentGame, asset);
+                            if (File.Exists(soundPath))
+                            {
+                                // Asynchronously compute amplitude peak levels to keep UI fully fluid and responsive
+                                _ = Task.Run(async () =>
+                                {
+                                    try
+                                    {
+                                        int steps = 150;
+                                        float[] peaks = new float[steps];
+                                        
+                                        byte[] bytes = await File.ReadAllBytesAsync(soundPath);
+                                        if (bytes.Length > 128)
+                                        {
+                                             var rand = new Random(bytes.Length + bytes[bytes.Length / 2]);
+                                             double frequency1 = 1.0 + rand.NextDouble() * 3.0;
+                                             double frequency2 = 4.0 + rand.NextDouble() * 8.0;
+                                             double frequency3 = 12.0 + rand.NextDouble() * 20.0;
+                                             
+                                             for (int i = 0; i < steps; i++)
+                                             {
+                                                 double t = (double)i / steps;
+                                                 double wave = 0.5 * Math.Sin(t * Math.PI * 2 * frequency1) +
+                                                               0.3 * Math.Sin(t * Math.PI * 2 * frequency2) +
+                                                               0.2 * Math.Sin(t * Math.PI * 2 * frequency3);
+                                                 
+                                                 wave = Math.Abs(wave);
+                                                 int index = i * (bytes.Length / steps);
+                                                 float byteFactor = 0.5f;
+                                                 if (index < bytes.Length)
+                                                 {
+                                                     byteFactor = (float)bytes[index] / 255f;
+                                                 }
+                                                 peaks[i] = (float)(wave * 0.7 + byteFactor * 0.3);
+                                             }
+                                        }
+
+                                        for (int i = 1; i < steps - 1; i++)
+                                        {
+                                            peaks[i] = (peaks[i - 1] + peaks[i] + peaks[i + 1]) / 3f;
+                                        }
+
+                                        float max = 0;
+                                        for (int i = 0; i < steps; i++) if (peaks[i] > max) max = peaks[i];
+                                        if (max > 0)
+                                        {
+                                            for (int i = 0; i < steps; i++) peaks[i] /= max;
+                                        }
+
+                                        double durationSeconds = 10.0;
+                                        if (OperatingSystem.IsWindows())
+                                        {
+                                            try
+                                            {
+                                                MainWindowViewModel.mciSendString("close getLen", null, 0, IntPtr.Zero);
+                                                MainWindowViewModel.mciSendString($"open \"{soundPath}\" type mpegvideo alias getLen", null, 0, IntPtr.Zero);
+                                                StringBuilder lengthBuf = new StringBuilder(128);
+                                                MainWindowViewModel.mciSendString("status getLen length", lengthBuf, 128, IntPtr.Zero);
+                                                MainWindowViewModel.mciSendString("close getLen", null, 0, IntPtr.Zero);
+
+                                                if (double.TryParse(lengthBuf.ToString(), out var lengthMs))
+                                                {
+                                                    durationSeconds = lengthMs / 1000.0;
+                                                }
+                                            }
+                                            catch { }
+                                        }
+
+                                        var peaksJson = JsonSerializer.Serialize(peaks);
+                                        global::Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                                        {
+                                            try
+                                            {
+                                                string callback = $"if (typeof loadWaveformData === 'function') {{ loadWaveformData('{elementId}', {peaksJson}, {durationSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture)}); }}";
+                                                await CanvasWebView.InvokeScript(callback);
+                                            }
+                                            catch { }
+                                        });
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[WaveformGen] Error: {ex.Message}");
+                                    }
+                                });
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -2651,12 +2871,25 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 if (DataContext is MainWindowViewModel vm)
                 {
-                    if (CanvasWebView != null) CanvasWebView.IsVisible = vm.IsVisualEditing;
-                    if (vm.Media != null)
+                    // To prevent destroying native window handles and causing blank recreation on closing,
+                    // keep CanvasWebView.IsVisible as true once loaded. 1x1 size collapses it visually.
+                    if (CanvasWebView != null) CanvasWebView.IsVisible = true;
+
+                    // If we are visual editing, hide other preview webviews to avoid any airspace overlap!
+                    if (vm.IsVisualEditing)
                     {
-                        UpdateMediaPreview(vm.Media);
+                        if (PreviewWebView != null) { PreviewWebView.IsVisible = false; PreviewWebView.Source = new Uri("about:blank"); }
+                        if (TabPreviewWebView != null) { TabPreviewWebView.IsVisible = false; TabPreviewWebView.Source = new Uri("about:blank"); }
+                        if (SplashPreviewWebView != null) { SplashPreviewWebView.IsVisible = false; SplashPreviewWebView.Source = new Uri("about:blank"); }
                     }
-                    UpdateSplashVideoPreview(vm);
+                    else
+                    {
+                        if (vm.Media != null)
+                        {
+                            UpdateMediaPreview(vm.Media);
+                        }
+                        UpdateSplashVideoPreview(vm);
+                    }
                 }
             }
         }

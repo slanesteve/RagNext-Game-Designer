@@ -47,6 +47,16 @@
 
     <Application.Resources>
         <ResourceDictionary>
+            <DrawingBrush x:Key="CirclesPatternBrush" TileMode="Tile" Stretch="None" DestinationRect="0,0,24,24">
+                <DrawingBrush.Drawing>
+                    <GeometryDrawing Brush="{DynamicResource GridDotsBrush}">
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="12,12" RadiusX="1.5" RadiusY="1.5"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
+            
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="MainBg" Color="#F3F3F3"/>
@@ -57,6 +67,14 @@
                     <SolidColorBrush x:Key="TextMuted" Color="#7F7F7F"/>
                     <SolidColorBrush x:Key="BorderBrush" Color="#CCCCCC"/>
                     <SolidColorBrush x:Key="AccentBrush" Color="#007ACC"/>
+                    <SolidColorBrush x:Key="GridDotsBrush" Color="Transparent"/>
+                    <SolidColorBrush x:Key="NavHoverBg" Color="#EAEAEA"/>
+                    <SolidColorBrush x:Key="NavActiveBg" Color="#CCCCCC"/>
+                    <SolidColorBrush x:Key="NavHoverFg" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="NavNormalFg" Color="#7F7F7F"/>
+                    <SolidColorBrush x:Key="ToolbarBtnBg" Color="#EAEAEA"/>
+                    <SolidColorBrush x:Key="ToolbarBtnFg" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="ToolbarBtnBorder" Color="#CCCCCC"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="MainBg" Color="#1E1E1E"/>
@@ -67,6 +85,14 @@
                     <SolidColorBrush x:Key="TextMuted" Color="#A1A1AA"/>
                     <SolidColorBrush x:Key="BorderBrush" Color="#3F3F46"/>
                     <SolidColorBrush x:Key="AccentBrush" Color="#007ACC"/>
+                    <SolidColorBrush x:Key="GridDotsBrush" Color="#2E2E3E" Opacity="0.55"/>
+                    <SolidColorBrush x:Key="NavHoverBg" Color="#252535"/>
+                    <SolidColorBrush x:Key="NavActiveBg" Color="#2D2D3E"/>
+                    <SolidColorBrush x:Key="NavHoverFg" Color="White"/>
+                    <SolidColorBrush x:Key="NavNormalFg" Color="#A0A0B0"/>
+                    <SolidColorBrush x:Key="ToolbarBtnBg" Color="#262635"/>
+                    <SolidColorBrush x:Key="ToolbarBtnFg" Color="White"/>
+                    <SolidColorBrush x:Key="ToolbarBtnBorder" Color="#3D3D5A"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>

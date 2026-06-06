@@ -17,7 +17,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
     public class MainWindowViewModel : ViewModelBase
     {
         [System.Runtime.InteropServices.DllImport("winmm.dll")]
-        private static extern long mciSendString(string command, System.Text.StringBuilder? returnValue, int returnLength, IntPtr winHandle);
+        internal static extern long mciSendString(string command, System.Text.StringBuilder? returnValue, int returnLength, IntPtr winHandle);
 
         private readonly IGameStorage _storage;
 
@@ -157,6 +157,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     CurrentGame.Title = value;
                     OnPropertyChanged();
+                    PublishTitle = value;
                 }
             }
         }
@@ -170,6 +171,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     CurrentGame.Author = value;
                     OnPropertyChanged();
+                    PublishAuthor = value;
                 }
             }
         }
@@ -183,6 +185,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     CurrentGame.Version = value;
                     OnPropertyChanged();
+                    PublishVersion = value;
                 }
             }
         }
@@ -280,7 +283,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         }
 
         public bool IsSplashVideoMode => CurrentGame?.SplashScreen?.Mode == "Video";
-        public bool IsSplashVideoPreviewVisible => IsSplashVideoMode && (ActiveView == "SplashScreen" || ActiveView == "Player");
+        public bool IsSplashVideoPreviewVisible => IsSplashVideoMode && (ActiveView == "SplashScreen");
 
         public MediaAsset? SelectedSplashImageAsset
         {
@@ -666,6 +669,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand RemoveRecentProjectCommand { get; }
 
         public ICommand TriggerAddInventoryCommand { get; }
+        public ICommand CloseInventorySelectorCommand { get; }
         public ICommand SelectInventoryItemCommand { get; }
         public ICommand RemoveInventoryItemCommand { get; }
 
@@ -1181,6 +1185,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (target == null) return;
                 InventoryTarget = target;
                 ShowInventorySelectorOverlay = true;
+            });
+
+            CloseInventorySelectorCommand = new Command(() =>
+            {
+                ShowInventorySelectorOverlay = false;
+                InventoryTarget = null;
             });
 
             SelectInventoryItemCommand = new Command<GameObject>(async item =>

@@ -267,6 +267,52 @@
           "label": "Volume",
           "controlType": "Number",
           "dataType": "Number"
+        },
+        {
+          "label": "Loop",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        },
+        {
+          "label": "Start Time",
+          "controlType": "Number",
+          "dataType": "Number"
+        },
+        {
+          "label": "End Time",
+          "controlType": "Number",
+          "dataType": "Number"
+        }
+      ]
+    },
+    {
+      "name": "Media: Play Video",
+      "category": "Media",
+      "inputs": [
+        {
+          "label": "Video File",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        },
+        {
+          "label": "Volume",
+          "controlType": "Number",
+          "dataType": "Number"
+        },
+        {
+          "label": "Loop",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        },
+        {
+          "label": "Start Time",
+          "controlType": "Number",
+          "dataType": "Number"
+        },
+        {
+          "label": "End Time",
+          "controlType": "Number",
+          "dataType": "Number"
         }
       ]
     },
@@ -568,6 +614,11 @@
       "category": "Timer",
       "inputs": [
         {
+          "label": "Timer",
+          "controlType": "ComboBox",
+          "dataType": "Timer"
+        },
+        {
           "label": "Active",
           "controlType": "Checkbox",
           "dataType": "Bool"
@@ -704,6 +755,54 @@
           "label": "Container Object",
           "controlType": "ComboBox",
           "dataType": "Item"
+        }
+      ]
+    },
+    {
+      "name": "Player: Set Action To Active/Inactive",
+      "category": "Player",
+      "inputs": [
+        {
+          "label": "Action Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Active",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+    {
+      "name": "Room: Set Action To Active/Inactive",
+      "category": "Room",
+      "inputs": [
+        {
+          "label": "Action Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Active",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+    {
+      "name": "Item: Set Action To Active/Inactive",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Action Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Active",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
         }
       ]
     }

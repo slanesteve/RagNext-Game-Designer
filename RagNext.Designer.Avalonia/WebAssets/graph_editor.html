@@ -60,7 +60,10 @@
                 <button class="modal-close" onclick="closeAiAssistantModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="modal-desc">Describe what you want this script to do. The AI will generate the node structure automatically.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <p class="modal-desc" style="margin: 0;">Describe what you want this script to do. The AI will generate the node structure automatically.</p>
+                    <button class="btn" id="ai-modal-dictate-btn" onclick="toggleAiPromptDictation(event)" style="font-size: 11px; padding: 4px 8px; background: var(--node-bg-dialogue); border: 1px solid var(--node-border); color: #fff; cursor: pointer; border-radius: 4px;" title="Start Dictation" data-original-html="🎙️ Dictate">🎙️ Dictate</button>
+                </div>
                 <textarea id="ai-prompt-input" placeholder="e.g. If the player is holding the key, move them to the next room, otherwise display 'You need a key' and play a buzzer sound."></textarea>
                 <div class="modal-row">
                     <label class="modal-checkbox-label">
