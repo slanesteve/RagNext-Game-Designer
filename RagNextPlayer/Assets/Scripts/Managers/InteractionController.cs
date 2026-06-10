@@ -152,17 +152,6 @@ namespace RagNextPlayer.Managers
             panel.BringToFront();
         }
 
-        private bool TryExecuteInteract(GameObjectData entity)
-        {
-            var interactAct = entity.Actions.Find(a => a.InitallyActive && string.Equals(a.Trigger, "OnInteract", System.StringComparison.OrdinalIgnoreCase));
-            if (interactAct != null)
-            {
-                ExecuteCustomAction(entity, interactAct);
-                return true;
-            }
-            return false;
-        }
-
         public void HandleInlineClick(string name)
         {
             var game = GameManager.Instance?.ActiveGame;
@@ -175,7 +164,7 @@ namespace RagNextPlayer.Managers
                 string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase));
             if (ch is not null)
             {
-                if (!TryExecuteInteract(ch)) ShowMenu(ch, false);
+                ShowMenu(ch, false);
                 return;
             }
 
@@ -184,7 +173,7 @@ namespace RagNextPlayer.Managers
                 string.Equals(o.Name, name, System.StringComparison.OrdinalIgnoreCase));
             if (obj is not null)
             {
-                if (!TryExecuteInteract(obj)) ShowMenu(obj, false);
+                ShowMenu(obj, false);
                 return;
             }
 
@@ -192,7 +181,7 @@ namespace RagNextPlayer.Managers
                 string.Equals(o.Name, name, System.StringComparison.OrdinalIgnoreCase));
             if (invObj is not null)
             {
-                if (!TryExecuteInteract(invObj)) ShowMenu(invObj, true);
+                ShowMenu(invObj, true);
                 return;
             }
 
@@ -213,7 +202,7 @@ namespace RagNextPlayer.Managers
                 string.Equals(o.Name, name, System.StringComparison.OrdinalIgnoreCase));
             if (globalObj is not null)
             {
-                if (!TryExecuteInteract(globalObj)) ShowMenu(globalObj, false);
+                ShowMenu(globalObj, false);
                 return;
             }
 
@@ -222,7 +211,7 @@ namespace RagNextPlayer.Managers
                 string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase));
             if (globalChar is not null)
             {
-                if (!TryExecuteInteract(globalChar)) ShowMenu(globalChar, false);
+                ShowMenu(globalChar, false);
                 return;
             }
         }

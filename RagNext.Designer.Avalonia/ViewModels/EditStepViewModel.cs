@@ -191,6 +191,20 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         BuildInputsFromTarget();
                     });
                 }
+
+                // Bug #5: When the entity picker changes, rebuild so ActionName picker refreshes.
+                bool isEntityChange =
+                    (input.Label == "CharacterId" && _target is CharacterSetActionActiveCommand) ||
+                    (input.Label == "ItemId"      && _target is ItemSetActionActiveCommand)      ||
+                    (input.Label == "RoomId"      && _target is RoomSetActionActiveCommand);
+
+                if (isEntityChange)
+                {
+                    global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        BuildInputsFromTarget();
+                    });
+                }
             }
         }
 
@@ -267,6 +281,15 @@ namespace RagNext.Designer.Avalonia.ViewModels
             if (name.Equals("Comparison", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
             if (name.Equals("Gender", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
             if (name.Equals("Direction", StringComparison.OrdinalIgnoreCase)) return InputControlType.ComboBox;
+            // Bug #5: ActionName on the 4 Set Action Active/Inactive commands uses a dynamic
+            // entity-scoped ComboBox, not a plain Text field.
+            if (name.Equals("ActionName", StringComparison.OrdinalIgnoreCase) &&
+                (_target is CharacterSetActionActiveCommand ||
+                 _target is ItemSetActionActiveCommand ||
+                 _target is RoomSetActionActiveCommand ||
+                 _target is PlayerSetActionActiveCommand))
+                return InputControlType.ComboBox;
+
             if (name.Contains("Text", StringComparison.OrdinalIgnoreCase) || name.Contains("Description", StringComparison.OrdinalIgnoreCase)) return InputControlType.TextArea;
             return InputControlType.Text;
         }
@@ -348,6 +371,54 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     var match = input.PickerSource.Cast<NamedOption>().FirstOrDefault(x => string.Equals(x.Name, valStr, StringComparison.OrdinalIgnoreCase));
                     if (match != null) input.Value = match;
                 }
+                return;
+            }
+
+            // Bug #5: Dynamic ActionName picker — list scoped to the selected entity.
+            if (input.Label.Equals("ActionName", StringComparison.OrdinalIgnoreCase))
+            {
+                IEnumerable<RagsCore.Models.Action>? scopedActions = null;
+
+                if (_target is CharacterSetActionActiveCommand charCmd &&
+                    !string.IsNullOrEmpty(charCmd.CharacterId) &&
+                    Guid.TryParse(charCmd.CharacterId, out var charGuid))
+                {
+                    scopedActions = game.Characters.FirstOrDefault(c => c.Id == charGuid)?.Actions;
+                }
+                else if (_target is ItemSetActionActiveCommand itemCmd &&
+                    !string.IsNullOrEmpty(itemCmd.ItemId) &&
+                    Guid.TryParse(itemCmd.ItemId, out var itemGuid))
+                {
+                    scopedActions = game.Objects.FirstOrDefault(o => o.Id == itemGuid)?.Actions;
+                }
+                else if (_target is RoomSetActionActiveCommand roomCmd &&
+                    !string.IsNullOrEmpty(roomCmd.RoomId) &&
+                    Guid.TryParse(roomCmd.RoomId, out var roomGuid))
+                {
+                    scopedActions = game.Rooms.FirstOrDefault(r => r.Id == roomGuid)?.Actions;
+                }
+                else if (_target is PlayerSetActionActiveCommand)
+                {
+                    scopedActions = game.Player.Actions;
+                }
+
+                if (scopedActions != null)
+                {
+                    input.PickerSource = scopedActions
+                        .Select(a => new NamedOption { Name = a.Name })
+                        .Cast<object>()
+                        .ToList();
+
+                    if (input.Value is string existingName && !string.IsNullOrEmpty(existingName))
+                    {
+                        var match = input.PickerSource.Cast<NamedOption>()
+                            .FirstOrDefault(o => string.Equals(o.Name, existingName, StringComparison.OrdinalIgnoreCase));
+                        if (match != null) input.Value = match;
+                    }
+                    return;
+                }
+                // No entity selected yet — leave picker source empty
+                input.PickerSource = new List<object>();
                 return;
             }
 

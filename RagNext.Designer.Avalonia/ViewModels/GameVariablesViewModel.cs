@@ -12,10 +12,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private readonly ObservableCollection<GameVariable> _empty = new();
 
         public ObservableCollection<GameVariable> Variables => App.CurrentGame?.Variables ?? _empty;
-        public ObservableCollection<string> VariableTypes { get; } = new() { "string", "number", "bool", "datetime" };
+        public ObservableCollection<string> VariableTypes { get; } = new() { "string", "number", "bool", "datetime", "array" };
 
         public ICommand AddVariableCommand { get; }
         public ICommand DeleteVariableCommand { get; }
+        public ICommand AddColumnCommand { get; }
+        public ICommand RemoveColumnCommand { get; }
+        public ICommand AddRowCommand { get; }
+        public ICommand RemoveRowCommand { get; }
 
         public GameVariablesViewModel(IGameStorage storage)
         {
@@ -47,6 +51,57 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     await _storage.SaveAsync(App.CurrentGame, "autosave");
                     OnPropertyChanged(nameof(Variables));
                 }
+            });
+
+            AddColumnCommand = new Command<GameVariable>(async (v) =>
+            {
+                if (v is null) return;
+                string newCol = $"Col_{v.Columns.Count + 1}";
+                v.Columns.Add(newCol);
+                // Pad existing rows with an empty value for the new column
+                foreach (var row in v.Rows)
+                {
+                    row.Add(string.Empty);
+                }
+                await _storage.SaveAsync(App.CurrentGame, "autosave");
+            });
+
+            RemoveColumnCommand = new Command<Tuple<GameVariable, string>>(async (t) =>
+            {
+                if (t == null) return;
+                var v = t.Item1;
+                var col = t.Item2;
+                int idx = v.Columns.IndexOf(col);
+                if (idx >= 0)
+                {
+                    v.Columns.RemoveAt(idx);
+                    foreach (var row in v.Rows)
+                    {
+                        if (idx < row.Count) row.RemoveAt(idx);
+                    }
+                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                }
+            });
+
+            AddRowCommand = new Command<GameVariable>(async (v) =>
+            {
+                if (v is null) return;
+                var newRow = new ObservableCollection<string>();
+                for (int i = 0; i < v.Columns.Count; i++)
+                {
+                    newRow.Add(string.Empty);
+                }
+                v.Rows.Add(newRow);
+                await _storage.SaveAsync(App.CurrentGame, "autosave");
+            });
+
+            RemoveRowCommand = new Command<Tuple<GameVariable, ObservableCollection<string>>>(async (t) =>
+            {
+                if (t == null) return;
+                var v = t.Item1;
+                var row = t.Item2;
+                v.Rows.Remove(row);
+                await _storage.SaveAsync(App.CurrentGame, "autosave");
             });
         }
 

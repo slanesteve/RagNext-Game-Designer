@@ -34,6 +34,8 @@ namespace RagNext.Designer.Avalonia.Services
     [JsonSerializable(typeof(CatalogsDto))]
     [JsonSerializable(typeof(CatalogEntityDto))]
     [JsonSerializable(typeof(CatalogPlayerDto))]
+    [JsonSerializable(typeof(CatalogActionDto))]
+    [JsonSerializable(typeof(List<CatalogActionDto>))]
     [JsonSerializable(typeof(ReflectionEntityDto))]
     [JsonSerializable(typeof(List<ReflectionEntityDto>))]
     [JsonSerializable(typeof(GeminiRequest))]

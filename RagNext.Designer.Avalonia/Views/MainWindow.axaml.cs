@@ -333,15 +333,40 @@ namespace RagNext.Designer.Avalonia.Views
 
                 var catalogsObj = new CatalogsDto
                 {
-                    Rooms = vm.CurrentGame.Rooms.Select(r => new CatalogEntityDto { Id = r.Id.ToString(), Name = r.Name, Attributes = r.Attributes.Select(a => a.Name).ToList() }).ToList(),
-                    Characters = vm.CurrentGame.Characters.Select(c => new CatalogEntityDto { Id = c.Id.ToString(), Name = c.Name, Attributes = c.Attributes.Select(a => a.Name).ToList() }).ToList(),
-                    GameObjects = vm.CurrentGame.Objects.Select(o => new CatalogEntityDto { Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer, Attributes = o.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Rooms = vm.CurrentGame.Rooms.Select(r => new CatalogEntityDto
+                    {
+                        Id = r.Id.ToString(), Name = r.Name,
+                        Attributes = r.Attributes.Select(a => a.Name).ToList(),
+                        // Bug #5: Include action names so ActionName pickers can be scoped to this room.
+                        Actions = r.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
+                    }).ToList(),
+                    Characters = vm.CurrentGame.Characters.Select(c => new CatalogEntityDto
+                    {
+                        Id = c.Id.ToString(), Name = c.Name,
+                        Attributes = c.Attributes.Select(a => a.Name).ToList(),
+                        // Bug #5: Include action names for character action pickers.
+                        Actions = c.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
+                    }).ToList(),
+                    GameObjects = vm.CurrentGame.Objects.Select(o => new CatalogEntityDto
+                    {
+                        Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer,
+                        Attributes = o.Attributes.Select(a => a.Name).ToList(),
+                        // Bug #5: Include action names for item action pickers.
+                        Actions = o.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
+                    }).ToList(),
                     Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, VarType = v.Type, Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
-                    Player = new CatalogPlayerDto { Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList() },
+                    Player = new CatalogPlayerDto
+                    {
+                        Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList(),
+                        // Bug #5: Include player action names.
+                        Actions = vm.CurrentGame.Player.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
+                    },
                     Owner = new CatalogPlayerDto { Attributes = ownerAttributes },
                     Media = vm.CurrentGame.MediaAssets.Select(m => new CatalogEntityDto { Id = m.Id.ToString(), Name = string.IsNullOrWhiteSpace(m.OriginalFileName) ? m.RelativePath : m.OriginalFileName }).ToList(),
                     Functions = vm.CurrentGame.Functions.Select(f => new CatalogEntityDto { Id = f.Name, Name = f.Name }).ToList(),
-                    Timers = vm.CurrentGame.Timers.Select(t => new CatalogEntityDto { Id = t.Name, Name = t.Name, Attributes = t.Attributes.Select(a => a.Name).ToList() }).ToList()
+                    Timers = vm.CurrentGame.Timers.Select(t => new CatalogEntityDto { Id = t.Name, Name = t.Name, Attributes = t.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    // Bug #5: Top-level PlayerActions for the player.setActionActive command.
+                    PlayerActions = vm.CurrentGame.Player.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
                 };
                 string catalogsJson = JsonSerializer.Serialize(catalogsObj, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.CatalogsDto);
 
@@ -730,6 +755,7 @@ namespace RagNext.Designer.Avalonia.Views
                     target.Name = imported.Name;
                     target.Trigger = imported.Trigger;
                     target.InitallyActive = imported.InitallyActive;
+                    target.DirectionFilter = imported.DirectionFilter;
                     target.Nodes.Clear();
                     foreach (var node in imported.Nodes)
                     {
@@ -1275,6 +1301,33 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(() => { ObjectDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0); }, global::Avalonia.Threading.DispatcherPriority.Background);
             }
+        }
+
+        // Bug #3 fix: Use code-behind SelectionChanged instead of TwoWay binding so that
+        // Avalonia's ComboBox ItemsSource-refresh-induced SelectedItem reset (which sends null
+        // to the setter) never overwrites the persisted asset ID.
+        private void OnSplashImageSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count == 0) return; // ignore de-selection / reset events
+            if (e.AddedItems[0] is not RagsCore.Models.MediaAsset asset) return;
+            var vm = DataContext as ViewModels.MainWindowViewModel;
+            if (vm != null) vm.SelectedSplashImageAsset = asset;
+        }
+
+        private void OnSplashVideoSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count == 0) return;
+            if (e.AddedItems[0] is not RagsCore.Models.MediaAsset asset) return;
+            var vm = DataContext as ViewModels.MainWindowViewModel;
+            if (vm != null) vm.SelectedSplashVideoAsset = asset;
+        }
+
+        private void OnSplashSoundSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count == 0) return;
+            if (e.AddedItems[0] is not RagsCore.Models.MediaAsset asset) return;
+            var vm = DataContext as ViewModels.MainWindowViewModel;
+            if (vm != null) vm.SelectedSplashSoundAsset = asset;
         }
 
         private void LoadExits(Room room)

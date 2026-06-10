@@ -107,6 +107,7 @@ namespace RagNextPlayer.Runtime.Models
         public string Name           { get; set; } = string.Empty;
         public bool   InitallyActive { get; set; } = true;
         public string Trigger        { get; set; } = "UserClicked";
+        public string DirectionFilter { get; set; } = "All";
 
         [JsonConverter(typeof(ActionStepListConverter))]
         public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();
@@ -198,7 +199,11 @@ namespace RagNextPlayer.Runtime.Models
     public class SetCharacterStateCommandData        : CommandData { public string CharacterId { get; set; } = string.Empty; public string State { get; set; } = "Alive"; }
     public class TriggerTurnTickCommandData         : CommandData { }
     public class DebugTextCommandData               : CommandData { public string Message { get; set; } = string.Empty; }
-    public class CharacterSetActionActiveCommandData : CommandData { public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
+    public class CharacterSetActionActiveCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
+    // Bug #5: Scoped entity variants for set-action-active commands.
+    public class ItemSetActionActiveCommandData     : CommandData { public string ItemId      { get; set; } = string.Empty; public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
+    public class RoomSetActionActiveCommandData     : CommandData { public string RoomId      { get; set; } = string.Empty; public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
+    public class PlayerSetActionActiveCommandData   : CommandData { public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
     public class SetTimerActiveCommandData          : CommandData { public string TimerId { get; set; } = string.Empty; public bool Active { get; set; } = true; }
 
     public class RuntimeCustomChoice
@@ -238,6 +243,26 @@ namespace RagNextPlayer.Runtime.Models
     public class SetPlayerAttributeCommandData       : CommandData { public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class SetTimerAttributeCommandData        : CommandData { public string TimerId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class SetItemAttributeCommandData         : CommandData { public string ItemId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
+    
+    // Multi-Dimensional Array (MDA) Command and Condition Data structures
+    public class ForEachLoopCommandData : ConditionData { public string ArrayVariableName { get; set; } = string.Empty; }
+    public class BreakLoopCommandData : CommandData { }
+    public class SetArrayElementCommandData : CommandData { public string ArrayVariableName { get; set; } = string.Empty; public string RowIndex { get; set; } = "0"; public string ColumnName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
+    public class AddArrayRowCommandData : CommandData { public string ArrayVariableName { get; set; } = string.Empty; public string ValuesCommaSeparated { get; set; } = string.Empty; }
+    public class RemoveArrayRowCommandData : CommandData { public string ArrayVariableName { get; set; } = string.Empty; public string RowIndex { get; set; } = "0"; }
+    public class AppendTextCommandData : CommandData { public string VariableName { get; set; } = string.Empty; public string Text { get; set; } = string.Empty; }
+    public class AppendLineCommandData : CommandData { public string VariableName { get; set; } = string.Empty; public string Text { get; set; } = string.Empty; }
+    
+    public class SwitchCommandData : ConditionData
+    {
+        public string Expression { get; set; } = string.Empty;
+
+        [Newtonsoft.Json.JsonConverter(typeof(SwitchCasesConverter))]
+        public Dictionary<string, List<ActionStepData>> Cases { get; set; } = new Dictionary<string, List<ActionStepData>>();
+
+        [Newtonsoft.Json.JsonConverter(typeof(ActionStepListConverter))]
+        public List<ActionStepData> DefaultBranch { get; set; } = new List<ActionStepData>();
+    }
     
     public class DialogueChoiceData
     {
@@ -285,6 +310,8 @@ namespace RagNextPlayer.Runtime.Models
     {
         public string  Name  { get; set; } = string.Empty;
         public string? Value { get; set; }
+        public List<string> Columns { get; set; } = new List<string>();
+        public List<List<string>> Rows { get; set; } = new List<List<string>>();
     }
 
     public class MediaAssetData

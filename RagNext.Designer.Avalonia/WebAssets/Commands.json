@@ -107,9 +107,14 @@
       "category": "Character",
       "inputs": [
         {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
           "label": "Action Name",
-          "controlType": "Text",
-          "dataType": "String"
+          "controlType": "ComboBox",
+          "dataType": "ActionName"
         },
         {
           "label": "Active",
@@ -764,8 +769,8 @@
       "inputs": [
         {
           "label": "Action Name",
-          "controlType": "Text",
-          "dataType": "String"
+          "controlType": "ComboBox",
+          "dataType": "ActionName"
         },
         {
           "label": "Active",
@@ -779,9 +784,14 @@
       "category": "Room",
       "inputs": [
         {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        },
+        {
           "label": "Action Name",
-          "controlType": "Text",
-          "dataType": "String"
+          "controlType": "ComboBox",
+          "dataType": "ActionName"
         },
         {
           "label": "Active",
@@ -795,14 +805,114 @@
       "category": "Item",
       "inputs": [
         {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        },
+        {
           "label": "Action Name",
-          "controlType": "Text",
-          "dataType": "String"
+          "controlType": "ComboBox",
+          "dataType": "ActionName"
         },
         {
           "label": "Active",
           "controlType": "Checkbox",
           "dataType": "Bool"
+        }
+      ]
+    },
+    {
+      "name": "Variable: Break Loop",
+      "category": "Variable",
+      "inputs": []
+    },
+    {
+      "name": "Variable: Set Array Element",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Array Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Row Index",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Column Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Variable: Add Array Row",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Array Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Comma-separated Values",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Variable: Remove Array Row",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Array Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Row Index",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Variable: Append Text",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Text",
+          "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Variable: Append Line",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Text",
+          "controlType": "TextArea",
+          "dataType": "String"
         }
       ]
     }

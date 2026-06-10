@@ -122,12 +122,18 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     OnPropertyChanged(nameof(SplashBackgroundPath));
                     OnPropertyChanged(nameof(IsSplashVideoMode));
                     OnPropertyChanged(nameof(IsSplashVideoPreviewVisible));
-                    OnPropertyChanged(nameof(SelectedSplashImageAsset));
-                    OnPropertyChanged(nameof(SelectedSplashVideoAsset));
-                    OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                    // Fire media collections FIRST so ComboBox ItemsSources are ready,
+                    // then post the selected-item notifications on background priority so
+                    // they resolve after the ItemsSource update has fully rendered.
                     OnPropertyChanged(nameof(VideoMediaAssets));
                     OnPropertyChanged(nameof(ImageMediaAssets));
                     OnPropertyChanged(nameof(AudioMediaAssets));
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        OnPropertyChanged(nameof(SelectedSplashImageAsset));
+                        OnPropertyChanged(nameof(SelectedSplashVideoAsset));
+                        OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                    }, DispatcherPriority.Background);
                     OnPropertyChanged(nameof(SplashPreviewTextLeft));
                     OnPropertyChanged(nameof(SplashPreviewTextLeftWithOffset));
                     OnPropertyChanged(nameof(SplashPreviewTextTop));
@@ -290,12 +296,22 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.ImageAssetId);
             set
             {
-                if (CurrentGame?.SplashScreen != null)
+                if (CurrentGame == null) return;
+                // Bug #3: Auto-initialize SplashScreen so setter never silently drops values.
+                if (CurrentGame.SplashScreen == null)
                 {
-                    CurrentGame.SplashScreen.ImageAssetId = value?.IdString ?? string.Empty;
-                    OnPropertyChanged(nameof(SelectedSplashImageAsset));
-                    OnPropertyChanged(nameof(SplashBackgroundPath));
+                    CurrentGame.SplashScreen = new RagsCore.Models.SplashScreenSettings();
+                    CurrentGame.SplashScreen.PropertyChanged += (s, a) => _ = SaveGameAsync();
                 }
+                var newId = value?.IdString ?? string.Empty;
+                // Guard: Avalonia resets ComboBox SelectedItem to null whenever ItemsSource
+                // is refreshed. Prevent that from silently overwriting an already-saved ID.
+                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(CurrentGame.SplashScreen.ImageAssetId)) return;
+                if (newId == CurrentGame.SplashScreen.ImageAssetId) return;
+                CurrentGame.SplashScreen.ImageAssetId = newId;
+                OnPropertyChanged(nameof(SelectedSplashImageAsset));
+                OnPropertyChanged(nameof(SplashBackgroundPath));
+                _ = SaveGameAsync();
             }
         }
 
@@ -304,12 +320,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.VideoAssetId);
             set
             {
-                if (CurrentGame?.SplashScreen != null)
+                if (CurrentGame == null) return;
+                // Bug #3: Auto-initialize SplashScreen.
+                if (CurrentGame.SplashScreen == null)
                 {
-                    CurrentGame.SplashScreen.VideoAssetId = value?.IdString ?? string.Empty;
-                    OnPropertyChanged(nameof(SelectedSplashVideoAsset));
-                    OnPropertyChanged(nameof(SplashBackgroundPath));
+                    CurrentGame.SplashScreen = new RagsCore.Models.SplashScreenSettings();
+                    CurrentGame.SplashScreen.PropertyChanged += (s, a) => _ = SaveGameAsync();
                 }
+                var newId = value?.IdString ?? string.Empty;
+                // Guard: prevent Avalonia ComboBox reset from blanking a saved ID.
+                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(CurrentGame.SplashScreen.VideoAssetId)) return;
+                if (newId == CurrentGame.SplashScreen.VideoAssetId) return;
+                CurrentGame.SplashScreen.VideoAssetId = newId;
+                OnPropertyChanged(nameof(SelectedSplashVideoAsset));
+                OnPropertyChanged(nameof(SplashBackgroundPath));
+                _ = SaveGameAsync();
             }
         }
 
@@ -318,11 +343,20 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.SoundAssetId);
             set
             {
-                if (CurrentGame?.SplashScreen != null)
+                if (CurrentGame == null) return;
+                // Bug #3: Auto-initialize SplashScreen.
+                if (CurrentGame.SplashScreen == null)
                 {
-                    CurrentGame.SplashScreen.SoundAssetId = value?.IdString ?? string.Empty;
-                    OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                    CurrentGame.SplashScreen = new RagsCore.Models.SplashScreenSettings();
+                    CurrentGame.SplashScreen.PropertyChanged += (s, a) => _ = SaveGameAsync();
                 }
+                var newId = value?.IdString ?? string.Empty;
+                // Guard: prevent Avalonia ComboBox reset from blanking a saved ID.
+                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(CurrentGame.SplashScreen.SoundAssetId)) return;
+                if (newId == CurrentGame.SplashScreen.SoundAssetId) return;
+                CurrentGame.SplashScreen.SoundAssetId = newId;
+                OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                _ = SaveGameAsync();
             }
         }
 
@@ -662,6 +696,68 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand CopyActionCommand { get; }
         public ICommand PasteActionCommand { get; }
         public bool CanPasteAction => RagNext.Designer.Avalonia.Services.ActionClipboardService.CanPaste;
+
+        private static readonly ActionTrigger[] _allTriggers = (ActionTrigger[])Enum.GetValues(typeof(ActionTrigger));
+        public ActionTrigger[] AllTriggers => _allTriggers;
+
+        private static readonly ActionTrigger[] _playerTriggers = new[]
+        {
+            ActionTrigger.UserClicked,
+            ActionTrigger.OnGameStart,
+            ActionTrigger.OnGameLoad,
+            ActionTrigger.OnTurnTick,
+            ActionTrigger.OnPlayerEnter,
+            ActionTrigger.OnPlayerExit,
+            ActionTrigger.OnCharacterEnter,
+            ActionTrigger.OnCharacterExit,
+            ActionTrigger.OnCharacterKilled
+        };
+        public ActionTrigger[] PlayerTriggers => _playerTriggers;
+
+        private static readonly ActionTrigger[] _roomTriggers = new[]
+        {
+            ActionTrigger.UserClicked,
+            ActionTrigger.OnTurnTick,
+            ActionTrigger.OnPlayerEnter,
+            ActionTrigger.OnPlayerExit,
+            ActionTrigger.OnCharacterEnter,
+            ActionTrigger.OnCharacterExit,
+            ActionTrigger.OnCharacterKilled
+        };
+        public ActionTrigger[] RoomTriggers => _roomTriggers;
+
+        private static readonly ActionTrigger[] _characterTriggers = new[]
+        {
+            ActionTrigger.UserClicked,
+            ActionTrigger.OnTurnTick,
+            ActionTrigger.OnPlayerEnter,
+            ActionTrigger.OnPlayerExit,
+            ActionTrigger.OnCharacterEnter,
+            ActionTrigger.OnCharacterExit,
+            ActionTrigger.OnCharacterKilled
+        };
+        public ActionTrigger[] CharacterTriggers => _characterTriggers;
+
+        private static readonly ActionTrigger[] _objectTriggers = new[]
+        {
+            ActionTrigger.UserClicked,
+            ActionTrigger.OnTurnTick,
+            ActionTrigger.OnPlayerEnter,
+            ActionTrigger.OnPlayerExit,
+            ActionTrigger.OnCharacterEnter,
+            ActionTrigger.OnCharacterExit,
+            ActionTrigger.OnCharacterKilled,
+            ActionTrigger.OnObjectExamined,
+            ActionTrigger.OnObjectTaken,
+            ActionTrigger.OnObjectDropped
+        };
+        public ActionTrigger[] ObjectTriggers => _objectTriggers;
+
+        private static readonly string[] _directionFilters = new[] 
+        { 
+            "All", "N", "S", "E", "W", "NW", "NE", "SW", "SE", "Up", "Down", "In", "Out" 
+        };
+        public string[] DirectionFilters => _directionFilters;
         public ICommand OpenComposeCommand { get; }
         public ICommand CloseComposeCommand { get; }
         public ICommand LoadLastWorkspaceCommand { get; }
@@ -676,6 +772,19 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand TriggerAddAttributeCommand { get; }
         public ICommand SaveAttributeCommand { get; }
         public ICommand RemoveAttributeCommand { get; }
+
+        public ObservableCollection<RagsCore.Models.Action> GlobalActions { get; } = new();
+        public ObservableCollection<RagsCore.Models.Action> MatchActionTemplates { get; } = new();
+
+        private bool _showActionSelectorOverlay;
+        public bool ShowActionSelectorOverlay { get => _showActionSelectorOverlay; set => SetProperty(ref _showActionSelectorOverlay, value); }
+
+        private object? _actionTargetEntity;
+
+        public ICommand AddGlobalActionCommand { get; }
+        public ICommand DeleteGlobalActionCommand { get; }
+        public ICommand SelectActionTemplateCommand { get; }
+        public ICommand CloseActionSelectorCommand { get; }
 
         // Items Creators Command delegation
         public ICommand AddRoomCommand => Rooms.AddRoomCommand;
@@ -1007,6 +1116,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 IsVisualEditing = false;
                 ActiveAction = null;
                 await SaveGameAsync();
+                RagsCore.Services.GlobalActionLibraryService.SaveLibrary(GlobalActions.ToList());
             });
 
             LoadLastWorkspaceCommand = new Command(async () =>
@@ -1048,32 +1158,117 @@ namespace RagNext.Designer.Avalonia.ViewModels
             // Load recents on startup
             LoadRecentProjects();
 
-            AddActionCommand = new Command<object>(async parameter =>
+            // Initialize Global Action Library
+            foreach (var act in RagsCore.Services.GlobalActionLibraryService.LoadLibrary())
             {
-                if (parameter is Room room)
+                act.PropertyChanged += OnGlobalActionPropertyChanged;
+                GlobalActions.Add(act);
+            }
+
+            AddGlobalActionCommand = new Command(() =>
+            {
+                var newAct = new RagsCore.Models.Action
                 {
-                    var act = new RagsCore.Models.Action { Name = "New Room Action", Trigger = ActionTrigger.UserClicked, InitallyActive = true };
-                    room.Actions.Add(act);
-                    await SaveGameAsync();
-                }
-                else if (parameter is Character character)
+                    Name = $"New Template Action {GlobalActions.Count + 1}",
+                    Trigger = ActionTrigger.UserClicked
+                };
+                newAct.PropertyChanged += OnGlobalActionPropertyChanged;
+                GlobalActions.Add(newAct);
+                RagsCore.Services.GlobalActionLibraryService.SaveLibrary(GlobalActions.ToList());
+            });
+
+            DeleteGlobalActionCommand = new Command<RagsCore.Models.Action>(act =>
+            {
+                if (act == null) return;
+                act.PropertyChanged -= OnGlobalActionPropertyChanged;
+                GlobalActions.Remove(act);
+                RagsCore.Services.GlobalActionLibraryService.SaveLibrary(GlobalActions.ToList());
+            });
+
+            SelectActionTemplateCommand = new Command<RagsCore.Models.Action>(async template =>
+            {
+                if (_actionTargetEntity == null)
                 {
-                    var act = new RagsCore.Models.Action { Name = "New Character Action", Trigger = ActionTrigger.UserClicked, InitallyActive = true };
-                    character.Actions.Add(act);
-                    await SaveGameAsync();
+                    ShowActionSelectorOverlay = false;
+                    return;
                 }
-                else if (parameter is GameObject obj)
+
+                RagsCore.Models.Action act;
+                if (template == null || template.Name == "New Action (Blank)")
                 {
-                    var act = new RagsCore.Models.Action { Name = "New Object Action", Trigger = ActionTrigger.UserClicked, InitallyActive = true };
-                    obj.Actions.Add(act);
-                    await SaveGameAsync();
+                    string defaultName = "New Action";
+                    if (_actionTargetEntity is Room) defaultName = "New Room Action";
+                    else if (_actionTargetEntity is Character) defaultName = "New Character Action";
+                    else if (_actionTargetEntity is GameObject) defaultName = "New Object Action";
+                    else if (_actionTargetEntity is Player) defaultName = "New Player Action";
+
+                    act = new RagsCore.Models.Action { Name = defaultName, Trigger = ActionTrigger.UserClicked, InitallyActive = true };
                 }
-                else if (parameter is Player player)
+                else
                 {
-                    var act = new RagsCore.Models.Action { Name = "New Player Action", Trigger = ActionTrigger.UserClicked, InitallyActive = true };
-                    player.Actions.Add(act);
-                    await SaveGameAsync();
+                    try
+                    {
+                        var json = JsonSerializer.Serialize(template, RagsCore.RagsJsonContext.CustomDefault.Action);
+                        var clone = JsonSerializer.Deserialize<RagsCore.Models.Action>(json, RagsCore.RagsJsonContext.CustomDefault.Action);
+                        if (clone != null)
+                        {
+                            clone.Id = Guid.NewGuid();
+                            act = clone;
+                        }
+                        else
+                        {
+                            act = new RagsCore.Models.Action { Name = template.Name, Trigger = template.Trigger, InitallyActive = true };
+                        }
+                    }
+                    catch
+                    {
+                        act = new RagsCore.Models.Action { Name = template.Name, Trigger = template.Trigger, InitallyActive = true };
+                    }
                 }
+
+                if (_actionTargetEntity is Room room) room.Actions.Add(act);
+                else if (_actionTargetEntity is Character character) character.Actions.Add(act);
+                else if (_actionTargetEntity is GameObject obj) obj.Actions.Add(act);
+                else if (_actionTargetEntity is Player player) player.Actions.Add(act);
+
+                await SaveGameAsync();
+                ShowActionSelectorOverlay = false;
+                _actionTargetEntity = null;
+            });
+
+            CloseActionSelectorCommand = new Command(() =>
+            {
+                ShowActionSelectorOverlay = false;
+                _actionTargetEntity = null;
+            });
+
+            AddActionCommand = new Command<object>(parameter =>
+            {
+                if (parameter == null) return;
+                _actionTargetEntity = parameter;
+
+                MatchActionTemplates.Clear();
+                MatchActionTemplates.Add(new RagsCore.Models.Action { Name = "New Action (Blank)", Trigger = ActionTrigger.UserClicked });
+
+                foreach (var act in GlobalActions)
+                {
+                    bool isMatch = false;
+                    if (parameter is Room) isMatch = act.ApplyToRooms;
+                    else if (parameter is Player) isMatch = act.ApplyToPlayer;
+                    else if (parameter is Character) isMatch = act.ApplyToCharacters;
+                    else if (parameter is GameObject obj)
+                    {
+                        if (obj.IsCollectible) isMatch = act.ApplyToGrabableObjects;
+                        else isMatch = act.ApplyToStaticObjects;
+                    }
+
+                    if (isMatch)
+                    {
+                        MatchActionTemplates.Add(act);
+                    }
+                }
+
+                ShowActionSelectorOverlay = true;
             });
 
             DeleteActionCommand = new Command<RagsCore.Models.Action>(async action =>
@@ -1518,6 +1713,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
+        private void OnGlobalActionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            RagsCore.Services.GlobalActionLibraryService.SaveLibrary(GlobalActions.ToList());
+        }
+
         public void LoadRecentProjects()
         {
             try
@@ -1573,5 +1773,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             catch { }
         }
+        public static global::Avalonia.Data.Converters.IMultiValueConverter MakeTupleConverter { get; } = new FuncMultiValueConverter<object, Tuple<object, object>>(parts =>
+        {
+            if (parts == null || parts.Count < 2) return new Tuple<object, object>(null!, null!);
+            return new Tuple<object, object>(parts[0], parts[1]);
+        });
+    }
+
+    public class FuncMultiValueConverter<TIn, TOut> : global::Avalonia.Data.Converters.IMultiValueConverter
+    {
+        private readonly Func<System.Collections.Generic.IList<object?>, TOut> _conv;
+        public FuncMultiValueConverter(Func<System.Collections.Generic.IList<object?>, TOut> conv) => _conv = conv;
+        public object? Convert(System.Collections.Generic.IList<object?> values, Type targetType, object? parameter, System.Globalization.CultureInfo culture) => _conv(values);
     }
 }

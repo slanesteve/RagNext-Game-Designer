@@ -1142,6 +1142,14 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.3.6f1\Editor\Data\NetStandard\compat\2.1.0\shims\netfx\System.Xml.Serialization.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="PrimeTween.Runtime">
+      <HintPath>Library\ScriptAssemblies\PrimeTween.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PrimeTween.Editor">
+      <HintPath>Library\ScriptAssemblies\PrimeTween.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Unity.RenderPipelines.Core.Editor.csproj" />
@@ -1154,15 +1162,16 @@
     <ProjectReference Include="Unity.Rendering.LightTransport.Editor.csproj" />
     <ProjectReference Include="Unity.RenderPipelines.Core.ShaderLibrary.csproj" />
     <ProjectReference Include="Unity.2D.IK.Runtime.csproj" />
-    <ProjectReference Include="Unity.VisualScripting.SettingsProvider.Editor.csproj" />
+    <ProjectReference Include="PrimeTween.Demo.csproj" />
     <ProjectReference Include="Unity.2D.Animation.Editor.csproj" />
+    <ProjectReference Include="Unity.VisualScripting.SettingsProvider.Editor.csproj" />
     <ProjectReference Include="Unity.InternalAPIEditorBridge.001.csproj" />
     <ProjectReference Include="Unity.RenderPipelines.Universal.2D.Editor.Overrides.csproj" />
     <ProjectReference Include="Unity.RenderPipelines.Universal.Editor.csproj" />
     <ProjectReference Include="Unity.2D.Common.Editor.csproj" />
     <ProjectReference Include="Unity.Timeline.csproj" />
-    <ProjectReference Include="PPv2URPConverters.csproj" />
     <ProjectReference Include="Unity.2D.Tooling.Editor.csproj" />
+    <ProjectReference Include="PPv2URPConverters.csproj" />
     <ProjectReference Include="Unity.2D.Animation.Runtime.csproj" />
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.csproj" />
     <ProjectReference Include="Unity.RenderPipelines.Universal.2D.Runtime.csproj" />
@@ -1174,10 +1183,11 @@
     <ProjectReference Include="Unity.Mathematics.Editor.csproj" />
     <ProjectReference Include="Unity.UnifiedRayTracing.Runtime.csproj" />
     <ProjectReference Include="Unity.2D.Aseprite.Common.csproj" />
+    <ProjectReference Include="PrimeTween.Debug.csproj" />
     <ProjectReference Include="Unity.Rider.Editor.csproj" />
     <ProjectReference Include="Unity.2D.Aseprite.Editor.csproj" />
+    <ProjectReference Include="PrimeTween.Installer.csproj" />
     <ProjectReference Include="Unity.2D.Psdimporter.Editor.csproj" />
-    <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.csproj" />
     <ProjectReference Include="Unity.VisualScripting.Flow.csproj" />
     <ProjectReference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.csproj" />
     <ProjectReference Include="Unity.TextMeshPro.Editor.csproj" />
@@ -1187,6 +1197,7 @@
     <ProjectReference Include="Unity.2D.IK.Editor.csproj" />
     <ProjectReference Include="Unity.2D.SpriteShape.Runtime.csproj" />
     <ProjectReference Include="Unity.VisualStudio.Editor.csproj" />
+    <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.csproj" />
     <ProjectReference Include="Unity.2D.Tilemap.Editor.csproj" />
     <ProjectReference Include="Unity.2D.Common.Runtime.csproj" />
     <ProjectReference Include="Unity.Collections.csproj" />

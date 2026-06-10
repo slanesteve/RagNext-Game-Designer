@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
+using Avalonia.Threading;
 using System.Linq;
 using Avalonia.Markup.Xaml;
 using RagNext.Designer.Avalonia.ViewModels;
@@ -51,10 +52,16 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainWindowViewModel(),
-            };
+            // Create the window first with no DataContext so the initial Avalonia
+            // layout pass does not fire bindings against a null/incomplete ViewModel.
+            // Bug #1: Deferred DataContext prevents room-exit pickers and other
+            // ComboBoxes from resetting to defaults during startup binding errors.
+            var mainWindow = new MainWindow();
+            desktop.MainWindow = mainWindow;
+
+            Dispatcher.UIThread.Post(
+                () => mainWindow.DataContext = new MainWindowViewModel(),
+                DispatcherPriority.Loaded);
         }
 
         base.OnFrameworkInitializationCompleted();

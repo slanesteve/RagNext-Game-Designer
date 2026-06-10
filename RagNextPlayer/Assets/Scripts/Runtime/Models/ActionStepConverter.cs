@@ -112,11 +112,24 @@ namespace RagNextPlayer.Runtime.Models
                 "general.triggerTurnTick"=> typeof(TriggerTurnTickCommandData),
                 "general.debugText"      => typeof(DebugTextCommandData),
                 "char.setActionActive"   => typeof(CharacterSetActionActiveCommandData),
+                // Bug #5: Scoped entity variants.
+                "item.setActionActive"   => typeof(ItemSetActionActiveCommandData),
+                "room.setActionActive"   => typeof(RoomSetActionActiveCommandData),
+                "player.setActionActive" => typeof(PlayerSetActionActiveCommandData),
                 "timer.setTimerActive"   => typeof(SetTimerActiveCommandData),
                 "general.startDialogue"  => typeof(StartDialogueCommandData),
                 "general.addCustomChoice" => typeof(AddCustomChoiceCommandData),
                 "general.clearCustomChoice" => typeof(ClearCustomChoiceCommandData),
                 "general.removeCustomChoice" => typeof(RemoveCustomChoiceCommandData),
+
+                "variable.forEachLoop"      => typeof(ForEachLoopCommandData),
+                "variable.breakLoop"        => typeof(BreakLoopCommandData),
+                "variable.setArrayElement"  => typeof(SetArrayElementCommandData),
+                "variable.addArrayRow"      => typeof(AddArrayRowCommandData),
+                "variable.removeArrayRow"   => typeof(RemoveArrayRowCommandData),
+                "variable.appendText"       => typeof(AppendTextCommandData),
+                "variable.appendLine"       => typeof(AppendLineCommandData),
+                "general.switch"            => typeof(SwitchCommandData),
 
                 "char.setAttribute"      => typeof(SetCharacterAttributeCommandData),
                 "player.setAttribute"    => typeof(SetPlayerAttributeCommandData),
@@ -257,6 +270,47 @@ namespace RagNextPlayer.Runtime.Models
                     }
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Converts switch command cases dictionary of string to List of polymorphic ActionSteps.
+    /// </summary>
+    public class SwitchCasesConverter : JsonConverter<Dictionary<string, List<ActionStepData>>>
+    {
+        public override bool CanWrite => false;
+        public override void WriteJson(JsonWriter writer, Dictionary<string, List<ActionStepData>>? value, JsonSerializer serializer) => throw new NotImplementedException();
+        public override Dictionary<string, List<ActionStepData>>? ReadJson(
+            JsonReader reader,
+            Type objectType,
+            Dictionary<string, List<ActionStepData>>? existingValue,
+            bool hasExistingValue,
+            JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.Null) return null;
+            var dict = new Dictionary<string, List<ActionStepData>>();
+            var jobj = JObject.Load(reader);
+            foreach (var prop in jobj.Properties())
+            {
+                var list = new List<ActionStepData>();
+                if (prop.Value is JArray array)
+                {
+                    foreach (var token in array)
+                    {
+                        if (token is JObject jo)
+                        {
+                            using var subReader = jo.CreateReader();
+                            if (subReader.Read())
+                            {
+                                var step = serializer.Deserialize<ActionStepData>(subReader);
+                                if (step != null) list.Add(step);
+                            }
+                        }
+                    }
+                }
+                dict[prop.Name] = list;
+            }
+            return dict;
         }
     }
 }

@@ -48,6 +48,8 @@ namespace RagNext.Designer.Avalonia.Views
         public List<CatalogEntityDto>? Media { get; set; }
         public List<CatalogEntityDto>? Functions { get; set; }
         public List<CatalogEntityDto>? Timers { get; set; }
+        // Bug #5: Top-level player action names for the PlayerSetActionActive picker.
+        public List<CatalogActionDto>? PlayerActions { get; set; }
     }
 
     public class CatalogEntityDto
@@ -57,11 +59,20 @@ namespace RagNext.Designer.Avalonia.Views
         public bool? IsContainer { get; set; }
         public string? VarType { get; set; }
         public List<string>? Attributes { get; set; }
+        // Bug #5: Action names on this entity, for cascading ActionName pickers.
+        public List<CatalogActionDto>? Actions { get; set; }
+    }
+
+    public class CatalogActionDto
+    {
+        public string? Name { get; set; }
     }
 
     public class CatalogPlayerDto
     {
         public List<string>? Attributes { get; set; }
+        // Bug #5: Player's own action names for PlayerSetActionActive picker.
+        public List<CatalogActionDto>? Actions { get; set; }
     }
 
     public class ReflectionEntityDto

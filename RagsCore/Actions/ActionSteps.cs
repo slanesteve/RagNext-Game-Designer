@@ -91,7 +91,18 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SetTimerAttributeCommand), "timer.setAttribute")]
     [JsonDerivedType(typeof(SetItemAttributeCommand), "item.setAttribute")]
     [JsonDerivedType(typeof(CharacterSetActionActiveCommand), "char.setActionActive")]
+    [JsonDerivedType(typeof(ItemSetActionActiveCommand),      "item.setActionActive")]
+    [JsonDerivedType(typeof(RoomSetActionActiveCommand),      "room.setActionActive")]
+    [JsonDerivedType(typeof(PlayerSetActionActiveCommand),    "player.setActionActive")]
     [JsonDerivedType(typeof(SetTimerActiveCommand), "timer.setTimerActive")]
+    [JsonDerivedType(typeof(ForEachLoopCommand), "variable.forEachLoop")]
+    [JsonDerivedType(typeof(BreakLoopCommand), "variable.breakLoop")]
+    [JsonDerivedType(typeof(SetArrayElementCommand), "variable.setArrayElement")]
+    [JsonDerivedType(typeof(AddArrayRowCommand), "variable.addArrayRow")]
+    [JsonDerivedType(typeof(RemoveArrayRowCommand), "variable.removeArrayRow")]
+    [JsonDerivedType(typeof(AppendTextCommand), "variable.appendText")]
+    [JsonDerivedType(typeof(AppendLineCommand), "variable.appendLine")]
+    [JsonDerivedType(typeof(SwitchCommand), "general.switch")]
     public abstract class ActionStep
     {
         public static string NormalizeLegacyDiscriminators(string json)
@@ -375,28 +386,43 @@ namespace RagsCore.Actions
         }
     }
 
+    /// <summary>Sets a specific character's action active or inactive (Bug #5 enhanced).</summary>
     public sealed class CharacterSetActionActiveCommand : GameCommand
     {
         public string ActionName { get; set; } = string.Empty;
         public bool Active { get; set; } = true;
+        /// <summary>GUID of the character who owns the action. Empty = legacy global name-match.</summary>
+        public string CharacterId { get; set; } = string.Empty;
         public override string TypeName => "Character: Set Action To Active/Inactive";
         public override void Execute(ActionContext ctx)
         {
+            // Scoped resolution: when CharacterId is set, only toggle on that character.
+            if (!string.IsNullOrEmpty(CharacterId) && Guid.TryParse(CharacterId, out var charGuid))
+            {
+                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charGuid);
+                if (character != null)
+                {
+                    foreach (var action in character.Actions)
+                    {
+                        if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                            action.InitallyActive = Active;
+                    }
+                }
+                return;
+            }
+
+            // Legacy global name-match (backward compat when CharacterId is empty).
             foreach (var action in ctx.Game.Player.Actions)
             {
                 if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
-                {
                     action.InitallyActive = Active;
-                }
             }
             foreach (var room in ctx.Game.Rooms)
             {
                 foreach (var action in room.Actions)
                 {
                     if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
-                    {
                         action.InitallyActive = Active;
-                    }
                 }
             }
             foreach (var obj in ctx.Game.Objects)
@@ -404,9 +430,7 @@ namespace RagsCore.Actions
                 foreach (var action in obj.Actions)
                 {
                     if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
-                    {
                         action.InitallyActive = Active;
-                    }
                 }
             }
             foreach (var character in ctx.Game.Characters)
@@ -414,10 +438,66 @@ namespace RagsCore.Actions
                 foreach (var action in character.Actions)
                 {
                     if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
-                    {
                         action.InitallyActive = Active;
-                    }
                 }
+            }
+        }
+    }
+
+    /// <summary>Sets a specific item/object's action active or inactive.</summary>
+    public sealed class ItemSetActionActiveCommand : GameCommand
+    {
+        public string ActionName { get; set; } = string.Empty;
+        public bool Active { get; set; } = true;
+        /// <summary>GUID of the GameObject/item who owns the action.</summary>
+        public string ItemId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Set Action To Active/Inactive";
+        public override void Execute(ActionContext ctx)
+        {
+            if (string.IsNullOrEmpty(ItemId) || !Guid.TryParse(ItemId, out var itemGuid)) return;
+            var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == itemGuid);
+            if (obj == null) return;
+            foreach (var action in obj.Actions)
+            {
+                if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                    action.InitallyActive = Active;
+            }
+        }
+    }
+
+    /// <summary>Sets a specific room's action active or inactive.</summary>
+    public sealed class RoomSetActionActiveCommand : GameCommand
+    {
+        public string ActionName { get; set; } = string.Empty;
+        public bool Active { get; set; } = true;
+        /// <summary>GUID of the Room who owns the action.</summary>
+        public string RoomId { get; set; } = string.Empty;
+        public override string TypeName => "Room: Set Action To Active/Inactive";
+        public override void Execute(ActionContext ctx)
+        {
+            if (string.IsNullOrEmpty(RoomId) || !Guid.TryParse(RoomId, out var roomGuid)) return;
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == roomGuid);
+            if (room == null) return;
+            foreach (var action in room.Actions)
+            {
+                if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                    action.InitallyActive = Active;
+            }
+        }
+    }
+
+    /// <summary>Sets a player action active or inactive.</summary>
+    public sealed class PlayerSetActionActiveCommand : GameCommand
+    {
+        public string ActionName { get; set; } = string.Empty;
+        public bool Active { get; set; } = true;
+        public override string TypeName => "Player: Set Action To Active/Inactive";
+        public override void Execute(ActionContext ctx)
+        {
+            foreach (var action in ctx.Game.Player.Actions)
+            {
+                if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                    action.InitallyActive = Active;
             }
         }
     }
@@ -1697,6 +1777,143 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             ctx.SetVariable("system.lastDisplayedText", RagsCore.Services.TemplateResolver.Resolve(ctx.CurrentRoom?.Description ?? string.Empty, ctx));
+        }
+    }
+
+    public sealed class ForEachLoopCommand : Condition
+    {
+        public string ArrayVariableName { get; set; } = string.Empty;
+        public override string TypeName => "Variable: For Each Loop";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            // For Each Loop inherits from Condition so it has TrueBranch (the loop body).
+            // The visual graph / runner evaluates it. The C# design-side implementation can return false.
+            return false;
+        }
+    }
+
+    public sealed class BreakLoopCommand : GameCommand
+    {
+        public override string TypeName => "Variable: Break Loop";
+        public override void Execute(ActionContext ctx) { }
+    }
+
+    public sealed class SetArrayElementCommand : GameCommand
+    {
+        public string ArrayVariableName { get; set; } = string.Empty;
+        public string RowIndex { get; set; } = "0";
+        public string ColumnName { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Set Array Element";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            var resolvedRow = RagsCore.Services.TemplateResolver.Resolve(RowIndex, ctx);
+            var resolvedCol = RagsCore.Services.TemplateResolver.Resolve(ColumnName, ctx);
+
+            var v = ctx.GetVariable(ArrayVariableName);
+            if (v != null && v.Type == "array" && int.TryParse(resolvedRow, out int rIdx) && rIdx >= 0)
+            {
+                int colIdx = v.Columns.IndexOf(resolvedCol);
+                if (colIdx >= 0 && rIdx < v.Rows.Count)
+                {
+                    var row = v.Rows[rIdx];
+                    while (row.Count <= colIdx) row.Add(string.Empty);
+                    row[colIdx] = resolvedVal;
+                }
+            }
+        }
+    }
+
+    public sealed class AddArrayRowCommand : GameCommand
+    {
+        public string ArrayVariableName { get; set; } = string.Empty;
+        public string ValuesCommaSeparated { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Add Array Row";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedValues = RagsCore.Services.TemplateResolver.Resolve(ValuesCommaSeparated, ctx);
+            var v = ctx.GetVariable(ArrayVariableName);
+            if (v != null && v.Type == "array")
+            {
+                var row = new ObservableCollection<string>();
+                var parts = resolvedValues.Split(',');
+                for (int i = 0; i < v.Columns.Count; i++)
+                {
+                    row.Add(i < parts.Length ? parts[i].Trim() : string.Empty);
+                }
+                v.Rows.Add(row);
+            }
+        }
+    }
+
+    public sealed class RemoveArrayRowCommand : GameCommand
+    {
+        public string ArrayVariableName { get; set; } = string.Empty;
+        public string RowIndex { get; set; } = "0";
+        public override string TypeName => "Variable: Remove Array Row";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRow = RagsCore.Services.TemplateResolver.Resolve(RowIndex, ctx);
+            var v = ctx.GetVariable(ArrayVariableName);
+            if (v != null && v.Type == "array" && int.TryParse(resolvedRow, out int rIdx) && rIdx >= 0 && rIdx < v.Rows.Count)
+            {
+                v.Rows.RemoveAt(rIdx);
+            }
+        }
+    }
+
+    public sealed class AppendTextCommand : GameCommand
+    {
+        public string VariableName { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Append Text";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedText = RagsCore.Services.TemplateResolver.Resolve(Text, ctx);
+            var v = ctx.GetVariable(VariableName);
+            if (v != null)
+            {
+                v.Value = (v.Value ?? string.Empty) + resolvedText;
+            }
+            else
+            {
+                ctx.SetVariable(VariableName, resolvedText);
+            }
+        }
+    }
+
+    public sealed class AppendLineCommand : GameCommand
+    {
+        public string VariableName { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Append Line";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedText = RagsCore.Services.TemplateResolver.Resolve(Text, ctx);
+            var v = ctx.GetVariable(VariableName);
+            if (v != null)
+            {
+                v.Value = (v.Value ?? string.Empty) + resolvedText + "\n";
+            }
+            else
+            {
+                ctx.SetVariable(VariableName, resolvedText + "\n");
+            }
+        }
+    }
+
+    public sealed class SwitchCommand : GameCommand
+    {
+        public string Expression { get; set; } = string.Empty;
+        public Dictionary<string, ObservableCollection<ActionStep>> Cases { get; set; } = new();
+        public ObservableCollection<ActionStep> DefaultBranch { get; set; } = new();
+
+        public override string TypeName => "General: Switch";
+
+        public override void Execute(ActionContext ctx)
+        {
+            // Executed contextually at runtime in Player interpreter.
         }
     }
 }

@@ -93,6 +93,81 @@ namespace RagNextPlayer.Runtime
     ///   - Exceptions are caught per-node so a single bad command never aborts
     ///     the rest of the action sequence.
     /// </summary>
+    public class LoopScopeTracker : IEnumerator<ActionStepData>
+    {
+        private readonly ForEachLoopCommandData _loopNode;
+        private readonly GameExecutionContext _ctx;
+        private readonly List<List<string>> _rows;
+        private int _currentRowIndex = -1;
+        private IEnumerator<ActionStepData>? _currentBodyEnumerator;
+
+        public LoopScopeTracker(ForEachLoopCommandData loopNode, GameExecutionContext ctx, List<List<string>> rows)
+        {
+            _loopNode = loopNode;
+            _ctx = ctx;
+            _rows = rows;
+        }
+
+        public ActionStepData Current => _currentBodyEnumerator?.Current ?? _loopNode;
+
+        object System.Collections.IEnumerator.Current => Current;
+
+        public bool MoveNext()
+        {
+            if (_currentRowIndex == -1)
+            {
+                _currentRowIndex = 0;
+                if (_rows.Count == 0) return false;
+                SetupRowVariables();
+                _currentBodyEnumerator = _loopNode.TrueBranch.GetEnumerator();
+            }
+
+            while (true)
+            {
+                if (_currentBodyEnumerator != null && _currentBodyEnumerator.MoveNext())
+                {
+                    return true;
+                }
+
+                // Advance to next row
+                _currentRowIndex++;
+                if (_currentRowIndex >= _rows.Count)
+                {
+                    return false;
+                }
+
+                SetupRowVariables();
+                _currentBodyEnumerator = _loopNode.TrueBranch.GetEnumerator();
+            }
+        }
+
+        private void SetupRowVariables()
+        {
+            var varObj = _ctx.Game.Variables.Find(v => string.Equals(v.Name, _loopNode.ArrayVariableName, StringComparison.OrdinalIgnoreCase));
+            if (varObj != null)
+            {
+                var rowData = _rows[_currentRowIndex];
+                for (int i = 0; i < varObj.Columns.Count; i++)
+                {
+                    string colName = varObj.Columns[i];
+                    string value = i < rowData.Count ? rowData[i] : string.Empty;
+                    _ctx.SetVariable($"Loop.{colName}", value);
+                }
+            }
+        }
+
+        public void Reset()
+        {
+            _currentRowIndex = -1;
+            _currentBodyEnumerator = null;
+        }
+
+        public void Dispose()
+        {
+            _currentBodyEnumerator?.Dispose();
+        }
+    }
+
     public class ActionRunner
     {
         private Stack<IEnumerator<ActionStepData>> _scopes = new();
@@ -137,6 +212,20 @@ namespace RagNextPlayer.Runtime
                                     _scopes.Push(func.Nodes.GetEnumerator());
                                 }
                             }
+                            else if (cmd is BreakLoopCommandData)
+                            {
+                                // Pop scopes until we escape the current LoopScopeTracker
+                                while (_scopes.Count > 0 && !(_scopes.Peek() is LoopScopeTracker))
+                                {
+                                    var top = _scopes.Pop();
+                                    top.Dispose();
+                                }
+                                if (_scopes.Count > 0)
+                                {
+                                    var loopScope = _scopes.Pop();
+                                    loopScope.Dispose();
+                                }
+                            }
                             else
                             {
                                 ActionExecutor.ExecuteCommand(cmd, _ctx);
@@ -158,13 +247,38 @@ namespace RagNextPlayer.Runtime
                     {
                         try
                         {
-                            bool result = ActionExecutor.EvaluateCondition(cond, _ctx);
-                            _sink?.OnConditionEvaluated(cond, result, _ctx);
-                            
-                            var branch = result ? cond.TrueBranch : cond.FalseBranch;
-                            if (branch != null && branch.Count > 0)
+                            if (cond is SwitchCommandData switchNode)
                             {
-                                _scopes.Push(branch.GetEnumerator());
+                                var resolvedVal = _ctx.Resolve(switchNode.Expression);
+                                if (switchNode.Cases != null && switchNode.Cases.TryGetValue(resolvedVal, out var caseBranch) && caseBranch.Count > 0)
+                                {
+                                    _scopes.Push(caseBranch.GetEnumerator());
+                                }
+                                else if (switchNode.DefaultBranch != null && switchNode.DefaultBranch.Count > 0)
+                                {
+                                    _scopes.Push(switchNode.DefaultBranch.GetEnumerator());
+                                }
+                            }
+                            else if (cond is ForEachLoopCommandData loopNode)
+                            {
+                                var varName = loopNode.ArrayVariableName;
+                                var arrayVar = _ctx.Game.Variables.Find(v => string.Equals(v.Name, varName, StringComparison.OrdinalIgnoreCase));
+                                if (arrayVar != null && arrayVar.Rows != null && arrayVar.Rows.Count > 0)
+                                {
+                                    var loopTracker = new LoopScopeTracker(loopNode, _ctx, arrayVar.Rows);
+                                    _scopes.Push(loopTracker);
+                                }
+                            }
+                            else
+                            {
+                                bool result = ActionExecutor.EvaluateCondition(cond, _ctx);
+                                _sink?.OnConditionEvaluated(cond, result, _ctx);
+                                
+                                var branch = result ? cond.TrueBranch : cond.FalseBranch;
+                                if (branch != null && branch.Count > 0)
+                                {
+                                    _scopes.Push(branch.GetEnumerator());
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -274,6 +388,83 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case SetArrayElementCommandData c:
+                    {
+                        var resolvedVal = ctx.Resolve(c.Value);
+                        var resolvedRow = ctx.Resolve(c.RowIndex);
+                        var resolvedCol = ctx.Resolve(c.ColumnName);
+                        var v = ctx.Game.Variables.Find(varb => string.Equals(varb.Name, c.ArrayVariableName, StringComparison.OrdinalIgnoreCase));
+                        if (v != null && v.Columns != null && v.Rows != null && int.TryParse(resolvedRow, out int rIdx) && rIdx >= 0)
+                        {
+                            int colIdx = v.Columns.IndexOf(resolvedCol);
+                            if (colIdx >= 0 && rIdx < v.Rows.Count)
+                            {
+                                var row = v.Rows[rIdx];
+                                while (row.Count <= colIdx) row.Add(string.Empty);
+                                row[colIdx] = resolvedVal;
+                            }
+                        }
+                    }
+                    break;
+
+                case AddArrayRowCommandData c:
+                    {
+                        var resolvedValues = ctx.Resolve(c.ValuesCommaSeparated);
+                        var v = ctx.Game.Variables.Find(varb => string.Equals(varb.Name, c.ArrayVariableName, StringComparison.OrdinalIgnoreCase));
+                        if (v != null && v.Columns != null && v.Rows != null)
+                        {
+                            var row = new List<string>();
+                            var parts = resolvedValues.Split(',');
+                            for (int i = 0; i < v.Columns.Count; i++)
+                            {
+                                row.Add(i < parts.Length ? parts[i].Trim() : string.Empty);
+                            }
+                            v.Rows.Add(row);
+                        }
+                    }
+                    break;
+
+                case RemoveArrayRowCommandData c:
+                    {
+                        var resolvedRow = ctx.Resolve(c.RowIndex);
+                        var v = ctx.Game.Variables.Find(varb => string.Equals(varb.Name, c.ArrayVariableName, StringComparison.OrdinalIgnoreCase));
+                        if (v != null && v.Rows != null && int.TryParse(resolvedRow, out int rIdx) && rIdx >= 0 && rIdx < v.Rows.Count)
+                        {
+                            v.Rows.RemoveAt(rIdx);
+                        }
+                    }
+                    break;
+
+                case AppendTextCommandData c:
+                    {
+                        var resolvedText = ctx.Resolve(c.Text);
+                        var v = ctx.Game.Variables.Find(varb => string.Equals(varb.Name, c.VariableName, StringComparison.OrdinalIgnoreCase));
+                        if (v != null)
+                        {
+                            v.Value = (v.Value ?? string.Empty) + resolvedText;
+                        }
+                        else
+                        {
+                            ctx.SetVariable(c.VariableName, resolvedText);
+                        }
+                    }
+                    break;
+
+                case AppendLineCommandData c:
+                    {
+                        var resolvedText = ctx.Resolve(c.Text);
+                        var v = ctx.Game.Variables.Find(varb => string.Equals(varb.Name, c.VariableName, StringComparison.OrdinalIgnoreCase));
+                        if (v != null)
+                        {
+                            v.Value = (v.Value ?? string.Empty) + resolvedText + "\n";
+                        }
+                        else
+                        {
+                            ctx.SetVariable(c.VariableName, resolvedText + "\n");
+                        }
+                    }
+                    break;
+
                 case MovePlayerToRoomCommandData c:
                     {
                         var resolved = ctx.Resolve(c.RoomId);
@@ -288,7 +479,26 @@ namespace RagNextPlayer.Runtime
                         RemoveObjectFromEverywhere(resolvedObj, ctx);
                         var room = ctx.Game.Rooms.Find(r => r.Id == resolvedRoom);
                         if (room is not null && !room.ObjectIds.Contains(resolvedObj))
+                        {
                             room.ObjectIds.Add(resolvedObj);
+                            
+                            // If this room is the current room, fire OnObjectDropped
+                            if (ctx.CurrentRoom != null && string.Equals(ctx.CurrentRoom.Id, room.Id, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedObj, StringComparison.OrdinalIgnoreCase));
+                                if (obj?.Actions != null)
+                                {
+                                    var objCtx = new GameExecutionContext(ctx.Game, room, obj, obj);
+                                    foreach (var action in obj.Actions)
+                                    {
+                                        if (string.Equals(action.Trigger, "OnObjectDropped", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            ActionExecutor.Execute(action, objCtx, RagNextPlayer.Managers.InteractionController.Instance?.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>());
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     break;
 
@@ -373,7 +583,88 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case CharacterMoveToRoomCommandData c:
-                    ctx.SetVariable($"char.{ctx.Resolve(c.CharacterId)}.currentRoomId", ctx.Resolve(c.RoomId));
+                    {
+                        var charId = ctx.Resolve(c.CharacterId);
+                        var targetRoomId = ctx.Resolve(c.RoomId);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        
+                        var oldRoomId = ctx.GetVariable($"char.{charId}.currentRoomId")?.Value;
+                        ctx.SetVariable($"char.{charId}.currentRoomId", targetRoomId);
+                        
+                        var router = RagNextPlayer.Managers.InteractionController.Instance?.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>();
+
+                        // 1. Remove from old room ObjectIds
+                        if (!string.IsNullOrEmpty(oldRoomId))
+                        {
+                            var oldRoom = ctx.Game.Rooms.Find(r => string.Equals(r.Id, oldRoomId, StringComparison.OrdinalIgnoreCase));
+                            if (oldRoom != null)
+                            {
+                                oldRoom.ObjectIds.Remove(charId);
+                                
+                                // Fire OnCharacterExit on old room
+                                if (oldRoom.Actions != null && character != null)
+                                {
+                                    var rCtx = new GameExecutionContext(ctx.Game, oldRoom, character, oldRoom);
+                                    foreach (var action in oldRoom.Actions)
+                                    {
+                                        if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            ActionExecutor.Execute(action, rCtx, router);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Fire OnCharacterExit on Player (Global)
+                        if (character != null && ctx.Game.Player.Actions != null)
+                        {
+                            var pCtx = new GameExecutionContext(ctx.Game, ctx.CurrentRoom, character, ctx.Player);
+                            foreach (var action in ctx.Game.Player.Actions)
+                            {
+                                if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    ActionExecutor.Execute(action, pCtx, router);
+                                }
+                            }
+                        }
+
+                        // 2. Add to target room ObjectIds
+                        var targetRoom = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetRoomId, StringComparison.OrdinalIgnoreCase));
+                        if (targetRoom != null)
+                        {
+                            if (!targetRoom.ObjectIds.Contains(charId))
+                            {
+                                targetRoom.ObjectIds.Add(charId);
+                            }
+
+                            // Fire OnCharacterEnter on target room
+                            if (targetRoom.Actions != null && character != null)
+                            {
+                                var rCtx = new GameExecutionContext(ctx.Game, targetRoom, character, targetRoom);
+                                foreach (var action in targetRoom.Actions)
+                                {
+                                    if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        ActionExecutor.Execute(action, rCtx, router);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Fire OnCharacterEnter on Player (Global)
+                        if (character != null && ctx.Game.Player.Actions != null)
+                        {
+                            var pCtx = new GameExecutionContext(ctx.Game, targetRoom, character, ctx.Player);
+                            foreach (var action in ctx.Game.Player.Actions)
+                            {
+                                if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    ActionExecutor.Execute(action, pCtx, router);
+                                }
+                            }
+                        }
+                    }
                     break;
 
                 case CharacterDisplayPortraitCommandData c:
@@ -660,6 +951,17 @@ namespace RagNextPlayer.Runtime
                         if (obj != null)
                         {
                             ctx.SetVariable("system.lastDisplayedText", ctx.Resolve(obj.Description));
+                            if (obj.Actions != null)
+                            {
+                                var objCtx = new GameExecutionContext(ctx.Game, ctx.CurrentRoom, obj, obj);
+                                foreach (var action in obj.Actions)
+                                {
+                                    if (string.Equals(action.Trigger, "OnObjectExamined", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        ActionExecutor.Execute(action, objCtx, RagNextPlayer.Managers.InteractionController.Instance?.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>());
+                                    }
+                                }
+                            }
                         }
                     }
                     break;
@@ -718,7 +1020,20 @@ namespace RagNextPlayer.Runtime
                         {
                             var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedObj, StringComparison.OrdinalIgnoreCase));
                             if (obj != null)
+                            {
                                 ctx.Player.Inventory.Add(obj);
+                                if (obj.Actions != null)
+                                {
+                                    var objCtx = new GameExecutionContext(ctx.Game, ctx.CurrentRoom, obj, obj);
+                                    foreach (var action in obj.Actions)
+                                    {
+                                        if (string.Equals(action.Trigger, "OnObjectTaken", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            ActionExecutor.Execute(action, objCtx, RagNextPlayer.Managers.InteractionController.Instance?.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>());
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     break;
@@ -882,6 +1197,8 @@ namespace RagNextPlayer.Runtime
                 TimerActiveConditionData c =>
                     ctx.Game.Timers.Find(t => string.Equals(t.Name, ctx.Resolve(c.TimerId), StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id, ctx.Resolve(c.TimerId), StringComparison.OrdinalIgnoreCase))
                         ?.IsActive ?? false,
+
+                ForEachLoopCommandData => true,
 
                 DateTimePartComparisonConditionData or
                 DateTimeIsPastConditionData or

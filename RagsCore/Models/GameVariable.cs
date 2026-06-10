@@ -94,6 +94,9 @@ namespace RagsCore.Models
             }
         }
 
+        public ObservableCollection<string> Columns { get; set; } = new();
+        public ObservableCollection<ObservableCollection<string>> Rows { get; set; } = new();
+
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
         internal ObservableCollection<Action> Actions { get; set; } = new();
     }

@@ -500,13 +500,20 @@ namespace RagNextPlayer.Managers
                     if (_splashScreen != null) _splashScreen.style.opacity = 1f;
                     if (titleLabel != null) titleLabel.style.opacity = 1f;
 
-                    // Wait until video starts and then finishes
-                    yield return new UnityEngine.WaitForSeconds(0.5f);
-                    while (_videoPlayer.isPlaying)
+                    // Bug #4: Wait DisplayDuration then proceed to fade-out —
+                    // do NOT block until the video finishes. This allows fade transitions
+                    // to fire dynamically while the video is still playing.
+                    float displayDuration = (float)settings.DisplayDuration;
+                    if (displayDuration < 0.1f) displayDuration = 0.1f;
+                    float elapsedDisplay = 0f;
+                    while (elapsedDisplay < displayDuration)
                     {
+                        elapsedDisplay += UnityEngine.Time.deltaTime;
                         yield return null;
                     }
-                    _videoPlayer.Stop();
+                    // Bug #4: Do NOT stop the video here.
+                    // The fade-out runs below while the video is still playing.
+                    // _videoPlayer.Stop() is called after the fade-out completes.
                 }
             }
             else
@@ -712,6 +719,12 @@ namespace RagNextPlayer.Managers
             if (_splashScreen != null)
             {
                 _splashScreen.style.display = DisplayStyle.None;
+            }
+
+            // Bug #4: Stop video AFTER the fade-out so transitions play over the live video.
+            if (_videoPlayer != null && _videoPlayer.isPlaying)
+            {
+                _videoPlayer.Stop();
             }
 
             // Stop splash screen audio when done

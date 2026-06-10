@@ -425,6 +425,17 @@
           "dataType": "Variable"
         }
       ]
+    },
+    {
+      "name": "Variable: For Each Loop",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Array Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        }
+      ]
     }
   ]
 }

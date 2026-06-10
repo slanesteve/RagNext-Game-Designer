@@ -94,6 +94,7 @@
                         <Button Classes="nav" Content="📜 Global Functions" Command="{Binding NavigateCommand}" CommandParameter="Functions" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Functions, Converter={x:Static ObjectConverters.Equal}}"/>
                         <Button Classes="nav" Content="🎨 Splash Screen" Command="{Binding NavigateCommand}" CommandParameter="SplashScreen" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=SplashScreen, Converter={x:Static ObjectConverters.Equal}}"/>
                         <Button Classes="nav" Content="📂 Media Asset Library" Command="{Binding NavigateCommand}" CommandParameter="Media" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Media, Converter={x:Static ObjectConverters.Equal}}"/>
+                        <Button Classes="nav" Content="🛠️ Action Library" Command="{Binding NavigateCommand}" CommandParameter="ActionLibrary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=ActionLibrary, Converter={x:Static ObjectConverters.Equal}}"/>
 
                         <TextBlock Text="DIAGNOSTICS &amp; DISTRIBUTION" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="8,16,0,8" LetterSpacing="1"/>
                         <Button Classes="nav" Content="🔍 Validation Engine" Command="{Binding NavigateCommand}" CommandParameter="Validation" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Validation, Converter={x:Static ObjectConverters.Equal}}"/>
@@ -324,23 +325,11 @@
                                                 <TextBlock Text="Edit Action" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                 <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
                                                 <TextBlock Text="Trigger Event:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                <ComboBox SelectedIndex="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}">
-                                                    <ComboBoxItem Content="UserClicked"/>
-                                                    <ComboBoxItem Content="OnGameStart"/>
-                                                    <ComboBoxItem Content="OnGameLoad"/>
-                                                    <ComboBoxItem Content="OnTurnTick"/>
-                                                    <ComboBoxItem Content="OnPlayerEnter"/>
-                                                    <ComboBoxItem Content="OnPlayerExit"/>
-                                                    <ComboBoxItem Content="OnCharacterEnter"/>
-                                                    <ComboBoxItem Content="OnCharacterExit"/>
-                                                    <ComboBoxItem Content="OnRoomTick"/>
-                                                    <ComboBoxItem Content="OnInteract"/>
-                                                    <ComboBoxItem Content="OnCharacterTick"/>
-                                                    <ComboBoxItem Content="OnCharacterKilled"/>
-                                                    <ComboBoxItem Content="OnObjectExamined"/>
-                                                    <ComboBoxItem Content="OnObjectTaken"/>
-                                                    <ComboBoxItem Content="OnObjectDropped"/>
-                                                </ComboBox>
+                                                <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PlayerTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                <StackPanel Spacing="6" Margin="0,6,0,0" IsVisible="{Binding IsDirectionFilterVisible}">
+                                                    <TextBlock Text="Direction Filter:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DirectionFilters}" SelectedItem="{Binding DirectionFilter, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                </StackPanel>
                                                 <CheckBox IsChecked="{Binding InitallyActive, Mode=TwoWay}" Content="Initially Active" FontSize="11" Foreground="Gray"/>
                                                 <Button Content="🎨 Visual Graph Editor" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12"/>
                                             </StackPanel>
@@ -690,23 +679,11 @@
                                                             <TextBlock Text="Edit Action" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                             <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
                                                             <TextBlock Text="Trigger Event:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox SelectedIndex="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}">
-                                                                <ComboBoxItem Content="UserClicked"/>
-                                                                <ComboBoxItem Content="OnGameStart"/>
-                                                                <ComboBoxItem Content="OnGameLoad"/>
-                                                                <ComboBoxItem Content="OnTurnTick"/>
-                                                                <ComboBoxItem Content="OnPlayerEnter"/>
-                                                                <ComboBoxItem Content="OnPlayerExit"/>
-                                                                <ComboBoxItem Content="OnCharacterEnter"/>
-                                                                <ComboBoxItem Content="OnCharacterExit"/>
-                                                                <ComboBoxItem Content="OnRoomTick"/>
-                                                                <ComboBoxItem Content="OnInteract"/>
-                                                                <ComboBoxItem Content="OnCharacterTick"/>
-                                                                <ComboBoxItem Content="OnCharacterKilled"/>
-                                                                <ComboBoxItem Content="OnObjectExamined"/>
-                                                                <ComboBoxItem Content="OnObjectTaken"/>
-                                                                <ComboBoxItem Content="OnObjectDropped"/>
-                                                            </ComboBox>
+                                                            <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RoomTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                            <StackPanel Spacing="6" Margin="0,6,0,0" IsVisible="{Binding IsDirectionFilterVisible}">
+                                                                <TextBlock Text="Direction Filter:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                                <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DirectionFilters}" SelectedItem="{Binding DirectionFilter, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                            </StackPanel>
                                                             <CheckBox IsChecked="{Binding InitallyActive, Mode=TwoWay}" Content="Initially Active" FontSize="11" Foreground="Gray"/>
                                                             <Button Content="🎨 Visual Graph Editor" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12"/>
                                                         </StackPanel>
@@ -879,23 +856,11 @@
                                                 <TextBlock Text="Edit Action" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                 <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
                                                 <TextBlock Text="Trigger Event:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                <ComboBox SelectedIndex="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}">
-                                                    <ComboBoxItem Content="UserClicked"/>
-                                                    <ComboBoxItem Content="OnGameStart"/>
-                                                    <ComboBoxItem Content="OnGameLoad"/>
-                                                    <ComboBoxItem Content="OnTurnTick"/>
-                                                    <ComboBoxItem Content="OnPlayerEnter"/>
-                                                    <ComboBoxItem Content="OnPlayerExit"/>
-                                                    <ComboBoxItem Content="OnCharacterEnter"/>
-                                                    <ComboBoxItem Content="OnCharacterExit"/>
-                                                    <ComboBoxItem Content="OnRoomTick"/>
-                                                    <ComboBoxItem Content="OnInteract"/>
-                                                    <ComboBoxItem Content="OnCharacterTick"/>
-                                                    <ComboBoxItem Content="OnCharacterKilled"/>
-                                                    <ComboBoxItem Content="OnObjectExamined"/>
-                                                    <ComboBoxItem Content="OnObjectTaken"/>
-                                                    <ComboBoxItem Content="OnObjectDropped"/>
-                                                </ComboBox>
+                                                <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CharacterTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                <StackPanel Spacing="6" Margin="0,6,0,0" IsVisible="{Binding IsDirectionFilterVisible}">
+                                                    <TextBlock Text="Direction Filter:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DirectionFilters}" SelectedItem="{Binding DirectionFilter, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                </StackPanel>
                                                 <CheckBox IsChecked="{Binding InitallyActive, Mode=TwoWay}" Content="Initially Active" FontSize="11" Foreground="Gray"/>
                                                 <Button Content="🎨 Visual Graph Editor" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12"/>
                                             </StackPanel>
@@ -1054,23 +1019,11 @@
                                                             <TextBlock Text="Edit Action" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                             <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
                                                             <TextBlock Text="Trigger Event:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox SelectedIndex="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}">
-                                                                <ComboBoxItem Content="UserClicked"/>
-                                                                <ComboBoxItem Content="OnGameStart"/>
-                                                                <ComboBoxItem Content="OnGameLoad"/>
-                                                                <ComboBoxItem Content="OnTurnTick"/>
-                                                                <ComboBoxItem Content="OnPlayerEnter"/>
-                                                                <ComboBoxItem Content="OnPlayerExit"/>
-                                                                <ComboBoxItem Content="OnCharacterEnter"/>
-                                                                <ComboBoxItem Content="OnCharacterExit"/>
-                                                                <ComboBoxItem Content="OnRoomTick"/>
-                                                                <ComboBoxItem Content="OnInteract"/>
-                                                                <ComboBoxItem Content="OnCharacterTick"/>
-                                                                <ComboBoxItem Content="OnCharacterKilled"/>
-                                                                <ComboBoxItem Content="OnObjectExamined"/>
-                                                                <ComboBoxItem Content="OnObjectTaken"/>
-                                                                <ComboBoxItem Content="OnObjectDropped"/>
-                                                            </ComboBox>
+                                                            <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ObjectTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                            <StackPanel Spacing="6" Margin="0,6,0,0" IsVisible="{Binding IsDirectionFilterVisible}">
+                                                                <TextBlock Text="Direction Filter:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                                <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DirectionFilters}" SelectedItem="{Binding DirectionFilter, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                            </StackPanel>
                                                             <CheckBox IsChecked="{Binding InitallyActive, Mode=TwoWay}" Content="Initially Active" FontSize="11" Foreground="Gray"/>
                                                             <Button Content="🎨 Visual Graph Editor" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12"/>
                                                         </StackPanel>
@@ -1175,6 +1128,76 @@
                                     <TextBlock Text="• Display full Date &amp; Time using: {variable_name:datetime}" FontSize="11" Foreground="LightGray" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
+
+                            <!-- array / Multi-Dimensional Array Grid -->
+                            <Border Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12"
+                                    IsVisible="{Binding Type, ConverterParameter=array, Converter={x:Static ObjectConverters.Equal}}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="💡 Multi-Dimensional Array Setup" FontWeight="Bold" Foreground="#8E2DE2" FontSize="13"/>
+                                    <TextBlock Text="• Columns define variables or fields. Rows store row records." FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                                    
+                                    <!-- Column configuration -->
+                                    <TextBlock Text="Columns:" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                    <ItemsControl ItemsSource="{Binding Columns}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+                                                    <!-- Bind text two-way to allow renaming columns. Note: to edit a list of strings two-way, a TextBox binding is direct. -->
+                                                    <TextBox Text="{Binding ., Mode=TwoWay}" Grid.Column="0" Height="28" Background="{DynamicResource CardBg}" FontSize="11"/>
+                                                    <!-- Delete column button -->
+                                                    <Button Grid.Column="1" Content="✕" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.RemoveColumnCommand}" Height="28" Padding="6,2" Margin="4,0,0,0" VerticalAlignment="Center">
+                                                        <Button.CommandParameter>
+                                                            <MultiBinding Converter="{x:Static vm:MainWindowViewModel.MakeTupleConverter}">
+                                                                <Binding Path="$parent[Border].DataContext"/>
+                                                                <Binding Path="."/>
+                                                            </MultiBinding>
+                                                        </Button.CommandParameter>
+                                                    </Button>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Button Content="+ Add Column" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.AddColumnCommand}" CommandParameter="{Binding}" Height="28" Padding="10,2" FontSize="11"/>
+
+                                    <!-- Rows seeding -->
+                                    <TextBlock Text="Initial Row Data:" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,8,0,0"/>
+                                    <!-- Scrollable grid list of rows -->
+                                    <ScrollViewer MaxHeight="200">
+                                        <ItemsControl ItemsSource="{Binding Rows}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                                                        <!-- Values in this row -->
+                                                        <ItemsControl ItemsSource="{Binding}" Grid.Column="0">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4"/>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="x:String">
+                                                                    <!-- Direct edit of cell text -->
+                                                                    <TextBox Text="{Binding ., Mode=TwoWay}" Width="100" Height="28" Background="{DynamicResource CardBg}" FontSize="11"/>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <!-- Delete row button -->
+                                                        <Button Grid.Column="1" Content="Delete Row" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.RemoveRowCommand}" Height="28" FontSize="10" Padding="6,2" Margin="8,0,0,0">
+                                                            <Button.CommandParameter>
+                                                                <MultiBinding Converter="{x:Static vm:MainWindowViewModel.MakeTupleConverter}">
+                                                                    <Binding Path="$parent[Border].DataContext"/>
+                                                                    <Binding Path="."/>
+                                                                </MultiBinding>
+                                                            </Button.CommandParameter>
+                                                        </Button>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                    <Button Content="+ Add Row" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.AddRowCommand}" CommandParameter="{Binding}" Height="28" Padding="10,2" FontSize="11"/>
+                                </StackPanel>
+                             </Border>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -1291,7 +1314,7 @@
                                     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="200,*">
                                         <!-- Image Mode Background Selector -->
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Background Image Asset:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" IsVisible="{Binding Mode, ConverterParameter=ImageAndText, Converter={x:Static ObjectConverters.Equal}}"/>
-                                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashImageAsset, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" IsVisible="{Binding Mode, ConverterParameter=ImageAndText, Converter={x:Static ObjectConverters.Equal}}">
+                                        <ComboBox x:Name="SplashImageComboBox" Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashImageAsset, Mode=OneWay}" SelectionChanged="OnSplashImageSelectionChanged" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" IsVisible="{Binding Mode, ConverterParameter=ImageAndText, Converter={x:Static ObjectConverters.Equal}}">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:MediaAsset">
                                                     <TextBlock Text="{Binding OriginalFileName}"/>
@@ -1301,7 +1324,7 @@
 
                                         <!-- Video Mode Video Selector -->
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Background Video Asset:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.Equal}}"/>
-                                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VideoMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashVideoAsset, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.Equal}}">
+                                        <ComboBox x:Name="SplashVideoComboBox" Grid.Row="0" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).VideoMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashVideoAsset, Mode=OneWay}" SelectionChanged="OnSplashVideoSelectionChanged" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.Equal}}">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:MediaAsset">
                                                     <TextBlock Text="{Binding OriginalFileName}"/>
@@ -1311,7 +1334,7 @@
  
                                         <!-- Dramatic Sound / Music Selector (Ignored & Hidden in Video Mode) -->
                                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Dramatic Sound / Music:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" Margin="0,10,0,0" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.NotEqual}}"/>
-                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AudioMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashSoundAsset, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Margin="0,10,0,0" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.NotEqual}}">
+                                        <ComboBox x:Name="SplashSoundComboBox" Grid.Row="1" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AudioMediaAssets}" SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSplashSoundAsset, Mode=OneWay}" SelectionChanged="OnSplashSoundSelectionChanged" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Margin="0,10,0,0" IsVisible="{Binding Mode, ConverterParameter=Video, Converter={x:Static ObjectConverters.NotEqual}}">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:MediaAsset">
                                                     <TextBlock Text="{Binding OriginalFileName}"/>
@@ -1531,6 +1554,67 @@
                             </Grid>
                         </Border>
                     </Grid>
+                </Grid>
+
+                <!-- 7d. Global Action Library Tab -->
+                <Grid IsVisible="{Binding ActiveView, ConverterParameter=ActionLibrary, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
+                    <!-- Left Sidebar: Actions List -->
+                    <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <Grid RowDefinitions="Auto,*,Auto">
+                            <TextBlock Grid.Row="0" Text="🛠️ Action Templates" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextNormal}" Margin="0,0,0,10"/>
+                            
+                            <ListBox Grid.Row="1" ItemsSource="{Binding GlobalActions}" SelectedIndex="0" x:Name="GlobalActionsList" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:Action">
+                                        <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontSize="12" Padding="4"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
+                                <Button Content="+ Action" Command="{Binding AddGlobalActionCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" FontSize="11" Padding="10,6" CornerRadius="4"/>
+                                <Button Content="Delete" Command="{Binding DeleteGlobalActionCommand}" CommandParameter="{Binding #GlobalActionsList.SelectedItem}" Background="#C0392B" Foreground="White" FontSize="11" Padding="10,6" CornerRadius="4"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Right Content Pane: Selected Action Properties & Scripting -->
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" IsVisible="{Binding #GlobalActionsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <ScrollViewer>
+                            <StackPanel Spacing="16" DataContext="{Binding #GlobalActionsList.SelectedItem}" x:DataType="models:Action">
+                                <TextBlock Text="Template Configuration" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
+                                
+                                <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto" Margin="0,8,0,0">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Action Name:" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,0,12" FontSize="12"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" BorderBrush="#3D3D58" Margin="0,0,0,12" FontSize="12"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Trigger Event:" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,0,12" FontSize="12"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AllTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" BorderBrush="#3D3D58" Margin="0,0,0,12" FontSize="12"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Direction Filter:" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,0,12" FontSize="12" IsVisible="{Binding IsDirectionFilterVisible}"/>
+                                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DirectionFilters}" SelectedItem="{Binding DirectionFilter, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" BorderBrush="#3D3D58" Margin="0,0,0,12" FontSize="12" IsVisible="{Binding IsDirectionFilterVisible}"/>
+                                </Grid>
+
+                                <Separator Height="1" Background="{DynamicResource BorderBrush}" Margin="0,8"/>
+
+                                <TextBlock Text="Apply Template to Target Types:" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
+                                
+                                <WrapPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding ApplyToRooms, Mode=TwoWay}" Content="Rooms" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                    <CheckBox IsChecked="{Binding ApplyToPlayer, Mode=TwoWay}" Content="Player" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                    <CheckBox IsChecked="{Binding ApplyToCharacters, Mode=TwoWay}" Content="Characters" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                    <CheckBox IsChecked="{Binding ApplyToGrabableObjects, Mode=TwoWay}" Content="Grabable Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                    <CheckBox IsChecked="{Binding ApplyToStaticObjects, Mode=TwoWay}" Content="Static Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                    <CheckBox IsChecked="{Binding ApplyToTimers, Mode=TwoWay}" Content="Timers" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                    <CheckBox IsChecked="{Binding ApplyToFunctions, Mode=TwoWay}" Content="Functions" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                </WrapPanel>
+
+                                <Separator Height="1" Background="{DynamicResource BorderBrush}" Margin="0,8"/>
+
+                                <Button Content="🎨 Visual Script Editor" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="13" Padding="12" CornerRadius="6"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
                 </Grid>
 
                 <!-- 8. Validation Engine -->
@@ -2034,6 +2118,29 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
                         <Button Content="Cancel" Command="{Binding CloseInventorySelectorCommand}" Background="Transparent" Foreground="Gray"/>
                         <Button Content="Add to Inventory" Command="{Binding SelectInventoryItemCommand}" CommandParameter="{Binding #SelectorItemsList.SelectedItem}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorItemsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Premium Action Template Selector Popup Overlay -->
+        <Border Background="#B005050C" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsVisible="{Binding ShowActionSelectorOverlay}">
+            <Border Width="420" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource CardBg}" BorderBrush="#35354A" BorderThickness="1" CornerRadius="12" Padding="24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="🛠️ Add Action Template" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextNormal}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Choose an action template to create on this entity:" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center"/>
+                    
+                    <ListBox ItemsSource="{Binding MatchActionTemplates}" Height="180" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" x:Name="SelectorTemplatesList" SelectedIndex="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:Action">
+                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontSize="12" Padding="4"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                        <Button Content="Cancel" Command="{Binding CloseActionSelectorCommand}" Background="Transparent" Foreground="Gray"/>
+                        <Button Content="Add Action" Command="{Binding SelectActionTemplateCommand}" CommandParameter="{Binding #SelectorTemplatesList.SelectedItem}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorTemplatesList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

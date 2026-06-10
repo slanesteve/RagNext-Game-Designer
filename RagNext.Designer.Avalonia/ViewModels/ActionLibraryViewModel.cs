@@ -118,28 +118,42 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 ActionTrigger.UserClicked,
                 ActionTrigger.OnGameStart,
                 ActionTrigger.OnGameLoad,
-                ActionTrigger.OnTurnTick
-            },
-            "Room" => new List<ActionTrigger>
-            {
-                ActionTrigger.UserClicked,
+                ActionTrigger.OnTurnTick,
                 ActionTrigger.OnPlayerEnter,
                 ActionTrigger.OnPlayerExit,
                 ActionTrigger.OnCharacterEnter,
                 ActionTrigger.OnCharacterExit,
-                ActionTrigger.OnRoomTick
+                ActionTrigger.OnCharacterKilled
+            },
+            "Room" => new List<ActionTrigger>
+            {
+                ActionTrigger.UserClicked,
+                ActionTrigger.OnTurnTick,
+                ActionTrigger.OnPlayerEnter,
+                ActionTrigger.OnPlayerExit,
+                ActionTrigger.OnCharacterEnter,
+                ActionTrigger.OnCharacterExit,
+                ActionTrigger.OnCharacterKilled
             },
             "Character" => new List<ActionTrigger>
             {
                 ActionTrigger.UserClicked,
-                ActionTrigger.OnInteract,
-                ActionTrigger.OnCharacterTick,
+                ActionTrigger.OnTurnTick,
+                ActionTrigger.OnPlayerEnter,
+                ActionTrigger.OnPlayerExit,
+                ActionTrigger.OnCharacterEnter,
+                ActionTrigger.OnCharacterExit,
                 ActionTrigger.OnCharacterKilled
             },
             "GameObject" => new List<ActionTrigger>
             {
                 ActionTrigger.UserClicked,
-                ActionTrigger.OnInteract,
+                ActionTrigger.OnTurnTick,
+                ActionTrigger.OnPlayerEnter,
+                ActionTrigger.OnPlayerExit,
+                ActionTrigger.OnCharacterEnter,
+                ActionTrigger.OnCharacterExit,
+                ActionTrigger.OnCharacterKilled,
                 ActionTrigger.OnObjectExamined,
                 ActionTrigger.OnObjectTaken,
                 ActionTrigger.OnObjectDropped

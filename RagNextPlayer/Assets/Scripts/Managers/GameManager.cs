@@ -200,10 +200,172 @@ namespace RagNextPlayer.Managers
 
         // ── Room Transitions ─────────────────────────────────────────────────
 
+        public static bool MatchesDirection(string filter, string? direction)
+        {
+            if (string.IsNullOrWhiteSpace(filter) || string.Equals(filter, "All", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (string.IsNullOrWhiteSpace(direction))
+                return false;
+            
+            if (string.Equals(filter, direction, StringComparison.OrdinalIgnoreCase))
+                return true;
+                
+            // Abbreviation match: e.g. "N" matches "North"
+            if (string.Equals(filter, "N", StringComparison.OrdinalIgnoreCase) && string.Equals(direction, "North", StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(filter, "S", StringComparison.OrdinalIgnoreCase) && string.Equals(direction, "South", StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(filter, "E", StringComparison.OrdinalIgnoreCase) && string.Equals(direction, "East", StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(filter, "W", StringComparison.OrdinalIgnoreCase) && string.Equals(direction, "West", StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(filter, "NW", StringComparison.OrdinalIgnoreCase) && string.Equals(direction, "NorthWest", StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(filter, "NE", StringComparison.OrdinalIgnoreCase) && string.Equals(direction, "NorthEast", StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(filter, "SW", StringComparison.OrdinalIgnoreCase) && string.Equals(direction, "SouthWest", StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(filter, "SE", StringComparison.OrdinalIgnoreCase) && string.Equals(direction, "SouthEast", StringComparison.OrdinalIgnoreCase)) return true;
+            
+            return false;
+        }
+
+        public void FireTurnTickTriggers()
+        {
+            if (ActiveGame is null) return;
+            var sink = InteractionController.Instance?.GetComponent<CommandEffectRouter>();
+
+            // 1. Player OnTurnTick
+            if (ActiveGame.Player?.Actions != null)
+            {
+                var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description };
+                var playerCtx = new GameExecutionContext(ActiveGame, CurrentRoom, playerStub, ActiveGame.Player);
+                foreach (var action in ActiveGame.Player.Actions)
+                {
+                    if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ActionExecutor.Execute(action, playerCtx, sink);
+                    }
+                }
+            }
+
+            // 2. Current Room OnTurnTick
+            if (CurrentRoom?.Actions != null)
+            {
+                var roomCtx = new GameExecutionContext(ActiveGame, CurrentRoom, null, CurrentRoom);
+                foreach (var action in CurrentRoom.Actions)
+                {
+                    if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ActionExecutor.Execute(action, roomCtx, sink);
+                    }
+                }
+            }
+
+            // 3. Characters in the current Room
+            if (CurrentRoom != null)
+            {
+                foreach (var ch in ActiveGame.Characters)
+                {
+                    if (CurrentRoom.ObjectIds.Contains(ch.Id) && ch.Actions != null)
+                    {
+                        var chCtx = new GameExecutionContext(ActiveGame, CurrentRoom, ch, ch);
+                        foreach (var action in ch.Actions)
+                        {
+                            if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
+                            {
+                                ActionExecutor.Execute(action, chCtx, sink);
+                            }
+                        }
+                    }
+                }
+
+                // 4. Objects in the current Room
+                foreach (var obj in ActiveGame.Objects)
+                {
+                    if (CurrentRoom.ObjectIds.Contains(obj.Id) && obj.Actions != null)
+                    {
+                        var objCtx = new GameExecutionContext(ActiveGame, CurrentRoom, obj, obj);
+                        foreach (var action in obj.Actions)
+                        {
+                            if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
+                            {
+                                ActionExecutor.Execute(action, objCtx, sink);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public void FireCharacterKilledTriggers(GameObjectData character)
+        {
+            if (ActiveGame is null) return;
+            var sink = InteractionController.Instance?.GetComponent<CommandEffectRouter>();
+
+            // 1. Character's own OnCharacterKilled
+            if (character.Actions != null)
+            {
+                var charCtx = new GameExecutionContext(ActiveGame, CurrentRoom, character, character);
+                foreach (var action in character.Actions)
+                {
+                    if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ActionExecutor.Execute(action, charCtx, sink);
+                    }
+                }
+            }
+
+            // Get character's current room
+            var charRoomId = ActiveGame.Variables.Find(v => string.Equals(v.Name, $"char.{character.Id}.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
+            var charRoom = ActiveGame.Rooms.Find(r => r.Id == charRoomId) ?? CurrentRoom;
+
+            // 2. Room's OnCharacterKilled
+            if (charRoom?.Actions != null)
+            {
+                var roomCtx = new GameExecutionContext(ActiveGame, charRoom, character, charRoom);
+                foreach (var action in charRoom.Actions)
+                {
+                    if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ActionExecutor.Execute(action, roomCtx, sink);
+                    }
+                }
+            }
+
+            // 3. GameObjects in the same Room's OnCharacterKilled
+            if (charRoom != null)
+            {
+                foreach (var obj in ActiveGame.Objects)
+                {
+                    if (charRoom.ObjectIds.Contains(obj.Id) && obj.Actions != null)
+                    {
+                        var objCtx = new GameExecutionContext(ActiveGame, charRoom, character, obj);
+                        foreach (var action in obj.Actions)
+                        {
+                            if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
+                            {
+                                ActionExecutor.Execute(action, objCtx, sink);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Player's OnCharacterKilled (Global)
+            if (ActiveGame.Player?.Actions != null)
+            {
+                var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description };
+                var playerCtx = new GameExecutionContext(ActiveGame, charRoom, character, ActiveGame.Player);
+                foreach (var action in ActiveGame.Player.Actions)
+                {
+                    if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ActionExecutor.Execute(action, playerCtx, sink);
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Thread-safe room transition entry point. Safe to call from button callbacks.
         /// </summary>
-        public void MovePlayerToRoom(string roomId)
+        public void MovePlayerToRoom(string roomId) => MovePlayerToRoom(roomId, null);
+
+        public void MovePlayerToRoom(string roomId, string? direction)
         {
             if (CurrentState == GameState.Transitioning)
             {
@@ -214,10 +376,12 @@ namespace RagNextPlayer.Managers
                 }
                 return;
             }
-            _ = TransitionToRoomAsync(roomId);
+            _ = TransitionToRoomAsync(roomId, direction);
         }
 
-        private async Task TransitionToRoomAsync(string roomId)
+        private async Task TransitionToRoomAsync(string roomId) => await TransitionToRoomAsync(roomId, null);
+
+        private async Task TransitionToRoomAsync(string roomId, string? direction)
         {
             await _transitionLock.WaitAsync();
             try
@@ -230,6 +394,19 @@ namespace RagNextPlayer.Managers
                 }
 
                 CurrentState = GameState.Transitioning;
+
+                // Resolve direction if not explicitly provided
+                if (direction == null && CurrentRoom != null)
+                {
+                    foreach (var kvp in CurrentRoom.Exits)
+                    {
+                        if (string.Equals(kvp.Value, roomId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            direction = kvp.Key;
+                            break;
+                        }
+                    }
+                }
 
                 // Sync currentRoomId variable to the target room before firing exit actions
                 var roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
@@ -250,7 +427,27 @@ namespace RagNextPlayer.Managers
                     {
                         if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
                         {
-                            ActionExecutor.Execute(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                            if (MatchesDirection(action.DirectionFilter, direction))
+                            {
+                                ActionExecutor.Execute(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                            }
+                        }
+                    }
+
+                    // Bubble OnPlayerExit globally to Player-level hooks
+                    if (ActiveGame?.Player?.Actions != null)
+                    {
+                        var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description };
+                        var playerCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, playerStub, ActiveGame.Player);
+                        foreach (var action in ActiveGame.Player.Actions)
+                        {
+                            if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (MatchesDirection(action.DirectionFilter, direction))
+                                {
+                                    ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                }
+                            }
                         }
                     }
 
@@ -293,30 +490,32 @@ namespace RagNextPlayer.Managers
                 {
                     if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
-                    }
-                }
-
-                // Run Player's OnTurnTick actions
-                if (ActiveGame?.Player?.Actions != null)
-                {
-                    foreach (var action in ActiveGame.Player.Actions)
-                    {
-                        if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
+                        if (MatchesDirection(action.DirectionFilter, direction))
                         {
-                            ActionExecutor.Execute(action, MakeContext(), InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                            ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
                         }
                     }
                 }
 
-                // Run Room's OnRoomTick actions
-                foreach (var action in room.Actions)
+                // Bubble OnPlayerEnter globally to Player-level hooks
+                if (ActiveGame?.Player?.Actions != null)
                 {
-                    if (string.Equals(action.Trigger, "OnRoomTick", StringComparison.OrdinalIgnoreCase))
+                    var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description };
+                    var playerCtx = new GameExecutionContext(ActiveGame!, room, playerStub, ActiveGame.Player);
+                    foreach (var action in ActiveGame.Player.Actions)
                     {
-                        ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                        if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (MatchesDirection(action.DirectionFilter, direction))
+                            {
+                                ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                            }
+                        }
                     }
                 }
+
+                // Run all unified OnTurnTick actions across player, rooms, and active entities
+                FireTurnTickTriggers();
 
                 // 4. Fade in
                 if (UIManager.Instance is not null)

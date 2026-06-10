@@ -18,6 +18,7 @@ let selectedNode = null;
 let activeActionName = "Visual Action Node";
 let activeActionTrigger = "UserClicked";
 let activeActionInitallyActive = true;
+let activeActionDirectionFilter = "All";
 
 function getArray(val) {
     if (!val) return [];
@@ -84,9 +85,9 @@ const fallbackDiscriminators = {
     "charactermovetoobject": "char.moveToObject",
     "charactersetportraitmedia": "char.setPortraitMedia",
     "charactersetactiontoactiveinactive": "char.setActionActive",
-    "playersetactiontoactiveinactive": "char.setActionActive",
-    "roomsetactiontoactiveinactive": "char.setActionActive",
-    "itemsetactiontoactiveinactive": "char.setActionActive",
+    "playersetactiontoactiveinactive": "player.setActionActive",
+    "roomsetactiontoactiveinactive": "room.setActionActive",
+    "itemsetactiontoactiveinactive": "item.setActionActive",
     "charactersetattribute": "char.setAttribute",
     "charactersetdescription": "char.setDescription",
     "charactersetgender": "char.setGender",
@@ -134,6 +135,13 @@ const fallbackDiscriminators = {
     "variableset": "var.set",
     "variableincrement": "var.inc",
     "variabledecrement": "var.dec",
+    "variableforeachloop": "variable.forEachLoop",
+    "variablebreakloop": "variable.breakLoop",
+    "variablesetarrayelement": "variable.setArrayElement",
+    "variableaddarrayrow": "variable.addArrayRow",
+    "variableremovearrayrow": "variable.removeArrayRow",
+    "variableappendtext": "variable.appendText",
+    "variableappendline": "variable.appendLine",
     "promptplayerinput": "general.promptInput",
     "variablesetnumericrandomly": "var.setRandom",
     "endthegame": "general.endGame",
@@ -198,10 +206,16 @@ const propertyMappings = {
     "Constant Value": ["ConstantValue", "constantValue"],
     "Sound File": ["SoundId", "soundId"],
     "Video File": ["VideoId", "videoId"],
+    "Array Variable": ["ArrayVariableName", "arrayVariableName"],
+    "Row Index": ["RowIndex", "rowIndex"],
+    "Column Name": ["ColumnName", "columnName"],
+    "Comma-separated Values": ["ValuesCommaSeparated", "valuesCommaSeparated"],
     "Volume": ["Volume", "volume"],
     "Loop": ["Loop", "loop"],
     "Start Time": ["StartTime", "startTime"],
-    "End Time": ["EndTime", "endTime"]
+    "End Time": ["EndTime", "endTime"],
+    // Bug #5: ActionName maps to the C# ActionName property on Set Action Active commands.
+    "Action Name": ["ActionName", "actionName"]
 };
 
 function getPropertyValue(nodeData, label) {
@@ -1122,9 +1136,6 @@ function createStartNode() {
         { val: "OnPlayerExit", label: "On Player Exit" },
         { val: "OnCharacterEnter", label: "On Character Enter" },
         { val: "OnCharacterExit", label: "On Character Exit" },
-        { val: "OnRoomTick", label: "On Room Tick" },
-        { val: "OnInteract", label: "On Interact" },
-        { val: "OnCharacterTick", label: "On Character Tick" },
         { val: "OnCharacterKilled", label: "On Character Killed" },
         { val: "OnObjectExamined", label: "On Object Examined" },
         { val: "OnObjectTaken", label: "On Object Taken" },
@@ -1141,11 +1152,59 @@ function createStartNode() {
         triggerSelect.appendChild(opt);
     });
 
-    triggerSelect.addEventListener('change', () => {
-        activeActionTrigger = triggerSelect.value;
+    // Direction Filter Container
+    const dirContainer = document.createElement('div');
+    dirContainer.style.marginTop = "4px";
+    dirContainer.style.marginBottom = "8px";
+
+    const dirLabel = document.createElement('label');
+    dirLabel.innerText = "Direction Filter:";
+    dirLabel.style.fontSize = "10px";
+    dirLabel.style.color = "var(--text-muted)";
+    dirLabel.style.display = "block";
+    dirContainer.appendChild(dirLabel);
+
+    const dirSelect = document.createElement('select');
+    dirSelect.style.width = "95%";
+    dirSelect.style.backgroundColor = "#2a2a2a";
+    dirSelect.style.color = "#ffffff";
+    dirSelect.style.border = "1px solid #444";
+    dirSelect.style.borderRadius = "4px";
+    dirSelect.style.padding = "4px";
+
+    const directions = ["All", "N", "S", "E", "W", "NW", "NE", "SW", "SE", "Up", "Down", "In", "Out"];
+    directions.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.innerText = d;
+        if (d === activeActionDirectionFilter) {
+            opt.selected = true;
+        }
+        dirSelect.appendChild(opt);
+    });
+
+    dirSelect.addEventListener('change', () => {
+        activeActionDirectionFilter = dirSelect.value;
         triggerAutoSave();
     });
+    dirContainer.appendChild(dirSelect);
+
+    const updateDirVisibility = () => {
+        const needsDir = ["OnPlayerEnter", "OnPlayerExit", "OnCharacterEnter", "OnCharacterExit"].includes(activeActionTrigger);
+        dirContainer.style.display = needsDir ? "block" : "none";
+    };
+
+    triggerSelect.addEventListener('change', () => {
+        activeActionTrigger = triggerSelect.value;
+        updateDirVisibility();
+        triggerAutoSave();
+    });
+    
+    // Set initial visibility
+    updateDirVisibility();
+
     node.bodyElement.appendChild(triggerSelect);
+    node.bodyElement.appendChild(dirContainer);
 
     // Initially Active Checkbox
     const activeRow = document.createElement('div');
@@ -1279,6 +1338,114 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
 
     const choiceObj = { id: choiceId, textElement: inp, rowId };
     node.choices.push(choiceObj);
+}
+
+function addNewSwitchNode(x = null, y = null) {
+    if (x === null || y === null) {
+        const center = getViewportCenterCoordinates();
+        x = center.x - 160;
+        y = center.y - 120;
+    }
+    const id = 'switch_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const node = createBaseNode(id, 'switch', '🔀 Switch Control Flow', x, y);
+
+    addPin(node, 'input', 'exec', 'Entry', `${id}_in`);
+
+    // Expression input
+    const exprLabel = document.createElement('label');
+    exprLabel.innerText = "Expression:";
+    exprLabel.style.fontSize = "10px";
+    exprLabel.style.color = "var(--text-muted)";
+    node.bodyElement.appendChild(exprLabel);
+
+    const exprInput = document.createElement('input');
+    exprInput.type = 'text';
+    exprInput.placeholder = "e.g. {var.State}";
+    exprInput.style.width = '90%';
+    exprInput.style.marginBottom = '8px';
+    exprInput.value = node.data.expression || "";
+    exprInput.addEventListener('input', () => {
+        node.data.expression = exprInput.value;
+        triggerAutoSave();
+    });
+    node.bodyElement.appendChild(exprInput);
+
+    // Static Default pin
+    addPin(node, 'output', 'exec', 'Default', `${id}_default`);
+
+    // Cases list container
+    const casesList = document.createElement('div');
+    casesList.id = `${id}_cases_container`;
+    node.bodyElement.appendChild(casesList);
+
+    node.cases = [];
+
+    const btn = document.createElement('button');
+    btn.className = 'add-choice-btn';
+    btn.innerText = "+ Add Case";
+    btn.onclick = () => {
+        addSwitchCaseRow(node, casesList, "", Date.now());
+        triggerAutoSave();
+    };
+    node.bodyElement.appendChild(btn);
+
+    return node;
+}
+
+function addSwitchCaseRow(node, container, initialText, caseId) {
+    const rowId = `case_${caseId}`;
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.marginBottom = '6px';
+    row.style.position = 'relative';
+    row.id = rowId;
+
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.style.flex = '1';
+    inp.style.marginRight = '20px';
+    inp.placeholder = "Value (e.g. 1)";
+    inp.value = initialText;
+    inp.addEventListener('input', () => {
+        triggerAutoSave();
+    });
+    row.appendChild(inp);
+
+    const delBtn = document.createElement('button');
+    delBtn.innerText = "✕";
+    delBtn.className = 'delete-choice-btn';
+    delBtn.onclick = () => {
+        node.cases = node.cases.filter(c => c.id !== caseId);
+        removeConnectionsForPin(`${rowId}_out`);
+        row.remove();
+        triggerAutoSave();
+    };
+    row.appendChild(delBtn);
+
+    const pin = document.createElement('div');
+    pin.id = `${rowId}_out`;
+    pin.className = 'pin output switch-case';
+    pin.style.right = '-8px';
+    pin.style.top = '12px';
+    pin.style.width = '12px';
+    pin.style.height = '12px';
+    pin.style.borderRadius = '50%';
+    pin.style.backgroundColor = '#94A3B8';
+    pin.style.position = 'absolute';
+    row.appendChild(pin);
+
+    // Make pin connectable
+    pin.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        activeDrawingPin = { id: pin.id, direction: 'output', type: 'switch-case', node };
+        drawTempConnection(e);
+    });
+
+    container.appendChild(row);
+
+    const caseObj = { id: caseId, textElement: inp, rowId };
+    node.cases.push(caseObj);
 }
 
 function populateSelectWithOptions(select, items) {
@@ -1670,7 +1837,7 @@ function refreshCommandFields(node) {
             listWrapper.appendChild(addGroup);
 
             inputElement = listWrapper;
-        } else if (inputSchema.controlType === 'ComboBox' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'PromptName') {
+        } else if (inputSchema.controlType === 'ComboBox' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'PromptName' || inputSchema.dataType === 'ActionName') {
             // Container for both controls
             const fieldWrapper = document.createElement('div');
             fieldWrapper.className = 'toggle-field-wrapper';
@@ -1734,6 +1901,33 @@ function refreshCommandFields(node) {
             else if (inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') {
                 const attrs = getAttributesForNode(node);
                 optionsList = attrs.map(a => ({ Id: a, Name: a }));
+            }
+            // Bug #5: ActionName is a dynamic list scoped to the entity selected in this node.
+            else if (inputSchema.dataType === 'ActionName') {
+                // Determine which entity is selected and pull its actions from the catalog.
+                const commandType = node.data.commandType || '';
+                let entityActions = [];
+
+                if (commandType === 'char.setActionActive') {
+                    const charId = getPropertyValue(node.data, 'Character');
+                    const ch = (catalogs.Characters || []).find(c => (c.Id || c.id) === charId);
+                    entityActions = ch ? (ch.Actions || ch.actions || []) : [];
+                } else if (commandType === 'item.setActionActive') {
+                    const itemId = getPropertyValue(node.data, 'Item');
+                    const obj = (catalogs.GameObjects || []).find(o => (o.Id || o.id) === itemId);
+                    entityActions = obj ? (obj.Actions || obj.actions || []) : [];
+                } else if (commandType === 'room.setActionActive') {
+                    const roomId = getPropertyValue(node.data, 'Room');
+                    const rm = (catalogs.Rooms || []).find(r => (r.Id || r.id) === roomId);
+                    entityActions = rm ? (rm.Actions || rm.actions || []) : [];
+                } else if (commandType === 'player.setActionActive') {
+                    entityActions = catalogs.PlayerActions || [];
+                }
+
+                optionsList = entityActions.map(a => {
+                    const name = a.Name || a.name || a;
+                    return { Id: name, Name: name };
+                });
             }
             else if (inputSchema.label === 'Gender') {
                 optionsList = [
@@ -1855,7 +2049,7 @@ function refreshCommandFields(node) {
                     node.data["End Time"] = "";
                     node.data["EndTime"] = "";
                 }
-                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media') {
+                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'ActionName') {
                     refreshCommandFields(node);
                 }
                 triggerAutoSave();
@@ -2597,6 +2791,7 @@ function refreshCommandFields(node) {
 function addNewDialogueNodeAtCursor() { addNewDialogueNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
 function addNewCommandNodeAtCursor() { addNewCommandNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
 function addNewConditionNodeAtCursor() { addNewConditionNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
+function addNewSwitchNodeAtCursor() { addNewSwitchNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
 
 function deleteNode(id) {
     if (id === 'start') return;
@@ -2696,6 +2891,7 @@ function serializeGraph() {
         Name: activeActionName,
         Trigger: activeActionTrigger,
         InitallyActive: activeActionInitallyActive,
+        DirectionFilter: activeActionDirectionFilter,
         Nodes: rootNodes
     };
 }
@@ -2743,6 +2939,27 @@ function buildNodeJsonWithoutNext(node) {
             "dialogueId": node.id,
             "characterLines": node.data.characterLines || "",
             "choices": choiceDtos,
+            "x": node.x,
+            "y": node.y,
+            "width": node.width || null,
+            "height": node.height || null
+        };
+    } else if (node.type === 'switch') {
+        const casesDict = {};
+        node.cases.forEach(c => {
+            const destPin = connections.find(conn => conn.fromPinId === `${c.rowId}_out`);
+            const destNode = destPin ? nodes.find(n => n.id === getNodeIdFromPinId(destPin.toPinId)) : null;
+            casesDict[c.textElement.value] = destNode ? buildFlatSequence(destNode) : [];
+        });
+
+        const defaultPin = connections.find(c => c.fromPinId === `${node.id}_default`);
+        const defaultNode = defaultPin ? nodes.find(n => n.id === getNodeIdFromPinId(defaultPin.toPinId)) : null;
+
+        return {
+            "$type": "general.switch",
+            "expression": node.data.expression || "",
+            "cases": casesDict,
+            "defaultBranch": defaultNode ? buildFlatSequence(defaultNode) : [],
             "x": node.x,
             "y": node.y,
             "width": node.width || null,
@@ -2935,6 +3152,7 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
         activeActionInitallyActive = (actionJson?.InitallyActive !== undefined) ? actionJson.InitallyActive : 
                                      ((actionJson?.initallyActive !== undefined) ? actionJson.initallyActive : 
                                      ((actionJson?.initiallyActive !== undefined) ? actionJson.initiallyActive : true));
+        activeActionDirectionFilter = actionJson?.DirectionFilter || actionJson?.directionFilter || "All";
 
         const titleEl = document.getElementById("editor-title");
         if (titleEl) {
@@ -2979,9 +3197,13 @@ function parseFlatSequence(nodeList, x, y) {
     let prevNode = null;
 
     list.forEach((stepData, idx) => {
-        // Force automatic layout mapping to prevent LLM overlapping/clustering coordinates
-        const nodeX = x + idx * 380;
-        const nodeY = y;
+        // Bug #2: Use saved node position if present (non-zero).
+        // Fall back to auto-layout only for nodes that have never been positioned.
+        const rawX = stepData.x !== undefined ? stepData.x : (stepData.X !== undefined ? stepData.X : 0);
+        const rawY = stepData.y !== undefined ? stepData.y : (stepData.Y !== undefined ? stepData.Y : 0);
+        const nodeX = (rawX !== 0) ? rawX : x + idx * 380;
+        const nodeY = (rawY !== 0) ? rawY : y;
+
         const currNode = parseAndCreateNode(stepData, nodeX, nodeY);
         if (!firstNode) firstNode = currNode;
 
@@ -3000,6 +3222,51 @@ function parseFlatSequence(nodeList, x, y) {
 
 function parseAndCreateNode(data, x, y) {
     if (!data) return null;
+
+    if (data["$type"] === "general.switch") {
+        const node = addNewSwitchNode(x, y);
+        node.data.expression = data.Expression !== undefined ? data.Expression : (data.expression || "");
+        const input = node.element.querySelector('input[type="text"]');
+        if (input) input.value = node.data.expression;
+
+        // Restore Cases
+        const cases = data.Cases || data.cases;
+        if (cases) {
+            let idx = 0;
+            const container = document.getElementById(`${node.id}_cases_container`);
+            for (const key of Object.keys(cases)) {
+                const caseId = Date.now() + idx;
+                addSwitchCaseRow(node, container, key, caseId);
+
+                const caseCmds = getArray(cases[key]);
+                if (caseCmds && caseCmds.length > 0) {
+                    const child = parseFlatSequence(caseCmds, x + 380, y + idx * 240);
+                    if (child) {
+                        connections.push({
+                            fromPinId: `case_${caseId}_out`,
+                            toPinId: `${child.id}_in`,
+                            type: 'switch-case'
+                        });
+                    }
+                }
+                idx++;
+            }
+        }
+
+        // Restore DefaultBranch
+        const defaultBranch = getArray(data.DefaultBranch || data.defaultBranch);
+        if (defaultBranch && defaultBranch.length > 0) {
+            const child = parseFlatSequence(defaultBranch, x + 380, y - 120);
+            if (child) {
+                connections.push({
+                    fromPinId: `${node.id}_default`,
+                    toPinId: `${child.id}_in`,
+                    type: 'default'
+                });
+            }
+        }
+        return node;
+    }
 
     if (data["$type"] === "general.startDialogue") {
         const node = addNewDialogueNode(x, y);

@@ -15,6 +15,7 @@ namespace RagsCore
     [JsonSerializable(typeof(CommandCatalog))]
     [JsonSerializable(typeof(ConditionCatalog))]
     [JsonSerializable(typeof(RagsCore.Models.Action))]
+    [JsonSerializable(typeof(List<RagsCore.Models.Action>))]
     [JsonSerializable(typeof(Room))]
     [JsonSerializable(typeof(Character))]
     [JsonSerializable(typeof(GameObject))]
