@@ -1554,8 +1554,23 @@ function addNewConditionNode(x = null, y = null) {
 
     const select = document.createElement('select');
     populateSelectWithOptions(select, AVAILABLE_CONDITIONS);
+    
+    // Helper to dynamically rename port labels based on condition type (e.g. For Each Loop)
+    const updateOutputLabels = (condType) => {
+        const truePin = node.element.querySelector('.pin.output.true');
+        const falsePin = node.element.querySelector('.pin.output.false');
+        if (condType === 'variable.forEachLoop') {
+            if (truePin && truePin.parentNode) truePin.parentNode.firstChild.textContent = 'Loop Body';
+            if (falsePin && falsePin.parentNode) falsePin.parentNode.firstChild.textContent = 'Completed';
+        } else {
+            if (truePin && truePin.parentNode) truePin.parentNode.firstChild.textContent = 'True';
+            if (falsePin && falsePin.parentNode) falsePin.parentNode.firstChild.textContent = 'False';
+        }
+    };
+
     select.addEventListener('change', () => { 
         node.data.conditionType = select.value; 
+        updateOutputLabels(select.value);
         refreshCommandFields(node); 
         triggerAutoSave();
     });
@@ -1567,6 +1582,7 @@ function addNewConditionNode(x = null, y = null) {
 
     if (AVAILABLE_CONDITIONS.length > 0) {
         node.data.conditionType = AVAILABLE_CONDITIONS[0].type;
+        updateOutputLabels(node.data.conditionType);
         refreshCommandFields(node);
     }
 
@@ -3343,6 +3359,16 @@ function parseAndCreateNode(data, x, y) {
             if (select) {
                 populateSelectWithOptions(select, AVAILABLE_CONDITIONS);
                 select.value = data["$type"];
+                // Trigger label rename if needed
+                const truePin = node.element.querySelector('.pin.output.true');
+                const falsePin = node.element.querySelector('.pin.output.false');
+                if (select.value === 'variable.forEachLoop') {
+                    if (truePin && truePin.parentNode) truePin.parentNode.firstChild.textContent = 'Loop Body';
+                    if (falsePin && falsePin.parentNode) falsePin.parentNode.firstChild.textContent = 'Completed';
+                } else {
+                    if (truePin && truePin.parentNode) truePin.parentNode.firstChild.textContent = 'True';
+                    if (falsePin && falsePin.parentNode) falsePin.parentNode.firstChild.textContent = 'False';
+                }
             }
 
             refreshCommandFields(node);
@@ -3616,6 +3642,14 @@ function getAutocompleteSuggestions(triggerChar) {
                     list.push({ token: `variables.${v.Name}:date`, typeName: "Datetime Date-only", desc: "Displays date portion: 2026-10-31" });
                     list.push({ token: `variables.${v.Name}:time`, typeName: "Datetime Time-only", desc: "Displays time portion: 08:00:00" });
                     list.push({ token: `variables.${v.Name}:datetime`, typeName: "Datetime Raw ISO-8601", desc: `Raw value: ${v.Value || ''}` });
+                } else if (vt === "array") {
+                    list.push({ token: `variables.${v.Name}`, typeName: "Array Variable", desc: "Multi-Dimensional Array variable." });
+                    const cols = v.Columns || v.columns;
+                    if (cols) {
+                        getArray(cols).forEach(col => {
+                            list.push({ token: `Loop.${col}`, typeName: `Loop Variable (${v.Name})`, desc: `Value of column '${col}' for current iteration of '${v.Name}'.` });
+                        });
+                    }
                 } else {
                     list.push({ token: `variables.${v.Name}`, typeName: "Global Variable", desc: `State variable. Current: ${v.Value || '0'}` });
                 }
@@ -3626,6 +3660,7 @@ function getAutocompleteSuggestions(triggerChar) {
         if (catalogs.Characters) {
             catalogs.Characters.forEach(c => {
                 const nameClean = c.Name.replace(/\s+/g, "");
+                list.push({ token: `characters.${nameClean}.id`, typeName: "Character Property", desc: `Unique ID of character '${c.Name}'.` });
                 list.push({ token: `characters.${nameClean}.Name`, typeName: "Character Property", desc: `Name of character '${c.Name}'.` });
                 list.push({ token: `characters.${nameClean}.Description`, typeName: "Character Property", desc: `Description of character '${c.Name}'.` });
                 list.push({ token: `characters.${nameClean}.Health`, typeName: "Character Property", desc: `Health of character '${c.Name}'.` });
@@ -3637,9 +3672,21 @@ function getAutocompleteSuggestions(triggerChar) {
         if (catalogs.GameObjects) {
             catalogs.GameObjects.forEach(o => {
                 const nameClean = o.Name.replace(/\s+/g, "");
+                list.push({ token: `objects.${nameClean}.id`, typeName: "Object Property", desc: `Unique ID of object '${o.Name}'.` });
                 list.push({ token: `objects.${nameClean}.Name`, typeName: "Object Property", desc: `Name of object '${o.Name}'.` });
                 list.push({ token: `objects.${nameClean}.Description`, typeName: "Object Property", desc: `Description of object '${o.Name}'.` });
                 list.push({ token: `objects.${nameClean}.portrait`, typeName: "Object Property", desc: `Portrait of object '${o.Name}'.` });
+            });
+        }
+
+        // Rooms (Add rooms.{name}.id & properties)
+        if (catalogs.Rooms) {
+            catalogs.Rooms.forEach(r => {
+                const nameClean = r.Name.replace(/\s+/g, "");
+                list.push({ token: `rooms.${nameClean}.id`, typeName: "Room Property", desc: `Unique ID of room '${r.Name}'.` });
+                list.push({ token: `rooms.${nameClean}.Name`, typeName: "Room Property", desc: `Name of room '${r.Name}'.` });
+                list.push({ token: `rooms.${nameClean}.Description`, typeName: "Room Property", desc: `Description of room '${r.Name}'.` });
+                list.push({ token: `rooms.${nameClean}.portrait`, typeName: "Room Property", desc: `Portrait of room '${r.Name}'.` });
             });
         }
     } else if (triggerChar === '[') {

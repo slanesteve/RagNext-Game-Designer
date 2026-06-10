@@ -40,12 +40,19 @@ namespace RagNextPlayer.Runtime
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
-            return _tokenRegex.Replace(text, match =>
+            var resolved = _tokenRegex.Replace(text, match =>
             {
                 var path     = match.Groups[1].Value.Trim();
                 var resolved = ResolvePath(path, game, currentRoom, focusEntity);
                 return resolved ?? match.Value;   // leave unknown tokens unchanged
             });
+
+            if (resolved != text && resolved.Contains('{') && resolved.Contains('}'))
+            {
+                resolved = Resolve(resolved, game, currentRoom, focusEntity);
+            }
+
+            return resolved;
         }
 
         // ── Core resolver ──────────────────────────────────────────────────────
@@ -59,14 +66,18 @@ namespace RagNextPlayer.Runtime
             if (string.IsNullOrWhiteSpace(path)) return null;
 
             var parts = path.Split('.');
-            var root  = parts[0].Trim().ToLowerInvariant();
+            for (int i = 0; i < parts.Length; i++)
+            {
+                parts[i] = parts[i].Trim('[', ']', '"', '\'', ' ');
+            }
+            var root  = parts[0].ToLowerInvariant();
 
             switch (root)
             {
                 // ── player.* ─────────────────────────────────────────────────
                 case "player":
                     if (parts.Length < 2) return game.Player?.Name;
-                    switch (parts[1].Trim().ToLowerInvariant())
+                    switch (parts[1].ToLowerInvariant())
                     {
                         case "id":          return game.Player?.Id;
                         case "currentroom":
@@ -83,10 +94,18 @@ namespace RagNextPlayer.Runtime
                         case "attributes":
                         case "attribute":
                             if (parts.Length < 3 || game.Player?.Attributes == null) return null;
-                            game.Player.Attributes.TryGetValue(parts[2].Trim(), out var attrVal);
+                            game.Player.Attributes.TryGetValue(parts[2], out var attrVal);
                             return attrVal;
                         default:            return null;
                     }
+
+                // ── loop.* ────────────────────────────────────────────────────
+                case "loop":
+                    if (parts.Length > 1)
+                    {
+                        return FindVariable(game, $"Loop.{parts[1]}");
+                    }
+                    return null;
 
                 // ── room.* ────────────────────────────────────────────────────
                 case "room":
@@ -94,7 +113,7 @@ namespace RagNextPlayer.Runtime
                     var room = currentRoom;
                     if (room is null) return null;
                     if (parts.Length < 2) return room.Name;
-                    switch (parts[1].Trim().ToLowerInvariant())
+                    switch (parts[1].ToLowerInvariant())
                     {
                         case "id":          return room.Id;
                         case "name":        return room.Name;
@@ -107,7 +126,123 @@ namespace RagNextPlayer.Runtime
                         case "attributes":
                         case "attribute":
                             if (parts.Length < 3 || room.Attributes == null) return null;
-                            room.Attributes.TryGetValue(parts[2].Trim(), out var attrVal);
+                            room.Attributes.TryGetValue(parts[2], out var attrVal);
+                            return attrVal;
+                        default:            return null;
+                    }
+                }
+
+                // ── rooms.* (specific room by name) ───────────────────────────
+                case "rooms":
+                {
+                    if (parts.Length < 2) return null;
+                    var roomName = parts[1];
+                    var room = game.Rooms.Find(r => 
+                        string.Equals(r.Name, roomName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r.Name.Replace(" ", ""), roomName, StringComparison.OrdinalIgnoreCase));
+                    if (room == null) return null;
+                    if (parts.Length < 3) return room.Name;
+                    switch (parts[2].ToLowerInvariant())
+                    {
+                        case "id":          return room.Id;
+                        case "name":        return room.Name;
+                        case "description": return room.Description;
+                        case "portrait":
+                        case "characterportrait":
+                        case "portraitimagepath":
+                        case "portraitimage":
+                            return room.PortraitImagePath;
+                        case "attributes":
+                        case "attribute":
+                            if (parts.Length < 4 || room.Attributes == null) return null;
+                            room.Attributes.TryGetValue(parts[3], out var attrVal);
+                            return attrVal;
+                        default:            return null;
+                    }
+                }
+
+                // ── objects.* / gameobjects.* / gameobject.* ───────────────────
+                case "objects":
+                {
+                    if (parts.Length < 2) return null;
+                    var objName = parts[1];
+                    var obj = game.Objects.Find(o => 
+                        string.Equals(o.Name, objName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(o.Name.Replace(" ", ""), objName, StringComparison.OrdinalIgnoreCase));
+                    if (obj == null) return null;
+                    if (parts.Length < 3) return obj.Name;
+                    switch (parts[2].ToLowerInvariant())
+                    {
+                        case "id":          return obj.Id;
+                        case "name":        return obj.Name;
+                        case "description": return obj.Description;
+                        case "portrait":
+                        case "characterportrait":
+                        case "portraitimagepath":
+                        case "portraitimage":
+                            return obj.PortraitImagePath;
+                        case "attributes":
+                        case "attribute":
+                            if (parts.Length < 4 || obj.Attributes == null) return null;
+                            obj.Attributes.TryGetValue(parts[3], out var attrVal);
+                            return attrVal;
+                        default:            return null;
+                    }
+                }
+                case "gameobjects":
+                case "gameobject":
+                {
+                    if (parts.Length < 2) return null;
+                    var objName = parts[1];
+                    var obj = game.Objects.Find(o => 
+                        string.Equals(o.Name, objName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(o.Name.Replace(" ", ""), objName, StringComparison.OrdinalIgnoreCase));
+                    if (obj == null) return null;
+                    if (parts.Length < 3) return obj.Name;
+                    switch (parts[2].ToLowerInvariant())
+                    {
+                        case "id":          return obj.Id;
+                        case "name":        return obj.Name;
+                        case "description": return obj.Description;
+                        case "portrait":
+                        case "characterportrait":
+                        case "portraitimagepath":
+                        case "portraitimage":
+                            return obj.PortraitImagePath;
+                        case "attributes":
+                        case "attribute":
+                            if (parts.Length < 4 || obj.Attributes == null) return null;
+                            obj.Attributes.TryGetValue(parts[3], out var attrVal);
+                            return attrVal;
+                        default:            return null;
+                    }
+                }
+
+                // ── characters.* / character.* ─────────────────────────────────
+                case "characters":
+                case "character":
+                {
+                    if (parts.Length < 2) return null;
+                    var charName = parts[1];
+                    var character = game.Characters.Find(c => 
+                        string.Equals(c.Name, charName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(c.Name.Replace(" ", ""), charName, StringComparison.OrdinalIgnoreCase));
+                    if (character == null) return null;
+                    if (parts.Length < 3) return character.Name;
+                    switch (parts[2].ToLowerInvariant())
+                    {
+                        case "id":          return character.Id;
+                        case "name":        return character.Name;
+                        case "description": return character.Description;
+                        case "portrait":
+                        case "characterportrait":
+                        case "portraitimagepath":
+                        case "portraitimage":
+                            return character.PortraitImagePath;
+                        case "attributes":
+                        case "attribute":
+                            if (parts.Length < 4 || character.Attributes == null) return null;
+                            character.Attributes.TryGetValue(parts[3], out var attrVal);
                             return attrVal;
                         default:            return null;
                     }
@@ -154,7 +289,7 @@ namespace RagNextPlayer.Runtime
                     }
 
                     if (parts.Length < 2) return name;
-                    switch (parts[1].Trim().ToLowerInvariant())
+                    switch (parts[1].ToLowerInvariant())
                     {
                         case "id":          return id ?? entity.GetType().GetProperty("Id")?.GetValue(entity)?.ToString();
                         case "name":        return name;
@@ -167,14 +302,14 @@ namespace RagNextPlayer.Runtime
                         case "attributes":
                         case "attribute":
                             if (parts.Length < 3 || attributes == null) return null;
-                            attributes.TryGetValue(parts[2].Trim(), out var attrVal);
+                            attributes.TryGetValue(parts[2], out var attrVal);
                             return attrVal;
                         default:
-                            if (attributes is not null && attributes.TryGetValue(parts[1].Trim(), out var directAttrVal))
+                            if (attributes is not null && attributes.TryGetValue(parts[1], out var directAttrVal))
                             {
                                 return directAttrVal;
                             }
-                            if (properties is not null && properties.TryGetValue(parts[1].Trim(), out var prop))
+                            if (properties is not null && properties.TryGetValue(parts[1], out var prop))
                             {
                                 return prop;
                             }

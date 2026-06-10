@@ -6,8 +6,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -36,6 +38,7 @@ namespace RagNext.Designer.Avalonia.Views
 
             AddHandler(TextBox.KeyUpEvent, OnTextBoxKeyUp, RoutingStrategies.Bubble, true);
             AddHandler(TextBox.KeyDownEvent, OnTextBoxKeyDown, RoutingStrategies.Bubble, true);
+            AddHandler(TextBox.LostFocusEvent, OnTextBoxLostFocus, RoutingStrategies.Bubble, true);
 
             var composeTextBox = this.FindControl<TextBox>("ComposeTextBox");
             if (composeTextBox != null)
@@ -354,7 +357,7 @@ namespace RagNext.Designer.Avalonia.Views
                         // Bug #5: Include action names for item action pickers.
                         Actions = o.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
                     }).ToList(),
-                    Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, VarType = v.Type, Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, VarType = v.Type, Columns = v.Columns.ToList(), Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
                     Player = new CatalogPlayerDto
                     {
                         Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList(),
@@ -2522,6 +2525,13 @@ namespace RagNext.Designer.Avalonia.Views
 
         private void OnTextBoxKeyUp(object? sender, KeyEventArgs e)
         {
+            // Ignore navigation/functional keys so they don't trigger/reset/dismiss the autocomplete menu on KeyUp
+            if (e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right ||
+                e.Key == Key.Enter || e.Key == Key.Tab || e.Key == Key.Escape)
+            {
+                return;
+            }
+
             if (e.Source is TextBox textBox)
             {
                 string text = textBox.Text ?? "";
@@ -2559,22 +2569,50 @@ namespace RagNext.Designer.Avalonia.Views
                 if (e.Key == Key.Down)
                 {
                     e.Handled = true;
-                    int nextIndex = AutocompleteListBox.SelectedIndex + 1;
-                    if (nextIndex < AutocompleteListBox.Items.Count)
-                        AutocompleteListBox.SelectedIndex = nextIndex;
-                    else
-                        AutocompleteListBox.SelectedIndex = 0;
-                    AutocompleteListBox.ScrollIntoView(AutocompleteListBox.SelectedItem);
+                    _isUpdatingAutocompleteSource = true;
+                    try
+                    {
+                        if (AutocompleteListBox != null && AutocompleteListBox.Items != null)
+                        {
+                            int nextIndex = AutocompleteListBox.SelectedIndex + 1;
+                            if (nextIndex < AutocompleteListBox.Items.Count)
+                                AutocompleteListBox.SelectedIndex = nextIndex;
+                            else
+                                AutocompleteListBox.SelectedIndex = 0;
+                            if (AutocompleteListBox.SelectedItem != null)
+                            {
+                                AutocompleteListBox.ScrollIntoView(AutocompleteListBox.SelectedItem);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        _isUpdatingAutocompleteSource = false;
+                    }
                 }
                 else if (e.Key == Key.Up)
                 {
                     e.Handled = true;
-                    int prevIndex = AutocompleteListBox.SelectedIndex - 1;
-                    if (prevIndex >= 0)
-                        AutocompleteListBox.SelectedIndex = prevIndex;
-                    else
-                        AutocompleteListBox.SelectedIndex = AutocompleteListBox.Items.Count - 1;
-                    AutocompleteListBox.ScrollIntoView(AutocompleteListBox.SelectedItem);
+                    _isUpdatingAutocompleteSource = true;
+                    try
+                    {
+                        if (AutocompleteListBox != null && AutocompleteListBox.Items != null)
+                        {
+                            int prevIndex = AutocompleteListBox.SelectedIndex - 1;
+                            if (prevIndex >= 0)
+                                AutocompleteListBox.SelectedIndex = prevIndex;
+                            else
+                                AutocompleteListBox.SelectedIndex = AutocompleteListBox.Items.Count - 1;
+                            if (AutocompleteListBox.SelectedItem != null)
+                            {
+                                AutocompleteListBox.ScrollIntoView(AutocompleteListBox.SelectedItem);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        _isUpdatingAutocompleteSource = false;
+                    }
                 }
                 else if (e.Key == Key.Enter || e.Key == Key.Tab)
                 {
@@ -2589,18 +2627,196 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        private void OnTextBoxLostFocus(object? sender, RoutedEventArgs e)
+        private async void OnColumnTextBoxLostFocus(object? sender, RoutedEventArgs e)
         {
+            if (sender is TextBox textBox && DataContext is MainWindowViewModel vm && vm.CurrentGame != null)
+            {
+                // Short-circuit if focus moved to the autocomplete popup/listbox
+                var focusManager = this.FocusManager;
+                if (focusManager?.GetFocusedElement() is Visual focusedVisual && AutocompletePopup?.Child != null)
+                {
+                    if (AutocompletePopup.Child == focusedVisual || AutocompletePopup.Child.IsVisualAncestorOf(focusedVisual))
+                    {
+                        return;
+                    }
+                }
+
+                var textValue = textBox.Text ?? string.Empty;
+                var itemsControl = textBox.FindAncestorOfType<ItemsControl>();
+                var border = textBox.FindAncestorOfType<Border>();
+                if (border?.DataContext is GameVariable v && itemsControl != null && v.Type == "array")
+                {
+                    // Find visual index by panel layout children
+                    int index = -1;
+                    var panel = itemsControl.ItemsPanelRoot;
+                    if (panel != null)
+                    {
+                        for (int i = 0; i < panel.Children.Count; i++)
+                        {
+                            var child = panel.Children[i];
+                            if (child == textBox || child.FindDescendantOfType<TextBox>() == textBox)
+                            {
+                                index = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (index >= 0 && index < v.Columns.Count)
+                    {
+                        if (v.Columns[index] != textValue)
+                        {
+                            // Capture the index of the newly focused textbox in the columns collection before rebuilding
+                            int focusedColumnIndex = -1;
+                            if (focusManager?.GetFocusedElement() is TextBox focusedTextBox)
+                            {
+                                // Check if the focused textbox is also a column header textbox under the same ItemsControl
+                                var focusedItemsControl = focusedTextBox.FindAncestorOfType<ItemsControl>();
+                                if (focusedItemsControl == itemsControl)
+                                {
+                                    var focusedPanel = itemsControl.ItemsPanelRoot;
+                                    if (focusedPanel != null)
+                                    {
+                                        for (int i = 0; i < focusedPanel.Children.Count; i++)
+                                        {
+                                            var child = focusedPanel.Children[i];
+                                            if (child == focusedTextBox || child.FindDescendantOfType<TextBox>() == focusedTextBox)
+                                            {
+                                                focusedColumnIndex = i;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            v.Columns[index] = textValue;
+                            
+                            // Rebuild collection to force dynamic items controls / headers to re-render immediately
+                            var copy = new System.Collections.Generic.List<string>(v.Columns);
+                            v.Columns.Clear();
+                            foreach (var c in copy)
+                            {
+                                v.Columns.Add(c);
+                            }
+
+                            // Restore focus asynchronously on the next layout pass
+                            if (focusedColumnIndex >= 0)
+                            {
+                                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                                {
+                                    var updatedPanel = itemsControl.ItemsPanelRoot;
+                                    if (updatedPanel != null && focusedColumnIndex < updatedPanel.Children.Count)
+                                    {
+                                        var targetChild = updatedPanel.Children[focusedColumnIndex];
+                                        var targetTextBox = targetChild as TextBox ?? targetChild.FindDescendantOfType<TextBox>();
+                                        targetTextBox?.Focus();
+                                    }
+                                });
+                            }
+                            
+                            try
+                            {
+                                await vm.SaveGameAsync();
+                            }
+                            catch (IOException)
+                            {
+                                // Yield slightly and try again to handle concurrent file-writes gracefully
+                                await Task.Delay(200);
+                                try { await vm.SaveGameAsync(); } catch {}
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        private void OnAutocompleteListBoxTapped(object? sender, global::Avalonia.Input.TappedEventArgs e)
+        private async void OnCellTextBoxLostFocus(object? sender, RoutedEventArgs e)
         {
-            ApplySelectedAutocomplete();
+            if (sender is TextBox textBox && DataContext is MainWindowViewModel vm && vm.CurrentGame != null)
+            {
+                // Short-circuit if focus moved to the autocomplete popup/listbox
+                var focusManager = this.FocusManager;
+                if (focusManager?.GetFocusedElement() is Visual focusedVisual && AutocompletePopup?.Child != null)
+                {
+                    if (AutocompletePopup.Child == focusedVisual || AutocompletePopup.Child.IsVisualAncestorOf(focusedVisual))
+                    {
+                        return;
+                    }
+                }
+
+                var textValue = textBox.Text ?? string.Empty;
+                var itemDataContext = textBox.DataContext as string;
+                var cellItemsControl = textBox.FindAncestorOfType<ItemsControl>();
+                if (cellItemsControl?.DataContext is ObservableCollection<string> row && itemDataContext != null)
+                {
+                    int index = -1;
+                    for (int i = 0; i < row.Count; i++)
+                    {
+                        if (ReferenceEquals(row[i], itemDataContext))
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+
+                    if (index >= 0 && index < row.Count)
+                    {
+                        if (row[index] != textValue)
+                        {
+                            row[index] = textValue;
+                            try
+                            {
+                                await vm.SaveGameAsync();
+                            }
+                            catch (IOException)
+                            {
+                                await Task.Delay(200);
+                                try { await vm.SaveGameAsync(); } catch {}
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        private void ApplySelectedAutocomplete()
+        private async void OnTextBoxLostFocus(object? sender, RoutedEventArgs e)
         {
-            if (_activeTextBox == null || AutocompleteListBox == null || AutocompleteListBox.SelectedItem is not AutocompleteItem selectedItem)
+            if (DataContext is MainWindowViewModel vm)
+            {
+                await vm.SaveGameAsync();
+            }
+        }
+
+        private bool _isUpdatingAutocompleteSource = false;
+        private void OnAutocompleteSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingAutocompleteSource) return;
+            if (AutocompleteListBox != null && AutocompleteListBox.SelectedItem != null)
+            {
+                // Defer applying selection to ensure mouse click event routing finishes cleanly
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    ApplySelectedAutocomplete(delayClose: true);
+                });
+            }
+        }
+
+        private void ApplySelectedAutocomplete(bool delayClose = false)
+        {
+            if (_activeTextBox == null || AutocompleteListBox == null)
+            {
+                HideAutocomplete();
+                return;
+            }
+
+            AutocompleteItem? selectedItem = AutocompleteListBox.SelectedItem as AutocompleteItem;
+            if (selectedItem == null && AutocompleteListBox.Items != null && AutocompleteListBox.Items.Count > 0)
+            {
+                selectedItem = AutocompleteListBox.Items[0] as AutocompleteItem;
+            }
+
+            if (selectedItem == null)
             {
                 HideAutocomplete();
                 return;
@@ -2616,10 +2832,104 @@ namespace RagNext.Designer.Avalonia.Views
                 string before = text.Substring(0, _triggerIndex);
                 string after = text.Substring(caret);
                 
-                _activeTextBox.Text = before + replacement + after;
+                string completedText = before + replacement + after;
+                _activeTextBox.Text = completedText;
                 _activeTextBox.CaretIndex = _triggerIndex + replacement.Length;
+
+                PropagateTextBoxValue(_activeTextBox, completedText);
             }
-            HideAutocomplete();
+
+            if (delayClose)
+            {
+                var popupToClose = AutocompletePopup;
+                if (popupToClose != null)
+                {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(250);
+                        global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            popupToClose.IsOpen = false;
+                        });
+                    });
+                }
+                _activeTextBox = null;
+                _triggerIndex = -1;
+            }
+            else
+            {
+                HideAutocomplete();
+            }
+        }
+
+        private async void PropagateTextBoxValue(TextBox textBox, string completedText)
+        {
+            if (DataContext is not MainWindowViewModel vm || vm.CurrentGame == null) return;
+
+            // 1. Check if it's a cell textbox in the row data section
+            var cellItemsControl = textBox.FindAncestorOfType<ItemsControl>();
+            if (cellItemsControl?.DataContext is ObservableCollection<string> row)
+            {
+                var itemDataContext = textBox.DataContext as string;
+                if (itemDataContext != null)
+                {
+                    int index = -1;
+                    for (int i = 0; i < row.Count; i++)
+                    {
+                        if (ReferenceEquals(row[i], itemDataContext))
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+
+                    if (index >= 0 && index < row.Count)
+                    {
+                        if (row[index] != completedText)
+                        {
+                            row[index] = completedText;
+                            try { await vm.SaveGameAsync(); } catch {}
+                        }
+                    }
+                }
+                return;
+            }
+
+            // 2. Check if it's a column textbox in the column headers section
+            var border = textBox.FindAncestorOfType<Border>();
+            if (border?.DataContext is GameVariable v && cellItemsControl != null && v.Type == "array")
+            {
+                int index = -1;
+                var panel = cellItemsControl.ItemsPanelRoot;
+                if (panel != null)
+                {
+                    for (int i = 0; i < panel.Children.Count; i++)
+                    {
+                        var child = panel.Children[i];
+                        if (child == textBox || child.FindDescendantOfType<TextBox>() == textBox)
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (index >= 0 && index < v.Columns.Count)
+                {
+                    if (v.Columns[index] != completedText)
+                    {
+                        v.Columns[index] = completedText;
+                        var copy = new System.Collections.Generic.List<string>(v.Columns);
+                        v.Columns.Clear();
+                        foreach (var c in copy)
+                        {
+                            v.Columns.Add(c);
+                        }
+                        try { await vm.SaveGameAsync(); } catch {}
+                    }
+                }
+                return;
+            }
         }
 
 
@@ -2707,6 +3017,7 @@ namespace RagNext.Designer.Avalonia.Views
                         foreach (var c in game.Characters)
                         {
                             string nameClean = c.Name.Replace(" ", "");
+                            list.Add(new AutocompleteItem { Token = $"characters.{nameClean}.id", DisplayToken = $"{{characters.{nameClean}.id}}", TypeName = "Character Property", Description = $"Unique ID of character '{c.Name}'." });
                             if (c.Attributes != null)
                             {
                                 foreach (var a in c.Attributes)
@@ -2723,6 +3034,7 @@ namespace RagNext.Designer.Avalonia.Views
                         foreach (var o in game.Objects)
                         {
                             string nameClean = o.Name.Replace(" ", "");
+                            list.Add(new AutocompleteItem { Token = $"objects.{nameClean}.id", DisplayToken = $"{{objects.{nameClean}.id}}", TypeName = "Object Property", Description = $"Unique ID of object '{o.Name}'." });
                             if (o.Attributes != null)
                             {
                                 foreach (var a in o.Attributes)
@@ -2739,6 +3051,7 @@ namespace RagNext.Designer.Avalonia.Views
                         foreach (var r in game.Rooms)
                         {
                             string nameClean = r.Name.Replace(" ", "");
+                            list.Add(new AutocompleteItem { Token = $"rooms.{nameClean}.id", DisplayToken = $"{{rooms.{nameClean}.id}}", TypeName = "Room Property", Description = $"Unique ID of room '{r.Name}'." });
                             if (r.Attributes != null)
                             {
                                 foreach (var a in r.Attributes)
@@ -2798,6 +3111,29 @@ namespace RagNext.Designer.Avalonia.Views
                                     TypeName = "Datetime Raw ISO-8601", 
                                     Description = "Raw value: 2026-10-31T08:00:00" 
                                 });
+                            }
+                            else if (v.Type == "array")
+                            {
+                                int colCount = v.Columns != null ? v.Columns.Count : 0;
+                                int rowCount = v.Rows != null ? v.Rows.Count : 0;
+                                list.Add(new AutocompleteItem { 
+                                    Token = $"variables.{v.Name}", 
+                                    DisplayToken = $"{{variables.{v.Name}}}", 
+                                    TypeName = "Array Variable", 
+                                    Description = $"Multi-Dimensional Array: {colCount} columns, {rowCount} rows." 
+                                });
+                                if (v.Columns != null)
+                                {
+                                    foreach (var col in v.Columns)
+                                    {
+                                        list.Add(new AutocompleteItem { 
+                                            Token = $"Loop.{col}", 
+                                            DisplayToken = $"{{Loop.{col}}}", 
+                                            TypeName = $"Loop Variable ({v.Name})", 
+                                            Description = $"Value of column '{col}' for current iteration of '{v.Name}'." 
+                                        });
+                                    }
+                                }
                             }
                             else
                             {
@@ -2894,8 +3230,16 @@ namespace RagNext.Designer.Avalonia.Views
                 return;
             }
 
-            AutocompleteListBox.ItemsSource = filtered;
-            AutocompleteListBox.SelectedIndex = 0;
+            _isUpdatingAutocompleteSource = true;
+            try
+            {
+                AutocompleteListBox.ItemsSource = filtered;
+                AutocompleteListBox.SelectedIndex = -1;
+            }
+            finally
+            {
+                _isUpdatingAutocompleteSource = false;
+            }
 
             AutocompletePopup.PlacementTarget = textBox;
             AutocompletePopup.IsOpen = true;
@@ -3712,6 +4056,7 @@ namespace RagNext.Designer.Avalonia.Views
                 }
             }
         }
+
     }
 
     public class AutocompleteItem

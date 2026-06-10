@@ -1703,13 +1703,40 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public ObservableCollection<string> RecentProjects { get; } = new();
 
+        private readonly System.Threading.SemaphoreSlim _saveSemaphore = new System.Threading.SemaphoreSlim(1, 1);
+
         public async Task SaveGameAsync()
         {
             if (CurrentGame == null) return;
-            await _storage.SaveAsync(CurrentGame, CurrentGame.Title, false);
-            if (!string.IsNullOrWhiteSpace(CurrentGame.FileName))
+            await _saveSemaphore.WaitAsync();
+            try
             {
-                SaveRecentProject(CurrentGame.FileName);
+                await _storage.SaveAsync(CurrentGame, CurrentGame.Title, false);
+                if (!string.IsNullOrWhiteSpace(CurrentGame.FileName))
+                {
+                    SaveRecentProject(CurrentGame.FileName);
+                }
+            }
+            catch (IOException)
+            {
+                // Yield and retry once in case of temporary file locking
+                await Task.Delay(200);
+                try
+                {
+                    await _storage.SaveAsync(CurrentGame, CurrentGame.Title, false);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MainWindowViewModel] Save retry failed: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainWindowViewModel] Save failed: {ex.Message}");
+            }
+            finally
+            {
+                _saveSemaphore.Release();
             }
         }
 

@@ -83,6 +83,8 @@ namespace RagNext.Designer.Avalonia.Services
     {
         public string? Name { get; set; }
         public string? Value { get; set; }
+        public List<string> Columns { get; set; } = new List<string>();
+        public List<List<string>> Rows { get; set; } = new List<List<string>>();
     }
 
     public class ExportMediaAssetDto
@@ -160,7 +162,13 @@ namespace RagNext.Designer.Avalonia.Services
             Rooms      = game.Rooms.Select(r => BuildRoomDto(r)).ToList(),
             Objects    = game.Objects.Select(o => BuildObjectDto(o)).ToList(),
             Characters = game.Characters.Select(c => BuildObjectDto(c)).ToList(),
-            Variables  = game.Variables.Select(v => new ExportVariableDto { Name = v.Name, Value = v.Value }).ToList(),
+            Variables  = game.Variables.Select(v => new ExportVariableDto 
+            { 
+                Name = v.Name, 
+                Value = v.Value,
+                Columns = v.Columns.ToList(),
+                Rows = v.Rows.Select(row => row.ToList()).ToList()
+            }).ToList(),
             MediaAssets= game.MediaAssets.Select(m => new ExportMediaAssetDto
             {
                 Id           = m.Id.ToString(),

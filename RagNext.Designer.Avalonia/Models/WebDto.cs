@@ -58,6 +58,7 @@ namespace RagNext.Designer.Avalonia.Views
         public string? Name { get; set; }
         public bool? IsContainer { get; set; }
         public string? VarType { get; set; }
+        public List<string>? Columns { get; set; }
         public List<string>? Attributes { get; set; }
         // Bug #5: Action names on this entity, for cascading ActionName pickers.
         public List<CatalogActionDto>? Actions { get; set; }

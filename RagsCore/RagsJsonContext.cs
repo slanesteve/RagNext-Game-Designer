@@ -26,6 +26,9 @@ namespace RagsCore
     [JsonSerializable(typeof(ConditionDefinition))]
     [JsonSerializable(typeof(List<CommandDefinition>))]
     [JsonSerializable(typeof(List<ConditionDefinition>))]
+    [JsonSerializable(typeof(GameVariable))]
+    [JsonSerializable(typeof(System.Collections.ObjectModel.ObservableCollection<string>), TypeInfoPropertyName = "GameVariableColumnsCollection")]
+    [JsonSerializable(typeof(System.Collections.ObjectModel.ObservableCollection<System.Collections.ObjectModel.ObservableCollection<string>>), TypeInfoPropertyName = "GameVariableRowsCollection")]
     [JsonSerializable(typeof(ActionStep))]
     public partial class RagsJsonContext : JsonSerializerContext
     {

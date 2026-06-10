@@ -17,12 +17,19 @@ namespace RagsCore.Services
                 return text ?? string.Empty;
             }
 
-            return TokenRegex.Replace(text, match =>
+            var resolved = TokenRegex.Replace(text, match =>
             {
                 var path = match.Groups[1].Value.Trim();
-                var resolved = ResolvePath(path, ctx);
-                return resolved ?? match.Value; // Fallback to original token if unresolved
+                var resolvedPath = ResolvePath(path, ctx);
+                return resolvedPath ?? match.Value; // Fallback to original token if unresolved
             });
+
+            if (resolved != text && resolved.Contains('{') && resolved.Contains('}'))
+            {
+                resolved = Resolve(resolved, ctx);
+            }
+
+            return resolved;
         }
 
         private static string? ResolvePath(string path, ActionContext ctx)
@@ -41,6 +48,15 @@ namespace RagsCore.Services
             {
                 case "player":
                     return ResolvePlayer(parts, ctx);
+
+                case "loop":
+                    // Support {Loop.colName} by checking exact loop variable name
+                    if (parts.Length > 1)
+                    {
+                        var loopVar = ctx.GetVariable($"Loop.{parts[1]}");
+                        if (loopVar != null) return loopVar.Value;
+                    }
+                    return null;
 
                 case "room":
                     return ResolveRoom(parts, ctx);
@@ -63,6 +79,9 @@ namespace RagsCore.Services
                 case "gameobjects":
                 case "gameobject":
                     return ResolveGameObject(parts, ctx);
+
+                case "rooms":
+                    return ResolveSpecificRoom(parts, ctx);
 
                 default:
                     // If no prefix, check if it matches a variable name directly
@@ -161,6 +180,41 @@ namespace RagsCore.Services
                 case "attribute":
                     if (parts.Length < 3) return null;
                     var attrName = parts[2];
+                    return CustomAttribute.GetAttribute(attrName, room.Attributes);
+                default:
+                    return null;
+            }
+        }
+
+        private static string? ResolveSpecificRoom(string[] parts, ActionContext ctx)
+        {
+            if (parts.Length < 2) return null;
+            var roomName = parts[1];
+            var room = ctx.Game.Rooms.FirstOrDefault(r => 
+                string.Equals(r.Name, roomName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.Name.Replace(" ", ""), roomName, StringComparison.OrdinalIgnoreCase));
+            if (room == null) return null;
+
+            if (parts.Length < 3) return room.Name;
+
+            var prop = parts[2].ToLowerInvariant();
+            switch (prop)
+            {
+                case "id":
+                    return room.Id.ToString();
+                case "name":
+                    return room.Name;
+                case "description":
+                    return room.Description;
+                case "portrait":
+                case "characterportrait":
+                case "portraitimagepath":
+                case "portraitimage":
+                    return room.PortraitImagePath;
+                case "attributes":
+                case "attribute":
+                    if (parts.Length < 4) return null;
+                    var attrName = parts[3];
                     return CustomAttribute.GetAttribute(attrName, room.Attributes);
                 default:
                     return null;
@@ -297,7 +351,9 @@ namespace RagsCore.Services
         {
             if (parts.Length < 2) return null;
             var charName = parts[1];
-            var character = ctx.Game.Characters.FirstOrDefault(c => string.Equals(c.Name, charName, StringComparison.OrdinalIgnoreCase));
+            var character = ctx.Game.Characters.FirstOrDefault(c => 
+                string.Equals(c.Name, charName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Name.Replace(" ", ""), charName, StringComparison.OrdinalIgnoreCase));
             if (character == null) return null;
 
             if (parts.Length < 3) return character.Name;
@@ -305,6 +361,8 @@ namespace RagsCore.Services
             var prop = parts[2].ToLowerInvariant();
             switch (prop)
             {
+                case "id":
+                    return character.Id.ToString();
                 case "name":
                     return character.Name;
                 case "description":
@@ -332,7 +390,9 @@ namespace RagsCore.Services
         {
             if (parts.Length < 2) return null;
             var objName = parts[1];
-            var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Name, objName, StringComparison.OrdinalIgnoreCase));
+            var obj = ctx.Game.Objects.FirstOrDefault(o => 
+                string.Equals(o.Name, objName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(o.Name.Replace(" ", ""), objName, StringComparison.OrdinalIgnoreCase));
             if (obj == null) return null;
 
             if (parts.Length < 3) return obj.Name;
@@ -340,6 +400,8 @@ namespace RagsCore.Services
             var prop = parts[2].ToLowerInvariant();
             switch (prop)
             {
+                case "id":
+                    return obj.Id.ToString();
                 case "name":
                     return obj.Name;
                 case "description":
