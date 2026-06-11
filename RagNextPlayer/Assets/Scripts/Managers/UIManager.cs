@@ -246,7 +246,7 @@ namespace RagNextPlayer.Managers
                 _roomActionsContainer.RegisterCallback<ClickEvent>(evt => {
                     if (_pulseTween.isAlive)
                     {
-                        _pulseTween.stop();
+                        _pulseTween.Stop();
                     }
                     _roomActionsContainer.style.opacity = 1f;
                 });
@@ -888,7 +888,7 @@ namespace RagNextPlayer.Managers
         {
             if (_pulseTween.isAlive)
             {
-                _pulseTween.stop();
+                _pulseTween.Stop();
             }
 
             UnsubscribeEvents();
@@ -1043,7 +1043,7 @@ namespace RagNextPlayer.Managers
         {
             if (_pulseTween.isAlive)
             {
-                _pulseTween.stop();
+                _pulseTween.Stop();
             }
 
             if (_roomActionsContainer is null) return;
