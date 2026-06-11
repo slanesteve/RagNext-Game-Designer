@@ -14,90 +14,142 @@
       </ui:VisualElement>
     </ui:VisualElement>
 
+    <!-- ══ MAIN VERTICAL CONTAINER ═══════════════════════════════════════════ -->
+    <ui:VisualElement name="main-container" style="flex-grow: 1; min-height: 0; flex-direction: column;">
 
-    <!-- ══ MAIN SPLITTER (Vertical) ══════════════════════════════════════════ -->
-    <ui:TwoPaneSplitView name="main-splitter" orientation="Vertical" fixed-pane-index="1" fixed-pane-initial-dimension="150" style="flex-grow: 1; min-height: 0;">
+      <!-- Core flexible vertical compartment wrapping upper section -->
+      <ui:VisualElement name="main-upper-compartment" style="flex-grow: 1; flex-shrink: 1; flex-basis: 0px; min-height: 100px;">
+        <!-- Top Main Area: rigid flex row container -->
+        <ui:VisualElement name="main-split-container" class="content-area" style="flex-direction: row; width: 100%; height: 100%; flex-grow: 1; min-height: 0;">
 
-      <!-- Pane 0: Top Main Area with Horizontal Splitter -->
-      <ui:TwoPaneSplitView name="content-splitter" orientation="Horizontal" fixed-pane-index="1" fixed-pane-initial-dimension="300" class="content-area" style="min-height: 0;">
+          <!-- Left Container wrapping left-column elements and toggle btn -->
+          <ui:VisualElement name="left-container" style="flex-grow: 1; flex-shrink: 1; flex-basis: 0px; min-height: 0; position: relative; flex-direction: column;">
 
-        <!-- Pane 0: Left Column with Vertical Splitter between Scene Art and Narrative -->
-        <ui:TwoPaneSplitView name="left-column-splitter" orientation="Vertical" fixed-pane-index="0" fixed-pane-initial-dimension="480" class="left-column" style="min-height: 0;">
+            <!-- Scene artwork card -->
+            <ui:VisualElement name="media-canvas" class="scene-card" style="flex-grow: 1.2; flex-shrink: 1; flex-basis: 0px; min-height: 100px;">
+              <ui:VisualElement name="scene-image" class="scene-image" />
+              <ui:VisualElement name="media-vignette" class="media-vignette" />
+              <ui:Label name="scene-placeholder" class="scene-placeholder" text="🏰" />
 
-          <!-- Scene artwork card (Pane 0) -->
-          <ui:VisualElement name="scene-card" class="scene-card">
-            <ui:VisualElement name="scene-image" class="scene-image" />
-            <ui:Label name="scene-placeholder" class="scene-placeholder" text="🏰" />
-          </ui:VisualElement>
-
-          <!-- Narrative scroll log (Pane 1) -->
-          <ui:VisualElement name="narrative-panel" class="narrative-panel">
-            <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
-                           vertical-scroller-visibility="AlwaysVisible"
-                           horizontal-scroller-visibility="Hidden" />
-          </ui:VisualElement>
-
-        </ui:TwoPaneSplitView>
-
-        <!-- Pane 1: Right Column -->
-        <ui:VisualElement name="right-column" class="right-column">
-
-          <!-- Static Compass Navigation Ring -->
-          <ui:VisualElement name="compass-card" class="compass-card">
-            <ui:Label class="section-header" text="Navigation" />
-            
-            <!-- Beautiful 3x3 Cardinal Compass Rose -->
-            <ui:VisualElement name="compass-rose" class="compass-rose">
-              <!-- Row 1 -->
-              <ui:VisualElement class="compass-row">
-                <ui:Button name="compass-dir-nw" class="compass-rose-btn compass-btn--inactive" text="↖" />
-                <ui:Button name="compass-dir-north" class="compass-rose-btn compass-btn--inactive" text="▲" />
-                <ui:Button name="compass-dir-ne" class="compass-rose-btn compass-btn--inactive" text="↗" />
-              </ui:VisualElement>
-              <!-- Row 2 -->
-              <ui:VisualElement class="compass-row">
-                <ui:Button name="compass-dir-west" class="compass-rose-btn compass-btn--inactive" text="◀" />
-                <ui:VisualElement name="compass-center" class="compass-center">
-                  <ui:Label class="compass-center-dot" text="❖" />
+              <!-- HUD Overlay Compass (styled in USS absolute positioning) -->
+              <ui:VisualElement name="compass-card-hud" class="compass-card">
+                <ui:Label name="navigation-title-hud" class="section-header" text="Navigation" />
+                <ui:VisualElement class="compass-rose">
+                  <ui:VisualElement class="compass-row">
+                    <ui:Button name="compass-dir-nw-hud" class="compass-rose-btn compass-btn--inactive" text="↖" />
+                    <ui:Button name="compass-dir-north-hud" class="compass-rose-btn compass-btn--inactive" text="▲" />
+                    <ui:Button name="compass-dir-ne-hud" class="compass-rose-btn compass-btn--inactive" text="↗" />
+                  </ui:VisualElement>
+                  <ui:VisualElement class="compass-row">
+                    <ui:Button name="compass-dir-west-hud" class="compass-rose-btn compass-btn--inactive" text="◀" />
+                    <ui:VisualElement class="compass-center">
+                      <ui:Label class="compass-center-dot" text="❖" />
+                    </ui:VisualElement>
+                    <ui:Button name="compass-dir-east-hud" class="compass-rose-btn compass-btn--inactive" text="▶" />
+                  </ui:VisualElement>
+                  <ui:VisualElement class="compass-row">
+                    <ui:Button name="compass-dir-sw-hud" class="compass-rose-btn compass-btn--inactive" text="↙" />
+                    <ui:Button name="compass-dir-south-hud" class="compass-rose-btn compass-btn--inactive" text="▼" />
+                    <ui:Button name="compass-dir-se-hud" class="compass-rose-btn compass-btn--inactive" text="↘" />
+                  </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Button name="compass-dir-east" class="compass-rose-btn compass-btn--inactive" text="▶" />
-              </ui:VisualElement>
-              <!-- Row 3 -->
-              <ui:VisualElement class="compass-row">
-                <ui:Button name="compass-dir-sw" class="compass-rose-btn compass-btn--inactive" text="↙" />
-                <ui:Button name="compass-dir-south" class="compass-rose-btn compass-btn--inactive" text="▼" />
-                <ui:Button name="compass-dir-se" class="compass-rose-btn compass-btn--inactive" text="↘" />
+                <ui:VisualElement class="compass-auxiliary">
+                  <ui:Button name="compass-dir-up-hud" class="compass-aux-btn compass-btn--inactive" text="▲ Up" />
+                  <ui:Button name="compass-dir-down-hud" class="compass-aux-btn compass-btn--inactive" text="▼ Down" />
+                  <ui:Button name="compass-dir-in-hud" class="compass-aux-btn compass-btn--inactive" text="📥 In" />
+                  <ui:Button name="compass-dir-out-hud" class="compass-aux-btn compass-btn--inactive" text="📤 Out" />
+                </ui:VisualElement>
               </ui:VisualElement>
             </ui:VisualElement>
 
-            <!-- Auxiliary Portal Transitions -->
-            <ui:VisualElement name="compass-auxiliary" class="compass-auxiliary">
-              <ui:Button name="compass-dir-up" class="compass-aux-btn compass-btn--inactive" text="▲ Up" />
-              <ui:Button name="compass-dir-down" class="compass-aux-btn compass-btn--inactive" text="▼ Down" />
-              <ui:Button name="compass-dir-in" class="compass-aux-btn compass-btn--inactive" text="📥 In" />
-              <ui:Button name="compass-dir-out" class="compass-aux-btn compass-btn--inactive" text="📤 Out" />
+            <!-- Text-Media Vertical Splitter -->
+            <ui:VisualElement name="text-media-splitter" class="drag-splitter drag-splitter--horizontal">
+              <ui:VisualElement class="drag-splitter-line" />
             </ui:VisualElement>
-            
+
+            <!-- Narrative scroll log -->
+            <ui:VisualElement name="narrative-panel" class="narrative-panel" style="flex-grow: 0.8; flex-shrink: 1; flex-basis: 0px; min-height: 100px;">
+              <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
+                             vertical-scroller-visibility="AlwaysVisible"
+                             horizontal-scroller-visibility="Hidden" />
+            </ui:VisualElement>
+
+            <!-- Sidebar Toggle Button on the dividing line -->
+            <ui:Button name="sidebar-toggle-btn" class="sidebar-toggle-btn" text="⏴" />
           </ui:VisualElement>
 
-          <!-- Room Objects -->
-          <ui:VisualElement name="objects-card" class="entity-card">
-            <ui:Label class="section-header" text="Objects" />
-            <ui:VisualElement name="objects-list" class="entity-list" />
+          <!-- Main split handle (Custom draggable partition boundary) -->
+          <ui:VisualElement name="main-split-handle" class="drag-splitter drag-splitter--vertical">
+            <ui:VisualElement class="drag-splitter-line" />
           </ui:VisualElement>
 
-          <!-- Characters -->
-          <ui:VisualElement name="characters-card" class="entity-card">
-            <ui:Label class="section-header" text="Characters" />
-            <ui:VisualElement name="characters-list" class="entity-list" />
+          <!-- Right Sidebar Container -->
+          <ui:VisualElement name="right-sidebar-container" class="right-column" style="width: 300px; flex-shrink: 0;">
+
+            <!-- Static Compass Navigation Ring -->
+            <ui:VisualElement name="navigation-panel" class="compass-card">
+              <ui:Label name="navigation-title" class="section-header" text="Navigation" />
+              
+              <ui:VisualElement class="compass-rose">
+                <!-- Row 1 -->
+                <ui:VisualElement class="compass-row">
+                  <ui:Button name="compass-dir-nw" class="compass-rose-btn compass-btn--inactive" text="↖" />
+                  <ui:Button name="compass-dir-north" class="compass-rose-btn compass-btn--inactive" text="▲" />
+                  <ui:Button name="compass-dir-ne" class="compass-rose-btn compass-btn--inactive" text="↗" />
+                </ui:VisualElement>
+                <!-- Row 2 -->
+                <ui:VisualElement class="compass-row">
+                  <ui:Button name="compass-dir-west" class="compass-rose-btn compass-btn--inactive" text="◀" />
+                  <ui:VisualElement class="compass-center">
+                    <ui:Label class="compass-center-dot" text="❖" />
+                  </ui:VisualElement>
+                  <ui:Button name="compass-dir-east" class="compass-rose-btn compass-btn--inactive" text="▶" />
+                </ui:VisualElement>
+                <!-- Row 3 -->
+                <ui:VisualElement class="compass-row">
+                  <ui:Button name="compass-dir-sw" class="compass-rose-btn compass-btn--inactive" text="↙" />
+                  <ui:Button name="compass-dir-south" class="compass-rose-btn compass-btn--inactive" text="▼" />
+                  <ui:Button name="compass-dir-se" class="compass-rose-btn compass-btn--inactive" text="↘" />
+                </ui:VisualElement>
+              </ui:VisualElement>
+
+              <!-- Auxiliary Portal Transitions -->
+              <ui:VisualElement class="compass-auxiliary">
+                <ui:Button name="compass-dir-up" class="compass-aux-btn compass-btn--inactive" text="▲ Up" />
+                <ui:Button name="compass-dir-down" class="compass-aux-btn compass-btn--inactive" text="▼ Down" />
+                <ui:Button name="compass-dir-in" class="compass-aux-btn compass-btn--inactive" text="📥 In" />
+                <ui:Button name="compass-dir-out" class="compass-aux-btn compass-btn--inactive" text="📤 Out" />
+              </ui:VisualElement>
+              
+            </ui:VisualElement>
+
+            <!-- Unified Room Legend Module -->
+            <ui:VisualElement name="room-legend" class="entity-card">
+              <ui:Label name="legend-title" class="section-header" text="Room Legend" />
+              
+              <ui:VisualElement name="characters-section">
+                <ui:VisualElement name="characters-list" class="entity-list" />
+              </ui:VisualElement>
+
+              <ui:VisualElement class="legend-separator" />
+
+              <ui:VisualElement name="objects-section">
+                <ui:VisualElement name="objects-list" class="entity-list" />
+              </ui:VisualElement>
+            </ui:VisualElement>
+
           </ui:VisualElement>
 
         </ui:VisualElement>
+      </ui:VisualElement>
 
-      </ui:TwoPaneSplitView>
+      <!-- Horizontal Profile Splitter (between upper compartments and bottom bar) -->
+      <ui:VisualElement name="profile-splitter" class="drag-splitter drag-splitter--horizontal">
+        <ui:VisualElement class="drag-splitter-line" />
+      </ui:VisualElement>
 
-      <!-- Pane 1: Bottom Bar (Player Strip) -->
-      <ui:VisualElement name="bottom-bar" class="bottom-bar">
+      <!-- Bottom Bar (Player Strip) -->
+      <ui:VisualElement name="bottom-profile-bar" class="bottom-bar" style="height: 115px; flex-shrink: 0;">
 
         <!-- Player portrait -->
         <ui:VisualElement name="player-portrait" class="player-portrait" />
@@ -120,7 +172,7 @@
 
       </ui:VisualElement>
 
-    </ui:TwoPaneSplitView>
+    </ui:VisualElement>
 
     <!-- ══ INTERACTION POPUP MENU (hidden by default) ═══════════════════════ -->
     <ui:VisualElement name="interaction-menu" class="interaction-menu" style="display: none;" />
@@ -133,6 +185,12 @@
       <ui:VisualElement class="settings-row">
         <ui:Label class="settings-label" text="Screen Mode" />
         <ui:Button name="fullscreen-toggle-btn" class="settings-toggle-btn" text="Fullscreen" />
+      </ui:VisualElement>
+
+      <!-- HUD Overlay Toggle -->
+      <ui:VisualElement class="settings-row">
+        <ui:Label class="settings-label" text="HUD Overlay" />
+        <ui:Button name="hud-toggle-btn" class="settings-toggle-btn" text="HUD Mode OFF" />
       </ui:VisualElement>
 
       <!-- Typewriter reveal toggle -->

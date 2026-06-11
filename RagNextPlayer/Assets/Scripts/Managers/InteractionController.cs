@@ -300,13 +300,46 @@ namespace RagNextPlayer.Managers
                 btn.text = label;
                 btn.AddToClassList("interaction-menu-btn");
                 btn.clicked += HideMenu;
+                RegisterMenuBtnWiggle(btn);
                 grid.Add(btn);
             }
             _menuPanel.Add(grid);
 
             var cancelBtn = new Button(HideMenu) { text = "✕ Cancel" };
             cancelBtn.AddToClassList("interaction-menu-cancel");
+            RegisterMenuBtnWiggle(cancelBtn);
             _menuPanel.Add(cancelBtn);
+        }
+
+        private void RegisterMenuBtnWiggle(Button btn)
+        {
+            if (btn is null) return;
+
+            var target = btn.Q<VisualElement>(className: "unity-text-element") ?? (VisualElement)btn;
+
+            btn.RegisterCallback<PointerOverEvent>(evt => {
+                if (!btn.enabledSelf) return;
+
+                PrimeTween.Tween.StopAll(target);
+
+                // Quick 0.1s scale to 1.05 with Ease.OutBack
+                PrimeTween.Tween.Custom(target.transform.scale.x, 1.05f, duration: 0.1f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    target.transform.scale = new Vector3(val, val, 1f);
+                });
+
+                // Subtle Y-axis translation bounce (translate Y by -4f)
+                PrimeTween.Tween.Custom(target.transform.position.y, -4f, duration: 0.1f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    target.transform.position = new Vector3(target.transform.position.x, val, 0f);
+                });
+            });
+
+            btn.RegisterCallback<PointerOutEvent>(evt => {
+                PrimeTween.Tween.StopAll(target);
+
+                target.transform.scale = Vector3.one;
+                target.transform.position = Vector3.zero;
+                target.style.opacity = 1.0f;
+            });
         }
     }
 }

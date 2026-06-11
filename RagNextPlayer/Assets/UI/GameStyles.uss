@@ -5,22 +5,22 @@
 
 /* ── Design Tokens ────────────────────────────────────────────────────────── */
 :root {
-    --color-bg-deep:        #0D0D0F;
-    --color-bg-card:        #141418;
-    --color-bg-panel:       #1A1A20;
-    --color-border:         #2A2A38;
-    --color-accent-blue:    #4AABFF;
+    --color-bg-deep:        rgb(13, 14, 18);
+    --color-bg-card:        rgba(22, 24, 30, 0.65);
+    --color-bg-panel:       rgba(22, 24, 30, 0.85);
+    --color-border:         rgba(0, 168, 204, 0.3);
+    --color-accent-blue:    rgb(0, 168, 204);
     --color-accent-amber:   #FFB84A;
-    --color-text-primary:   #E0E0E8;
-    --color-text-secondary: #888899;
-    --color-text-hotlink:   #4AABFF;
+    --color-text-primary:   #EAEAEA;
+    --color-text-secondary: rgb(90, 95, 110);
+    --color-text-hotlink:   rgb(0, 168, 204);
     --color-character-dot:  #FF6B9D;
-    --color-object-dot:     #4AABFF;
+    --color-object-dot:     rgb(0, 168, 204);
     --radius-card:          8px;
     --radius-btn:           6px;
     --font-size-body:       14px;
     --font-size-header:     18px;
-    --font-size-section:    11px;
+    --font-size-section:          11px;
 }
 
 /* ── Root Layout ──────────────────────────────────────────────────────────── */
@@ -28,11 +28,11 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
-    background-color: #0D0D0F;
-    color: #E0E0E8;
-    border-width: 6px;
-    border-color: #2A2A38;
-    border-radius: 12px;
+    background-color: var(--color-bg-deep);
+    color: var(--color-text-primary);
+    border-width: 1px;
+    border-color: rgba(0, 168, 204, 0.3);
+    border-radius: 8px;
     overflow: hidden;
 }
 
@@ -42,14 +42,14 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 18px;
-    background-color: #101014;
+    background-color: rgba(22, 24, 30, 0.85);
     border-bottom-width: 1px;
-    border-bottom-color: #2A2A38;
+    border-bottom-color: rgba(0, 168, 204, 0.3);
 }
 
 .room-title {
     font-size: 20px;
-    color: #4AABFF;
+    color: var(--color-accent-blue);
     -unity-font-style: bold;
     letter-spacing: 1px;
     cursor: link;
@@ -60,8 +60,8 @@
     height: 32px;
     border-radius: 16px;
     border-width: 1.5px;
-    border-color: #4AABFF;
-    background-color: #1E1E28;
+    border-color: var(--color-accent-blue);
+    background-color: rgba(22, 24, 30, 0.65);
     -unity-background-scale-mode: scale-and-crop;
     flex-shrink: 0;
     margin-right: 8px;
@@ -69,17 +69,16 @@
 }
 
 .room-portrait:hover {
-    border-color: #FFB84A;
+    border-color: var(--color-accent-amber);
 }
 
 .room-title:hover {
-    color: #FFB84A;
+    color: var(--color-accent-amber);
 }
-
 
 .game-info {
     font-size: 11px;
-    color: #888899;
+    color: var(--color-text-secondary);
     -unity-font-style: italic;
 }
 
@@ -94,6 +93,23 @@
     margin-bottom: 4px; /* Clear bottom split handle */
 }
 
+/* Stylized splitter drag lines/handles for content-splitter */
+#content-splitter > .unity-two-pane-split-view__drag-line {
+    background-color: rgba(0, 168, 204, 0.2);
+    width: 1px;
+}
+#content-splitter > .unity-two-pane-split-view__handle {
+    background-color: rgba(0, 168, 204, 0.4);
+}
+
+/* Hide when collapsed */
+.splitter--collapsed > .unity-two-pane-split-view__drag-line,
+.splitter--collapsed > .unity-two-pane-split-view__handle {
+    display: none;
+    width: 0px;
+    opacity: 0;
+}
+
 /* ── Left Column ──────────────────────────────────────────────────────────── */
 .left-column {
     flex-direction: column;
@@ -102,15 +118,18 @@
     flex-basis: 0px;
     row-gap: 10px;
     min-height: 0px;
-    margin-right: 6px; /* Clear vertical split handle */
+    margin-right: 0px;
 }
 
 /* Scene Art Card */
 .scene-card {
-    background-color: rgba(20, 20, 24, 0.88);
-    border-radius: 12px;
-    border-width: 1.5px;
-    border-color: #2A2A38;
+    background-color: var(--color-bg-card);
+    border-radius: 8px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-color: rgba(0, 168, 204, 0.3);
     flex-grow: 1;
     flex-shrink: 1;
     min-height: 100px;
@@ -129,7 +148,7 @@
 
 .scene-placeholder {
     font-size: 64px;
-    color: #2A2A38;
+    color: rgba(0, 168, 204, 0.2);
     -unity-text-align: middle-center;
 }
 
@@ -139,10 +158,13 @@
     flex-shrink: 1;
     flex-basis: 0px;
     min-height: 0px;
-    background-color: rgba(20, 20, 24, 0.88);
-    border-radius: 12px;
-    border-width: 1.5px;
-    border-color: #2A2A38;
+    background-color: var(--color-bg-card);
+    border-radius: 8px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-color: rgba(0, 168, 204, 0.3);
     transition-property: opacity;
     transition-duration: 0.3s;
     margin-top: 3px; /* Clear horizontal split handle */
@@ -158,10 +180,11 @@
 
 .narrative-room-header {
     font-size: 16px;
-    color: #FFB84A;
+    color: var(--color-accent-blue);
     -unity-font-style: bold;
     margin-bottom: 6px;
     margin-top: 12px;
+    letter-spacing: 1px;
 }
 
 .narrative-paragraph {
@@ -173,9 +196,9 @@
 
 .narrative-text {
     font-size: 14px;
-    color: #D0D0D8;
+    color: #EAEAEA;
     white-space: normal;
-    line-height: 1.4;
+    line-height: 1.6;
 }
 
 .narrative-status {
@@ -187,7 +210,7 @@
 
 .narrative-hotlink {
     font-size: 14px;
-    color: #4AABFF;
+    color: var(--color-accent-blue);
     -unity-font-style: bold;
     text-decoration: underline;
     background-color: transparent;
@@ -203,7 +226,7 @@
 
 .narrative-separator {
     height: 1px;
-    background-color: #2A2A38;
+    background-color: rgba(0, 168, 204, 0.2);
     margin: 10px 0;
 }
 
@@ -215,40 +238,51 @@
 .right-column {
     flex-direction: column;
     row-gap: 10px;
-    min-width: 150px;
-    margin-left: 6px; /* Clear vertical split handle */
+    min-width: 0px;
+    overflow: hidden;
+    margin-left: 0px;
     padding-left: 2px;
-    margin-right: 4px;
+    margin-right: 0px;
+    border-left-width: 1px;
+    border-left-color: rgba(0, 168, 204, 0.3);
+}
+
+.right-column > * {
+    flex-shrink: 0;
 }
 
 /* Section headers */
 .section-header {
     font-size: 11px;
-    color: #888899;
+    color: var(--color-text-secondary);
     -unity-font-style: bold;
     letter-spacing: 2px;
     text-transform: uppercase;
     margin-bottom: 6px;
-    padding-bottom: 4px;
+    padding: 6px 12px;
+    background-image: linear-gradient(to right, rgba(0, 168, 204, 0.15), rgba(13, 14, 18, 0));
     border-bottom-width: 1px;
-    border-bottom-color: #2A2A38;
+    border-bottom-color: rgba(0, 168, 204, 0.3);
 }
 
 /* Card base */
 .compass-card, .entity-card {
-    background-color: rgba(20, 20, 24, 0.88);
-    border-radius: 12px;
-    border-width: 1.5px;
-    border-color: #2A2A38;
+    background-color: var(--color-bg-card);
+    border-radius: 8px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 168, 204, 0.2);
+    border-top-width: 1.5px;
+    border-top-color: rgba(0, 168, 204, 0.45);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.5);
     padding: 10px;
 }
 
 /* ── Exits Compass ────────────────────────────────────────────────────────── */
 .compass-rose {
-    background-color: #16161E;
-    border-radius: 50%;
-    border-width: 1.5px;
-    border-color: #2E2E3E;
+    background-color: transparent;
+    border-width: 0;
     width: 120px;
     height: 120px;
     align-self: center;
@@ -268,9 +302,9 @@
     width: 30px;
     height: 30px;
     border-radius: 4px;
-    background-color: #121216;
-    border-width: 1px;
-    font-size: 13px;
+    background-color: transparent;
+    border-width: 0px;
+    font-size: 14px;
     -unity-font-style: bold;
     padding: 0;
     -unity-text-align: middle-center;
@@ -285,7 +319,7 @@
 
 .compass-center-dot {
     font-size: 14px;
-    color: #4AABFF;
+    color: var(--color-accent-blue);
     -unity-font-style: bold;
 }
 
@@ -299,9 +333,9 @@
 }
 
 .compass-aux-btn {
-    background-color: #121216;
+    background-color: transparent;
     border-radius: 6px;
-    border-width: 1px;
+    border-width: 0px;
     font-size: 11px;
     padding: 6px 12px;
     -unity-font-style: bold;
@@ -309,38 +343,46 @@
 
 /* Dimmed / Inactive exits */
 .compass-btn--inactive {
-    opacity: 0.15;
+    opacity: 0.25;
     border-width: 0;
-    color: #444450;
+    color: var(--color-text-secondary);
     background-color: transparent;
 }
 
-/* Active Exits (Cardinal directions / blue glow) */
+/* Generic active state for directional paths */
+.compass-btn--active {
+    opacity: 1.0;
+    border-color: rgba(0, 168, 204, 0.8);
+}
+
+/* Active Exits (Cardinal directions / Electric Cyan glow) */
 .compass-rose-btn.compass-btn--active {
-    border-width: 1.5px;
-    border-color: #4AABFF;
-    color: #4AABFF;
-    background-color: #1E1E28;
+    border-width: 1px;
+    border-color: rgba(0, 168, 204, 0.8);
+    color: var(--color-accent-blue);
+    background-color: rgba(22, 24, 30, 0.65);
     opacity: 1.0;
 }
 
 .compass-rose-btn.compass-btn--active:hover {
-    background-color: #4AABFF;
-    color: #0D0D0F;
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+    background-color: rgba(0, 168, 204, 0.1);
 }
 
-/* Active Vertical portals (amber gold glow) */
+/* Active Vertical portals (Electric Cyan glow) */
 .compass-aux-btn.compass-btn--active {
-    border-width: 1.5px;
-    border-color: #FFB84A;
-    color: #FFB84A;
-    background-color: #1E1E28;
+    border-width: 1px;
+    border-color: rgba(0, 168, 204, 0.8);
+    color: var(--color-accent-blue);
+    background-color: rgba(22, 24, 30, 0.65);
     opacity: 1.0;
 }
 
 .compass-aux-btn.compass-btn--active:hover {
-    background-color: #FFB84A;
-    color: #0D0D0F;
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+    background-color: rgba(0, 168, 204, 0.1);
 }
 
 /* Active Spatial portals (pink glow) */
@@ -366,15 +408,16 @@
 .entity-row {
     flex-direction: row;
     align-items: center;
-    background-color: #1A1A22;
+    background-color: transparent;
     border-radius: 6px;
     padding: 5px 8px;
+    height: 32px;
     transition-property: background-color;
     transition-duration: 0.1s;
 }
 
 .entity-row:hover {
-    background-color: #22222E;
+    background-color: transparent;
 }
 
 .entity-dot--object {
@@ -831,4 +874,166 @@
     -unity-font-style: bold;
     letter-spacing: 2px;
 }
+
+/* ── UI OVERHAUL ADDITIONS ────────────────────────────────────────────────── */
+.sidebar-toggle-btn {
+    position: absolute;
+    right: 0px;
+    top: 50%;
+    translate: 50% -50%;
+    width: 16px;
+    height: 48px;
+    background-color: rgba(22, 24, 30, 0.95);
+    border-width: 1px;
+    border-color: rgba(0, 168, 204, 0.4);
+    border-radius: 4px;
+    color: rgb(0, 168, 204);
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 10px;
+    z-index: 100;
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: rgb(0, 168, 204);
+    color: rgb(13, 14, 18);
+    border-color: rgb(0, 168, 204);
+}
+
+#compass-card-hud {
+    display: none;
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    background-color: rgba(22, 24, 30, 0.65);
+    border-radius: 8px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-color: rgb(0, 168, 204);
+    padding: 10px;
+    z-index: 50;
+}
+
+.hud-mode-active #compass-card-hud {
+    display: none;
+}
+
+.hud-mode-active #navigation-panel {
+    display: flex;
+}
+
+.media-vignette {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(13, 14, 18, 0) 60%, rgba(13, 14, 18, 0.85) 100%);
+    z-index: 5;
+}
+
+.sidebar--collapsed {
+    width: 0px !important;
+    border-left-width: 0px !important;
+    border-left-color: transparent !important;
+}
+
+/* Custom Splitter Handles & Dragging Zones */
+.drag-splitter {
+    background-color: transparent;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.drag-splitter--vertical {
+    width: 8px; /* Larger clickable hitbox area */
+    cursor: resize-horizontal;
+    height: 100%;
+}
+
+.drag-splitter--horizontal {
+    height: 8px; /* Larger clickable hitbox area */
+    cursor: resize-vertical;
+    width: 100%;
+}
+
+.drag-splitter-line {
+    background-color: rgba(90, 95, 110, 0.4);
+}
+
+.drag-splitter--vertical > .drag-splitter-line {
+    width: 2px;
+    height: 100%;
+}
+
+.drag-splitter--horizontal > .drag-splitter-line {
+    height: 2px;
+    width: 100%;
+}
+
+/* Floating HUD Overlay Sidebar Deck */
+#right-sidebar-container.sidebar--hud-overlay {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    position: absolute;
+    right: 16px;
+    top: 64px;
+    bottom: 24px;
+    width: 300px;
+    background-color: rgba(22, 24, 30, 0.65);
+    border-top-width: 1px;
+    border-top-color: rgba(0, 168, 204, 0.4);
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+    border-radius: 8px;
+    height: auto;
+    padding: 12px;
+}
+
+/* Ensure no inherited style sheets can force a dark fill on items */
+.sidebar--hud-overlay .entity-row, 
+.sidebar--hud-overlay .legend-box {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* Force physical separation between the stacked modules */
+#right-sidebar-container.sidebar--hud-overlay #navigation-panel {
+    position: relative; /* Hard override to ensure layout flow */
+    margin-bottom: 16px; /* Explicit gap so the legend cannot merge into it */
+    flex-shrink: 0;
+}
+
+#right-sidebar-container.sidebar--hud-overlay #room-legend {
+    position: relative; /* Hard override to ensure layout flow */
+    flex-grow: 1;
+}
+
+.sidebar--hud-overlay .entity-card,
+.sidebar--hud-overlay .compass-card {
+    background-color: transparent;
+    border-width: 0;
+    box-shadow: none;
+}
+
+/* Unified Room Legend Separator */
+.legend-separator {
+    height: 1px;
+    background-color: rgba(0, 168, 204, 0.2);
+    margin: 8px 4px;
+}
+
+/* Push the text boundaries and scrollbar left to completely clear the HUD width */
+.text-container--hud-active {
+    padding-right: 308px;
+    transition-property: padding-right;
+    transition-duration: 0.2s;
+}
+
 

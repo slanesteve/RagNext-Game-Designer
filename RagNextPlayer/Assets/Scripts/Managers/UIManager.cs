@@ -30,6 +30,15 @@ namespace RagNextPlayer.Managers
         private Label          _gameInfoLabel;
         private ScrollView     _narrativeScroll;
         private readonly System.Collections.Generic.Dictionary<string, Button> _compassButtons = new(System.StringComparer.OrdinalIgnoreCase);
+        private readonly System.Collections.Generic.Dictionary<string, Button> _compassButtonsHud = new(System.StringComparer.OrdinalIgnoreCase);
+        private Button _sidebarToggleBtn;
+        private VisualElement _rightSidebarContainer;
+        private bool _sidebarCollapsed = false;
+        private Button _hudToggleBtn;
+        private bool _hudOverlayMode = false;
+        private PrimeTween.Tween _sidebarTween;
+        private VisualElement _contentSplitter;
+        private float _lastSidebarWidth = 300f;
         private VisualElement  _objectsListContainer;
         private VisualElement  _charactersListContainer;
         private VisualElement  _inventoryListContainer;
@@ -131,6 +140,7 @@ namespace RagNextPlayer.Managers
             _roomActionsContainer   = _root.Q<VisualElement>("room-actions-container");
             _gameInfoLabel          = _root.Q<Label>("game-info");
             _narrativeScroll        = _root.Q<ScrollView>("narrative-scroll");
+            
             // Bind static compass buttons
             _compassButtons.Clear();
             _compassButtons["North"] = _root.Q<Button>("compass-dir-north");
@@ -145,6 +155,42 @@ namespace RagNextPlayer.Managers
             _compassButtons["Down"]  = _root.Q<Button>("compass-dir-down");
             _compassButtons["In"]    = _root.Q<Button>("compass-dir-in");
             _compassButtons["Out"]   = _root.Q<Button>("compass-dir-out");
+
+            // Bind HUD compass buttons
+            _compassButtonsHud.Clear();
+            _compassButtonsHud["North"] = _root.Q<Button>("compass-dir-north-hud");
+            _compassButtonsHud["South"] = _root.Q<Button>("compass-dir-south-hud");
+            _compassButtonsHud["East"]  = _root.Q<Button>("compass-dir-east-hud");
+            _compassButtonsHud["West"]  = _root.Q<Button>("compass-dir-west-hud");
+            _compassButtonsHud["NorthWest"] = _root.Q<Button>("compass-dir-nw-hud");
+            _compassButtonsHud["NorthEast"] = _root.Q<Button>("compass-dir-ne-hud");
+            _compassButtonsHud["SouthWest"] = _root.Q<Button>("compass-dir-sw-hud");
+            _compassButtonsHud["SouthEast"] = _root.Q<Button>("compass-dir-se-hud");
+            _compassButtonsHud["Up"]    = _root.Q<Button>("compass-dir-up-hud");
+            _compassButtonsHud["Down"]  = _root.Q<Button>("compass-dir-down-hud");
+            _compassButtonsHud["In"]    = _root.Q<Button>("compass-dir-in-hud");
+            _compassButtonsHud["Out"]   = _root.Q<Button>("compass-dir-out-hud");
+
+            _sidebarToggleBtn = _root.Q<Button>("sidebar-toggle-btn");
+            if (_sidebarToggleBtn is not null) _sidebarToggleBtn.clicked += ToggleSidebar;
+
+            _rightSidebarContainer = _root.Q<VisualElement>("right-sidebar-container");
+            if (_rightSidebarContainer is not null)
+            {
+                _rightSidebarContainer.pickingMode = PickingMode.Ignore;
+                
+                var compassCard = _rightSidebarContainer.Q<VisualElement>("navigation-panel");
+                if (compassCard is not null) compassCard.pickingMode = PickingMode.Position;
+                
+                var legendCard = _rightSidebarContainer.Q<VisualElement>("room-legend");
+                if (legendCard is not null) legendCard.pickingMode = PickingMode.Position;
+            }
+
+            _contentSplitter = _root.Q<VisualElement>("main-split-container");
+            SetupSplitters();
+
+            _hudToggleBtn = _root.Q<Button>("hud-toggle-btn");
+            if (_hudToggleBtn is not null) _hudToggleBtn.clicked += ToggleHudOverlayMode;
 
             _objectsListContainer   = _root.Q<VisualElement>("objects-list");
             _charactersListContainer= _root.Q<VisualElement>("characters-list");
@@ -244,47 +290,17 @@ namespace RagNextPlayer.Managers
             if (_roomActionsContainer is not null)
             {
                 _roomActionsContainer.RegisterCallback<ClickEvent>(evt => {
-                    if (_pulseTween.isAlive)
-                    {
-                        _pulseTween.Stop();
-                    }
+                    _pulseTween.Stop();
                     _roomActionsContainer.style.opacity = 1f;
                 });
             }
 
-            // Bind pointer hover transitions to compass buttons
-            foreach (var kvp in _compassButtons)
-            {
-                if (kvp.Value is null) continue;
-                var btn = kvp.Value;
-                btn.RegisterCallback<PointerOverEvent>(evt => {
-                    if (btn.enabledSelf)
-                    {
-                        PrimeTween.Tween.Custom(1.0f, 1.08f, duration: 0.1f, onValueChange: val => {
-                            btn.transform.scale = new Vector3(val, val, 1f);
-                        });
-                    }
-                });
-                btn.RegisterCallback<PointerOutEvent>(evt => {
-                    PrimeTween.Tween.Custom(btn.transform.scale.x, 1.0f, duration: 0.1f, onValueChange: val => {
-                        btn.transform.scale = new Vector3(val, val, 1f);
-                    });
-                });
-            }
 
-            // Also add hover transitions for primary interactive panel buttons
+
+            // Also add hover transitions for settings button
             if (_settingsBtn is not null)
             {
-                _settingsBtn.RegisterCallback<PointerOverEvent>(evt => {
-                    PrimeTween.Tween.Custom(1.0f, 1.08f, duration: 0.1f, onValueChange: val => {
-                        _settingsBtn.transform.scale = new Vector3(val, val, 1f);
-                    });
-                });
-                _settingsBtn.RegisterCallback<PointerOutEvent>(evt => {
-                    PrimeTween.Tween.Custom(_settingsBtn.transform.scale.x, 1.0f, duration: 0.1f, onValueChange: val => {
-                        _settingsBtn.transform.scale = new Vector3(val, val, 1f);
-                    });
-                });
+                RegisterHoverSwell(_settingsBtn);
             }
 
             SubscribeEvents();
@@ -1066,8 +1082,8 @@ namespace RagNextPlayer.Managers
 
             if (hasActions)
             {
-                // Pulse opacity from 1.0 down to 0.4 continuously using PrimeTween
-                _pulseTween = PrimeTween.Tween.Custom(1f, 0.4f, duration: 1.2f, ease: PrimeTween.Ease.InOutSine, cycles: -1, cycleMode: PrimeTween.CycleMode.Yoyo, onValueChange: val => {
+                // Pulse opacity between 0.2 and 0.8 continuously using PrimeTween (2.0s sine oscillation)
+                _pulseTween = PrimeTween.Tween.Custom(0.2f, 0.8f, duration: 2.0f, ease: PrimeTween.Ease.InOutSine, cycles: -1, cycleMode: PrimeTween.CycleMode.Yoyo, onValueChange: val => {
                     if (_roomActionsContainer is not null)
                     {
                         _roomActionsContainer.style.opacity = val;
@@ -1113,10 +1129,10 @@ namespace RagNextPlayer.Managers
             }
 
             // Objects
-            _objectsListContainer?.Clear();
+            var requiredObjects = new List<(GameObjectData data, bool isNested)>();
             foreach (var obj in game.Objects.FindAll(o => room.ObjectIds.Contains(o.Id) && !o.IsCharacter && !containedIds.Contains(o.Id)))
             {
-                _objectsListContainer?.Add(CreateEntityRow(obj, false));
+                requiredObjects.Add((obj, false));
                 if (obj.IsContainer && obj.ContainerOpen)
                 {
                     var children = game.Objects.FindAll(o => 
@@ -1126,16 +1142,30 @@ namespace RagNextPlayer.Managers
 
                     foreach (var childObj in children)
                     {
-                        _objectsListContainer?.Add(CreateNestedEntityRow(childObj, false));
+                        requiredObjects.Add((childObj, true));
                     }
                 }
             }
 
+            ReconcileListContainer(_objectsListContainer, requiredObjects, tuple => {
+                return tuple.isNested ? CreateNestedEntityRow(tuple.data, false) : CreateEntityRow(tuple.data, false);
+            }, (element, tuple) => {
+                var label = element.Q<Label>(className: "entity-name");
+                if (label != null)
+                {
+                    string nameText = game is not null ? TemplateResolver.Resolve(tuple.data.Name, game, room, tuple.data) : tuple.data.Name;
+                    if (tuple.data.IsContainer)
+                    {
+                        nameText += tuple.data.ContainerOpen ? " [Open]" : " [Closed]";
+                    }
+                    label.text = nameText;
+                }
+            });
+
             // Characters
-            _charactersListContainer?.Clear();
+            var requiredCharacters = new List<GameObjectData>();
             foreach (var ch in game.Characters)
             {
-                // Check dynamic location variable first
                 var charRoomVar = game.Variables.Find(v => string.Equals(v.Name, $"char.{ch.Id}.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
                 bool isInThisRoom = false;
 
@@ -1149,21 +1179,30 @@ namespace RagNextPlayer.Managers
                 }
                 else
                 {
-                    // Fallback to static ObjectIds
                     isInThisRoom = room.ObjectIds.Contains(ch.Id);
                 }
 
                 if (isInThisRoom)
                 {
-                    _charactersListContainer?.Add(CreateEntityRow(ch, false));
+                    requiredCharacters.Add(ch);
                 }
             }
 
+            ReconcileListContainer(_charactersListContainer, requiredCharacters, ch => {
+                return CreateEntityRow(ch, false);
+            }, (element, ch) => {
+                var label = element.Q<Label>(className: "entity-name");
+                if (label != null)
+                {
+                    label.text = game is not null ? TemplateResolver.Resolve(ch.Name, game, room, ch) : ch.Name;
+                }
+            });
+
             // Inventory
-            _inventoryListContainer?.Clear();
+            var requiredInventory = new List<(GameObjectData data, bool isNested)>();
             foreach (var item in game.Player.Inventory.FindAll(i => !containedIds.Contains(i.Id)))
             {
-                _inventoryListContainer?.Add(CreateEntityRow(item, true));
+                requiredInventory.Add((item, false));
                 if (item.IsContainer && item.ContainerOpen)
                 {
                     var children = game.Objects.FindAll(o => 
@@ -1173,10 +1212,21 @@ namespace RagNextPlayer.Managers
 
                     foreach (var childObj in children)
                     {
-                        _inventoryListContainer?.Add(CreateNestedEntityRow(childObj, true));
+                        requiredInventory.Add((childObj, true));
                     }
                 }
             }
+
+            ReconcileListContainer(_inventoryListContainer, requiredInventory, tuple => {
+                return tuple.isNested ? CreateNestedEntityRow(tuple.data, true) : CreateEntityRow(tuple.data, true);
+            }, (element, tuple) => {
+                var label = element.Q<Label>(className: "entity-name");
+                if (label != null)
+                {
+                    label.text = game is not null ? TemplateResolver.Resolve(tuple.data.Name, game, room, tuple.data) : tuple.data.Name;
+                }
+            });
+
         }
 
         public void RefreshPlayerPanel()
@@ -1443,10 +1493,33 @@ namespace RagNextPlayer.Managers
             foreach (var kvp in _compassButtons)
             {
                 if (kvp.Value is null) continue;
-                kvp.Value.RemoveFromClassList("compass-btn--active");
-                kvp.Value.AddToClassList("compass-btn--inactive");
-                kvp.Value.SetEnabled(false);
-                kvp.Value.clickable = null; // Clear previous transition actions
+                if (kvp.Value.ClassListContains("compass-btn--active") || kvp.Value.enabledSelf)
+                {
+                    kvp.Value.RemoveFromClassList("compass-btn--active");
+                    kvp.Value.AddToClassList("compass-btn--inactive");
+                    kvp.Value.SetEnabled(false);
+                    kvp.Value.clickable = null;
+                    PrimeTween.Tween.StopAll(kvp.Value);
+                    PrimeTween.Tween.Custom(kvp.Value.transform.scale.x, 0.9f, duration: 0.15f, onValueChange: val => {
+                        kvp.Value.transform.scale = new Vector3(val, val, 1f);
+                    });
+                }
+            }
+
+            foreach (var kvp in _compassButtonsHud)
+            {
+                if (kvp.Value is null) continue;
+                if (kvp.Value.ClassListContains("compass-btn--active") || kvp.Value.enabledSelf)
+                {
+                    kvp.Value.RemoveFromClassList("compass-btn--active");
+                    kvp.Value.AddToClassList("compass-btn--inactive");
+                    kvp.Value.SetEnabled(false);
+                    kvp.Value.clickable = null;
+                    PrimeTween.Tween.StopAll(kvp.Value);
+                    PrimeTween.Tween.Custom(kvp.Value.transform.scale.x, 0.9f, duration: 0.15f, onValueChange: val => {
+                        kvp.Value.transform.scale = new Vector3(val, val, 1f);
+                    });
+                }
             }
 
             // High-intensity glow highlights for active exit directions
@@ -1456,15 +1529,38 @@ namespace RagNextPlayer.Managers
                 if (room.LockedExits.TryGetValue(key, out var isLocked) && isLocked)
                     continue;
 
+                string targetRoomId = exit.Value;
+
                 if (_compassButtons.TryGetValue(key, out var btn) && btn is not null)
                 {
-                    btn.RemoveFromClassList("compass-btn--inactive");
-                    btn.AddToClassList("compass-btn--active");
-                    btn.SetEnabled(true);
+                    if (btn.ClassListContains("compass-btn--inactive") || !btn.enabledSelf)
+                    {
+                        btn.RemoveFromClassList("compass-btn--inactive");
+                        btn.AddToClassList("compass-btn--active");
+                        btn.SetEnabled(true);
+                        btn.clickable = new Clickable(() => GameManager.Instance?.MovePlayerToRoom(targetRoomId));
 
-                    // Add dynamic move player click action
-                    string targetRoomId = exit.Value;
-                    btn.clickable = new Clickable(() => GameManager.Instance?.MovePlayerToRoom(targetRoomId));
+                        PrimeTween.Tween.StopAll(btn);
+                        PrimeTween.Tween.Custom(0.8f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                            btn.transform.scale = new Vector3(val, val, 1f);
+                        });
+                    }
+                }
+
+                if (_compassButtonsHud.TryGetValue(key, out var btnHud) && btnHud is not null)
+                {
+                    if (btnHud.ClassListContains("compass-btn--inactive") || !btnHud.enabledSelf)
+                    {
+                        btnHud.RemoveFromClassList("compass-btn--inactive");
+                        btnHud.AddToClassList("compass-btn--active");
+                        btnHud.SetEnabled(true);
+                        btnHud.clickable = new Clickable(() => GameManager.Instance?.MovePlayerToRoom(targetRoomId));
+
+                        PrimeTween.Tween.StopAll(btnHud);
+                        PrimeTween.Tween.Custom(0.8f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                            btnHud.transform.scale = new Vector3(val, val, 1f);
+                        });
+                    }
                 }
             }
         }
@@ -1472,6 +1568,7 @@ namespace RagNextPlayer.Managers
         private VisualElement CreateEntityRow(GameObjectData entity, bool isInventory)
         {
             var row = new VisualElement();
+            row.userData = entity.Id;
             row.AddToClassList("entity-row");
             row.pickingMode = PickingMode.Position;
 
@@ -1500,16 +1597,7 @@ namespace RagNextPlayer.Managers
             // Tap on the whole row also opens the menu
             row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
 
-            row.RegisterCallback<PointerOverEvent>(evt => {
-                PrimeTween.Tween.Custom(1.0f, 1.03f, duration: 0.1f, onValueChange: val => {
-                    row.transform.scale = new Vector3(val, val, 1f);
-                });
-            });
-            row.RegisterCallback<PointerOutEvent>(evt => {
-                PrimeTween.Tween.Custom(row.transform.scale.x, 1.0f, duration: 0.1f, onValueChange: val => {
-                    row.transform.scale = new Vector3(val, val, 1f);
-                });
-            });
+            RegisterHoverSwell(row);
 
             return row;
         }
@@ -1517,6 +1605,7 @@ namespace RagNextPlayer.Managers
         private VisualElement CreateNestedEntityRow(GameObjectData entity, bool isInventory)
         {
             var row = new VisualElement();
+            row.userData = entity.Id;
             row.AddToClassList("entity-row");
             row.AddToClassList("entity-row--nested");
             row.pickingMode = PickingMode.Position;
@@ -1546,16 +1635,7 @@ namespace RagNextPlayer.Managers
 
             row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
 
-            row.RegisterCallback<PointerOverEvent>(evt => {
-                PrimeTween.Tween.Custom(1.0f, 1.03f, duration: 0.1f, onValueChange: val => {
-                    row.transform.scale = new Vector3(val, val, 1f);
-                });
-            });
-            row.RegisterCallback<PointerOutEvent>(evt => {
-                PrimeTween.Tween.Custom(row.transform.scale.x, 1.0f, duration: 0.1f, onValueChange: val => {
-                    row.transform.scale = new Vector3(val, val, 1f);
-                });
-            });
+            RegisterHoverSwell(row);
 
             return row;
         }
@@ -1625,6 +1705,7 @@ namespace RagNextPlayer.Managers
             if (elem is not null)
             {
                 elem.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
+                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
                 if (_scenePlaceholder is not null)
                 {
                     _scenePlaceholder.style.display = DisplayStyle.None;
@@ -1705,9 +1786,17 @@ namespace RagNextPlayer.Managers
                 if (elem is not null)
                 {
                     elem.style.backgroundImage = new StyleBackground(tex);
-                    if (elementName == "scene-image" && _scenePlaceholder is not null)
+                    if (elementName == "scene-image")
                     {
-                        _scenePlaceholder.style.display = DisplayStyle.None;
+                        if (tex != null)
+                        {
+                            float aspect = (float)tex.width / tex.height;
+                            elem.style.unityBackgroundScaleMode = aspect > 1.2f ? ScaleMode.ScaleAndCrop : ScaleMode.ScaleToFit;
+                        }
+                        if (_scenePlaceholder is not null)
+                        {
+                            _scenePlaceholder.style.display = DisplayStyle.None;
+                        }
                     }
                     Debug.Log($"[UIManager] Successfully applied texture to '{elementName}'");
                 }
@@ -2262,10 +2351,374 @@ namespace RagNextPlayer.Managers
         {
             if (_root == null) return;
             var topBar = _root.Q<VisualElement>("top-bar");
-            var mainSplitter = _root.Q<VisualElement>("main-splitter");
+            var mainSplitter = _root.Q<VisualElement>("main-split-container");
             var display = visible ? DisplayStyle.Flex : DisplayStyle.None;
             if (topBar != null) topBar.style.display = display;
             if (mainSplitter != null) mainSplitter.style.display = display;
+        }
+
+        public void RegisterHoverSwell(VisualElement element)
+        {
+            if (element is null) return;
+
+            var textLabel = element.Q<Label>(className: "entity-name") ?? element;
+
+            // Force the row hitbox to remain completely dead-static
+            element.style.height = 32;
+            element.pickingMode = PickingMode.Position;
+
+            element.RegisterCallback<PointerOverEvent>(evt => {
+                if (!element.enabledSelf) return;
+                PrimeTween.Tween.StopAll(textLabel); // Stop specifically on the text element
+                
+                // 1. Crisp Color Cross-fade
+                Color currentColor = textLabel.style.color.keyword == StyleKeyword.Undefined ? Color.white : textLabel.style.color.value;
+                PrimeTween.Tween.Custom(currentColor, new Color(0f, 0.65f, 0.80f), duration: 0.08f, onValueChange: val => {
+                    textLabel.style.color = val;
+                });
+                
+                // 2. Tactile Local Wiggle (Shifts text slightly right over 0.1s using an elastic overshoot)
+                PrimeTween.Tween.Custom(textLabel.transform.position.x, 4.0f, duration: 0.1f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    textLabel.transform.position = new Vector3(val, textLabel.transform.position.y, 0f);
+                });
+            });
+
+            element.RegisterCallback<PointerOutEvent>(evt => {
+                PrimeTween.Tween.StopAll(textLabel);
+                
+                // Smoothly restore position and color instead of a harsh snapping reset
+                Color currentColor = textLabel.style.color.keyword == StyleKeyword.Undefined ? Color.white : textLabel.style.color.value;
+                PrimeTween.Tween.Custom(currentColor, Color.white, duration: 0.08f, onValueChange: val => {
+                    textLabel.style.color = val;
+                });
+                PrimeTween.Tween.Custom(textLabel.transform.position.x, 0.0f, duration: 0.08f, onValueChange: val => {
+                    textLabel.transform.position = new Vector3(val, textLabel.transform.position.y, 0f);
+                }).OnComplete(() => {
+                    textLabel.style.opacity = 1.0f;
+                });
+            });
+        }
+
+        private void ReconcileListContainer<TData>(
+            VisualElement container, 
+            List<TData> requiredData, 
+            System.Func<TData, VisualElement> createFunc,
+            System.Action<VisualElement, TData> updateFunc)
+        {
+            if (container == null) return;
+
+            // Stop tweens and remove any extra children
+            while (container.childCount > requiredData.Count)
+            {
+                var index = container.childCount - 1;
+                var child = container[index];
+                PrimeTween.Tween.StopAll(child);
+                var label = child.Q<Label>(className: "entity-name");
+                if (label != null) PrimeTween.Tween.StopAll(label);
+                container.RemoveAt(index);
+            }
+
+            for (int i = 0; i < requiredData.Count; i++)
+            {
+                var data = requiredData[i];
+                if (i < container.childCount)
+                {
+                    var existingElement = container[i];
+                    string? existingId = existingElement.userData as string;
+                    string? requiredId = GetDataId(data);
+                    
+                    if (existingId == requiredId)
+                    {
+                        updateFunc(existingElement, data);
+                    }
+                    else
+                    {
+                        // Replace the element
+                        PrimeTween.Tween.StopAll(existingElement);
+                        var label = existingElement.Q<Label>(className: "entity-name");
+                        if (label != null) PrimeTween.Tween.StopAll(label);
+
+                        var newElement = createFunc(data);
+                        container.RemoveAt(i);
+                        container.Insert(i, newElement);
+                    }
+                }
+                else
+                {
+                    var newElement = createFunc(data);
+                    container.Add(newElement);
+                }
+            }
+        }
+
+        private string? GetDataId(object data)
+        {
+            if (data is GameObjectData god) return god.Id;
+            if (data is (GameObjectData godTuple, bool _)) return godTuple.Id;
+            return null;
+        }
+
+        private void ToggleSidebar()
+        {
+            if (_rightSidebarContainer is null) return;
+
+            _sidebarTween.Stop();
+            _sidebarCollapsed = !_sidebarCollapsed;
+            float startWidth = _rightSidebarContainer.resolvedStyle.width;
+
+            if (!_sidebarCollapsed)
+            {
+                _rightSidebarContainer.RemoveFromClassList("sidebar--collapsed");
+            }
+            else
+            {
+                if (startWidth > 50f)
+                {
+                    _lastSidebarWidth = startWidth;
+                }
+            }
+
+            float endWidth = _sidebarCollapsed ? 0f : _lastSidebarWidth;
+
+            if (_sidebarToggleBtn is not null)
+            {
+                _sidebarToggleBtn.text = _sidebarCollapsed ? "⏵" : "⏴";
+            }
+
+            _sidebarTween = PrimeTween.Tween.Custom(startWidth, endWidth, duration: 0.25f, onValueChange: val => {
+                _rightSidebarContainer.style.width = val;
+                _rightSidebarContainer.style.flexBasis = val;
+            }).OnComplete(() => {
+                if (_sidebarCollapsed)
+                {
+                    _rightSidebarContainer.AddToClassList("sidebar--collapsed");
+                }
+            });
+        }
+
+        private void ToggleHudOverlayMode()
+        {
+            _hudOverlayMode = !_hudOverlayMode;
+            if (_hudToggleBtn is not null)
+            {
+                _hudToggleBtn.text = _hudOverlayMode ? "HUD Mode ON" : "HUD Mode OFF";
+            }
+
+            if (_root is not null)
+            {
+                if (_hudOverlayMode)
+                {
+                    _root.AddToClassList("hud-mode-active");
+                }
+                else
+                {
+                    _root.RemoveFromClassList("hud-mode-active");
+                }
+            }
+
+            if (_narrativePanel is not null)
+            {
+                if (_hudOverlayMode)
+                {
+                    _narrativePanel.AddToClassList("text-container--hud-active");
+                }
+                else
+                {
+                    _narrativePanel.RemoveFromClassList("text-container--hud-active");
+                }
+            }
+
+            if (_rightSidebarContainer is not null)
+            {
+                if (_hudOverlayMode)
+                {
+                    _rightSidebarContainer.AddToClassList("sidebar--hud-overlay");
+                    _rightSidebarContainer.style.width = 300f;
+                    _rightSidebarContainer.style.flexBasis = 300f;
+                    if (_root is not null && _rightSidebarContainer.parent != _root)
+                    {
+                        _rightSidebarContainer.RemoveFromHierarchy();
+                        _root.Add(_rightSidebarContainer);
+                        _rightSidebarContainer.BringToFront();
+                    }
+                }
+                else
+                {
+                    _rightSidebarContainer.RemoveFromClassList("sidebar--hud-overlay");
+                    _rightSidebarContainer.style.width = _lastSidebarWidth;
+                    _rightSidebarContainer.style.flexBasis = _lastSidebarWidth;
+                    if (_contentSplitter is not null && _rightSidebarContainer.parent != _contentSplitter)
+                    {
+                        _rightSidebarContainer.RemoveFromHierarchy();
+                        _contentSplitter.Add(_rightSidebarContainer);
+                    }
+                }
+            }
+        }
+
+        private void SetupSplitters()
+        {
+            var mainHandle = _root.Q<VisualElement>("main-split-handle");
+            var mainLine = mainHandle?.Q<VisualElement>(className: "drag-splitter-line");
+            if (mainHandle != null && mainLine != null && _rightSidebarContainer != null)
+            {
+                bool isDragging = false;
+                
+                mainHandle.RegisterCallback<PointerDownEvent>(evt => {
+                    isDragging = true;
+                    mainHandle.CapturePointer(evt.pointerId);
+                    evt.StopPropagation();
+                });
+                
+                mainHandle.RegisterCallback<PointerMoveEvent>(evt => {
+                    if (isDragging)
+                    {
+                        float deltaX = evt.localPosition.x;
+                        float newWidth = _rightSidebarContainer.resolvedStyle.width - deltaX;
+                        newWidth = Mathf.Clamp(newWidth, 150f, 600f);
+                        _rightSidebarContainer.style.width = newWidth;
+                        _rightSidebarContainer.style.flexBasis = newWidth;
+                        _lastSidebarWidth = newWidth;
+                        evt.StopPropagation();
+                    }
+                });
+                
+                mainHandle.RegisterCallback<PointerUpEvent>(evt => {
+                    if (isDragging)
+                    {
+                        isDragging = false;
+                        mainHandle.ReleasePointer(evt.pointerId);
+                        evt.StopPropagation();
+                    }
+                });
+
+                mainHandle.RegisterCallback<PointerOverEvent>(evt => {
+                    PrimeTween.Tween.StopAll(mainLine);
+                    Color curColor = mainLine.style.backgroundColor.keyword == StyleKeyword.Undefined ? new Color(90/255f, 95/255f, 110/255f, 0.4f) : mainLine.style.backgroundColor.value;
+                    PrimeTween.Tween.Custom(curColor, new Color(0f, 168/255f, 204/255f), duration: 0.1f, onValueChange: val => {
+                        mainLine.style.backgroundColor = val;
+                    });
+                });
+
+                mainHandle.RegisterCallback<PointerOutEvent>(evt => {
+                    PrimeTween.Tween.StopAll(mainLine);
+                    Color curColor = mainLine.style.backgroundColor.keyword == StyleKeyword.Undefined ? new Color(0f, 168/255f, 204/255f) : mainLine.style.backgroundColor.value;
+                    PrimeTween.Tween.Custom(curColor, new Color(90/255f, 95/255f, 110/255f, 0.4f), duration: 0.1f, onValueChange: val => {
+                        mainLine.style.backgroundColor = val;
+                    });
+                });
+            }
+
+            var textMediaHandle = _root.Q<VisualElement>("text-media-splitter");
+            var mediaLine = textMediaHandle?.Q<VisualElement>(className: "drag-splitter-line");
+            var mediaCanvas = _root.Q<VisualElement>("media-canvas");
+            var narrativePanel = _root.Q<VisualElement>("narrative-panel");
+            if (textMediaHandle != null && mediaLine != null && mediaCanvas != null && narrativePanel != null)
+            {
+                bool isDragging = false;
+
+                textMediaHandle.RegisterCallback<PointerDownEvent>(evt => {
+                    isDragging = true;
+                    textMediaHandle.CapturePointer(evt.pointerId);
+                    evt.StopPropagation();
+                });
+
+                textMediaHandle.RegisterCallback<PointerMoveEvent>(evt => {
+                    if (isDragging)
+                    {
+                        float deltaY = evt.localPosition.y;
+                        float curHeightMedia = mediaCanvas.resolvedStyle.height;
+                        float curHeightNarrative = narrativePanel.resolvedStyle.height;
+                        float totalHeight = curHeightMedia + curHeightNarrative;
+                        
+                        float targetHeightMedia = curHeightMedia + deltaY;
+                        targetHeightMedia = Mathf.Clamp(targetHeightMedia, 50f, totalHeight - 50f);
+                        
+                        float growMedia = (targetHeightMedia / totalHeight) * 2.0f;
+                        float growNarrative = 2.0f - growMedia;
+
+                        mediaCanvas.style.flexGrow = growMedia;
+                        narrativePanel.style.flexGrow = growNarrative;
+                        
+                        evt.StopPropagation();
+                    }
+                });
+
+                textMediaHandle.RegisterCallback<PointerUpEvent>(evt => {
+                    if (isDragging)
+                    {
+                        isDragging = false;
+                        textMediaHandle.ReleasePointer(evt.pointerId);
+                        evt.StopPropagation();
+                    }
+                });
+
+                textMediaHandle.RegisterCallback<PointerOverEvent>(evt => {
+                    PrimeTween.Tween.StopAll(mediaLine);
+                    Color curColor = mediaLine.style.backgroundColor.keyword == StyleKeyword.Undefined ? new Color(90/255f, 95/255f, 110/255f, 0.4f) : mediaLine.style.backgroundColor.value;
+                    PrimeTween.Tween.Custom(curColor, new Color(0f, 168/255f, 204/255f), duration: 0.1f, onValueChange: val => {
+                        mediaLine.style.backgroundColor = val;
+                    });
+                });
+
+                textMediaHandle.RegisterCallback<PointerOutEvent>(evt => {
+                    PrimeTween.Tween.StopAll(mediaLine);
+                    Color curColor = mediaLine.style.backgroundColor.keyword == StyleKeyword.Undefined ? new Color(0f, 168/255f, 204/255f) : mediaLine.style.backgroundColor.value;
+                    PrimeTween.Tween.Custom(curColor, new Color(90/255f, 95/255f, 110/255f, 0.4f), duration: 0.1f, onValueChange: val => {
+                        mediaLine.style.backgroundColor = val;
+                    });
+                });
+            }
+
+            var profileHandle = _root.Q<VisualElement>("profile-splitter");
+            var profileLine = profileHandle?.Q<VisualElement>(className: "drag-splitter-line");
+            var bottomProfile = _root.Q<VisualElement>("bottom-profile-bar");
+            if (profileHandle != null && profileLine != null && bottomProfile != null)
+            {
+                bool isDragging = false;
+
+                profileHandle.RegisterCallback<PointerDownEvent>(evt => {
+                    isDragging = true;
+                    profileHandle.CapturePointer(evt.pointerId);
+                    evt.StopPropagation();
+                });
+
+                profileHandle.RegisterCallback<PointerMoveEvent>(evt => {
+                    if (isDragging)
+                    {
+                        float deltaY = evt.localPosition.y;
+                        float newHeight = bottomProfile.resolvedStyle.height - deltaY;
+                        newHeight = Mathf.Clamp(newHeight, 80f, 250f);
+                        bottomProfile.style.height = newHeight;
+                        evt.StopPropagation();
+                    }
+                });
+
+                profileHandle.RegisterCallback<PointerUpEvent>(evt => {
+                    if (isDragging)
+                    {
+                        isDragging = false;
+                        profileHandle.ReleasePointer(evt.pointerId);
+                        evt.StopPropagation();
+                    }
+                });
+
+                profileHandle.RegisterCallback<PointerOverEvent>(evt => {
+                    PrimeTween.Tween.StopAll(profileLine);
+                    Color curColor = profileLine.style.backgroundColor.keyword == StyleKeyword.Undefined ? new Color(90/255f, 95/255f, 110/255f, 0.4f) : profileLine.style.backgroundColor.value;
+                    PrimeTween.Tween.Custom(curColor, new Color(0f, 168/255f, 204/255f), duration: 0.1f, onValueChange: val => {
+                        profileLine.style.backgroundColor = val;
+                    });
+                });
+
+                profileHandle.RegisterCallback<PointerOutEvent>(evt => {
+                    PrimeTween.Tween.StopAll(profileLine);
+                    Color curColor = profileLine.style.backgroundColor.keyword == StyleKeyword.Undefined ? new Color(0f, 168/255f, 204/255f) : profileLine.style.backgroundColor.value;
+                    PrimeTween.Tween.Custom(curColor, new Color(90/255f, 95/255f, 110/255f, 0.4f), duration: 0.1f, onValueChange: val => {
+                        profileLine.style.backgroundColor = val;
+                    });
+                });
+            }
         }
     }
 }

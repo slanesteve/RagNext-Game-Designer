@@ -460,8 +460,19 @@ namespace RagNextPlayer.Managers
                         if (room is null)
                         {
                             Debug.LogWarning($"[GameManager] Redirect target room '{roomId}' not found.");
+                            CurrentState = GameState.Playing;
                             return;
                         }
+                    }
+
+                    // Robust Interception Check: if redirected back to the starting/current room, abort early
+                    if (string.Equals(roomId, CurrentRoom.Id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var rVar = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                        if (rVar != null) rVar.Value = CurrentRoom.Id;
+                        
+                        CurrentState = GameState.Playing;
+                        return;
                     }
                 }
 
