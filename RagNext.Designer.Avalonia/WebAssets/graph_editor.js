@@ -2897,6 +2897,21 @@ function getReachableNodeIds() {
                     if (destNode) queue.push(destNode);
                 }
             });
+        } else if (curr.type === 'switch') {
+            const defaultPin = connections.find(c => c.fromPinId === `${curr.id}_default`);
+            if (defaultPin) {
+                const defaultNode = nodes.find(n => n.id === getNodeIdFromPinId(defaultPin.toPinId));
+                if (defaultNode) queue.push(defaultNode);
+            }
+            if (curr.cases) {
+                curr.cases.forEach(c => {
+                    const destPin = connections.find(conn => conn.fromPinId === `${c.rowId}_out`);
+                    if (destPin) {
+                        const destNode = nodes.find(n => n.id === getNodeIdFromPinId(destPin.toPinId));
+                        if (destNode) queue.push(destNode);
+                    }
+                });
+            }
         }
     }
     return reachable;

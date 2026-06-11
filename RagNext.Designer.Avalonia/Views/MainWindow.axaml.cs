@@ -412,7 +412,7 @@ namespace RagNext.Designer.Avalonia.Views
             try
             {
                 var base64Json = await CanvasWebView.InvokeScript("saveAndSyncCsharp()");
-                if (base64Json == "CANCELLED")
+                if (base64Json == "CANCELLED" || base64Json == "\"CANCELLED\"")
                 {
                     return; // User cancelled saving! Keep visual editor open!
                 }
