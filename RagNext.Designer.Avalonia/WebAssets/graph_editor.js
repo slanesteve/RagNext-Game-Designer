@@ -2000,7 +2000,14 @@ function refreshCommandFields(node) {
                 optionsList = Array.from(colSet).map(c => ({ Id: c, Name: c }));
             } else if (inputSchema.label === 'Row Index' || inputSchema.label === 'RowIndex') {
                 optionsList = [];
-                for (let i = 0; i < 20; i++) {
+                const varName = getPropertyValue(node.data, "Array Variable") || getPropertyValue(node.data, "ArrayVariable");
+                const variable = (catalogs.Variables || []).find(v => (v.Name || v.name || "").toLowerCase() === (varName || "").toLowerCase());
+                const rows = variable ? (variable.Rows || variable.rows) : null;
+                const rowCount = rows ? rows.length : 0;
+                
+                // Show indices up to the current row count, but at least 0-4 as fallback
+                const limit = Math.max(5, rowCount);
+                for (let i = 0; i < limit; i++) {
                     optionsList.push({ Id: i.toString(), Name: i.toString() });
                 }
             }
