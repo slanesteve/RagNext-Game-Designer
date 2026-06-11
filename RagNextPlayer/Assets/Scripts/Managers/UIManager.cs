@@ -1747,16 +1747,16 @@ namespace RagNextPlayer.Managers
             _settingsMenu.style.display = DisplayStyle.Flex;
             _settingsMenu.BringToFront();
             _settingsMenu.transform.scale = Vector3.zero;
-            PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
-                _settingsMenu.transform.scale = val;
+            PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                _settingsMenu.transform.scale = new Vector3(val, val, 1f);
             });
         }
 
         private void CloseSettingsMenu()
         {
             if (_settingsMenu is null) return;
-            PrimeTween.Tween.Custom(_settingsMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
-                _settingsMenu.transform.scale = val;
+            PrimeTween.Tween.Custom(_settingsMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+                _settingsMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _settingsMenu.style.display = DisplayStyle.None;
             });
@@ -1992,8 +1992,8 @@ namespace RagNextPlayer.Managers
                 _gameOverMenu.style.display = DisplayStyle.Flex;
                 _gameOverMenu.BringToFront();
                 _gameOverMenu.transform.scale = Vector3.zero;
-                PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
-                    _gameOverMenu.transform.scale = val;
+                PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _gameOverMenu.transform.scale = new Vector3(val, val, 1f);
                 });
             }
         }
@@ -2001,8 +2001,8 @@ namespace RagNextPlayer.Managers
         private void RestartGameAction()
         {
             if (_gameOverMenu is null) return;
-            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
-                _gameOverMenu.transform.scale = val;
+            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+                _gameOverMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _gameOverMenu.style.display = DisplayStyle.None;
                 GameManager.Instance?.RestartGame();
@@ -2012,8 +2012,8 @@ namespace RagNextPlayer.Managers
         private void OpenLoadGameFromGameOver()
         {
             if (_gameOverMenu is null) return;
-            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
-                _gameOverMenu.transform.scale = val;
+            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+                _gameOverMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _gameOverMenu.style.display = DisplayStyle.None;
                 OpenSettingsMenu();
@@ -2126,8 +2126,8 @@ namespace RagNextPlayer.Managers
                 _promptInputMenu.style.display = DisplayStyle.Flex;
                 _promptInputMenu.BringToFront();
                 _promptInputMenu.transform.scale = Vector3.zero;
-                PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
-                    _promptInputMenu.transform.scale = val;
+                PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
                 });
             }
         }
@@ -2168,8 +2168,8 @@ namespace RagNextPlayer.Managers
             }
 
             if (_promptInputMenu is null) return;
-            PrimeTween.Tween.Custom(_promptInputMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
-                _promptInputMenu.transform.scale = val;
+            PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+                _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _promptInputMenu.style.display = DisplayStyle.None;
             });
@@ -2215,8 +2215,8 @@ namespace RagNextPlayer.Managers
                 var btn = new Button(() => {
                     if (_promptInputMenu is not null)
                     {
-                        PrimeTween.Tween.Custom(_promptInputMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
-                            _promptInputMenu.transform.scale = val;
+                        PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+                            _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
                         }).OnComplete(() => {
                             _promptInputMenu.style.display = DisplayStyle.None;
                         });
@@ -2243,8 +2243,8 @@ namespace RagNextPlayer.Managers
                 _promptInputMenu.style.display = DisplayStyle.Flex;
                 _promptInputMenu.BringToFront();
                 _promptInputMenu.transform.scale = Vector3.zero;
-                PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
-                    _promptInputMenu.transform.scale = val;
+                PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
                 });
             }
         }

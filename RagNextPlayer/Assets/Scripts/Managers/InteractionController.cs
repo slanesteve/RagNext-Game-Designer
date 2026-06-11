@@ -155,8 +155,8 @@ namespace RagNextPlayer.Managers
             _menuPanel.style.display = DisplayStyle.Flex;
             _menuPanel.BringToFront();
             _menuPanel.transform.scale = Vector3.zero;
-            PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
-                _menuPanel.transform.scale = val;
+            PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                _menuPanel.transform.scale = new Vector3(val, val, 1f);
             });
         }
 
