@@ -750,7 +750,7 @@ namespace RagNext.Designer.Avalonia.Views
                 string json = Encoding.UTF8.GetString(bytes);
                 json = ActionStep.NormalizeLegacyDiscriminators(json);
 
-                var imported = JsonSerializer.Deserialize(json, RagsCore.RagsJsonContext.CustomDefault.Action);
+                var imported = JsonSerializer.Deserialize(json, RagsCore.RagsJsonContext.FlatContext.Action);
 
                 if (imported != null)
                 {
@@ -762,6 +762,7 @@ namespace RagNext.Designer.Avalonia.Views
                     target.Nodes.Clear();
                     foreach (var node in imported.Nodes)
                     {
+                        CleanSwitchCases(node);
                         target.Nodes.Add(node);
                     }
 
@@ -773,6 +774,43 @@ namespace RagNext.Designer.Avalonia.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to auto-sync graph: {ex.Message}");
+            }
+        }
+
+        private static void CleanSwitchCases(ActionStep step)
+        {
+            if (step is SwitchCommand switchCmd)
+            {
+                if (switchCmd.Cases != null)
+                {
+                    var keysToRemove = switchCmd.Cases.Keys.Where(k => string.IsNullOrWhiteSpace(k)).ToList();
+                    foreach (var key in keysToRemove)
+                    {
+                        switchCmd.Cases.Remove(key);
+                    }
+                    foreach (var branch in switchCmd.Cases.Values)
+                    {
+                        if (branch != null)
+                        {
+                            foreach (var s in branch) CleanSwitchCases(s);
+                        }
+                    }
+                }
+                if (switchCmd.DefaultBranch != null)
+                {
+                    foreach (var s in switchCmd.DefaultBranch) CleanSwitchCases(s);
+                }
+            }
+            else if (step is Condition cond)
+            {
+                if (cond.TrueBranch != null)
+                {
+                    foreach (var s in cond.TrueBranch) CleanSwitchCases(s);
+                }
+                if (cond.FalseBranch != null)
+                {
+                    foreach (var s in cond.FalseBranch) CleanSwitchCases(s);
+                }
             }
         }
 

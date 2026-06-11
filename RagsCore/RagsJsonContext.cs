@@ -57,6 +57,32 @@ namespace RagsCore
                 return _default;
             }
         }
+
+        private static RagsJsonContext? _flatContext;
+        public static RagsJsonContext FlatContext
+        {
+            get
+            {
+                if (_flatContext == null)
+                {
+                    var opts = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        PropertyNameCaseInsensitive = true,
+                        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                        ReferenceHandler = null
+                    };
+                    opts.Converters.Add(new StepDefinitionBaseJsonConverter());
+                    opts.Converters.Add(new LenientBooleanConverter());
+                    opts.Converters.Add(new LenientDoubleConverter());
+                    opts.Converters.Add(new LenientSingleConverter());
+                    opts.Converters.Add(new LenientInt32Converter());
+                    _flatContext = new RagsJsonContext(opts);
+                }
+                return _flatContext;
+            }
+        }
     }
 
     public class LenientBooleanConverter : JsonConverter<bool>

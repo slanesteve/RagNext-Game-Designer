@@ -109,6 +109,12 @@ namespace RagsCore.Actions
         public static string NormalizeLegacyDiscriminators(string json)
         {
             if (string.IsNullOrEmpty(json)) return json;
+
+            // Repair System.Text.Json reference preservation bug on empty dictionary keys
+            // where empty keys are serialized as duplicate "$id": { ... } or "$ref": { ... }
+            json = System.Text.RegularExpressions.Regex.Replace(json, @"""\$id""\s*:\s*\{", @""""": {");
+            json = System.Text.RegularExpressions.Regex.Replace(json, @"""\$ref""\s*:\s*\{", @""""": {");
+
             return json
                 .Replace("\"char.customPropertyCheck\"", "\"char.attributeCheck\"")
                 .Replace("\"item.customPropertyCheck\"", "\"item.attributeCheck\"")

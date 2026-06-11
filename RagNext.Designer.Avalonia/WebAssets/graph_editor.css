@@ -183,10 +183,10 @@ body, html {
 .pin::after {
     content: "";
     position: absolute;
-    top: -20px;
-    left: -20px;
-    right: -20px;
-    bottom: -20px;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
     background: transparent;
     border-radius: 50%;
 }

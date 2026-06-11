@@ -1302,6 +1302,8 @@ function addDialogueChoiceRow(node, container, initialText, choiceId) {
     del.style.cursor = "pointer";
     del.style.fontSize = "12px";
     del.style.color = "var(--pin-false)";
+    del.style.marginRight = "10px";
+    del.style.userSelect = "none";
     del.onclick = () => {
         row.remove();
         connections = connections.filter(c => c.fromPinId !== `${rowId}_out`);
@@ -1396,15 +1398,14 @@ function addSwitchCaseRow(node, container, initialText, caseId) {
     const rowId = `case_${caseId}`;
     const row = document.createElement('div');
     row.style.display = 'flex';
+    row.style.gap = '4px';
     row.style.alignItems = 'center';
     row.style.marginBottom = '6px';
-    row.style.position = 'relative';
     row.id = rowId;
 
     const inp = document.createElement('input');
     inp.type = 'text';
     inp.style.flex = '1';
-    inp.style.marginRight = '20px';
     inp.placeholder = "Value (e.g. 1)";
     inp.value = initialText;
     inp.addEventListener('input', () => {
@@ -1412,28 +1413,26 @@ function addSwitchCaseRow(node, container, initialText, caseId) {
     });
     row.appendChild(inp);
 
-    const delBtn = document.createElement('button');
-    delBtn.innerText = "✕";
-    delBtn.className = 'delete-choice-btn';
-    delBtn.onclick = () => {
+    const del = document.createElement('span');
+    del.innerHTML = "✕";
+    del.style.cursor = "pointer";
+    del.style.fontSize = "12px";
+    del.style.color = "var(--pin-false)";
+    del.style.marginRight = "10px";
+    del.style.userSelect = "none";
+    del.onclick = () => {
         node.cases = node.cases.filter(c => c.id !== caseId);
-        removeConnectionsForPin(`${rowId}_out`);
+        connections = connections.filter(c => c.fromPinId !== `${rowId}_out`);
+        redrawConnections();
         row.remove();
         triggerAutoSave();
     };
-    row.appendChild(delBtn);
+    row.appendChild(del);
 
     const pin = document.createElement('div');
     pin.id = `${rowId}_out`;
     pin.className = 'pin output switch-case';
-    pin.style.right = '-8px';
-    pin.style.top = '12px';
-    pin.style.width = '12px';
-    pin.style.height = '12px';
-    pin.style.borderRadius = '50%';
     pin.style.backgroundColor = '#94A3B8';
-    pin.style.position = 'absolute';
-    row.appendChild(pin);
 
     // Make pin connectable
     pin.addEventListener('mousedown', (e) => {
@@ -1441,6 +1440,7 @@ function addSwitchCaseRow(node, container, initialText, caseId) {
         activeDrawingPin = { id: pin.id, direction: 'output', type: 'switch-case', node };
         drawTempConnection(e);
     });
+    row.appendChild(pin);
 
     container.appendChild(row);
 
@@ -3293,6 +3293,7 @@ function parseAndCreateNode(data, x, y) {
             let idx = 0;
             const container = document.getElementById(`${node.id}_cases_container`);
             for (const key of Object.keys(cases)) {
+                if (key.startsWith('$')) continue;
                 const caseId = Date.now() + idx;
                 addSwitchCaseRow(node, container, key, caseId);
 

@@ -175,12 +175,15 @@ namespace RagNextPlayer.Runtime
         private IGameEventSink? _sink;
         
         public bool IsSuspended { get; private set; }
+        public string ActionName { get; }
         
         public ActionRunner(ActionData action, GameExecutionContext ctx, IGameEventSink? sink)
         {
             _ctx = ctx;
             _sink = sink;
+            ActionName = action?.Name ?? "";
             _scopes.Push(action.Nodes.GetEnumerator());
+            ActionExecutor.RegisterRunner(this);
         }
         
         public void Resume()
@@ -249,14 +252,58 @@ namespace RagNextPlayer.Runtime
                         {
                             if (cond is SwitchCommandData switchNode)
                             {
-                                var resolvedVal = _ctx.Resolve(switchNode.Expression);
-                                if (switchNode.Cases != null && switchNode.Cases.TryGetValue(resolvedVal, out var caseBranch) && caseBranch.Count > 0)
+                                var expr = switchNode.Expression;
+                                var resolvedVal = "";
+                                if (!string.IsNullOrEmpty(expr))
+                                {
+                                    if (!expr.Contains("{") && !expr.Contains("}"))
+                                    {
+                                        var variable = _ctx.Game.Variables.Find(v => string.Equals(v.Name, expr, StringComparison.OrdinalIgnoreCase));
+                                        if (variable != null)
+                                        {
+                                            resolvedVal = variable.Value;
+                                        }
+                                        else
+                                        {
+                                            // Support path-like bare names (e.g. 'variables.InputData') by wrapping in curly braces
+                                            resolvedVal = _ctx.Resolve("{" + expr + "}");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        resolvedVal = _ctx.Resolve(expr);
+                                    }
+                                }
+
+                                resolvedVal = resolvedVal?.Trim() ?? "";
+                                Debug.Log($"[ActionExecutor] Evaluating Switch node. Expression: '{expr}', Resolved Value: '{resolvedVal}'");
+
+                                List<ActionStepData> caseBranch = null;
+                                if (switchNode.Cases != null)
+                                {
+                                    foreach (var kvp in switchNode.Cases)
+                                    {
+                                        if (string.Equals(kvp.Key?.Trim(), resolvedVal, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            caseBranch = kvp.Value;
+                                            Debug.Log($"[ActionExecutor] Switch node matched case: '{kvp.Key}'");
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (caseBranch != null && caseBranch.Count > 0)
                                 {
                                     _scopes.Push(caseBranch.GetEnumerator());
                                 }
                                 else if (switchNode.DefaultBranch != null && switchNode.DefaultBranch.Count > 0)
                                 {
+                                    Debug.Log($"[ActionExecutor] Switch node did not match any case. Falling back to default branch.");
                                     _scopes.Push(switchNode.DefaultBranch.GetEnumerator());
+                                }
+                                else
+                                {
+                                    Debug.Log($"[ActionExecutor] Switch node did not match any case and default branch is empty.");
                                 }
                             }
                             else if (cond is ForEachLoopCommandData loopNode)
@@ -293,6 +340,10 @@ namespace RagNextPlayer.Runtime
                     _scopes.Pop();
                 }
             }
+            if (_scopes.Count == 0)
+            {
+                ActionExecutor.UnregisterRunner(this);
+            }
         }
     }
 
@@ -310,14 +361,45 @@ namespace RagNextPlayer.Runtime
     /// </summary>
     public static class ActionExecutor
     {
+        private static readonly System.Collections.Generic.List<ActionRunner> _runners = new();
+
         public static ActionRunner? ActiveRunner { get; set; }
+
+        public static void RegisterRunner(ActionRunner runner)
+        {
+            _runners.Add(runner);
+            ActiveRunner = runner;
+        }
+
+        public static void UnregisterRunner(ActionRunner runner)
+        {
+            _runners.Remove(runner);
+            if (ActiveRunner == runner)
+            {
+                ActiveRunner = _runners.Count > 0 ? _runners[_runners.Count - 1] : null;
+            }
+        }
+
+        public static void ResumeSuspended()
+        {
+            for (int i = _runners.Count - 1; i >= 0; i--)
+            {
+                if (_runners[i].IsSuspended)
+                {
+                    Debug.Log($"[ActionExecutor] Resuming suspended runner: '{_runners[i].ActionName}'");
+                    _runners[i].Resume();
+                    return;
+                }
+            }
+            ActiveRunner?.Resume();
+        }
 
         public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null)
         {
             if (action is null || ctx is null) return;
             
+            Debug.Log($"[ActionExecutor] Execute called for action: '{action.Name}' ({action.Id}).");
             var runner = new ActionRunner(action, ctx, sink);
-            ActiveRunner = runner;
             runner.ExecuteNext();
         }
 

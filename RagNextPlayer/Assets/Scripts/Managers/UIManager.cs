@@ -1990,6 +1990,7 @@ namespace RagNextPlayer.Managers
 
         private void SubmitPromptSelection(string value)
         {
+            UnityEngine.Debug.Log($"[UIManager] SubmitPromptSelection called. value: '{value}', _promptTargetVarName: '{_promptTargetVarName}', ActiveRunner is {(ActionExecutor.ActiveRunner != null ? "NOT null" : "null")}");
             if (GameManager.Instance?.ActiveGame is null || string.IsNullOrWhiteSpace(_promptTargetVarName)) return;
 
             var vars = GameManager.Instance.ActiveGame.Variables;
@@ -2027,10 +2028,13 @@ namespace RagNextPlayer.Managers
 
             var currentRoom = GameManager.Instance.CurrentRoom;
             if (currentRoom is not null)
-                RenderRoom(currentRoom);
+            {
+                BuildExitButtons(currentRoom);
+                RefreshEntityLists();
+            }
 
             // Resume the action execution engine
-            ActionExecutor.ActiveRunner?.Resume();
+            ActionExecutor.ResumeSuspended();
         }
 
         private void SubmitPromptInput()
