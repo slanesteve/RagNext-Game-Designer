@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using System.Text.Json;
 using RagsCore.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -1327,6 +1328,39 @@ namespace RagsCore.Actions
         }
     }
 
+    public class PlayerInputTypeConverter : JsonConverter<PlayerInputType>
+    {
+        public override PlayerInputType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var val = reader.GetString();
+                if (string.IsNullOrWhiteSpace(val))
+                {
+                    return PlayerInputType.Text;
+                }
+                if (Enum.TryParse<PlayerInputType>(val, true, out var result))
+                {
+                    return result;
+                }
+            }
+            else if (reader.TokenType == JsonTokenType.Number)
+            {
+                if (reader.TryGetInt32(out var intVal))
+                {
+                    return (PlayerInputType)intVal;
+                }
+            }
+            return PlayerInputType.Text;
+        }
+
+        public override void Write(Utf8JsonWriter writer, PlayerInputType value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString());
+        }
+    }
+
+    [JsonConverter(typeof(PlayerInputTypeConverter))]
     public enum PlayerInputType { Text, Objects, Characters, Custom }
 
     public sealed class EndGameCommand : GameCommand
