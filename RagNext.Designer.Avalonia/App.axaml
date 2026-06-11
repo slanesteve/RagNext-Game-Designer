@@ -85,7 +85,7 @@
                     <SolidColorBrush x:Key="TextMuted" Color="#A1A1AA"/>
                     <SolidColorBrush x:Key="BorderBrush" Color="#3F3F46"/>
                     <SolidColorBrush x:Key="AccentBrush" Color="#007ACC"/>
-                    <SolidColorBrush x:Key="GridDotsBrush" Color="#2E2E3E" Opacity="0.55"/>
+                    <SolidColorBrush x:Key="GridDotsBrush" Color="Transparent"/>
                     <SolidColorBrush x:Key="NavHoverBg" Color="#252535"/>
                     <SolidColorBrush x:Key="NavActiveBg" Color="#2D2D3E"/>
                     <SolidColorBrush x:Key="NavHoverFg" Color="White"/>

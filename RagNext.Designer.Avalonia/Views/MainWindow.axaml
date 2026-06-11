@@ -52,6 +52,13 @@
                         
                         <!-- Manual Load / Launcher Button -->
                         <Button Content="📂 Launcher" Command="{Binding ShowLauncherCommand}" FontSize="12" Background="{DynamicResource ToolbarBtnBg}" Foreground="#A29BFE" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="10,0,0,0"/>
+
+                        <!-- Help Menu -->
+                        <Menu Background="Transparent" VerticalAlignment="Center" Margin="10,0,0,0">
+                            <MenuItem Header="Help" Foreground="{DynamicResource TextNormal}">
+                                <MenuItem Header="Report an Issue" Click="OnReportIssueClicked"/>
+                            </MenuItem>
+                        </Menu>
                     </StackPanel>
 
                     <!-- Active Project Status -->
@@ -1686,37 +1693,25 @@
 
                                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Target Platform" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" FontSize="13"/>
                                     <Grid Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*,*" Margin="0,4,0,0" Height="80">
-                                        <Button Grid.Column="0" Command="{Binding SelectPlatformCommand}" CommandParameter="Windows" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,8,0" Padding="8" CornerRadius="6"
-                                                Background="{Binding IsWindowsSelected, Converter={x:Static views:SelectedToBrushConverter.Instance}}"
-                                                BorderBrush="{Binding IsWindowsSelected, Converter={x:Static views:SelectedToBorderBrushConverter.Instance}}"
-                                                BorderThickness="2">
+                                        <Button Grid.Column="0" Command="{Binding SelectPlatformCommand}" CommandParameter="Windows" Classes="platform-btn" Tag="{Binding IsWindowsSelected}" Margin="0,0,8,0">
                                             <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <TextBlock Text="🪟 Windows" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextNormal}" HorizontalAlignment="Center"/>
                                                 <TextBlock Text="{Binding WinStatusText}" Foreground="{Binding WinStatusColor}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
-                                        <Button Grid.Column="1" Command="{Binding SelectPlatformCommand}" CommandParameter="MacOS" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,8,0" Padding="8" CornerRadius="6"
-                                                Background="{Binding IsMacSelected, Converter={x:Static views:SelectedToBrushConverter.Instance}}"
-                                                BorderBrush="{Binding IsMacSelected, Converter={x:Static views:SelectedToBorderBrushConverter.Instance}}"
-                                                BorderThickness="2">
+                                        <Button Grid.Column="1" Command="{Binding SelectPlatformCommand}" CommandParameter="MacOS" Classes="platform-btn" Tag="{Binding IsMacSelected}" Margin="0,0,8,0">
                                             <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <TextBlock Text="🍎 macOS" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextNormal}" HorizontalAlignment="Center"/>
                                                 <TextBlock Text="{Binding MacStatusText}" Foreground="{Binding MacStatusColor}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
-                                        <Button Grid.Column="2" Command="{Binding SelectPlatformCommand}" CommandParameter="Linux" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,8,0" Padding="8" CornerRadius="6"
-                                                Background="{Binding IsLinuxSelected, Converter={x:Static views:SelectedToBrushConverter.Instance}}"
-                                                BorderBrush="{Binding IsLinuxSelected, Converter={x:Static views:SelectedToBorderBrushConverter.Instance}}"
-                                                BorderThickness="2">
+                                        <Button Grid.Column="2" Command="{Binding SelectPlatformCommand}" CommandParameter="Linux" Classes="platform-btn" Tag="{Binding IsLinuxSelected}" Margin="0,0,8,0">
                                             <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <TextBlock Text="🐧 Linux" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextNormal}" HorizontalAlignment="Center"/>
                                                 <TextBlock Text="{Binding LinuxStatusText}" Foreground="{Binding LinuxStatusColor}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
-                                        <Button Grid.Column="3" Command="{Binding SelectPlatformCommand}" CommandParameter="WebGL" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="8" CornerRadius="6"
-                                                Background="{Binding IsWebGLSelected, Converter={x:Static views:SelectedToBrushConverter.Instance}}"
-                                                BorderBrush="{Binding IsWebGLSelected, Converter={x:Static views:SelectedToBorderBrushConverter.Instance}}"
-                                                BorderThickness="2">
+                                        <Button Grid.Column="3" Command="{Binding SelectPlatformCommand}" CommandParameter="WebGL" Classes="platform-btn" Tag="{Binding IsWebGLSelected}">
                                             <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <TextBlock Text="🌐 WebGL" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextNormal}" HorizontalAlignment="Center"/>
                                                 <TextBlock Text="{Binding WebGLStatusText}" Foreground="{Binding WebGLStatusColor}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center"/>
@@ -2191,8 +2186,8 @@
             </Border>
         </Border>
         <Popup Name="AutocompletePopup" IsOpen="False" Placement="Bottom" IsLightDismissEnabled="True" Focusable="False">
-            <Border Background="#16161E" BorderBrush="#333344" BorderThickness="1" CornerRadius="8" Padding="4" MaxHeight="220" Width="280" Focusable="False">
-                <ListBox Name="AutocompleteListBox" Background="Transparent" BorderThickness="0" Foreground="White" SelectionChanged="OnAutocompleteSelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4" MaxHeight="220" Width="280" Focusable="False">
+                <ListBox Name="AutocompleteListBox" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextNormal}" SelectionChanged="OnAutocompleteSelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.Styles>
                         <Style Selector="ScrollBar">
                             <Setter Property="Focusable" Value="False"/>
@@ -2214,7 +2209,7 @@
 
         <!-- Compose Overlay -->
         <Border Background="#A0000000" IsVisible="{Binding ShowComposeOverlay}" ZIndex="1000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Border Background="{DynamicResource SidebarBg}" BorderBrush="#3D3D5A" BorderThickness="1" CornerRadius="12" Width="850" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
+            <Border Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Width="850" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto" Margin="24">
                     <!-- Header -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
@@ -2308,6 +2303,23 @@
         <Style Selector="Button.nav[Tag=True]">
             <Setter Property="Foreground" Value="{DynamicResource NavHoverFg}"/>
             <Setter Property="Background" Value="{DynamicResource NavActiveBg}"/>
+        </Style>
+        <Style Selector="Button.platform-btn">
+            <Setter Property="Background" Value="{DynamicResource ToolbarBtnBg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+        </Style>
+        <Style Selector="Button.platform-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource NavHoverBg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        </Style>
+        <Style Selector="Button.platform-btn[Tag=True]">
+            <Setter Property="Background" Value="{DynamicResource NavActiveBg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
         </Style>
         <Style Selector="Expander">
             <Setter Property="HorizontalAlignment" Value="Stretch"/>

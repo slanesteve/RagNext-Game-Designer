@@ -405,6 +405,22 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        public void OnReportIssueClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                global::System.Diagnostics.Process.Start(new global::System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://github.com/slanesteve/RagNext-Game-Designer/issues/new?title=[Bug]%20Short%20Description&body=Steps%20to%20reproduce:",
+                    UseShellExecute = true
+                });
+            }
+            catch
+            {
+                // Silently ignore failures if default browser can't be invoked
+            }
+        }
+
          public async void OnSyncGraphClicked(object sender, RoutedEventArgs e)
         {
             if (DataContext is not MainWindowViewModel vm || vm.CurrentGame == null || vm.ActiveAction == null) return;
@@ -4176,34 +4192,38 @@ namespace RagNext.Designer.Avalonia.Views
                 Width = 450,
                 Height = 240,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Background = global::Avalonia.Media.Brush.Parse("#14141E"),
-                Foreground = global::Avalonia.Media.Brushes.White,
                 Padding = new global::Avalonia.Thickness(20)
             };
+            dialog.Bind(global::Avalonia.Controls.Window.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("MainBg"));
+            dialog.Bind(global::Avalonia.Controls.Window.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
 
             var stack = new StackPanel { Spacing = 12 };
-            stack.Children.Add(new TextBlock { Text = message, Foreground = global::Avalonia.Media.Brushes.Gray });
+            var msgBlock = new TextBlock { Text = message };
+            msgBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
+            stack.Children.Add(msgBlock);
 
             var input = new TextBox
             {
-                PlaceholderText = "Enter visual prompt (e.g. realistic warrior, dark fantasy)...",
-                Background = global::Avalonia.Media.Brush.Parse("#13131F"),
-                Foreground = global::Avalonia.Media.Brushes.White,
-                BorderBrush = global::Avalonia.Media.Brush.Parse("#33334A")
+                PlaceholderText = "Enter visual prompt (e.g. realistic warrior, dark fantasy)..."
             };
+            input.Bind(TextBox.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("InputBg"));
+            input.Bind(TextBox.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            input.Bind(TextBox.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
             stack.Children.Add(input);
 
             // Size Selector Stack
             var sizeStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Left };
-            sizeStack.Children.Add(new TextBlock { Text = "Size:", VerticalAlignment = VerticalAlignment.Center, Foreground = global::Avalonia.Media.Brushes.Gray });
+            var sizeLabel = new TextBlock { Text = "Size:", VerticalAlignment = VerticalAlignment.Center };
+            sizeLabel.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
+            sizeStack.Children.Add(sizeLabel);
 
             var sizeCombo = new ComboBox
             {
-                Background = global::Avalonia.Media.Brush.Parse("#13131F"),
-                Foreground = global::Avalonia.Media.Brushes.White,
-                BorderBrush = global::Avalonia.Media.Brush.Parse("#33334A"),
                 Width = 200
             };
+            sizeCombo.Bind(ComboBox.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("InputBg"));
+            sizeCombo.Bind(ComboBox.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            sizeCombo.Bind(ComboBox.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
 
             var sizes = new[]
             {
@@ -4229,10 +4249,19 @@ namespace RagNext.Designer.Avalonia.Views
                 Margin = new Thickness(0, 5, 0, 5)
             };
 
-            var wLabel = new TextBlock { Text = "Width:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,5,0), Foreground = global::Avalonia.Media.Brushes.Gray };
+            var wLabel = new TextBlock { Text = "Width:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,5,0) };
+            wLabel.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
             var wInput = new NumericUpDown { Value = 512, Minimum = 64, Maximum = 2048, Increment = 64, Width = 110, Margin = new Thickness(0,0,15,0) };
-            var hLabel = new TextBlock { Text = "Height:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,5,0), Foreground = global::Avalonia.Media.Brushes.Gray };
+            wInput.Bind(NumericUpDown.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("InputBg"));
+            wInput.Bind(NumericUpDown.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            wInput.Bind(NumericUpDown.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
+
+            var hLabel = new TextBlock { Text = "Height:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,5,0) };
+            hLabel.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
             var hInput = new NumericUpDown { Value = 512, Minimum = 64, Maximum = 2048, Increment = 64, Width = 110 };
+            hInput.Bind(NumericUpDown.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("InputBg"));
+            hInput.Bind(NumericUpDown.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            hInput.Bind(NumericUpDown.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
 
             Grid.SetColumn(wLabel, 0);
             Grid.SetColumn(wInput, 1);
@@ -4257,7 +4286,10 @@ namespace RagNext.Designer.Avalonia.Views
             // Buttons
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 10, Margin = new Thickness(0, 10, 0, 0) };
             var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
-            var cancelBtn = new Button { Content = "Cancel", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#2B2B3A"), Foreground = global::Avalonia.Media.Brushes.White };
+            var cancelBtn = new Button { Content = "Cancel", Width = 80 };
+            cancelBtn.Bind(Button.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("ToolbarBtnBg"));
+            cancelBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            cancelBtn.Bind(Button.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
 
             void Submit()
             {
@@ -4315,19 +4347,28 @@ namespace RagNext.Designer.Avalonia.Views
                 Width = 400,
                 Height = 180,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Background = global::Avalonia.Media.Brush.Parse("#14141E"),
-                Foreground = global::Avalonia.Media.Brushes.White,
                 Padding = new global::Avalonia.Thickness(20)
             };
+            dialog.Bind(global::Avalonia.Controls.Window.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("MainBg"));
+            dialog.Bind(global::Avalonia.Controls.Window.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
 
             var stack = new StackPanel { Spacing = 12 };
-            stack.Children.Add(new TextBlock { Text = message, Foreground = global::Avalonia.Media.Brushes.Gray });
-            var input = new TextBox { PlaceholderText = "Enter value...", Background = global::Avalonia.Media.Brush.Parse("#13131F"), Foreground = global::Avalonia.Media.Brushes.White, BorderBrush = global::Avalonia.Media.Brush.Parse("#33334A") };
+            var msgBlock = new TextBlock { Text = message };
+            msgBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
+            stack.Children.Add(msgBlock);
+
+            var input = new TextBox { PlaceholderText = "Enter value..." };
+            input.Bind(TextBox.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("InputBg"));
+            input.Bind(TextBox.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            input.Bind(TextBox.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
             stack.Children.Add(input);
 
             var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
             var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
-            var cancelBtn = new Button { Content = "Cancel", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#2B2B3A"), Foreground = global::Avalonia.Media.Brushes.White };
+            var cancelBtn = new Button { Content = "Cancel", Width = 80 };
+            cancelBtn.Bind(Button.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("ToolbarBtnBg"));
+            cancelBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            cancelBtn.Bind(Button.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
 
             okBtn.Click += (s, e) => { tcs.SetResult(input.Text ?? ""); dialog.Close(); };
             cancelBtn.Click += (s, e) => { tcs.SetResult(""); dialog.Close(); };
@@ -4363,17 +4404,22 @@ namespace RagNext.Designer.Avalonia.Views
                 Width = 480,
                 SizeToContent = global::Avalonia.Controls.SizeToContent.Height,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Background = global::Avalonia.Media.Brush.Parse("#14141E"),
-                Foreground = global::Avalonia.Media.Brushes.White,
                 Padding = new global::Avalonia.Thickness(20)
             };
+            dialog.Bind(global::Avalonia.Controls.Window.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("MainBg"));
+            dialog.Bind(global::Avalonia.Controls.Window.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
 
             var stack = new StackPanel { Spacing = 16 };
-            stack.Children.Add(new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap, Foreground = global::Avalonia.Media.Brushes.Gray });
+            var msgBlock = new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap };
+            msgBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
+            stack.Children.Add(msgBlock);
 
             var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
             var yesBtn = new Button { Content = "Yes", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
-            var noBtn = new Button { Content = "No", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#2B2B3A"), Foreground = global::Avalonia.Media.Brushes.White };
+            var noBtn = new Button { Content = "No", Width = 80 };
+            noBtn.Bind(Button.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("ToolbarBtnBg"));
+            noBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            noBtn.Bind(Button.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
 
             yesBtn.Click += (s, e) => { tcs.SetResult(true); dialog.Close(); };
             noBtn.Click += (s, e) => { tcs.SetResult(false); dialog.Close(); };
@@ -4399,13 +4445,15 @@ namespace RagNext.Designer.Avalonia.Views
                 Width = 480,
                 SizeToContent = global::Avalonia.Controls.SizeToContent.Height,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Background = global::Avalonia.Media.Brush.Parse("#14141E"),
-                Foreground = global::Avalonia.Media.Brushes.White,
                 Padding = new global::Avalonia.Thickness(20)
             };
+            dialog.Bind(global::Avalonia.Controls.Window.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("MainBg"));
+            dialog.Bind(global::Avalonia.Controls.Window.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
 
             var stack = new StackPanel { Spacing = 16 };
-            stack.Children.Add(new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap, Foreground = global::Avalonia.Media.Brushes.Gray });
+            var msgBlock = new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap };
+            msgBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
+            stack.Children.Add(msgBlock);
 
             var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
             var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
@@ -4471,7 +4519,15 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (value is bool selected && selected)
             {
+                if (global::Avalonia.Application.Current?.TryFindResource("NavActiveBg", out var activeBrush) == true && activeBrush is global::Avalonia.Media.IBrush brush)
+                {
+                    return brush;
+                }
                 return global::Avalonia.Media.Brush.Parse("#2E1A47"); // Dark purple / violet highlight
+            }
+            if (global::Avalonia.Application.Current?.TryFindResource("ToolbarBtnBg", out var baseBrush) == true && baseBrush is global::Avalonia.Media.IBrush bBrush)
+            {
+                return bBrush;
             }
             return global::Avalonia.Media.Brush.Parse("#13131F"); // Base button color
         }
@@ -4487,7 +4543,15 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (value is bool selected && selected)
             {
+                if (global::Avalonia.Application.Current?.TryFindResource("AccentBrush", out var accentBrush) == true && accentBrush is global::Avalonia.Media.IBrush brush)
+                {
+                    return brush;
+                }
                 return global::Avalonia.Media.Brush.Parse("#8E2DE2"); // Highlight border
+            }
+            if (global::Avalonia.Application.Current?.TryFindResource("BorderBrush", out var borderBrush) == true && borderBrush is global::Avalonia.Media.IBrush bBrush)
+            {
+                return bBrush;
             }
             return global::Avalonia.Media.Brush.Parse("#2A2A3A"); // Dark border
         }
