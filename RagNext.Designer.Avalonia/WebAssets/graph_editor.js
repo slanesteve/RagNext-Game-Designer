@@ -1878,7 +1878,15 @@ function refreshCommandFields(node) {
                 }
             }
             else if (inputSchema.dataType === 'Character') optionsList = catalogs.Characters || [];
-            else if (inputSchema.dataType === 'Variable') optionsList = catalogs.Variables || [];
+            else if (inputSchema.dataType === 'Variable') {
+                optionsList = catalogs.Variables || [];
+                if (inputSchema.label === 'Array Variable' || inputSchema.label === 'ArrayVariable' || inputSchema.label === 'Array Variable Name' || inputSchema.label === 'ArrayVariableName') {
+                    optionsList = optionsList.filter(v => {
+                        const t = (v.VarType || v.varType || v.Type || v.type || "").toLowerCase();
+                        return t === 'array';
+                    });
+                }
+            }
             else if (inputSchema.dataType === 'Media') {
                 optionsList = catalogs.Media || [];
                 const isSoundCommand = (type === 'media.playSound');
@@ -1989,21 +1997,18 @@ function refreshCommandFields(node) {
                     { Id: "Out", Name: "Out" }
                 ];
             } else if (inputSchema.label === 'Column Name' || inputSchema.label === 'ColumnName') {
-                const colSet = new Set();
-                if (catalogs.Variables) {
-                    catalogs.Variables.forEach(v => {
-                        if (v.Type === 'array' && v.Columns) {
-                            v.Columns.forEach(c => colSet.add(c));
-                        }
-                    });
+                optionsList = [];
+                const varName = getPropertyValue(node.data, "Array Variable") || getPropertyValue(node.data, "ArrayVariable");
+                const variable = (catalogs.Variables || []).find(v => (v.Name || v.name || "").toLowerCase() === (varName || "").toLowerCase());
+                const columns = variable ? (variable.Columns || variable.columns) : null;
+                if (columns) {
+                    optionsList = columns.map(c => ({ Id: c, Name: c }));
                 }
-                optionsList = Array.from(colSet).map(c => ({ Id: c, Name: c }));
             } else if (inputSchema.label === 'Row Index' || inputSchema.label === 'RowIndex') {
                 optionsList = [];
                 const varName = getPropertyValue(node.data, "Array Variable") || getPropertyValue(node.data, "ArrayVariable");
                 const variable = (catalogs.Variables || []).find(v => (v.Name || v.name || "").toLowerCase() === (varName || "").toLowerCase());
-                const rows = variable ? (variable.Rows || variable.rows) : null;
-                const rowCount = rows ? rows.length : 0;
+                const rowCount = variable ? (variable.RowCount !== undefined ? variable.RowCount : (variable.rowCount || 0)) : 0;
                 
                 // Show indices up to the current row count, but at least 0-4 as fallback
                 const limit = Math.max(5, rowCount);

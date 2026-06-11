@@ -357,7 +357,7 @@ namespace RagNext.Designer.Avalonia.Views
                         // Bug #5: Include action names for item action pickers.
                         Actions = o.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
                     }).ToList(),
-                    Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, VarType = v.Type, Columns = v.Columns.ToList(), Attributes = v.Attributes.Select(a => a.Name).ToList() }).ToList(),
+                    Variables = vm.CurrentGame.Variables.Select(v => new CatalogEntityDto { Id = v.Name, Name = v.Name, VarType = v.Type, Columns = v.Columns.ToList(), Attributes = v.Attributes.Select(a => a.Name).ToList(), RowCount = v.Rows != null ? v.Rows.Count : 0 }).ToList(),
                     Player = new CatalogPlayerDto
                     {
                         Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList(),
@@ -2746,17 +2746,21 @@ namespace RagNext.Designer.Avalonia.Views
                 }
 
                 var textValue = textBox.Text ?? string.Empty;
-                var itemDataContext = textBox.DataContext as string;
                 var cellItemsControl = textBox.FindAncestorOfType<ItemsControl>();
-                if (cellItemsControl?.DataContext is ObservableCollection<string> row && itemDataContext != null)
+                if (cellItemsControl?.DataContext is ObservableCollection<string> row)
                 {
                     int index = -1;
-                    for (int i = 0; i < row.Count; i++)
+                    var panel = cellItemsControl.ItemsPanelRoot;
+                    if (panel != null)
                     {
-                        if (ReferenceEquals(row[i], itemDataContext))
+                        for (int i = 0; i < panel.Children.Count; i++)
                         {
-                            index = i;
-                            break;
+                            var child = panel.Children[i];
+                            if (child == textBox || child.FindDescendantOfType<TextBox>() == textBox)
+                            {
+                                index = i;
+                                break;
+                            }
                         }
                     }
 
@@ -3132,18 +3136,38 @@ namespace RagNext.Designer.Avalonia.Views
                                             TypeName = $"Loop Variable ({v.Name})", 
                                             Description = $"Value of column '{col}' for current iteration of '{v.Name}'." 
                                         });
+
+                                        // Placeholder templates
+                                        list.Add(new AutocompleteItem { 
+                                            Token = $"variables.{v.Name}.{col}.<row_index>", 
+                                            DisplayToken = $"{{variables.{v.Name}.{col}.<row_index>}}", 
+                                            TypeName = "Array Template (Col-First)", 
+                                            Description = $"Access column '{col}' for any row index." 
+                                        });
+                                        list.Add(new AutocompleteItem { 
+                                            Token = $"variables.{v.Name}.<row_index>.{col}", 
+                                            DisplayToken = $"{{variables.{v.Name}.<row_index>.{col}}}", 
+                                            TypeName = "Array Template (Row-First)", 
+                                            Description = $"Access column '{col}' for any row index." 
+                                        });
                                     }
 
-                                    if (v.Rows != null)
+                                    if (v.Rows != null && v.Rows.Count <= 10)
                                     {
                                         for (int r = 0; r < v.Rows.Count; r++)
                                         {
                                             foreach (var col in v.Columns)
                                             {
                                                 list.Add(new AutocompleteItem { 
+                                                    Token = $"variables.{v.Name}.{col}.{r}", 
+                                                    DisplayToken = $"{{variables.{v.Name}.{col}.{r}}}", 
+                                                    TypeName = "Array Cell (Col-First)", 
+                                                    Description = $"Value of column '{col}' at row {r} in '{v.Name}'." 
+                                                });
+                                                list.Add(new AutocompleteItem { 
                                                     Token = $"variables.{v.Name}.{r}.{col}", 
                                                     DisplayToken = $"{{variables.{v.Name}.{r}.{col}}}", 
-                                                    TypeName = "Array Cell Reference", 
+                                                    TypeName = "Array Cell (Row-First)", 
                                                     Description = $"Value of column '{col}' at row {r} in '{v.Name}'." 
                                                 });
                                             }
