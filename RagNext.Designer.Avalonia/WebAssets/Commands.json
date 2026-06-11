@@ -837,12 +837,12 @@
         },
         {
           "label": "Row Index",
-          "controlType": "Text",
+          "controlType": "ComboBox",
           "dataType": "String"
         },
         {
           "label": "Column Name",
-          "controlType": "Text",
+          "controlType": "ComboBox",
           "dataType": "String"
         },
         {
@@ -879,7 +879,7 @@
         },
         {
           "label": "Row Index",
-          "controlType": "Text",
+          "controlType": "ComboBox",
           "dataType": "String"
         }
       ]

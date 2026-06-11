@@ -1988,13 +1988,28 @@ function refreshCommandFields(node) {
                     { Id: "In", Name: "In" },
                     { Id: "Out", Name: "Out" }
                 ];
+            } else if (inputSchema.label === 'Column Name' || inputSchema.label === 'ColumnName') {
+                const colSet = new Set();
+                if (catalogs.Variables) {
+                    catalogs.Variables.forEach(v => {
+                        if (v.Type === 'array' && v.Columns) {
+                            v.Columns.forEach(c => colSet.add(c));
+                        }
+                    });
+                }
+                optionsList = Array.from(colSet).map(c => ({ Id: c, Name: c }));
+            } else if (inputSchema.label === 'Row Index' || inputSchema.label === 'RowIndex') {
+                optionsList = [];
+                for (let i = 0; i < 20; i++) {
+                    optionsList.push({ Id: i.toString(), Name: i.toString() });
+                }
             }
 
             optionsList.forEach(opt => {
                 const o = document.createElement('option');
                 const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
                 const idVal = opt.Id !== undefined ? opt.Id : opt.id;
-                if (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') {
+                if (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName' || inputSchema.label === 'Column Name' || inputSchema.label === 'ColumnName' || inputSchema.label === 'Row Index' || inputSchema.label === 'RowIndex') {
                     o.value = nameVal;
                     o.innerText = nameVal;
                 } else {

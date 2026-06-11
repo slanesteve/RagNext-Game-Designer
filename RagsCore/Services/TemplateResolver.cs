@@ -84,6 +84,41 @@ namespace RagsCore.Services
                     return ResolveSpecificRoom(parts, ctx);
 
                 default:
+                    // Check if parts[0] is an array variable
+                    var rootVar = ctx.GetVariable(parts[0]) ?? ctx.Game.Variables.FirstOrDefault(v => string.Equals(v.Name, parts[0], StringComparison.OrdinalIgnoreCase));
+                    if (rootVar != null && string.Equals(rootVar.Type, "array", StringComparison.OrdinalIgnoreCase) && parts.Length >= 3)
+                    {
+                        int rowIndex = -1;
+                        string colName = "";
+                        if (int.TryParse(parts[1], out var idx1))
+                        {
+                            rowIndex = idx1;
+                            colName = parts[2];
+                        }
+                        else if (int.TryParse(parts[2], out var idx2))
+                        {
+                            rowIndex = idx2;
+                            colName = parts[1];
+                        }
+
+                        if (rowIndex >= 0 && rootVar.Rows != null && rowIndex < rootVar.Rows.Count)
+                        {
+                            int colIndex = -1;
+                            for (int i = 0; i < rootVar.Columns.Count; i++)
+                            {
+                                if (string.Equals(rootVar.Columns[i], colName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    colIndex = i;
+                                    break;
+                                }
+                            }
+                            if (colIndex >= 0 && colIndex < rootVar.Rows[rowIndex].Count)
+                            {
+                                return rootVar.Rows[rowIndex][colIndex];
+                            }
+                        }
+                    }
+
                     // If no prefix, check if it matches a variable name directly
                     var directVar = ctx.GetVariable(path);
                     if (directVar != null)
@@ -307,6 +342,42 @@ namespace RagsCore.Services
         private static string? ResolveVariable(string[] parts, ActionContext ctx)
         {
             if (parts.Length < 2) return null;
+
+            // Check if parts[1] is an array variable
+            var baseVar = ctx.GetVariable(parts[1]) ?? ctx.Game.Variables.FirstOrDefault(v => string.Equals(v.Name, parts[1], StringComparison.OrdinalIgnoreCase));
+            if (baseVar != null && string.Equals(baseVar.Type, "array", StringComparison.OrdinalIgnoreCase) && parts.Length >= 4)
+            {
+                int rowIndex = -1;
+                string colName = "";
+                if (int.TryParse(parts[2], out var idx1))
+                {
+                    rowIndex = idx1;
+                    colName = parts[3];
+                }
+                else if (int.TryParse(parts[3], out var idx2))
+                {
+                    rowIndex = idx2;
+                    colName = parts[2];
+                }
+
+                if (rowIndex >= 0 && baseVar.Rows != null && rowIndex < baseVar.Rows.Count)
+                {
+                    int colIndex = -1;
+                    for (int i = 0; i < baseVar.Columns.Count; i++)
+                    {
+                        if (string.Equals(baseVar.Columns[i], colName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            colIndex = i;
+                            break;
+                        }
+                    }
+                    if (colIndex >= 0 && colIndex < baseVar.Rows[rowIndex].Count)
+                    {
+                        return baseVar.Rows[rowIndex][colIndex];
+                    }
+                }
+            }
+
             var varName = string.Join(".", parts.Skip(1));
             
             // First check exact match in ActionContext

@@ -322,13 +322,70 @@ namespace RagNextPlayer.Runtime
                 case "variable":
                 {
                     if (parts.Length < 2) return null;
+
+                    // Check if parts[1] is an array variable
+                    var baseVar = game.Variables.Find(v => string.Equals(v.Name, parts[1], StringComparison.OrdinalIgnoreCase));
+                    if (baseVar != null && string.Equals(baseVar.Type ?? "", "array", StringComparison.OrdinalIgnoreCase) && parts.Length >= 4)
+                    {
+                        int rowIndex = -1;
+                        string colName = "";
+                        if (int.TryParse(parts[2], out var idx1))
+                        {
+                            rowIndex = idx1;
+                            colName = parts[3];
+                        }
+                        else if (int.TryParse(parts[3], out var idx2))
+                        {
+                            rowIndex = idx2;
+                            colName = parts[2];
+                        }
+
+                        if (rowIndex >= 0 && baseVar.Rows != null && rowIndex < baseVar.Rows.Count)
+                        {
+                            int colIndex = baseVar.Columns.FindIndex(c => string.Equals(c, colName, StringComparison.OrdinalIgnoreCase));
+                            if (colIndex >= 0 && colIndex < baseVar.Rows[rowIndex].Count)
+                            {
+                                return baseVar.Rows[rowIndex][colIndex];
+                            }
+                        }
+                    }
+
                     var varName = string.Join(".", parts, 1, parts.Length - 1).Trim();
                     return FindVariable(game, varName);
                 }
 
                 // ── bare variable name ─────────────────────────────────────────
                 default:
+                {
+                    // Check if parts[0] is an array variable
+                    var rootVar = game.Variables.Find(v => string.Equals(v.Name, parts[0], StringComparison.OrdinalIgnoreCase));
+                    if (rootVar != null && string.Equals(rootVar.Type ?? "", "array", StringComparison.OrdinalIgnoreCase) && parts.Length >= 3)
+                    {
+                        int rowIndex = -1;
+                        string colName = "";
+                        if (int.TryParse(parts[1], out var idx1))
+                        {
+                            rowIndex = idx1;
+                            colName = parts[2];
+                        }
+                        else if (int.TryParse(parts[2], out var idx2))
+                        {
+                            rowIndex = idx2;
+                            colName = parts[1];
+                        }
+
+                        if (rowIndex >= 0 && rootVar.Rows != null && rowIndex < rootVar.Rows.Count)
+                        {
+                            int colIndex = rootVar.Columns.FindIndex(c => string.Equals(c, colName, StringComparison.OrdinalIgnoreCase));
+                            if (colIndex >= 0 && colIndex < rootVar.Rows[rowIndex].Count)
+                            {
+                                return rootVar.Rows[rowIndex][colIndex];
+                            }
+                        }
+                    }
+
                     return FindVariable(game, path);
+                }
             }
         }
 
