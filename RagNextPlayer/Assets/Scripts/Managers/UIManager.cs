@@ -1755,7 +1755,7 @@ namespace RagNextPlayer.Managers
         private void CloseSettingsMenu()
         {
             if (_settingsMenu is null) return;
-            PrimeTween.Tween.Custom<float>(_settingsMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+            PrimeTween.Tween.Custom(_settingsMenu.transform.scale.x, 0.0f, 0.1f, val => {
                 _settingsMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _settingsMenu.style.display = DisplayStyle.None;
@@ -2001,7 +2001,7 @@ namespace RagNextPlayer.Managers
         private void RestartGameAction()
         {
             if (_gameOverMenu is null) return;
-            PrimeTween.Tween.Custom<float>(_gameOverMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale.x, 0.0f, 0.1f, val => {
                 _gameOverMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _gameOverMenu.style.display = DisplayStyle.None;
@@ -2012,7 +2012,7 @@ namespace RagNextPlayer.Managers
         private void OpenLoadGameFromGameOver()
         {
             if (_gameOverMenu is null) return;
-            PrimeTween.Tween.Custom<float>(_gameOverMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale.x, 0.0f, 0.1f, val => {
                 _gameOverMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _gameOverMenu.style.display = DisplayStyle.None;
@@ -2168,7 +2168,7 @@ namespace RagNextPlayer.Managers
             }
 
             if (_promptInputMenu is null) return;
-            PrimeTween.Tween.Custom<float>(_promptInputMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+            PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
                 _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _promptInputMenu.style.display = DisplayStyle.None;
@@ -2215,7 +2215,7 @@ namespace RagNextPlayer.Managers
                 var btn = new Button(() => {
                     if (_promptInputMenu is not null)
                     {
-                        PrimeTween.Tween.Custom<float>(_promptInputMenu.transform.scale.x, 0.0f, duration: 0.1s, onValueChange: val => {
+                        PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
                             _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
                         }).OnComplete(() => {
                             _promptInputMenu.style.display = DisplayStyle.None;
