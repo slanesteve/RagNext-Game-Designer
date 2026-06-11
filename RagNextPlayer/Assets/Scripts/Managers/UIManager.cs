@@ -23,6 +23,8 @@ namespace RagNextPlayer.Managers
 
         // ── UXML Element References ───────────────────────────────────────────
         private VisualElement  _root;
+        private VisualElement  _roomActionsContainer;
+        private PrimeTween.Tween _pulseTween;
         private VisualElement  _roomPortrait;
         private Label          _roomTitleLabel;
         private Label          _gameInfoLabel;
@@ -126,6 +128,7 @@ namespace RagNextPlayer.Managers
 
             // Query elements by their UXML names
             _roomTitleLabel         = _root.Q<Label>("room-title");
+            _roomActionsContainer   = _root.Q<VisualElement>("room-actions-container");
             _gameInfoLabel          = _root.Q<Label>("game-info");
             _narrativeScroll        = _root.Q<ScrollView>("narrative-scroll");
             // Bind static compass buttons
@@ -236,6 +239,52 @@ namespace RagNextPlayer.Managers
 
                 var loadBtn = _root.Q<Button>($"load-slot-{capturedSlot}-btn");
                 if (loadBtn is not null) loadBtn.clicked += () => LoadGameSlot(capturedSlot);
+            }
+
+            if (_roomActionsContainer is not null)
+            {
+                _roomActionsContainer.RegisterCallback<ClickEvent>(evt => {
+                    if (_pulseTween.isAlive)
+                    {
+                        _pulseTween.Kill();
+                    }
+                    _roomActionsContainer.style.opacity = 1f;
+                });
+            }
+
+            // Bind pointer hover transitions to compass buttons
+            foreach (var kvp in _compassButtons)
+            {
+                if (kvp.Value is null) continue;
+                var btn = kvp.Value;
+                btn.RegisterCallback<PointerOverEvent>(evt => {
+                    if (btn.enabledSelf)
+                    {
+                        PrimeTween.Tween.Custom(1.0f, 1.08f, duration: 0.1f, onValueChange: val => {
+                            btn.transform.scale = new Vector3(val, val, 1f);
+                        });
+                    }
+                });
+                btn.RegisterCallback<PointerOutEvent>(evt => {
+                    PrimeTween.Tween.Custom(btn.transform.scale.x, 1.0f, duration: 0.1f, onValueChange: val => {
+                        btn.transform.scale = new Vector3(val, val, 1f);
+                    });
+                });
+            }
+
+            // Also add hover transitions for primary interactive panel buttons
+            if (_settingsBtn is not null)
+            {
+                _settingsBtn.RegisterCallback<PointerOverEvent>(evt => {
+                    PrimeTween.Tween.Custom(1.0f, 1.08f, duration: 0.1f, onValueChange: val => {
+                        _settingsBtn.transform.scale = new Vector3(val, val, 1f);
+                    });
+                });
+                _settingsBtn.RegisterCallback<PointerOutEvent>(evt => {
+                    PrimeTween.Tween.Custom(_settingsBtn.transform.scale.x, 1.0f, duration: 0.1f, onValueChange: val => {
+                        _settingsBtn.transform.scale = new Vector3(val, val, 1f);
+                    });
+                });
             }
 
             SubscribeEvents();
@@ -837,6 +886,11 @@ namespace RagNextPlayer.Managers
 
         private void OnDisable()
         {
+            if (_pulseTween.isAlive)
+            {
+                _pulseTween.Kill();
+            }
+
             UnsubscribeEvents();
 
             if (_settingsBtn is not null) _settingsBtn.clicked -= OpenSettingsMenu;
@@ -980,6 +1034,46 @@ namespace RagNextPlayer.Managers
 
             // Entity lists
             RefreshEntityLists();
+
+            // Pulse room-actions-container if active actions are available
+            UpdateRoomActionsPulse(room);
+        }
+
+        private void UpdateRoomActionsPulse(RoomData room)
+        {
+            if (_pulseTween.isAlive)
+            {
+                _pulseTween.Kill();
+            }
+
+            if (_roomActionsContainer is null) return;
+
+            // Reset style state
+            _roomActionsContainer.style.opacity = 1f;
+
+            bool hasActions = false;
+            if (room?.Actions != null)
+            {
+                foreach (var act in room.Actions)
+                {
+                    if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
+                    {
+                        hasActions = true;
+                        break;
+                    }
+                }
+            }
+
+            if (hasActions)
+            {
+                // Pulse opacity from 1.0 down to 0.4 continuously using PrimeTween
+                _pulseTween = PrimeTween.Tween.Custom(1f, 0.4f, duration: 1.2f, ease: PrimeTween.Ease.InOutSine, cycles: -1, cycleMode: PrimeTween.CycleMode.Yoyo, onValueChange: val => {
+                    if (_roomActionsContainer is not null)
+                    {
+                        _roomActionsContainer.style.opacity = val;
+                    }
+                });
+            }
         }
 
 
@@ -1406,6 +1500,17 @@ namespace RagNextPlayer.Managers
             // Tap on the whole row also opens the menu
             row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
 
+            row.RegisterCallback<PointerOverEvent>(evt => {
+                PrimeTween.Tween.Custom(1.0f, 1.03f, duration: 0.1f, onValueChange: val => {
+                    row.transform.scale = new Vector3(val, val, 1f);
+                });
+            });
+            row.RegisterCallback<PointerOutEvent>(evt => {
+                PrimeTween.Tween.Custom(row.transform.scale.x, 1.0f, duration: 0.1f, onValueChange: val => {
+                    row.transform.scale = new Vector3(val, val, 1f);
+                });
+            });
+
             return row;
         }
 
@@ -1440,6 +1545,17 @@ namespace RagNextPlayer.Managers
             row.Add(btn);
 
             row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
+
+            row.RegisterCallback<PointerOverEvent>(evt => {
+                PrimeTween.Tween.Custom(1.0f, 1.03f, duration: 0.1f, onValueChange: val => {
+                    row.transform.scale = new Vector3(val, val, 1f);
+                });
+            });
+            row.RegisterCallback<PointerOutEvent>(evt => {
+                PrimeTween.Tween.Custom(row.transform.scale.x, 1.0f, duration: 0.1f, onValueChange: val => {
+                    row.transform.scale = new Vector3(val, val, 1f);
+                });
+            });
 
             return row;
         }
@@ -1630,12 +1746,20 @@ namespace RagNextPlayer.Managers
 
             _settingsMenu.style.display = DisplayStyle.Flex;
             _settingsMenu.BringToFront();
+            _settingsMenu.transform.scale = Vector3.zero;
+            PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                _settingsMenu.transform.scale = val;
+            });
         }
 
         private void CloseSettingsMenu()
         {
-            if (_settingsMenu is not null)
+            if (_settingsMenu is null) return;
+            PrimeTween.Tween.Custom(_settingsMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
+                _settingsMenu.transform.scale = val;
+            }).OnComplete(() => {
                 _settingsMenu.style.display = DisplayStyle.None;
+            });
         }
 
         private void ToggleFullscreen()
@@ -1864,23 +1988,36 @@ namespace RagNextPlayer.Managers
                 _gameOverMessage.text = finalMessage;
 
             if (_gameOverMenu is not null)
+            {
                 _gameOverMenu.style.display = DisplayStyle.Flex;
+                _gameOverMenu.BringToFront();
+                _gameOverMenu.transform.scale = Vector3.zero;
+                PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _gameOverMenu.transform.scale = val;
+                });
+            }
         }
 
         private void RestartGameAction()
         {
-            if (_gameOverMenu is not null)
+            if (_gameOverMenu is null) return;
+            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
+                _gameOverMenu.transform.scale = val;
+            }).OnComplete(() => {
                 _gameOverMenu.style.display = DisplayStyle.None;
-
-            GameManager.Instance?.RestartGame();
+                GameManager.Instance?.RestartGame();
+            });
         }
 
         private void OpenLoadGameFromGameOver()
         {
-            if (_gameOverMenu is not null)
+            if (_gameOverMenu is null) return;
+            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
+                _gameOverMenu.transform.scale = val;
+            }).OnComplete(() => {
                 _gameOverMenu.style.display = DisplayStyle.None;
-
-            OpenSettingsMenu();
+                OpenSettingsMenu();
+            });
         }
 
         private void ExitGameAction()
@@ -1985,7 +2122,14 @@ namespace RagNextPlayer.Managers
             }
 
             if (_promptInputMenu is not null)
+            {
                 _promptInputMenu.style.display = DisplayStyle.Flex;
+                _promptInputMenu.BringToFront();
+                _promptInputMenu.transform.scale = Vector3.zero;
+                PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _promptInputMenu.transform.scale = val;
+                });
+            }
         }
 
         private void SubmitPromptSelection(string value)
@@ -2023,8 +2167,12 @@ namespace RagNextPlayer.Managers
                 }
             }
 
-            if (_promptInputMenu is not null)
+            if (_promptInputMenu is null) return;
+            PrimeTween.Tween.Custom(_promptInputMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
+                _promptInputMenu.transform.scale = val;
+            }).OnComplete(() => {
                 _promptInputMenu.style.display = DisplayStyle.None;
+            });
 
             var currentRoom = GameManager.Instance.CurrentRoom;
             if (currentRoom is not null)
@@ -2066,7 +2214,13 @@ namespace RagNextPlayer.Managers
                 var resolvedChoiceText = ctx.Resolve(choice.Text);
                 var btn = new Button(() => {
                     if (_promptInputMenu is not null)
-                        _promptInputMenu.style.display = DisplayStyle.None;
+                    {
+                        PrimeTween.Tween.Custom(_promptInputMenu.transform.scale, Vector3.zero, duration: 0.1s, onValueChange: val => {
+                            _promptInputMenu.transform.scale = val;
+                        }).OnComplete(() => {
+                            _promptInputMenu.style.display = DisplayStyle.None;
+                        });
+                    }
 
                     // Execute choice sub-commands
                     if (choice.Commands != null && choice.Commands.Count > 0)
@@ -2085,7 +2239,14 @@ namespace RagNextPlayer.Managers
             }
 
             if (_promptInputMenu is not null)
+            {
                 _promptInputMenu.style.display = DisplayStyle.Flex;
+                _promptInputMenu.BringToFront();
+                _promptInputMenu.transform.scale = Vector3.zero;
+                PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _promptInputMenu.transform.scale = val;
+                });
+            }
         }
 
         public void RefreshExits()

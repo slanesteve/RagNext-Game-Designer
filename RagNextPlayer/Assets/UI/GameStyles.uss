@@ -107,9 +107,9 @@
 
 /* Scene Art Card */
 .scene-card {
-    background-color: #141418;
-    border-radius: 8px;
-    border-width: 1px;
+    background-color: rgba(20, 20, 24, 0.88);
+    border-radius: 12px;
+    border-width: 1.5px;
     border-color: #2A2A38;
     flex-grow: 1;
     flex-shrink: 1;
@@ -139,9 +139,9 @@
     flex-shrink: 1;
     flex-basis: 0px;
     min-height: 0px;
-    background-color: #141418;
-    border-radius: 8px;
-    border-width: 1px;
+    background-color: rgba(20, 20, 24, 0.88);
+    border-radius: 12px;
+    border-width: 1.5px;
     border-color: #2A2A38;
     transition-property: opacity;
     transition-duration: 0.3s;
@@ -157,17 +157,17 @@
 }
 
 .narrative-room-header {
-    font-size: 15px;
-    color: #4AABFF;
+    font-size: 16px;
+    color: #FFB84A;
     -unity-font-style: bold;
-    margin-bottom: 4px;
-    margin-top: 8px;
+    margin-bottom: 6px;
+    margin-top: 12px;
 }
 
 .narrative-paragraph {
     flex-direction: row;
     flex-wrap: wrap;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     align-items: flex-start;
 }
 
@@ -175,6 +175,7 @@
     font-size: 14px;
     color: #D0D0D8;
     white-space: normal;
+    line-height: 1.4;
 }
 
 .narrative-status {
@@ -235,9 +236,9 @@
 
 /* Card base */
 .compass-card, .entity-card {
-    background-color: #141418;
-    border-radius: 8px;
-    border-width: 1px;
+    background-color: rgba(20, 20, 24, 0.88);
+    border-radius: 12px;
+    border-width: 1.5px;
     border-color: #2A2A38;
     padding: 10px;
 }
@@ -246,7 +247,7 @@
 .compass-rose {
     background-color: #16161E;
     border-radius: 50%;
-    border-width: 1px;
+    border-width: 1.5px;
     border-color: #2E2E3E;
     width: 120px;
     height: 120px;
@@ -308,14 +309,15 @@
 
 /* Dimmed / Inactive exits */
 .compass-btn--inactive {
-    opacity: 0.12;
-    border-color: #222228;
+    opacity: 0.15;
+    border-width: 0;
     color: #444450;
-    background-color: #0E0E12;
+    background-color: transparent;
 }
 
 /* Active Exits (Cardinal directions / blue glow) */
 .compass-rose-btn.compass-btn--active {
+    border-width: 1.5px;
     border-color: #4AABFF;
     color: #4AABFF;
     background-color: #1E1E28;
@@ -329,6 +331,7 @@
 
 /* Active Vertical portals (amber gold glow) */
 .compass-aux-btn.compass-btn--active {
+    border-width: 1.5px;
     border-color: #FFB84A;
     color: #FFB84A;
     background-color: #1E1E28;
@@ -342,6 +345,7 @@
 
 /* Active Spatial portals (pink glow) */
 .compass-aux-btn.compass-btn--active {
+    border-width: 1.5px;
     border-color: #FF6B9D;
     color: #FF6B9D;
     background-color: #1E1E28;
@@ -363,7 +367,7 @@
     flex-direction: row;
     align-items: center;
     background-color: #1A1A22;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 5px 8px;
     transition-property: background-color;
     transition-duration: 0.1s;
@@ -459,9 +463,9 @@
 
 .inventory-card {
     flex-grow: 1;
-    background-color: #141418;
-    border-radius: 8px;
-    border-width: 1px;
+    background-color: rgba(20, 20, 24, 0.88);
+    border-radius: 12px;
+    border-width: 1.5px;
     border-color: #2A2A38;
     padding: 6px 10px;
     overflow: hidden;
@@ -515,16 +519,15 @@
     left: 50%;
     top: 50%;
     translate: -50% -50%;
-    background-color: #18181E;
+    background-color: rgba(24, 24, 28, 0.92);
     border-radius: 12px;
-    border-width: 1px;
+    border-width: 1.5px;
     border-color: #4AABFF;
     padding: 16px;
-    min-width: 220px;
-    max-width: 320px;
+    min-width: 260px;
+    max-width: 380px;
     flex-direction: column;
     row-gap: 6px;
-    /* URP drop shadow via box-shadow not yet supported; use border glow instead */
     z-index: 100;
 }
 
@@ -534,6 +537,15 @@
     -unity-font-style: bold;
     margin-bottom: 8px;
     -unity-text-align: upper-center;
+}
+
+.interaction-menu-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    column-gap: 8px;
+    row-gap: 8px;
+    margin: 8px 0;
 }
 
 .interaction-menu-btn {
@@ -595,9 +607,9 @@
     left: 50%;
     top: 50%;
     translate: -50% -50%;
-    background-color: #18181E;
+    background-color: rgba(24, 24, 28, 0.92);
     border-radius: 12px;
-    border-width: 1px;
+    border-width: 1.5px;
     border-color: #4AABFF;
     padding: 20px;
     min-width: 280px;

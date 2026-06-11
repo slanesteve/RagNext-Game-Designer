@@ -4,7 +4,7 @@
 
     <!-- ══ TOP BAR ═══════════════════════════════════════════════════════════ -->
     <ui:VisualElement name="top-bar" class="top-bar">
-      <ui:VisualElement name="room-header-container" style="flex-direction: row; align-items: center;">
+      <ui:VisualElement name="room-actions-container" style="flex-direction: row; align-items: center;">
         <ui:VisualElement name="room-portrait" class="room-portrait" style="display: none;" />
         <ui:Label name="room-title" class="room-title" text="Room Name" />
       </ui:VisualElement>

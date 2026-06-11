@@ -83,8 +83,7 @@ namespace RagNextPlayer.Managers
                 : entity.Name;
 
             BuildMenuUI(resolvedTitle, options);
-            _menuPanel.style.display = DisplayStyle.Flex;
-            _menuPanel.BringToFront();
+            DisplayMenuPanel();
         }
 
 
@@ -118,8 +117,7 @@ namespace RagNextPlayer.Managers
                 : room.Name;
 
             BuildMenuUI(resolvedTitle, options);
-            panel.style.display = DisplayStyle.Flex;
-            panel.BringToFront();
+            DisplayMenuPanel();
         }
 
 
@@ -148,8 +146,18 @@ namespace RagNextPlayer.Managers
                 : player.Name;
 
             BuildMenuUI(resolvedTitle, options);
-            panel.style.display = DisplayStyle.Flex;
-            panel.BringToFront();
+            DisplayMenuPanel();
+        }
+
+        private void DisplayMenuPanel()
+        {
+            if (_menuPanel is null) return;
+            _menuPanel.style.display = DisplayStyle.Flex;
+            _menuPanel.BringToFront();
+            _menuPanel.transform.scale = Vector3.zero;
+            PrimeTween.Tween.Custom(Vector3.zero, Vector3.one, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                _menuPanel.transform.scale = val;
+            });
         }
 
         public void HandleInlineClick(string name)
@@ -283,14 +291,18 @@ namespace RagNextPlayer.Managers
             titleLbl.AddToClassList("interaction-menu-title");
             _menuPanel.Add(titleLbl);
 
+            var grid = new VisualElement();
+            grid.AddToClassList("interaction-menu-grid");
+
             foreach (var (label, handler) in options)
             {
                 var btn = new Button(handler);
                 btn.text = label;
                 btn.AddToClassList("interaction-menu-btn");
                 btn.clicked += HideMenu;
-                _menuPanel.Add(btn);
+                grid.Add(btn);
             }
+            _menuPanel.Add(grid);
 
             var cancelBtn = new Button(HideMenu) { text = "✕ Cancel" };
             cancelBtn.AddToClassList("interaction-menu-cancel");

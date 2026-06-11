@@ -559,10 +559,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public string WebGLStatusText => PublishEngine.IsTemplateAvailable(PackagingTarget.WebGL) ? "✅ Ready" : "⚠️ No template";
 
         private bool IsLightTheme => global::Avalonia.Application.Current?.ActualThemeVariant == global::Avalonia.Styling.ThemeVariant.Light;
-        public string WinStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.Windows) ? (IsLightTheme ? "#1B5E20" : "#00FA9A") : (IsLightTheme ? "#E65100" : "#FF8C00");
-        public string MacStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.MacOS) ? (IsLightTheme ? "#1B5E20" : "#00FA9A") : (IsLightTheme ? "#E65100" : "#FF8C00");
-        public string LinuxStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.Linux) ? (IsLightTheme ? "#1B5E20" : "#00FA9A") : (IsLightTheme ? "#E65100" : "#FF8C00");
-        public string WebGLStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.WebGL) ? (IsLightTheme ? "#1B5E20" : "#00FA9A") : (IsLightTheme ? "#E65100" : "#FF8C00");
+        public string WinStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.Windows) ? (IsLightTheme ? "#1B5E20" : "#00FA9A") : (IsLightTheme ? "#B23B00" : "#FF8C00");
+        public string MacStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.MacOS) ? (IsLightTheme ? "#1B5E20" : "#00FA9A") : (IsLightTheme ? "#B23B00" : "#FF8C00");
+        public string LinuxStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.Linux) ? (IsLightTheme ? "#1B5E20" : "#00FA9A") : (IsLightTheme ? "#B23B00" : "#FF8C00");
+        public string WebGLStatusColor => PublishEngine.IsTemplateAvailable(PackagingTarget.WebGL) ? (IsLightTheme ? "#1B5E20" : "#00FA9A") : (IsLightTheme ? "#B23B00" : "#FF8C00");
 
         public bool TemplateMissingWarningVisible => !PublishEngine.IsTemplateAvailable(SelectedPublishTarget);
 
