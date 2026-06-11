@@ -2073,7 +2073,7 @@
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadRecentProjectCommand}" 
                                                         CommandParameter="{Binding}" 
                                                         Background="Transparent" 
-                                                        Foreground="#E0E0F0" 
+                                                        Foreground="{DynamicResource TextNormal}" 
                                                         FontSize="11" 
                                                         HorizontalAlignment="Stretch" 
                                                         HorizontalContentAlignment="Left" 
