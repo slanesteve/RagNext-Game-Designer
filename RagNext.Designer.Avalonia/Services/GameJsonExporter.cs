@@ -84,6 +84,7 @@ namespace RagNext.Designer.Avalonia.Services
     {
         public string? Name { get; set; }
         public string? Value { get; set; }
+        public string? Type { get; set; }
         public List<string> Columns { get; set; } = new List<string>();
         public List<List<string>> Rows { get; set; } = new List<List<string>>();
     }
@@ -167,6 +168,7 @@ namespace RagNext.Designer.Avalonia.Services
             { 
                 Name = v.Name, 
                 Value = v.Value,
+                Type = v.Type,
                 Columns = v.Columns.ToList(),
                 Rows = v.Rows.Select(row => row.ToList()).ToList()
             }).ToList(),

@@ -310,6 +310,7 @@ namespace RagNextPlayer.Runtime.Models
     {
         public string  Name  { get; set; } = string.Empty;
         public string? Value { get; set; }
+        public string  Type  { get; set; } = "string";
         public List<string> Columns { get; set; } = new List<string>();
         public List<List<string>> Rows { get; set; } = new List<List<string>>();
     }

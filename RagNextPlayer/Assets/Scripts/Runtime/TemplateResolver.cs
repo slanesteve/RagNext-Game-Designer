@@ -325,7 +325,7 @@ namespace RagNextPlayer.Runtime
 
                     // Check if parts[1] is an array variable
                     var baseVar = game.Variables.Find(v => string.Equals(v.Name, parts[1], StringComparison.OrdinalIgnoreCase));
-                    if (baseVar != null && string.Equals(baseVar.Type ?? "", "array", StringComparison.OrdinalIgnoreCase) && parts.Length >= 4)
+                    if (baseVar != null && (string.Equals(baseVar.Type ?? "", "array", StringComparison.OrdinalIgnoreCase) || (baseVar.Columns != null && baseVar.Columns.Count > 0)) && parts.Length >= 4)
                     {
                         int rowIndex = -1;
                         string colName = "";
@@ -359,7 +359,7 @@ namespace RagNextPlayer.Runtime
                 {
                     // Check if parts[0] is an array variable
                     var rootVar = game.Variables.Find(v => string.Equals(v.Name, parts[0], StringComparison.OrdinalIgnoreCase));
-                    if (rootVar != null && string.Equals(rootVar.Type ?? "", "array", StringComparison.OrdinalIgnoreCase) && parts.Length >= 3)
+                    if (rootVar != null && (string.Equals(rootVar.Type ?? "", "array", StringComparison.OrdinalIgnoreCase) || (rootVar.Columns != null && rootVar.Columns.Count > 0)) && parts.Length >= 3)
                     {
                         int rowIndex = -1;
                         string colName = "";

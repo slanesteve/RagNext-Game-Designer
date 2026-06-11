@@ -3133,6 +3133,22 @@ namespace RagNext.Designer.Avalonia.Views
                                             Description = $"Value of column '{col}' for current iteration of '{v.Name}'." 
                                         });
                                     }
+
+                                    if (v.Rows != null)
+                                    {
+                                        for (int r = 0; r < v.Rows.Count; r++)
+                                        {
+                                            foreach (var col in v.Columns)
+                                            {
+                                                list.Add(new AutocompleteItem { 
+                                                    Token = $"variables.{v.Name}.{r}.{col}", 
+                                                    DisplayToken = $"{{variables.{v.Name}.{r}.{col}}}", 
+                                                    TypeName = "Array Cell Reference", 
+                                                    Description = $"Value of column '{col}' at row {r} in '{v.Name}'." 
+                                                });
+                                            }
+                                        }
+                                    }
                                 }
                             }
                             else
