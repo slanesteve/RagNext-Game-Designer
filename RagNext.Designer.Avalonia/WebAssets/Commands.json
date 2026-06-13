@@ -594,27 +594,6 @@
       "inputs": []
     },
     {
-      "name": "Timer: Set Attribute",
-      "category": "Timer",
-      "inputs": [
-        {
-          "label": "Timer",
-          "controlType": "ComboBox",
-          "dataType": "Timer"
-        },
-        {
-          "label": "Attribute Name",
-          "controlType": "Text",
-          "dataType": "String"
-        },
-        {
-          "label": "Value",
-          "controlType": "Text",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
       "name": "Timer: Set Timer To Active/Inactive",
       "category": "Timer",
       "inputs": [

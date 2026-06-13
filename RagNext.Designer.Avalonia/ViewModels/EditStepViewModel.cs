@@ -198,7 +198,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     (input.Label == "ItemId"      && _target is ItemSetActionActiveCommand)      ||
                     (input.Label == "RoomId"      && _target is RoomSetActionActiveCommand);
 
-                if (isEntityChange)
+                bool isVariableChange =
+                    (input.Label == "Name" && (_target.GetType().Name.Contains("VariableEqualsCondition") || _target.GetType().Name.Contains("VariableComparisonCondition")));
+
+                if (isEntityChange || isVariableChange)
                 {
                     global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                     {
@@ -253,11 +256,33 @@ namespace RagNext.Designer.Avalonia.ViewModels
             if (p.PropertyType == typeof(bool)) return InputControlType.Checkbox;
             if (p.PropertyType == typeof(int) || p.PropertyType == typeof(double) || p.PropertyType == typeof(float)) return InputControlType.Number;
 
+            if (p.Name.Equals("Value", StringComparison.OrdinalIgnoreCase) && 
+                (_target.GetType().Name.Contains("VariableEqualsCondition") || _target.GetType().Name.Contains("VariableComparisonCondition")))
+            {
+                var game = App.CurrentGame;
+                if (game != null)
+                {
+                    var nameProp = _target.GetType().GetProperty("Name");
+                    if (nameProp != null)
+                    {
+                        var varName = nameProp.GetValue(_target) as string;
+                        if (!string.IsNullOrEmpty(varName))
+                        {
+                            var variable = game.Variables.FirstOrDefault(v => string.Equals(v.Name, varName, StringComparison.OrdinalIgnoreCase));
+                            if (variable != null && string.Equals(variable.Type, "bool", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return InputControlType.ComboBox;
+                            }
+                        }
+                    }
+                }
+            }
+
             var name = p.Name;
             if (p.PropertyType.IsEnum || 
                 name.Equals("StoreVariableName", StringComparison.OrdinalIgnoreCase) || 
                 name.Equals("InputType", StringComparison.OrdinalIgnoreCase) || 
-                name.Equals("PromptName", StringComparison.OrdinalIgnoreCase) || 
+                (name.Equals("PromptName", StringComparison.OrdinalIgnoreCase) && _target is not PromptPlayerInputCommand) || 
                 (name.Equals("ChoiceText", StringComparison.OrdinalIgnoreCase) && _target is RemoveCustomChoiceCommand) || 
                 p.PropertyType == typeof(Guid) || 
                 name.EndsWith("Id", StringComparison.OrdinalIgnoreCase) ||
@@ -297,7 +322,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private InputDataType GetDataType(PropertyInfo p)
         {
             var name = p.Name;
-            if (name.Equals("PromptName", StringComparison.OrdinalIgnoreCase)) return InputDataType.PromptName;
+            if (name.Equals("PromptName", StringComparison.OrdinalIgnoreCase) && _target is not PromptPlayerInputCommand) return InputDataType.PromptName;
             if (name.Equals("StoreVariableName", StringComparison.OrdinalIgnoreCase)) return InputDataType.Variable;
 
             if (name.EndsWith("RoomId", StringComparison.OrdinalIgnoreCase) || 
@@ -420,6 +445,36 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 // No entity selected yet — leave picker source empty
                 input.PickerSource = new List<object>();
                 return;
+            }
+
+            if (input.Label.Equals("Value", StringComparison.OrdinalIgnoreCase) &&
+                (_target.GetType().Name.Contains("VariableEqualsCondition") || _target.GetType().Name.Contains("VariableComparisonCondition")))
+            {
+                var nameProp = _target.GetType().GetProperty("Name");
+                if (nameProp != null)
+                {
+                    var varName = nameProp.GetValue(_target) as string;
+                    if (!string.IsNullOrEmpty(varName))
+                    {
+                        var variable = game.Variables.FirstOrDefault(v => string.Equals(v.Name, varName, StringComparison.OrdinalIgnoreCase));
+                        if (variable != null && string.Equals(variable.Type, "bool", StringComparison.OrdinalIgnoreCase))
+                        {
+                            input.PickerSource = new List<object>
+                            {
+                                new NamedOption { Name = "true" },
+                                new NamedOption { Name = "false" }
+                            };
+
+                            if (input.Value != null)
+                            {
+                                var valStr = input.Value.ToString();
+                                var match = input.PickerSource.Cast<NamedOption>().FirstOrDefault(x => string.Equals(x.Name, valStr, StringComparison.OrdinalIgnoreCase));
+                                if (match != null) input.Value = match;
+                            }
+                            return;
+                        }
+                    }
+                }
             }
 
             input.PickerSource = input.DataType switch

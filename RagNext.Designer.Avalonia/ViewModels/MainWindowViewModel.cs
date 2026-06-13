@@ -34,7 +34,18 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     OnPropertyChanged(nameof(GameTitle));
                     OnPropertyChanged(nameof(GameAuthor));
                     OnPropertyChanged(nameof(GameVersion));
-                    OnPropertyChanged(nameof(Player));
+                    global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        OnPropertyChanged(nameof(Player));
+                        CurrentGame?.Player?.GetType().GetMethod("OnPropertyChanged")?.Invoke(CurrentGame.Player, new object[] { "StartingRoom" });
+                        if (CurrentGame?.Characters != null)
+                        {
+                            foreach (var c in CurrentGame.Characters)
+                            {
+                                c.GetType().GetMethod("OnPropertyChanged")?.Invoke(c, new object[] { "StartingRoom" });
+                            }
+                        }
+                    }, global::Avalonia.Threading.DispatcherPriority.Background);
                     OnPropertyChanged(nameof(SplashScreen));
 
                     PublishTitle = value?.Title ?? "My Adventure";
@@ -76,6 +87,38 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             OnPropertyChanged(nameof(ImageMediaAssets));
                             OnPropertyChanged(nameof(AudioMediaAssets));
                         };
+
+                        if (value.Player != null)
+                        {
+                            value.Player.PropertyChanged += (sender, args) =>
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] Player PropertyChanged: {args.PropertyName}");
+                                Console.WriteLine($"[DEBUG] Player PropertyChanged: {args.PropertyName}");
+                                _ = SaveGameAsync();
+                            };
+                        }
+
+                        if (value.Characters != null)
+                        {
+                            void Sub(RagsCore.Models.Character c)
+                            {
+                                c.PropertyChanged += (sender, args) =>
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Character PropertyChanged: {args.PropertyName}");
+                                    Console.WriteLine($"[DEBUG] Character PropertyChanged: {args.PropertyName}");
+                                    _ = SaveGameAsync();
+                                };
+                            }
+                            foreach (var c in value.Characters) Sub(c);
+                            value.Characters.CollectionChanged += (sender, args) =>
+                            {
+                                if (args.NewItems != null)
+                                {
+                                    foreach (RagsCore.Models.Character c in args.NewItems) Sub(c);
+                                }
+                                _ = SaveGameAsync();
+                            };
+                        }
 
                         if (value.SplashScreen != null)
                         {

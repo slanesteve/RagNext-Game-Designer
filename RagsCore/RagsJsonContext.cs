@@ -18,6 +18,7 @@ namespace RagsCore
     [JsonSerializable(typeof(List<RagsCore.Models.Action>))]
     [JsonSerializable(typeof(Room))]
     [JsonSerializable(typeof(Character))]
+    [JsonSerializable(typeof(Player))]
     [JsonSerializable(typeof(GameObject))]
     [JsonSerializable(typeof(MediaAsset))]
     [JsonSerializable(typeof(SplashScreenSettings))]
@@ -30,6 +31,7 @@ namespace RagsCore
     [JsonSerializable(typeof(System.Collections.ObjectModel.ObservableCollection<string>), TypeInfoPropertyName = "GameVariableColumnsCollection")]
     [JsonSerializable(typeof(System.Collections.ObjectModel.ObservableCollection<System.Collections.ObjectModel.ObservableCollection<string>>), TypeInfoPropertyName = "GameVariableRowsCollection")]
     [JsonSerializable(typeof(ActionStep))]
+    [JsonSerializable(typeof(PlayerInputType))]
     public partial class RagsJsonContext : JsonSerializerContext
     {
         private static RagsJsonContext? _default;

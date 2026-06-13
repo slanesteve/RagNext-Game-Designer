@@ -19,7 +19,15 @@ namespace RagsCore.Models
             get => _value; 
             set 
             {
-                if (SetProperty(ref _value, value))
+                var cleanValue = value;
+                if (Type == "bool" && value != null)
+                {
+                    if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase))
+                        cleanValue = "true";
+                    else if (string.Equals(value, "false", StringComparison.OrdinalIgnoreCase))
+                        cleanValue = "false";
+                }
+                if (SetProperty(ref _value, cleanValue))
                 {
                     OnPropertyChanged(nameof(ValidationWarning));
                 }
@@ -71,9 +79,10 @@ namespace RagsCore.Models
                 if (string.IsNullOrEmpty(Value)) return null;
                 if (Type == "bool")
                 {
-                    if (Value != "true" && Value != "false")
+                    if (!string.Equals(Value, "true", StringComparison.OrdinalIgnoreCase) && 
+                        !string.Equals(Value, "false", StringComparison.OrdinalIgnoreCase))
                     {
-                        return "⚠️ Value must be 'true' or 'false' (lowercase, no quotes).";
+                        return "⚠️ Value must be 'true' or 'false' (no quotes).";
                     }
                 }
                 else if (Type == "int" || Type == "number")

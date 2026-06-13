@@ -158,7 +158,12 @@ namespace RagsCore.Actions
         public override bool Evaluate(ActionContext ctx)
         {
             var v = ctx.GetVariable(Name)?.Value;
-            return CaseInsensitive
+            var isBool = string.Equals(v, "true", StringComparison.OrdinalIgnoreCase) || 
+                         string.Equals(v, "false", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(Value, "true", StringComparison.OrdinalIgnoreCase) || 
+                         string.Equals(Value, "false", StringComparison.OrdinalIgnoreCase);
+
+            return (CaseInsensitive || isBool)
                 ? string.Equals(v, Value, StringComparison.OrdinalIgnoreCase)
                 : string.Equals(v, Value, StringComparison.Ordinal);
         }

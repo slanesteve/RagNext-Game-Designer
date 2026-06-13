@@ -1197,7 +1197,11 @@ namespace RagNextPlayer.Runtime
             return cond switch
             {
                 VariableEqualsConditionData c =>
-                    c.CaseInsensitive
+                    (c.CaseInsensitive || 
+                     string.Equals(ctx.GetVariable(c.Name)?.Value, "true", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(ctx.GetVariable(c.Name)?.Value, "false", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(ctx.Resolve(c.Value), "true", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(ctx.Resolve(c.Value), "false", StringComparison.OrdinalIgnoreCase))
                         ? string.Equals(ctx.GetVariable(c.Name)?.Value, ctx.Resolve(c.Value), StringComparison.OrdinalIgnoreCase)
                         : string.Equals(ctx.GetVariable(c.Name)?.Value, ctx.Resolve(c.Value), StringComparison.Ordinal),
 

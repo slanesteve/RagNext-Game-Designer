@@ -15,7 +15,21 @@ namespace RagsCore.Models
         public int Health { get => _health; set => SetProperty(ref _health, value); }
 
         private Room? _startingRoom = null;
-        public Room? StartingRoom { get => _startingRoom; set => SetProperty(ref _startingRoom, value); }
+        public Room? StartingRoom
+        {
+            get => _startingRoom;
+            set
+            {
+                if (value == null && _startingRoom != null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Character.StartingRoom: Ignored null assignment from UI binding initialization.");
+                    Console.WriteLine("[DEBUG] Character.StartingRoom: Ignored null assignment from UI binding initialization.");
+                    OnPropertyChanged(nameof(StartingRoom));
+                    return;
+                }
+                SetProperty(ref _startingRoom, value);
+            }
+        }
 
         public ObservableCollection<GameObject> Inventory { get; set; } = new();
 

@@ -1686,6 +1686,7 @@ function refreshCommandFields(node) {
     }
 
     schema.inputs.forEach(inputSchema => {
+        let inputElement = null;
         const currentInputType = getPropertyValue(node.data, "Input Type") || getPropertyValue(node.data, "InputType") || "Text";
         if ((inputSchema.label === "Custom Options" || inputSchema.label === "CustomOptions") && currentInputType !== "Custom") {
             return;
@@ -2149,12 +2150,12 @@ function refreshCommandFields(node) {
                 
                 const optTrue = document.createElement('option');
                 optTrue.value = "true";
-                optTrue.innerText = "True";
+                optTrue.innerText = "true";
                 pickerSelect.appendChild(optTrue);
 
                 const optFalse = document.createElement('option');
                 optFalse.value = "false";
-                optFalse.innerText = "False";
+                optFalse.innerText = "false";
                 pickerSelect.appendChild(optFalse);
 
                 const textInput = document.createElement('input');

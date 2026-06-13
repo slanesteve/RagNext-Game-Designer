@@ -36,6 +36,28 @@ namespace RagNext.Designer.Avalonia.Views
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
 
+            var startingRoomCombo = this.FindControl<ComboBox>("StartingRoomComboBox");
+            if (startingRoomCombo != null)
+            {
+                startingRoomCombo.PropertyChanged += (s, e) =>
+                {
+                    if (e.Property.Name == "ItemsSource")
+                    {
+                        if (startingRoomCombo.ItemsSource != null && startingRoomCombo.DataContext is Player player)
+                        {
+                            startingRoomCombo.SelectedItem = player.StartingRoom;
+                        }
+                    }
+                    else if (e.Property.Name == "DataContext")
+                    {
+                        if (startingRoomCombo.DataContext is Player player && startingRoomCombo.ItemsSource != null)
+                        {
+                            startingRoomCombo.SelectedItem = player.StartingRoom;
+                        }
+                    }
+                };
+            }
+
             AddHandler(TextBox.KeyUpEvent, OnTextBoxKeyUp, RoutingStrategies.Bubble, true);
             AddHandler(TextBox.KeyDownEvent, OnTextBoxKeyDown, RoutingStrategies.Bubble, true);
             AddHandler(TextBox.LostFocusEvent, OnTextBoxLostFocus, RoutingStrategies.Bubble, true);
@@ -207,6 +229,18 @@ namespace RagNext.Designer.Avalonia.Views
                     if (ev.PropertyName == nameof(MainWindowViewModel.ComposeText))
                     {
                         UpdateComposePreview(vm.ComposeText);
+                    }
+                };
+
+                App.GameChanged += (newGame) =>
+                {
+                    if (newGame != null)
+                    {
+                        global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            // Trigger VM Property notification to refresh ComboBox bindings in views
+                            vm.GetType().GetMethod("OnPropertyChanged")?.Invoke(vm, new object[] { "Player" });
+                        }, global::Avalonia.Threading.DispatcherPriority.Loaded);
                     }
                 };
             }
@@ -1387,6 +1421,8 @@ namespace RagNext.Designer.Avalonia.Views
             if (vm != null) vm.SelectedSplashSoundAsset = asset;
         }
 
+
+
         private void LoadExits(Room room)
         {
             var game = App.CurrentGame;
@@ -2324,7 +2360,7 @@ namespace RagNext.Designer.Avalonia.Views
                     double textX = splash?.TextX ?? 50;
                     double textY = splash?.TextY ?? 50;
                     string fontColor = splash?.FontColor ?? "#FFFFFF";
-                    double fontSize = (splash?.FontSize ?? 32) * 2.4;
+                    double fontSize = (splash?.FontSize ?? 32) * 0.8;
                     string fontName = splash?.FontName ?? "Outfit";
 
                     // Optimized HTML template with built-in transition physics mirroring Unity exactly
@@ -2354,7 +2390,12 @@ namespace RagNext.Designer.Avalonia.Views
     position: absolute;
     left: {textX}%;
     top: {textY}%;
-    transform: translate(0, 0);
+    transform: translate(-50%, -50%);
+    width: 2000px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: {fontColor};
     font-size: {fontSize}px;
     font-family: '{fontName}', 'Outfit', sans-serif;
@@ -2362,7 +2403,8 @@ namespace RagNext.Designer.Avalonia.Views
     z-index: 10;
     pointer-events: none;
     text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-    transition: transform 0.05s ease-out;
+    transition: margin 0.05s ease-out;
+    white-space: nowrap;
   }}
 </style>
 <script>
@@ -2376,7 +2418,8 @@ namespace RagNext.Designer.Avalonia.Views
       // Reset states
       body.style.opacity = '0';
       overlay.style.opacity = '0';
-      overlay.style.transform = 'translate(0,0)';
+      overlay.style.marginLeft = '0px';
+      overlay.style.marginTop = '0px';
       body.style.transform = 'scale(1)';
       
       if (video) {{
@@ -2397,7 +2440,7 @@ namespace RagNext.Designer.Avalonia.Views
               var txtOpacity = progress;
 
               if (style === 'Rise') {{
-                  overlay.style.transform = 'translate(0, ' + (60 * (1 - progress)) + 'px)';
+                  overlay.style.marginTop = (60 * (1 - progress)) + 'px';
               }} else if (style === 'Exposure') {{
                   imgOpacity = Math.pow(progress, 0.4);
               }} else if (style === 'Cinematic') {{
@@ -2406,9 +2449,11 @@ namespace RagNext.Designer.Avalonia.Views
               }} else if (style === 'Glitch') {{
                   if (Math.random() < 0.15) {{
                       txtOpacity = Math.random() * 0.5 + 0.2;
-                      overlay.style.transform = 'translate(' + (Math.random() * 20 - 10) + 'px, ' + (Math.random() * 10 - 5) + 'px)';
+                      overlay.style.marginLeft = (Math.random() * 20 - 10) + 'px';
+                      overlay.style.marginTop = (Math.random() * 10 - 5) + 'px';
                   }} else {{
-                      overlay.style.transform = 'translate(0, 0)';
+                      overlay.style.marginLeft = '0px';
+                      overlay.style.marginTop = '0px';
                   }}
               }}
 
@@ -2427,12 +2472,15 @@ namespace RagNext.Designer.Avalonia.Views
               }} else if (style === 'Glitch') {{
                   if (Math.random() < 0.08) {{
                       overlay.style.opacity = Math.random() * 0.6 + 0.3;
-                      overlay.style.transform = 'translate(' + (Math.random() * 30 - 15) + 'px, ' + (Math.random() * 16 - 8) + 'px)';
+                      overlay.style.marginLeft = (Math.random() * 30 - 15) + 'px';
+                      overlay.style.marginTop = (Math.random() * 16 - 8) + 'px';
                   }} else {{
-                      overlay.style.transform = 'translate(0, 0)';
+                      overlay.style.marginLeft = '0px';
+                      overlay.style.marginTop = '0px';
                   }}
               }} else {{
-                  overlay.style.transform = 'translate(0, 0)';
+                  overlay.style.marginLeft = '0px';
+                  overlay.style.marginTop = '0px';
               }}
           }} else if (elapsed < duration) {{
               // Fade Out Sequence
@@ -2449,7 +2497,8 @@ namespace RagNext.Designer.Avalonia.Views
               body.style.opacity = '1';
               overlay.style.opacity = '1';
               body.style.transform = 'scale(1)';
-              overlay.style.transform = 'translate(0, 0)';
+              overlay.style.marginLeft = '0px';
+              overlay.style.marginTop = '0px';
               return;
           }}
 
@@ -3733,7 +3782,10 @@ namespace RagNext.Designer.Avalonia.Views
         {
             switch (label)
             {
-                case "Prompt Name": return "promptName";
+                case "Prompt Name": return "PromptName";
+                case "Prompt Text": return "PromptText";
+                case "Input Type": return "InputType";
+                case "Store Variable": return "StoreVariableName";
                 case "Choice Text": return "choiceText";
                 case "Target Variable": return "targetVariable";
                 case "Character": return "characterId";

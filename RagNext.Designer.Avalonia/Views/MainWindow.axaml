@@ -180,7 +180,7 @@
                         <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
                             <StackPanel Spacing="16">
                                 <TextBlock Text="👤 Protagonist Identity" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="140,*" RowSpacing="12" Margin="0,10,0,0">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="140,*" RowSpacing="12" Margin="0,10,0,0">
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Protagonist Name:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
                                     <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
@@ -207,16 +207,12 @@
                                          </Grid>
                                     </StackPanel>
                                     
-                                    <!-- Prompt for Name switch -->
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Prompt for Name:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
-                                    <ToggleSwitch Grid.Row="2" Grid.Column="1" IsChecked="{Binding bPromptForName, Mode=TwoWay}" OnContent="Yes" OffContent="No" Foreground="White" VerticalAlignment="Center"/>
-
                                     <!-- Gender Combo -->
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Gender:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
-                                    <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Genders}" SelectedItem="{Binding Gender, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Gender:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
+                                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Genders}" SelectedItem="{Binding Gender, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}"/>
 
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Starting Room:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
-                                    <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding StartingRoom, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Starting Room:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
+                                    <ComboBox x:Name="StartingRoomComboBox" Grid.Row="3" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding StartingRoom, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate x:DataType="models:Room">
                                                 <TextBlock Text="{Binding Name}"/>
@@ -779,6 +775,7 @@
                                         <CheckBox IsChecked="{Binding IsHostile, Mode=TwoWay}" Foreground="White" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Grid>
+
 
                                 <!-- Starting Room -->
                                 <TextBlock Text="Starting Room" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,0"/>
@@ -1482,7 +1479,10 @@
                                                             Canvas.Top="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextTopWithOffset}" 
                                                             Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextOpacity}"
                                                             TextWrapping="Wrap"
-                                                            MaxWidth="1800"/>
+                                                            Width="2000"
+                                                            Height="200"
+                                                            Margin="-1000,-100,0,0"
+                                                            TextAlignment="Center"/>
                                              </Canvas>
                                          </Border>
                                      </Viewbox>
