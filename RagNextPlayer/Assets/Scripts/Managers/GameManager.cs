@@ -367,6 +367,7 @@ namespace RagNextPlayer.Managers
 
         public void MovePlayerToRoom(string roomId, string? direction)
         {
+            InteractionController.Instance?.HideMenu();
             if (CurrentState == GameState.Transitioning)
             {
                 var roomVar = ActiveGame?.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
