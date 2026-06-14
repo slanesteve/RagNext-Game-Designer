@@ -452,7 +452,7 @@ namespace RagNextPlayer.Managers
                     }
 
                     // Execute OnPlayerExit actions for items in the current room
-                    var itemsInRoomExit = ActiveGame.Objects.FindAll(o => string.Equals(o.RoomId, CurrentRoom.Id, StringComparison.OrdinalIgnoreCase));
+                    var itemsInRoomExit = ActiveGame.Objects.FindAll(o => CurrentRoom.ObjectIds.Contains(o.Id));
                     foreach (var item in itemsInRoomExit)
                     {
                         if (item.Actions != null)
@@ -546,7 +546,7 @@ namespace RagNextPlayer.Managers
                 }
 
                 // Execute OnPlayerEnter actions for items in the entered room
-                var itemsInRoomEnter = ActiveGame.Objects.FindAll(o => string.Equals(o.RoomId, room.Id, StringComparison.OrdinalIgnoreCase));
+                var itemsInRoomEnter = ActiveGame.Objects.FindAll(o => room.ObjectIds.Contains(o.Id));
                 foreach (var item in itemsInRoomEnter)
                 {
                     if (item.Actions != null)

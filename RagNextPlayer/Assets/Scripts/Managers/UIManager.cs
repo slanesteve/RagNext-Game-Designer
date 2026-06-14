@@ -76,6 +76,7 @@ namespace RagNextPlayer.Managers
         private Button         _promptSubmitBtn;
         private string         _promptTargetVarName = string.Empty;
         private string         _promptName = string.Empty;
+        private PrimeTween.Tween _promptMenuCloseTween;
 
         // ── Typewriter effect ─────────────────────────────────────────────────
         [Header("Narrative Settings")]
@@ -344,6 +345,8 @@ namespace RagNextPlayer.Managers
             {
                 _splashScreen.style.display = DisplayStyle.Flex;
                 _splashScreen.style.opacity = 1f;
+                _splashScreen.style.alignItems = Align.Center;
+                _splashScreen.style.justifyContent = Justify.Center;
 
                 var badge = _splashScreen.Q<VisualElement>(className: "splash-badge");
                 var title = _splashScreen.Q<Label>(className: "splash-title");
@@ -474,6 +477,8 @@ namespace RagNextPlayer.Managers
             if (_splashScreen != null)
             {
                 _splashScreen.style.opacity = 0f;
+                _splashScreen.style.alignItems = Align.FlexStart;
+                _splashScreen.style.justifyContent = Justify.FlexStart;
             }
 
             var titleLabel = _splashScreen?.Q<Label>(className: "splash-title");
@@ -512,7 +517,6 @@ namespace RagNextPlayer.Managers
 
                     _splashScreen.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
                     
-                    // Customize Overlay Text block in Video Mode
                     if (titleLabel != null)
                     {
                         titleLabel.text = settings.Text;
@@ -520,15 +524,19 @@ namespace RagNextPlayer.Managers
                         titleLabel.style.position = Position.Absolute;
                         titleLabel.style.opacity = 1f;
                         titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
-                        titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
-
-                        // Absolute Positioning from percentages
                         titleLabel.style.left = Length.Percent((float)settings.TextX);
                         titleLabel.style.top = Length.Percent((float)settings.TextY);
+                        titleLabel.style.width = 2000f;
+                        titleLabel.style.height = 200f;
+                        titleLabel.style.marginLeft = -1000f;
+                        titleLabel.style.marginTop = -100f;
+                        titleLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                        titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                        titleLabel.style.whiteSpace = WhiteSpace.NoWrap;
 
                         if (double.TryParse(settings.FontSize.ToString(), out var sizeVal))
                         {
-                            titleLabel.style.fontSize = (float)sizeVal;
+                            titleLabel.style.fontSize = (float)sizeVal * 2.75f;
                         }
 
                         string fontColorHex = settings.FontColor;
@@ -546,6 +554,26 @@ namespace RagNextPlayer.Managers
                         }
                     }
 
+                    // Handle Rise / Cinematic / Glitch / Exposure setup for Video Mode
+                    if (titleLabel != null)
+                    {
+                        titleLabel.style.marginLeft = -1000f;
+                        titleLabel.style.marginTop = -100f;
+                        if (settings.TransitionStyle == "Rise")
+                        {
+                            titleLabel.style.translate = new StyleTranslate(new Translate(0, 60f));
+                        }
+                        else if (settings.TransitionStyle == "Cinematic")
+                        {
+                            if (_splashScreen != null)
+                                _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                        }
+                        else if (settings.TransitionStyle == "Exposure")
+                        {
+                            titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1.5f, 1.5f, 1f)));
+                        }
+                    }
+
                     _splashScreen.style.opacity = 0f;
                     if (titleLabel != null) titleLabel.style.opacity = 0f;
                     _videoPlayer.Play();
@@ -558,12 +586,64 @@ namespace RagNextPlayer.Managers
                     {
                         elapsedIn += UnityEngine.Time.deltaTime;
                         float t = Mathf.Clamp01(elapsedIn / fadeInDuration);
-                        if (_splashScreen != null) _splashScreen.style.opacity = t;
-                        if (titleLabel != null) titleLabel.style.opacity = t;
+                        if (_splashScreen != null)
+                        {
+                            if (settings.TransitionStyle == "Exposure")
+                            {
+                                float expT = Mathf.Pow(t, 0.4f);
+                                _splashScreen.style.opacity = expT;
+                            }
+                            else
+                            {
+                                _splashScreen.style.opacity = t;
+                            }
+
+                            if (settings.TransitionStyle == "Cinematic")
+                            {
+                                float curScale = Mathf.Lerp(1f, 1.02f, t);
+                                _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                            }
+                        }
+
+                        if (titleLabel != null)
+                        {
+                            if (settings.TransitionStyle == "Rise")
+                            {
+                                float yOffset = Mathf.Lerp(60f, 0f, EasingSpring(t));
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, yOffset));
+                            }
+                            else if (settings.TransitionStyle == "Exposure")
+                            {
+                                float scaleVal = Mathf.Lerp(1.5f, 1f, t);
+                                titleLabel.style.scale = new StyleScale(new Scale(new Vector3(scaleVal, scaleVal, 1f)));
+                            }
+                            else if (settings.TransitionStyle == "Glitch")
+                            {
+                                if (UnityEngine.Random.value < 0.15f)
+                                {
+                                    titleLabel.style.opacity = UnityEngine.Random.Range(0.2f, 0.7f);
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-10f, 10f), UnityEngine.Random.Range(-5f, 5f)));
+                                }
+                                else
+                                {
+                                    titleLabel.style.opacity = t;
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                                }
+                            }
+                            else
+                            {
+                                titleLabel.style.opacity = t;
+                            }
+                        }
                         yield return null;
                     }
                     if (_splashScreen != null) _splashScreen.style.opacity = 1f;
-                    if (titleLabel != null) titleLabel.style.opacity = 1f;
+                    if (titleLabel != null)
+                    {
+                        titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                        titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                        titleLabel.style.opacity = 1f;
+                    }
 
                     // Bug #4: Wait DisplayDuration then proceed to fade-out —
                     // do NOT block until the video finishes. This allows fade transitions
@@ -574,6 +654,27 @@ namespace RagNextPlayer.Managers
                     while (elapsedDisplay < displayDuration)
                     {
                         elapsedDisplay += UnityEngine.Time.deltaTime;
+                        float progress = elapsedDisplay / displayDuration;
+
+                        if (_splashScreen != null && settings.TransitionStyle == "Cinematic")
+                        {
+                            float curScale = Mathf.Lerp(1.02f, 1.05f, progress);
+                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                        }
+
+                        if (titleLabel != null && settings.TransitionStyle == "Glitch")
+                        {
+                            if (UnityEngine.Random.value < 0.08f)
+                            {
+                                titleLabel.style.opacity = UnityEngine.Random.Range(0.3f, 0.9f);
+                                titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-15f, 15f), UnityEngine.Random.Range(-8f, 8f)));
+                            }
+                            else
+                            {
+                                titleLabel.style.opacity = 1f;
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                            }
+                        }
                         yield return null;
                     }
                     // Bug #4: Do NOT stop the video here.
@@ -611,15 +712,19 @@ namespace RagNextPlayer.Managers
                     titleLabel.style.position = Position.Absolute;
                     titleLabel.style.opacity = 1f;
                     titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
-                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
-
-                    // Absolute Positioning from percentages
                     titleLabel.style.left = Length.Percent((float)settings.TextX);
                     titleLabel.style.top = Length.Percent((float)settings.TextY);
+                    titleLabel.style.width = 2000f;
+                    titleLabel.style.height = 200f;
+                    titleLabel.style.marginLeft = -1000f;
+                    titleLabel.style.marginTop = -100f;
+                    titleLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                    titleLabel.style.whiteSpace = WhiteSpace.NoWrap;
 
                     if (double.TryParse(settings.FontSize.ToString(), out var sizeVal))
                     {
-                        titleLabel.style.fontSize = (float)sizeVal;
+                        titleLabel.style.fontSize = (float)sizeVal * 2.75f;
                     }
 
                     string fontColorHex = settings.FontColor;
@@ -2212,6 +2317,10 @@ namespace RagNextPlayer.Managers
 
             if (_promptInputMenu is not null)
             {
+                if (_promptMenuCloseTween.isAlive)
+                {
+                    _promptMenuCloseTween.Stop();
+                }
                 _promptInputMenu.style.display = DisplayStyle.Flex;
                 _promptInputMenu.BringToFront();
                 _promptInputMenu.transform.scale = Vector3.zero;
@@ -2257,7 +2366,7 @@ namespace RagNextPlayer.Managers
             }
 
             if (_promptInputMenu is null) return;
-            PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
+            _promptMenuCloseTween = PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
                 _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _promptInputMenu.style.display = DisplayStyle.None;
@@ -2304,7 +2413,7 @@ namespace RagNextPlayer.Managers
                 var btn = new Button(() => {
                     if (_promptInputMenu is not null)
                     {
-                        PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
+                        _promptMenuCloseTween = PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
                             _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
                         }).OnComplete(() => {
                             _promptInputMenu.style.display = DisplayStyle.None;
@@ -2329,6 +2438,10 @@ namespace RagNextPlayer.Managers
 
             if (_promptInputMenu is not null)
             {
+                if (_promptMenuCloseTween.isAlive)
+                {
+                    _promptMenuCloseTween.Stop();
+                }
                 _promptInputMenu.style.display = DisplayStyle.Flex;
                 _promptInputMenu.BringToFront();
                 _promptInputMenu.transform.scale = Vector3.zero;
@@ -2352,9 +2465,14 @@ namespace RagNextPlayer.Managers
             if (_root == null) return;
             var topBar = _root.Q<VisualElement>("top-bar");
             var mainSplitter = _root.Q<VisualElement>("main-split-container");
+            var profileSplitter = _root.Q<VisualElement>("profile-splitter");
+            var bottomProfileBar = _root.Q<VisualElement>("bottom-profile-bar");
+
             var display = visible ? DisplayStyle.Flex : DisplayStyle.None;
             if (topBar != null) topBar.style.display = display;
             if (mainSplitter != null) mainSplitter.style.display = display;
+            if (profileSplitter != null) profileSplitter.style.display = display;
+            if (bottomProfileBar != null) bottomProfileBar.style.display = display;
         }
 
         public void RegisterHoverSwell(VisualElement element)

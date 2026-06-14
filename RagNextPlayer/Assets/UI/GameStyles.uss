@@ -807,6 +807,25 @@
     color: #FFB84A;
 }
 
+#prompt-text-field {
+    margin: 8px 0;
+}
+
+#prompt-text-field .unity-text-field__input {
+    background-color: #121217;
+    color: #FFFFFF;
+    border-color: #2A2A38;
+    border-width: 1px;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    selection-color: #00A8CC;
+}
+
+#prompt-text-field .unity-text-field__input:focus {
+    border-color: #00A8CC;
+}
+
 /* ── Nested Container Items Styling ────────────────────────────────────────── */
 .entity-row--nested {
     padding-left: 20px;
