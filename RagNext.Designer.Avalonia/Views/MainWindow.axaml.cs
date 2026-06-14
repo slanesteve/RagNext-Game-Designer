@@ -3687,6 +3687,14 @@ namespace RagNext.Designer.Avalonia.Views
             sb.AppendLine("9. When incrementing or decrementing variables (commands \"var.inc\" and \"var.dec\"):");
             sb.AppendLine("   * If the variable is numeric, set the \"value\" parameter to a standard numeric string (e.g. \"10\", \"-5\").");
             sb.AppendLine("   * If the variable is a date & time (datetime), the value MUST include a unit of time to indicate what is being changed (e.g., \"10 seconds\", \"5 minutes\", \"2 hours\", \"1 day\", \"-30 seconds\"). Do NOT output just a raw number for date/time increments unless you specifically want minutes, which is the fallback unit.");
+            sb.AppendLine("10. Loop nodes are represented by \"$type\": \"variable.forEachLoop\" and support:");
+            sb.AppendLine("    * \"ArrayVariableName\": String name of the array variable to loop through.");
+            sb.AppendLine("    * \"trueBranch\": Array of connected Command/Condition nodes to execute in each iteration.");
+            sb.AppendLine("11. Use \"$type\": \"variable.breakLoop\" (Break Loop) to exit loops early.");
+            sb.AppendLine("12. Switch nodes are represented by \"$type\": \"general.switch\" and support:");
+            sb.AppendLine("    * \"Expression\": The variable or expression string to switch on.");
+            sb.AppendLine("    * \"Cases\": Dictionary of string keys mapped to arrays of connected Command/Condition nodes.");
+            sb.AppendLine("    * \"DefaultBranch\": Array of connected Command/Condition nodes executed if no cases match.");
 
 
             var vm = DataContext as MainWindowViewModel;
@@ -3768,12 +3776,17 @@ namespace RagNext.Designer.Avalonia.Views
                 case "mediasetbackgroundmusic": return "media.setBackgroundMusic";
                 case "mediastopbackgroundmusic": return "media.stopBackgroundMusic";
                 case "mediaplaysoundeffect": return "media.playSound";
+                case "mediastopsoundeffect": return "media.stopSound";
+                case "mediaplayvideo": return "media.playVideo";
+                case "endthegame": return "general.endGame";
                 case "itemdisplaydescription": return "object.displayDescription";
                 case "itemmovetocharacter": return "object.moveToCharacter";
                 case "itemmovetoinventory": return "object.moveToInventory";
                 case "itemmoveinsideobject": return "object.moveInsideObject";
                 case "itemmovetoroom": return "room.addObject";
                 case "itemsetattribute": return "item.setAttribute";
+                case "itemwearitem": return "item.wear";
+                case "itemremoveitem": return "item.remove";
                 case "playerdisplaydescription": return "player.displayDescription";
                 case "playermoveinventorytocharacter": return "player.moveInventoryToChar";
                 case "playermoveinventorytoroom": return "player.moveInventoryToRoom";
@@ -3826,6 +3839,7 @@ namespace RagNext.Designer.Avalonia.Views
                 case "iteminobject": return "item.inObject";
                 case "itemnotheldbyplayer": return "item.notHeldByPlayer";
                 case "itemnotinobject": return "item.notInObject";
+                case "itemisitemworn": return "item.isWorn";
                 case "isroomexitlocked": return "room.isExitLocked";
                 case "charactergender": return "char.gender";
                 case "characterinroom": return "char.inRoom";

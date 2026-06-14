@@ -1233,23 +1233,30 @@ namespace RagNextPlayer.Managers
                 }
             }
 
+            // Local helper to recursively add nested container items
+            void AddContainedObjectsRecursively(GameObjectData parent, List<(GameObjectData data, bool isNested)> list)
+            {
+                if (parent.IsContainer && parent.ContainerOpen)
+                {
+                    var children = game.Objects.FindAll(o =>
+                        (parent.ContainedObjectIds != null && parent.ContainedObjectIds.Contains(o.Id)) ||
+                        (o.Properties.TryGetValue("ParentContainerId", out var pId) && string.Equals(pId, parent.Id, StringComparison.OrdinalIgnoreCase))
+                    );
+
+                    foreach (var childObj in children)
+                    {
+                        list.Add((childObj, true));
+                        AddContainedObjectsRecursively(childObj, list);
+                    }
+                }
+            }
+
             // Objects
             var requiredObjects = new List<(GameObjectData data, bool isNested)>();
             foreach (var obj in game.Objects.FindAll(o => room.ObjectIds.Contains(o.Id) && !o.IsCharacter && !containedIds.Contains(o.Id)))
             {
                 requiredObjects.Add((obj, false));
-                if (obj.IsContainer && obj.ContainerOpen)
-                {
-                    var children = game.Objects.FindAll(o => 
-                        (obj.ContainedObjectIds != null && obj.ContainedObjectIds.Contains(o.Id)) ||
-                        (o.Properties.TryGetValue("ParentContainerId", out var pId) && string.Equals(pId, obj.Id, StringComparison.OrdinalIgnoreCase))
-                    );
-
-                    foreach (var childObj in children)
-                    {
-                        requiredObjects.Add((childObj, true));
-                    }
-                }
+                AddContainedObjectsRecursively(obj, requiredObjects);
             }
 
             ReconcileListContainer(_objectsListContainer, requiredObjects, tuple => {
@@ -1259,6 +1266,10 @@ namespace RagNextPlayer.Managers
                 if (label != null)
                 {
                     string nameText = game is not null ? TemplateResolver.Resolve(tuple.data.Name, game, room, tuple.data) : tuple.data.Name;
+                    if (tuple.data.IsWearable)
+                    {
+                        nameText += tuple.data.IsWorn ? " (Worn)" : " (Not Worn)";
+                    }
                     if (tuple.data.IsContainer)
                     {
                         nameText += tuple.data.ContainerOpen ? " [Open]" : " [Closed]";
@@ -1308,18 +1319,7 @@ namespace RagNextPlayer.Managers
             foreach (var item in game.Player.Inventory.FindAll(i => !containedIds.Contains(i.Id)))
             {
                 requiredInventory.Add((item, false));
-                if (item.IsContainer && item.ContainerOpen)
-                {
-                    var children = game.Objects.FindAll(o => 
-                        (item.ContainedObjectIds != null && item.ContainedObjectIds.Contains(o.Id)) ||
-                        (o.Properties.TryGetValue("ParentContainerId", out var pId) && string.Equals(pId, item.Id, StringComparison.OrdinalIgnoreCase))
-                    );
-
-                    foreach (var childObj in children)
-                    {
-                        requiredInventory.Add((childObj, true));
-                    }
-                }
+                AddContainedObjectsRecursively(item, requiredInventory);
             }
 
             ReconcileListContainer(_inventoryListContainer, requiredInventory, tuple => {
@@ -1328,7 +1328,16 @@ namespace RagNextPlayer.Managers
                 var label = element.Q<Label>(className: "entity-name");
                 if (label != null)
                 {
-                    label.text = game is not null ? TemplateResolver.Resolve(tuple.data.Name, game, room, tuple.data) : tuple.data.Name;
+                    string nameText = game is not null ? TemplateResolver.Resolve(tuple.data.Name, game, room, tuple.data) : tuple.data.Name;
+                    if (tuple.data.IsWearable)
+                    {
+                        nameText += tuple.data.IsWorn ? " (Worn)" : " (Not Worn)";
+                    }
+                    if (tuple.data.IsContainer)
+                    {
+                        nameText += tuple.data.ContainerOpen ? " [Open]" : " [Closed]";
+                    }
+                    label.text = nameText;
                 }
             });
 

@@ -26,6 +26,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(ItemInObjectCondition), "item.inObject")]
     [JsonDerivedType(typeof(ItemNotHeldByPlayerCondition), "item.notHeldByPlayer")]
     [JsonDerivedType(typeof(ItemNotInObjectCondition), "item.notInObject")]
+    [JsonDerivedType(typeof(ItemWornCondition), "item.isWorn")]
     [JsonDerivedType(typeof(VariableComparisonToVariableCondition), "var.compareVar")]
     [JsonDerivedType(typeof(IsRoomExitLockedCondition), "room.isExitLocked")]
     [JsonDerivedType(typeof(CharacterAttributeCheckCondition), "char.attributeCheck")]
@@ -105,6 +106,8 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(AppendTextCommand), "variable.appendText")]
     [JsonDerivedType(typeof(AppendLineCommand), "variable.appendLine")]
     [JsonDerivedType(typeof(SwitchCommand), "general.switch")]
+    [JsonDerivedType(typeof(WearItemCommand), "item.wear")]
+    [JsonDerivedType(typeof(RemoveItemCommand), "item.remove")]
     public abstract class ActionStep
     {
         public static string NormalizeLegacyDiscriminators(string json)
@@ -115,6 +118,45 @@ namespace RagsCore.Actions
             // where empty keys are serialized as duplicate "$id": { ... } or "$ref": { ... }
             json = System.Text.RegularExpressions.Regex.Replace(json, @"""\$id""\s*:\s*\{", @""""": {");
             json = System.Text.RegularExpressions.Regex.Replace(json, @"""\$ref""\s*:\s*\{", @""""": {");
+
+            var validDiscriminators = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+            {
+                "var.equals", "player.inRoom", "room.hasObject", "player.sameRoom", "item.heldByPlayer",
+                "var.compare", "char.gender", "char.inRoom", "item.inRoom", "player.gender",
+                "item.heldByChar", "item.inObject", "item.notHeldByPlayer", "item.notInObject", "item.isWorn",
+                "var.compareVar", "room.isExitLocked", "char.attributeCheck", "item.attributeCheck",
+                "player.attributeCheck", "room.attributeCheck", "timer.isActive", "date.partCompare",
+                "date.isPast", "date.isFuture", "date.compareVars", "date.diffCompare", "date.compareConst",
+                "date.isValid", "var.set", "player.moveTo", "room.addObject", "room.removeObject",
+                "object.displayDescription", "player.displayDescription", "char.displayDescription",
+                "room.displayDescription", "object.moveToCharacter", "object.moveToInventory",
+                "object.moveInsideObject", "general.displayText", "general.addComment", "general.debugText",
+                "media.playSound", "media.playVideo", "media.stopSound", "player.setName",
+                "player.setDescription", "player.setGender", "char.setGender", "var.setRandom",
+                "char.moveToRoom", "media.displayMultimedia", "char.displayPortrait", "char.setPortraitMedia",
+                "player.setPortraitMedia", "var.inc", "var.dec", "var.setToVar", "room.setExit",
+                "room.disableExit", "room.lockExit", "room.unlockExit", "char.damage", "char.setState",
+                "general.triggerTurnTick", "general.endGame", "general.promptInput", "general.openContainer",
+                "general.closeContainer", "general.callFunction", "general.startDialogue",
+                "general.addCustomChoice", "general.clearCustomChoice", "general.removeCustomChoice",
+                "room.setAttribute", "char.setAttribute", "player.setAttribute", "timer.setAttribute",
+                "item.setAttribute", "char.setActionActive", "item.setActionActive", "room.setActionActive",
+                "player.setActionActive", "timer.setTimerActive", "variable.forEachLoop", "variable.breakLoop",
+                "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
+                "variable.appendText", "variable.appendLine", "general.switch", "item.wear",
+                "item.remove", "media.setBackgroundMusic", "media.stopBackgroundMusic"
+            };
+
+            // Convert unrecognized/unknown $type values to general.debugText to prevent crashes
+            json = System.Text.RegularExpressions.Regex.Replace(json, @"""\$type""\s*:\s*""([^""]+)""", m =>
+            {
+                var val = m.Groups[1].Value;
+                if (!validDiscriminators.Contains(val))
+                {
+                    return @"""$type"": ""general.debugText"", ""Message"": ""Unrecognized command/condition: " + val + @"""";
+                }
+                return m.Value;
+            });
 
             return json
                 .Replace("\"char.customPropertyCheck\"", "\"char.attributeCheck\"")
@@ -1979,6 +2021,48 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             // Executed contextually at runtime in Player interpreter.
+        }
+    }
+
+    public sealed class WearItemCommand : GameCommand
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Wear Item";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolved, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolved, StringComparison.OrdinalIgnoreCase));
+            if (obj != null)
+            {
+                obj.IsWorn = true;
+            }
+        }
+    }
+
+    public sealed class RemoveItemCommand : GameCommand
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Remove Item";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolved, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolved, StringComparison.OrdinalIgnoreCase));
+            if (obj != null)
+            {
+                obj.IsWorn = false;
+            }
+        }
+    }
+
+    public sealed class ItemWornCondition : Condition
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Is Item Worn";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolved, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolved, StringComparison.OrdinalIgnoreCase));
+            return obj != null && obj.IsWorn;
         }
     }
 }

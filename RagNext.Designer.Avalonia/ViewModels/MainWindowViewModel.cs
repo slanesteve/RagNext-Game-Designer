@@ -1302,7 +1302,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     else if (parameter is Character) isMatch = act.ApplyToCharacters;
                     else if (parameter is GameObject obj)
                     {
-                        if (obj.IsCollectible) isMatch = act.ApplyToGrabableObjects;
+                        if (obj.IsWearable) isMatch = act.ApplyToWearableObjects;
+                        else if (obj.IsCollectible) isMatch = act.ApplyToGrabableObjects;
                         else isMatch = act.ApplyToStaticObjects;
                     }
 

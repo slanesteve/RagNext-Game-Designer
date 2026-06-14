@@ -54,6 +54,9 @@ namespace RagsCore.Models
         private bool _applyToGrabableObjects;
         public bool ApplyToGrabableObjects { get => _applyToGrabableObjects; set => SetProperty(ref _applyToGrabableObjects, value); }
 
+        private bool _applyToWearableObjects;
+        public bool ApplyToWearableObjects { get => _applyToWearableObjects; set => SetProperty(ref _applyToWearableObjects, value); }
+
         private bool _applyToStaticObjects;
         public bool ApplyToStaticObjects { get => _applyToStaticObjects; set => SetProperty(ref _applyToStaticObjects, value); }
 

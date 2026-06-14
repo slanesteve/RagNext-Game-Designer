@@ -96,6 +96,8 @@ namespace RagNextPlayer.Runtime.Models
         public bool                        ContainerOpen      { get; set; }
         public List<string>                ContainedObjectIds { get; set; } = new List<string>();
         public string?                     StartingRoomId     { get; set; }
+        public bool                        IsWearable         { get; set; }
+        public bool                        IsWorn             { get; set; }
         [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
@@ -189,10 +191,15 @@ namespace RagNextPlayer.Runtime.Models
     public class PlaySoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; public double StartTime { get; set; } = 0.0; public double EndTime { get; set; } = 0.0; }
     public class PlayVideoCommandData                : CommandData { public string VideoId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; public double StartTime { get; set; } = 0.0; public double EndTime { get; set; } = 0.0; }
     public class StopSoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public bool StopAllLooping { get; set; } = false; }
+    public class SetBackgroundMusicCommandData       : CommandData { public string MusicFile { get; set; } = string.Empty; }
+    public class StopBackgroundMusicCommandData      : CommandData { }
     public class DisplayMultimediaCommandData        : CommandData { public string MediaId { get; set; } = string.Empty; }
     public class EndGameCommandData                  : CommandData { public string FinalMessage { get; set; } = string.Empty; }
     public class PromptPlayerInputCommandData        : CommandData { public string PromptName { get; set; } = string.Empty; public string PromptText { get; set; } = string.Empty; public string InputType { get; set; } = "Text"; public string CustomOptions { get; set; } = string.Empty; public string StoreVariableName { get; set; } = string.Empty; }
     public class OpenContainerCommandData            : CommandData { public string ObjectId { get; set; } = string.Empty; }
+    public class WearItemCommandData                 : CommandData { public string ItemId { get; set; } = string.Empty; }
+    public class RemoveItemCommandData               : CommandData { public string ItemId { get; set; } = string.Empty; }
+    public class ItemWornConditionData               : ConditionData { public string ItemId { get; set; } = string.Empty; }
     public class CloseContainerCommandData           : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class CallFunctionCommandData            : CommandData { public string FunctionId { get; set; } = string.Empty; }
     public class DamageCharacterCommandData         : CommandData { public string CharacterId { get; set; } = string.Empty; public int Amount { get; set; } }

@@ -913,6 +913,12 @@
                                             <!-- Carryable / Grabable Checkbox -->
                                             <CheckBox IsChecked="{Binding IsCollectible, Mode=TwoWay}" Content="Carryable / Grabable (Can be picked up and placed in inventory)" Foreground="{DynamicResource TextNormal}" FontSize="12" Margin="0,4,0,0"/>
 
+                                            <!-- Wearable Options -->
+                                            <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,4,0,0">
+                                                <CheckBox IsChecked="{Binding IsWearable, Mode=TwoWay}" Content="Is Wearable (Can be worn by player)" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
+                                                <CheckBox IsChecked="{Binding IsWorn, Mode=TwoWay}" IsEnabled="{Binding IsWearable}" Content="Initially Worn" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
+                                            </StackPanel>
+
                                             <!-- Description -->
                                             <TextBlock Text="Description" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,0"/>
                                             <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
@@ -1632,6 +1638,7 @@
                                     <CheckBox IsChecked="{Binding ApplyToPlayer, Mode=TwoWay}" Content="Player" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToCharacters, Mode=TwoWay}" Content="Characters" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToGrabableObjects, Mode=TwoWay}" Content="Grabable Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                    <CheckBox IsChecked="{Binding ApplyToWearableObjects, Mode=TwoWay}" Content="Wearable Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToStaticObjects, Mode=TwoWay}" Content="Static Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToTimers, Mode=TwoWay}" Content="Timers" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToFunctions, Mode=TwoWay}" Content="Functions" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>

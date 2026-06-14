@@ -19,11 +19,16 @@ namespace RagNextPlayer.Managers
 
         private readonly List<AudioSource> _pool = new();
         private readonly Dictionary<string, AudioClip> _cache = new();
+        private AudioSource _musicSource;
 
         private void Awake()
         {
             if (Instance == null) Instance = this;
             else { Destroy(gameObject); return; }
+
+            _musicSource = gameObject.AddComponent<AudioSource>();
+            _musicSource.playOnAwake = false;
+            _musicSource.loop = true;
 
             for (int i = 0; i < _sourcePoolSize; i++)
             {
@@ -160,6 +165,86 @@ namespace RagNextPlayer.Managers
                 src.Stop();
                 src.clip = null;
                 src.loop = false;
+            }
+            StopMusic();
+        }
+
+        public void PlayMusic(string soundId)
+        {
+            if (string.IsNullOrWhiteSpace(soundId)) return;
+            string path = soundId;
+            var game = GameManager.Instance?.ActiveGame;
+            if (game != null)
+            {
+                var asset = game.MediaAssets.Find(a => 
+                    string.Equals(a.Id, soundId, StringComparison.OrdinalIgnoreCase) || 
+                    string.Equals(a.OriginalFileName, soundId, StringComparison.OrdinalIgnoreCase));
+                if (asset != null)
+                {
+                    path = asset.RelativePath;
+                }
+            }
+
+            if (_cache.TryGetValue(path, out var clip))
+            {
+                PlayMusicClip(clip);
+            }
+            else
+            {
+                StartCoroutine(LoadAndPlayMusicRoutine(path));
+            }
+        }
+
+        private void PlayMusicClip(AudioClip clip)
+        {
+            if (_musicSource == null) return;
+            if (_musicSource.clip == clip && _musicSource.isPlaying) return;
+            _musicSource.clip = clip;
+            _musicSource.volume = 0.5f;
+            _musicSource.loop = true;
+            _musicSource.Play();
+        }
+
+        private System.Collections.IEnumerator LoadAndPlayMusicRoutine(string path)
+        {
+            string url = FormatLocalPathForWeb(path);
+            if (string.IsNullOrEmpty(url)) yield break;
+
+            AudioType audioType = AudioType.UNKNOWN;
+            string ext = Path.GetExtension(path).ToLower();
+            if (ext == ".mp3") audioType = AudioType.MPEG;
+            else if (ext == ".wav") audioType = AudioType.WAV;
+            else if (ext == ".ogg") audioType = AudioType.OGGVORBIS;
+
+            using var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType);
+            yield return req.SendWebRequest();
+
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                var clip = DownloadHandlerAudioClip.GetContent(req);
+                if (clip != null)
+                {
+                    _cache[path] = clip;
+                    PlayMusicClip(clip);
+                }
+            }
+            else
+            {
+                var clip = Resources.Load<AudioClip>($"Audio/{path}");
+                if (clip != null)
+                {
+                    _cache[path] = clip;
+                    PlayMusicClip(clip);
+                }
+            }
+        }
+
+        public void StopMusic()
+        {
+            if (_musicSource != null && _musicSource.isPlaying)
+            {
+                _musicSource.Stop();
+                _musicSource.clip = null;
             }
         }
 

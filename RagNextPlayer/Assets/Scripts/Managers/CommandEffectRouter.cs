@@ -75,6 +75,8 @@ namespace RagNextPlayer.Managers
                 case ObjectMoveToInventoryCommandData:
                 case ObjectMoveToCharacterCommandData:
                 case ObjectMoveInsideObjectCommandData:
+                case WearItemCommandData:
+                case RemoveItemCommandData:
                     UIManager.Instance?.RefreshEntityLists();
                     break;
 
@@ -175,6 +177,17 @@ namespace RagNextPlayer.Managers
                             AudioManager.Instance?.StopSound(soundId);
                         }
                     }
+                    break;
+
+                case SetBackgroundMusicCommandData c:
+                    {
+                        var musicId = ctx.Resolve(c.MusicFile);
+                        AudioManager.Instance?.PlayMusic(musicId);
+                    }
+                    break;
+
+                case StopBackgroundMusicCommandData:
+                    AudioManager.Instance?.StopMusic();
                     break;
 
                 case EndGameCommandData c:

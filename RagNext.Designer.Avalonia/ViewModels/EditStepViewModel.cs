@@ -652,22 +652,23 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private System.Collections.Generic.List<object> FilterMediaAssets(Game game, string label, ActionStep target)
         {
             var assets = game.MediaAssets;
+            var cleanLabel = label.Replace(" ", "");
             
-            if (label.Equals("SoundId", StringComparison.OrdinalIgnoreCase) || 
-                label.Equals("SoundIdB", StringComparison.OrdinalIgnoreCase) ||
-                label.Equals("SoundFile", StringComparison.OrdinalIgnoreCase) || 
-                label.Equals("MusicFile", StringComparison.OrdinalIgnoreCase) ||
+            if (cleanLabel.Equals("SoundId", StringComparison.OrdinalIgnoreCase) || 
+                cleanLabel.Equals("SoundIdB", StringComparison.OrdinalIgnoreCase) ||
+                cleanLabel.Equals("SoundFile", StringComparison.OrdinalIgnoreCase) || 
+                cleanLabel.Equals("MusicFile", StringComparison.OrdinalIgnoreCase) ||
                 target is PlaySoundEffectCommand ||
                 target is StopSoundEffectCommand)
             {
                 return assets.Where(m => m.Kind == MediaKind.Audio).Cast<object>().ToList();
             }
             
-            if (label.Equals("PortraitId", StringComparison.OrdinalIgnoreCase) || 
-                label.Equals("PortraitMedia", StringComparison.OrdinalIgnoreCase) || 
-                label.Equals("ImageFile", StringComparison.OrdinalIgnoreCase) || 
-                label.Equals("Picture", StringComparison.OrdinalIgnoreCase) || 
-                label.Equals("PictureFile", StringComparison.OrdinalIgnoreCase) ||
+            if (cleanLabel.Equals("PortraitId", StringComparison.OrdinalIgnoreCase) || 
+                cleanLabel.Equals("PortraitMedia", StringComparison.OrdinalIgnoreCase) || 
+                cleanLabel.Equals("ImageFile", StringComparison.OrdinalIgnoreCase) || 
+                cleanLabel.Equals("Picture", StringComparison.OrdinalIgnoreCase) || 
+                cleanLabel.Equals("PictureFile", StringComparison.OrdinalIgnoreCase) ||
                 target is CharacterSetPortraitMediaCommand ||
                 target is PlayerSetPortraitMediaCommand ||
                 target is CharacterDisplayPortraitCommand)
@@ -675,8 +676,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 return assets.Where(m => m.Kind == MediaKind.Image).Cast<object>().ToList();
             }
             
-            if (label.Equals("VideoFile", StringComparison.OrdinalIgnoreCase) || 
-                label.Equals("VideoId", StringComparison.OrdinalIgnoreCase))
+            if (cleanLabel.Equals("VideoFile", StringComparison.OrdinalIgnoreCase) || 
+                cleanLabel.Equals("VideoId", StringComparison.OrdinalIgnoreCase))
             {
                 return assets.Where(m => m.Kind == MediaKind.Video).Cast<object>().ToList();
             }

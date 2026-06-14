@@ -67,6 +67,8 @@ namespace RagNext.Designer.Avalonia.Services
         public List<ExportActionDto>? Actions { get; set; }
         public List<ExportObjectDto>? Inventory { get; set; }
         public Dictionary<string, string>? Properties { get; set; }
+        public bool IsWearable { get; set; }
+        public bool IsWorn { get; set; }
         public Dictionary<string, string>? Attributes { get; set; }
     }
 
@@ -268,6 +270,8 @@ namespace RagNext.Designer.Avalonia.Services
                                 ? ch.Inventory.Select(i => BuildObjectDto(i)).ToList()
                                 : new List<ExportObjectDto>(),
             Properties        = o.Properties,
+            IsWearable        = o.IsWearable,
+            IsWorn            = o.IsWorn,
             Attributes        = o.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
         };
 

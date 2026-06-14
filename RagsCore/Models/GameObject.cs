@@ -35,6 +35,12 @@ namespace RagsCore.Models
 
         public Dictionary<string, string> Properties { get; set; } = new();
 
+        private bool _isWearable;
+        public bool IsWearable { get => _isWearable; set => SetProperty(ref _isWearable, value); }
+
+        private bool _isWorn;
+        public bool IsWorn { get => _isWorn; set => SetProperty(ref _isWorn, value); }
+
         private string? _portraitImagePath;
         public string? PortraitImagePath
         {

@@ -161,6 +161,17 @@
       ]
     },
     {
+      "name": "Item: Is Item Worn",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        }
+      ]
+    },
+    {
       "name": "Player: Attribute Check",
       "category": "Player",
       "inputs": [

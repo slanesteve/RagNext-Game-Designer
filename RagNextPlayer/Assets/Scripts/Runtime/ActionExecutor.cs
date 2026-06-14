@@ -1346,6 +1346,20 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case WearItemCommandData c:
+                    {
+                        var resolvedItem = ctx.Resolve(c.ItemId);
+                        SetItemWornState(resolvedItem, true, ctx);
+                    }
+                    break;
+
+                case RemoveItemCommandData c:
+                    {
+                        var resolvedItem = ctx.Resolve(c.ItemId);
+                        SetItemWornState(resolvedItem, false, ctx);
+                    }
+                    break;
+
                 default:
                     Debug.LogWarning($"[ActionExecutor] Unhandled command type: {cmd.Type}");
                     break;
@@ -1452,6 +1466,9 @@ namespace RagNextPlayer.Runtime
                 TimerActiveConditionData c =>
                     ctx.Game.Timers.Find(t => string.Equals(t.Name, ctx.Resolve(c.TimerId), StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id, ctx.Resolve(c.TimerId), StringComparison.OrdinalIgnoreCase))
                         ?.IsActive ?? false,
+
+                ItemWornConditionData c =>
+                    FindGameObject(ctx.Resolve(c.ItemId), ctx.Game)?.IsWorn ?? false,
 
                 ForEachLoopCommandData => true,
 
@@ -1621,9 +1638,10 @@ namespace RagNextPlayer.Runtime
 
         private static bool CompareValues(string a, string b, string op)
         {
+            bool result;
             if (double.TryParse(a, out double na) && double.TryParse(b, out double nb))
             {
-                return op switch
+                result = op switch
                 {
                     "="  => na == nb,
                     "!=" => na != nb,
@@ -1634,12 +1652,66 @@ namespace RagNextPlayer.Runtime
                     _    => false
                 };
             }
-            return op switch
+            else
             {
-                "="  => string.Equals(a, b, StringComparison.OrdinalIgnoreCase),
-                "!=" => !string.Equals(a, b, StringComparison.OrdinalIgnoreCase),
-                _    => false
-            };
+                result = op switch
+                {
+                    "="  => string.Equals(a, b, StringComparison.OrdinalIgnoreCase),
+                    "!=" => !string.Equals(a, b, StringComparison.OrdinalIgnoreCase),
+                    _    => false
+                };
+            }
+            Debug.Log($"[ActionExecutor] CompareValues: a='{a}', b='{b}', op='{op}' -> {result}");
+            return result;
+        }
+
+        private static GameObjectData FindGameObject(string idOrName, GameData game)
+        {
+            if (string.IsNullOrEmpty(idOrName)) return null;
+
+            var obj = game.Objects.Find(o => string.Equals(o.Id, idOrName, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, idOrName, StringComparison.OrdinalIgnoreCase));
+            if (obj != null) return obj;
+
+            obj = game.Player.Inventory.Find(o => string.Equals(o.Id, idOrName, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, idOrName, StringComparison.OrdinalIgnoreCase));
+            if (obj != null) return obj;
+
+            foreach (var ch in game.Characters)
+            {
+                obj = ch.Inventory.Find(o => string.Equals(o.Id, idOrName, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, idOrName, StringComparison.OrdinalIgnoreCase));
+                if (obj != null) return obj;
+            }
+
+            return null;
+        }
+
+        private static void SetItemWornState(string itemId, bool worn, GameExecutionContext ctx)
+        {
+            // 1. Search main Objects list
+            var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, itemId, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, itemId, StringComparison.OrdinalIgnoreCase));
+            if (obj != null)
+            {
+                obj.IsWorn = worn;
+                Debug.Log($"[ActionExecutor] SetItemWornState: objects list item '{obj.Name}' worn set to {worn}");
+            }
+
+            // 2. Search Player inventory
+            var invItem = ctx.Game.Player.Inventory.Find(o => string.Equals(o.Id, itemId, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, itemId, StringComparison.OrdinalIgnoreCase));
+            if (invItem != null)
+            {
+                invItem.IsWorn = worn;
+                Debug.Log($"[ActionExecutor] SetItemWornState: player inventory item '{invItem.Name}' worn set to {worn}");
+            }
+
+            // 3. Search Character inventories
+            foreach (var ch in ctx.Game.Characters)
+            {
+                var chItem = ch.Inventory.Find(o => string.Equals(o.Id, itemId, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, itemId, StringComparison.OrdinalIgnoreCase));
+                if (chItem != null)
+                {
+                    chItem.IsWorn = worn;
+                    Debug.Log($"[ActionExecutor] SetItemWornState: character '{ch.Name}' inventory item '{chItem.Name}' worn set to {worn}");
+                }
+            }
         }
     }
 

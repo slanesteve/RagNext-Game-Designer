@@ -15,6 +15,7 @@ window.invokeCSharpAction = function(msg) {
 let nodes = [];
 let connections = [];
 let selectedNode = null;
+let selectedNodes = [];
 let activeActionName = "Visual Action Node";
 let activeActionTrigger = "UserClicked";
 let activeActionInitallyActive = true;
@@ -101,6 +102,7 @@ const fallbackDiscriminators = {
     "mediasetbackgroundmusic": "media.setBackgroundMusic",
     "mediastopbackgroundmusic": "media.stopBackgroundMusic",
     "mediaplaysoundeffect": "media.playSound",
+    "mediastopsoundeffect": "media.stopSound",
     "mediaplayvideo": "media.playVideo",
     "itemdisplaydescription": "object.displayDescription",
     "itemmovetocharacter": "object.moveToCharacter",
@@ -148,6 +150,8 @@ const fallbackDiscriminators = {
     "endthegame": "general.endGame",
     "itemopencontainer": "general.openContainer",
     "itemclosecontainer": "general.closeContainer",
+    "itemwearitem": "item.wear",
+    "itemremoveitem": "item.remove",
     "characterattributecheck": "char.attributeCheck",
     "charactergender": "char.gender",
     "characterinroom": "char.inRoom",
@@ -158,6 +162,7 @@ const fallbackDiscriminators = {
     "iteminroom": "item.inRoom",
     "itemnotheldbyplayer": "item.notHeldByPlayer",
     "itemnotinobject": "item.notInObject",
+    "itemisitemworn": "item.isWorn",
     "playerattributecheck": "player.attributeCheck",
     "playergender": "player.gender",
     "playerinroom": "player.inRoom",
@@ -242,7 +247,7 @@ function getPropertyValue(nodeData, label) {
 }
 
 function getSelectedVariableType(node) {
-    const varName = node.data["Name"] || node.data["name"] || node.data["VariableName"] || node.data["variableName"] || "";
+    const varName = node.data["Name"] || node.data["name"] || node.data["VariableName"] || node.data["variableName"] || node.data["Variable"] || node.data["variable"] || "";
     if (varName && catalogs.Variables) {
         const matchingVar = catalogs.Variables.find(v => v.Name === varName || v.id === varName || v.Id === varName);
         if (matchingVar) {
@@ -425,6 +430,7 @@ function deselectAllNodes() {
         n.element.classList.remove('selected');
     });
     selectedNode = null;
+    selectedNodes = [];
 }
 
 // Draw/Redraw SVG Connections
@@ -993,34 +999,65 @@ function createBaseNode(id, type, title, x, y) {
 }
 
 function makeDraggable(el) {
-    let offsetOffsetX = 0;
-    let offsetOffsetY = 0;
+    let startPositions = [];
 
     el.addEventListener('mousedown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.classList.contains('pin') || e.target.classList.contains('node-delete') || e.target.classList.contains('btn-format')) {
             return;
         }
         e.stopPropagation();
-        deselectAllNodes();
-        selectedNode = nodes.find(n => n.id === el.id);
-        el.classList.add('selected');
 
-        offsetOffsetX = e.clientX - el.getBoundingClientRect().left;
-        offsetOffsetY = e.clientY - el.getBoundingClientRect().top;
+        const clickedNode = nodes.find(n => n.id === el.id);
+        if (!clickedNode) return;
+
+        const isMulti = e.ctrlKey || e.metaKey || e.shiftKey;
+
+        if (isMulti) {
+            // Toggle selection of clicked node
+            const idx = selectedNodes.indexOf(clickedNode);
+            if (idx > -1) {
+                selectedNodes.splice(idx, 1);
+                el.classList.remove('selected');
+                if (selectedNode === clickedNode) {
+                    selectedNode = selectedNodes[selectedNodes.length - 1] || null;
+                }
+            } else {
+                selectedNodes.push(clickedNode);
+                el.classList.add('selected');
+                selectedNode = clickedNode;
+            }
+        } else {
+            // If clicked node is not already in selectedNodes, make it the only selected node
+            if (!selectedNodes.includes(clickedNode)) {
+                deselectAllNodes();
+                selectedNodes.push(clickedNode);
+                el.classList.add('selected');
+                selectedNode = clickedNode;
+            }
+        }
+
+        const startMouseX = e.clientX;
+        const startMouseY = e.clientY;
+
+        startPositions = selectedNodes.map(node => ({
+            node: node,
+            startX: node.x,
+            startY: node.y
+        }));
 
         const onMouseMove = (ev) => {
-            const bounds = container.getBoundingClientRect();
-            const x = (ev.clientX - bounds.left - offsetOffsetX - panX) / zoom;
-            const y = (ev.clientY - bounds.top - offsetOffsetY - panY) / zoom;
+            const dx = (ev.clientX - startMouseX) / zoom;
+            const dy = (ev.clientY - startMouseY) / zoom;
 
-            el.style.left = `${x}px`;
-            el.style.top = `${y}px`;
+            startPositions.forEach(pos => {
+                const newX = pos.startX + dx;
+                const newY = pos.startY + dy;
+                pos.node.x = newX;
+                pos.node.y = newY;
+                pos.node.element.style.left = `${newX}px`;
+                pos.node.element.style.top = `${newY}px`;
+            });
 
-            const node = nodes.find(n => n.id === el.id);
-            if (node) {
-                node.x = x;
-                node.y = y;
-            }
             redrawConnections();
         };
 

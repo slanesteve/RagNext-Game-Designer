@@ -260,6 +260,22 @@
       "inputs": []
     },
     {
+      "name": "Media: Stop Sound Effect",
+      "category": "Media",
+      "inputs": [
+        {
+          "label": "Sound File",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        },
+        {
+          "label": "Stop All Looping",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+    {
       "name": "Media: Play Sound Effect",
       "category": "Media",
       "inputs": [
@@ -818,6 +834,28 @@
           "label": "Active",
           "controlType": "Checkbox",
           "dataType": "Bool"
+        }
+      ]
+    },
+    {
+      "name": "Item: Wear Item",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        }
+      ]
+    },
+    {
+      "name": "Item: Remove Item",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
         }
       ]
     },
