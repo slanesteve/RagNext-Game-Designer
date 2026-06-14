@@ -41,21 +41,46 @@ namespace RagNext.Designer.Avalonia.Services
 
         public static async Task SaveAsync(Game game, string? fileName = null, bool isExplicitUserSave = false)
         {
-            // If this is a quick/auto save (not an explicit user-triggered save with a custom name),
-            // and we have a tracked loaded filename, redirect back to that filename.
-            if (!isExplicitUserSave && !string.IsNullOrWhiteSpace(game.FileName))
-            {
-                fileName = game.FileName;
-            }
+            var baseName = SanitizeFileName(game.Title ?? "save");
+            var targetFileName = baseName;
 
-            if (string.IsNullOrWhiteSpace(fileName))
-            {
-                // default filename: sanitized title + timestamp
-                var baseName = SanitizeFileName(game.Title ?? "save");
-                fileName = $"{baseName}_{DateTime.Now:yyyyMMddHHmmss}";
-            }
-
+            // Resolve unique filename if a collision exists
             EnsureDirectory();
+            var attempt = 1;
+            var path = Path.Combine(SavesDirectory, $"{targetFileName}.json");
+            while (File.Exists(path))
+            {
+                // If the existing file matches the tracked project filename, we can safely overwrite it
+                if (!string.IsNullOrEmpty(game.FileName) && string.Equals(game.FileName, targetFileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+                attempt++;
+                targetFileName = $"{baseName} ({attempt})";
+                path = Path.Combine(SavesDirectory, $"{targetFileName}.json");
+            }
+
+            // Rename: If the tracked filename has changed, delete the old file on disk
+            if (!string.IsNullOrEmpty(game.FileName) && !string.Equals(game.FileName, targetFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                var oldPath = Path.Combine(SavesDirectory, $"{game.FileName}.json");
+                if (File.Exists(oldPath))
+                {
+                    try
+                    {
+                        File.Delete(oldPath);
+                        System.Diagnostics.Debug.WriteLine($"[GameStorage] Renamed project. Deleted old file: {oldPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[GameStorage] Failed to delete old project file {oldPath}: {ex.Message}");
+                    }
+                }
+            }
+
+            game.FileName = targetFileName;
+            fileName = targetFileName;
+
             var fullPath = Path.Combine(SavesDirectory, $"{fileName}.json");
             System.Diagnostics.Debug.WriteLine($"[DEBUG] GameStorage.SaveAsync: Player.StartingRoom is {(game.Player?.StartingRoom != null ? game.Player.StartingRoom.Name : "null")}");
             Console.WriteLine($"[DEBUG] GameStorage.SaveAsync: Player.StartingRoom is {(game.Player?.StartingRoom != null ? game.Player.StartingRoom.Name : "null")}");
