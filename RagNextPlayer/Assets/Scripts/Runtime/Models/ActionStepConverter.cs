@@ -135,6 +135,7 @@ namespace RagNextPlayer.Runtime.Models
                 "player.setAttribute"    => typeof(SetPlayerAttributeCommandData),
                 "timer.setAttribute"     => typeof(SetTimerAttributeCommandData),
                 "item.setAttribute"      => typeof(SetItemAttributeCommandData),
+                "room.setAttribute"      => typeof(SetRoomAttributeCommandData),
 
                 "object.displayDescription" => typeof(ObjectDisplayDescriptionCommandData),
                 "player.displayDescription" => typeof(PlayerDisplayDescriptionCommandData),

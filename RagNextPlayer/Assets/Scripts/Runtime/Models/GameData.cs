@@ -243,6 +243,7 @@ namespace RagNextPlayer.Runtime.Models
     public class SetPlayerAttributeCommandData       : CommandData { public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class SetTimerAttributeCommandData        : CommandData { public string TimerId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class SetItemAttributeCommandData         : CommandData { public string ItemId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
+    public class SetRoomAttributeCommandData         : CommandData { public string RoomId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     
     // Multi-Dimensional Array (MDA) Command and Condition Data structures
     public class ForEachLoopCommandData : ConditionData { public string ArrayVariableName { get; set; } = string.Empty; }

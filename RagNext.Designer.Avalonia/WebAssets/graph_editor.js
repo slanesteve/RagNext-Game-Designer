@@ -124,6 +124,7 @@ const fallbackDiscriminators = {
     "roommoveitemstoplayer": "room.moveItemsToPlayer",
     "roomsetdescription": "room.setDescription",
     "roomsetpicture": "room.setPicture",
+    "roomsetattribute": "room.setAttribute",
     "roomlockexit": "room.lockExit",
     "roomunlockexit": "room.unlockExit",
     "statusbarsetvisibleinvisible": "ui.setStatusBarVisible",
@@ -1633,7 +1634,7 @@ function getAttributesForNode(node) {
             });
             attrs = Array.from(allAttrs);
         }
-    } else if (type === 'room.attributeCheck' || type === 'RoomAttributeCheckCondition') {
+    } else if (type === 'room.attributeCheck' || type === 'RoomAttributeCheckCondition' || type === 'room.setAttribute' || type === 'SetRoomAttributeCommandData') {
         const roomId = getPropertyValue(node.data, "Room");
         if (roomId && catalogs.Rooms) {
             const room = catalogs.Rooms.find(r => r.Id === roomId);

@@ -87,6 +87,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(AddCustomChoiceCommand), "general.addCustomChoice")]
     [JsonDerivedType(typeof(ClearCustomChoiceCommand), "general.clearCustomChoice")]
     [JsonDerivedType(typeof(RemoveCustomChoiceCommand), "general.removeCustomChoice")]
+    [JsonDerivedType(typeof(SetRoomAttributeCommand), "room.setAttribute")]
     [JsonDerivedType(typeof(SetCharacterAttributeCommand), "char.setAttribute")]
     [JsonDerivedType(typeof(SetPlayerAttributeCommand), "player.setAttribute")]
     [JsonDerivedType(typeof(SetTimerAttributeCommand), "timer.setAttribute")]
@@ -1642,6 +1643,25 @@ namespace RagsCore.Actions
             if (obj is not null)
             {
                 CustomAttribute.SetAttribute(AttributeName, resolvedVal, obj.Attributes);
+            }
+        }
+    }
+
+    public sealed class SetRoomAttributeCommand : GameCommand
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public string AttributeName { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public override string TypeName => "Room: Set Attribute";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            
+            var room = ctx.Game.Rooms.FirstOrDefault(r => string.Equals(r.Id.ToString(), resolvedRoom, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase));
+            if (room is not null)
+            {
+                CustomAttribute.SetAttribute(AttributeName, resolvedVal, room.Attributes);
             }
         }
     }

@@ -3728,6 +3728,7 @@ namespace RagNext.Designer.Avalonia.Views
                 case "roommoveitemstoplayer": return "room.moveItemsToPlayer";
                 case "roomsetdescription": return "room.setDescription";
                 case "roomsetpicture": return "room.setPicture";
+                case "roomsetattribute": return "room.setAttribute";
                 case "roomlockexit": return "room.lockExit";
                 case "roomunlockexit": return "room.unlockExit";
                 case "statusbarsetvisibleinvisible": return "ui.setStatusBarVisible";

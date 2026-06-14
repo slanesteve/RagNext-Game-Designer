@@ -956,6 +956,52 @@ namespace RagNextPlayer.Runtime
                     // Comment/log node, no execution needed.
                     break;
 
+                case ItemSetActionActiveCommandData c:
+                    {
+                        var resolvedItem = ctx.Resolve(c.ItemId);
+                        var actionName = ctx.Resolve(c.ActionName);
+                        var item = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolvedItem, StringComparison.OrdinalIgnoreCase));
+                        if (item != null && item.Actions != null)
+                        {
+                            foreach (var act in item.Actions)
+                            {
+                                if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                    act.InitallyActive = c.Active;
+                            }
+                        }
+                    }
+                    break;
+
+                case RoomSetActionActiveCommandData c:
+                    {
+                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var actionName = ctx.Resolve(c.ActionName);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, resolvedRoom, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase));
+                        if (room != null && room.Actions != null)
+                        {
+                            foreach (var act in room.Actions)
+                            {
+                                if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                    act.InitallyActive = c.Active;
+                            }
+                        }
+                    }
+                    break;
+
+                case PlayerSetActionActiveCommandData c:
+                    {
+                        var actionName = ctx.Resolve(c.ActionName);
+                        if (ctx.Game.Player.Actions != null)
+                        {
+                            foreach (var act in ctx.Game.Player.Actions)
+                            {
+                                if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                    act.InitallyActive = c.Active;
+                            }
+                        }
+                    }
+                    break;
+
                 case CharacterSetActionActiveCommandData c:
                     {
                         var actionName = ctx.Resolve(c.ActionName);

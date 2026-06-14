@@ -451,6 +451,26 @@ namespace RagNextPlayer.Managers
                         }
                     }
 
+                    // Execute OnPlayerExit actions for items in the current room
+                    var itemsInRoomExit = ActiveGame.Objects.FindAll(o => string.Equals(o.RoomId, CurrentRoom.Id, StringComparison.OrdinalIgnoreCase));
+                    foreach (var item in itemsInRoomExit)
+                    {
+                        if (item.Actions != null)
+                        {
+                            var itemCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, item, item);
+                            foreach (var action in item.Actions)
+                            {
+                                if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    if (MatchesDirection(action.DirectionFilter, direction))
+                                    {
+                                        ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // Check if currentRoomId was redirected/overridden during OnPlayerExit
                     var finalRoomId = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
                     if (!string.IsNullOrEmpty(finalRoomId) && !string.Equals(finalRoomId, roomId, StringComparison.OrdinalIgnoreCase))
@@ -520,6 +540,26 @@ namespace RagNextPlayer.Managers
                             if (MatchesDirection(action.DirectionFilter, direction))
                             {
                                 ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                            }
+                        }
+                    }
+                }
+
+                // Execute OnPlayerEnter actions for items in the entered room
+                var itemsInRoomEnter = ActiveGame.Objects.FindAll(o => string.Equals(o.RoomId, room.Id, StringComparison.OrdinalIgnoreCase));
+                foreach (var item in itemsInRoomEnter)
+                {
+                    if (item.Actions != null)
+                    {
+                        var itemCtx = new GameExecutionContext(ActiveGame!, room, item, item);
+                        foreach (var action in item.Actions)
+                        {
+                            if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (MatchesDirection(action.DirectionFilter, direction))
+                                {
+                                    ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                }
                             }
                         }
                     }

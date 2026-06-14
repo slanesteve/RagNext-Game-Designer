@@ -530,6 +530,27 @@
       ]
     },
     {
+      "name": "Room: Set Attribute",
+      "category": "Room",
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        },
+        {
+          "label": "Attribute Name",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "label": "Value",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
       "name": "Room: Set Picture",
       "category": "Room",
       "inputs": [
