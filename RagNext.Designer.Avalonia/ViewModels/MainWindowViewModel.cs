@@ -1192,6 +1192,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     ActiveView = "Dashboard";
                     SaveRecentProject(path);
                 }
+                else
+                {
+                    RemoveRecentProject(path);
+                }
             });
 
             RemoveRecentProjectCommand = new Command<string>(path =>
@@ -1802,10 +1806,24 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     var list = JsonSerializer.Deserialize(json, DesignerJsonContext.Default.ListString);
                     if (list != null)
                     {
+                        var availableSaves = _storage.ListSavesAsync().GetAwaiter().GetResult();
+                        var availableSet = new System.Collections.Generic.HashSet<string>(availableSaves, System.StringComparer.OrdinalIgnoreCase);
+
+                        var validRecentList = new System.Collections.Generic.List<string>();
                         foreach (var p in list)
                         {
-                            if (!string.IsNullOrWhiteSpace(p) && !RecentProjects.Contains(p))
-                                RecentProjects.Add(p);
+                            if (!string.IsNullOrWhiteSpace(p) && availableSet.Contains(p))
+                            {
+                                if (!RecentProjects.Contains(p))
+                                    RecentProjects.Add(p);
+                                validRecentList.Add(p);
+                            }
+                        }
+
+                        if (validRecentList.Count < list.Count)
+                        {
+                            var updatedJson = JsonSerializer.Serialize(validRecentList, DesignerJsonContext.Default.ListString);
+                            File.WriteAllText(RecentProjectsFilePath, updatedJson);
                         }
                     }
                 }

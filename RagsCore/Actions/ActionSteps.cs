@@ -4,6 +4,7 @@ using System.Text.Json;
 using RagsCore.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.Json.Nodes;
 
 namespace RagsCore.Actions
 {
@@ -119,6 +120,21 @@ namespace RagsCore.Actions
             json = System.Text.RegularExpressions.Regex.Replace(json, @"""\$id""\s*:\s*\{", @""""": {");
             json = System.Text.RegularExpressions.Regex.Replace(json, @"""\$ref""\s*:\s*\{", @""""": {");
 
+            // Normalize legacy dictionary "Attributes" into array format so System.Text.Json with ReferenceHandler.Preserve can deserialize it
+            try
+            {
+                var node = JsonNode.Parse(json);
+                if (node != null)
+                {
+                    ConvertLegacyAttributes(node);
+                    json = node.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError($"Failed to parse or convert legacy attributes in JSON: {ex}");
+            }
+
             var validDiscriminators = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
             {
                 "var.equals", "player.inRoom", "room.hasObject", "player.sameRoom", "item.heldByPlayer",
@@ -163,6 +179,49 @@ namespace RagsCore.Actions
                 .Replace("\"item.customPropertyCheck\"", "\"item.attributeCheck\"")
                 .Replace("\"player.customPropertyCheck\"", "\"player.attributeCheck\"")
                 .Replace("\"room.customPropertyCheck\"", "\"room.attributeCheck\"");
+        }
+
+        private static void ConvertLegacyAttributes(JsonNode node)
+        {
+            if (node is JsonObject obj)
+            {
+                var properties = obj.ToList();
+                foreach (var prop in properties)
+                {
+                    if (prop.Key == "Attributes" && prop.Value is JsonObject attrObj)
+                    {
+                        if (!attrObj.ContainsKey("$values") && !attrObj.ContainsKey("$ref"))
+                        {
+                            var array = new JsonArray();
+                            foreach (var attrProp in attrObj.ToList())
+                            {
+                                var attrVal = attrProp.Value?.ToString();
+                                var item = new JsonObject
+                                {
+                                    ["Name"] = attrProp.Key,
+                                    ["Value"] = attrVal
+                                };
+                                array.Add(item);
+                            }
+                            obj["Attributes"] = array;
+                        }
+                    }
+                    else if (prop.Value != null)
+                    {
+                        ConvertLegacyAttributes(prop.Value);
+                    }
+                }
+            }
+            else if (node is JsonArray arr)
+            {
+                foreach (var item in arr)
+                {
+                    if (item != null)
+                    {
+                        ConvertLegacyAttributes(item);
+                    }
+                }
+            }
         }
 
         public abstract ActionStepKind Kind { get; }
