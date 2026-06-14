@@ -2365,13 +2365,6 @@ namespace RagNextPlayer.Managers
                 }
             }
 
-            if (_promptInputMenu is null) return;
-            _promptMenuCloseTween = PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
-                _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
-            }).OnComplete(() => {
-                _promptInputMenu.style.display = DisplayStyle.None;
-            });
-
             var currentRoom = GameManager.Instance.CurrentRoom;
             if (currentRoom is not null)
             {
@@ -2379,8 +2372,24 @@ namespace RagNextPlayer.Managers
                 RefreshEntityLists();
             }
 
-            // Resume the action execution engine
+            // Resume the action execution engine first to see if a new prompt gets activated
             ActionExecutor.ResumeSuspended();
+
+            if (_promptInputMenu is null) return;
+
+            // If a new prompt is active, do not start the close tween.
+            var promptActive = GameManager.Instance?.ActiveGame?.Variables?.Find(v => string.Equals(v.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase))?.Value == "true";
+            if (promptActive) return;
+
+            _promptMenuCloseTween = PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
+                _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
+            }).OnComplete(() => {
+                // Only hide the menu if no new prompt has been activated during the resume sequence
+                if (GameManager.Instance?.ActiveGame?.Variables?.Find(v => string.Equals(v.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase))?.Value != "true")
+                {
+                    _promptInputMenu.style.display = DisplayStyle.None;
+                }
+            });
         }
 
         private void SubmitPromptInput()

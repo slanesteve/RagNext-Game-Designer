@@ -30,7 +30,17 @@ namespace RagNextPlayer.Runtime
 
         public GameVariableData? GetVariable(string name)
         {
-            if (name != null && name.Contains(':'))
+            if (string.IsNullOrEmpty(name)) return null;
+            if (name.StartsWith("variables.", StringComparison.OrdinalIgnoreCase))
+            {
+                name = name.Substring(10);
+            }
+            else if (name.StartsWith("variable.", StringComparison.OrdinalIgnoreCase))
+            {
+                name = name.Substring(9);
+            }
+
+            if (name.Contains(':'))
             {
                 var index = name.IndexOf(':');
                 var realName = name.Substring(0, index);
@@ -63,6 +73,16 @@ namespace RagNextPlayer.Runtime
 
         public void SetVariable(string name, string? value)
         {
+            if (string.IsNullOrEmpty(name)) return;
+            if (name.StartsWith("variables.", StringComparison.OrdinalIgnoreCase))
+            {
+                name = name.Substring(10);
+            }
+            else if (name.StartsWith("variable.", StringComparison.OrdinalIgnoreCase))
+            {
+                name = name.Substring(9);
+            }
+
             var v = GetVariable(name);
             if (v is null)
             {
@@ -235,7 +255,7 @@ namespace RagNextPlayer.Runtime
                                 _sink?.OnCommandExecuted(cmd, _ctx);
                             }
 
-                            if (_ctx.GetVariable("system.prompt.active")?.Value == "true")
+                            if (cmd is PromptPlayerInputCommandData)
                             {
                                 IsSuspended = true;
                                 break;
@@ -397,6 +417,11 @@ namespace RagNextPlayer.Runtime
         public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null)
         {
             if (action is null || ctx is null) return;
+            if (!action.InitallyActive)
+            {
+                Debug.Log($"[ActionExecutor] Skip executing inactive action: '{action.Name}' ({action.Id}).");
+                return;
+            }
             
             Debug.Log($"[ActionExecutor] Execute called for action: '{action.Name}' ({action.Id}).");
             var runner = new ActionRunner(action, ctx, sink);
@@ -407,6 +432,7 @@ namespace RagNextPlayer.Runtime
 
         internal static void ExecuteCommand(CommandData cmd, GameExecutionContext ctx)
         {
+            Debug.Log($"[ActionExecutor] ExecuteCommand: Type={cmd.GetType().Name}, cmd.Type={cmd.Type}");
             switch (cmd)
             {
                 case DisplayTextCommandData c:
@@ -645,15 +671,15 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case PlayerSetNameCommandData c:
-                    ctx.Player.Name = c.Name;
+                    ctx.Player.Name = ctx.Resolve(c.Name);
                     break;
 
                 case PlayerSetDescriptionCommandData c:
-                    ctx.Player.Description = c.Description;
+                    ctx.Player.Description = ctx.Resolve(c.Description);
                     break;
 
                 case PlayerSetGenderCommandData c:
-                    ctx.Player.Gender = c.Gender;
+                    ctx.Player.Gender = ctx.Resolve(c.Gender);
                     break;
 
                 case PlayerSetPortraitMediaCommandData c:
@@ -960,13 +986,69 @@ namespace RagNextPlayer.Runtime
                     {
                         var resolvedItem = ctx.Resolve(c.ItemId);
                         var actionName = ctx.Resolve(c.ActionName);
-                        var item = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolvedItem, StringComparison.OrdinalIgnoreCase));
-                        if (item != null && item.Actions != null)
+                        
+                        UnityEngine.Debug.Log($"[ActionExecutor] ItemSetActionActive: ItemId='{c.ItemId}' (resolved='{resolvedItem}'), ActionName='{c.ActionName}' (resolved='{actionName}'), c.Active={c.Active}");
+                        
+                        var items = new List<GameObjectData>();
+                        
+                        // Find in main objects list
+                        var mainObj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolvedItem, StringComparison.OrdinalIgnoreCase));
+                        if (mainObj != null)
                         {
-                            foreach (var act in item.Actions)
+                            UnityEngine.Debug.Log($"[ActionExecutor] Found in main Game.Objects: '{mainObj.Name}'");
+                            items.Add(mainObj);
+                        }
+                        
+                        // Find in player inventory
+                        if (ctx.Player?.Inventory != null)
+                        {
+                            var invObj = ctx.Player.Inventory.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolvedItem, StringComparison.OrdinalIgnoreCase));
+                            if (invObj != null)
                             {
-                                if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
-                                    act.InitallyActive = c.Active;
+                                UnityEngine.Debug.Log($"[ActionExecutor] Found in Player.Inventory: '{invObj.Name}'");
+                                items.Add(invObj);
+                            }
+                            else
+                            {
+                                UnityEngine.Debug.Log($"[ActionExecutor] Not found in Player.Inventory. Current inventory items: {string.Join(", ", ctx.Player.Inventory.ConvertAll(i => i.Name))}");
+                            }
+                        }
+                        
+                        // Find in character inventories
+                        if (ctx.Game?.Characters != null)
+                        {
+                            foreach (var ch in ctx.Game.Characters)
+                            {
+                                if (ch.Inventory != null)
+                                {
+                                    var chObj = ch.Inventory.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolvedItem, StringComparison.OrdinalIgnoreCase));
+                                    if (chObj != null)
+                                    {
+                                        UnityEngine.Debug.Log($"[ActionExecutor] Found in Character '{ch.Name}' inventory: '{chObj.Name}'");
+                                        items.Add(chObj);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (items.Count == 0)
+                        {
+                            UnityEngine.Debug.LogWarning($"[ActionExecutor] ItemSetActionActive failed: No matching items found for '{resolvedItem}'!");
+                        }
+
+                        foreach (var item in items)
+                        {
+                            if (item.Actions != null)
+                            {
+                                foreach (var act in item.Actions)
+                                {
+                                    UnityEngine.Debug.Log($"[ActionExecutor] Item '{item.Name}' action: '{act.Name}' (active={act.InitallyActive})");
+                                    if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        act.InitallyActive = c.Active;
+                                        UnityEngine.Debug.Log($"[ActionExecutor] Updated action '{act.Name}' on '{item.Name}' to active={c.Active}");
+                                    }
+                                }
                             }
                         }
                     }
@@ -976,13 +1058,17 @@ namespace RagNextPlayer.Runtime
                     {
                         var resolvedRoom = ctx.Resolve(c.RoomId);
                         var actionName = ctx.Resolve(c.ActionName);
+                        UnityEngine.Debug.Log($"[ActionExecutor] RoomSetActionActive: RoomId='{c.RoomId}' (resolved='{resolvedRoom}'), ActionName='{c.ActionName}' (resolved='{actionName}'), c.Active={c.Active}");
                         var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, resolvedRoom, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase));
                         if (room != null && room.Actions != null)
                         {
                             foreach (var act in room.Actions)
                             {
                                 if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                {
                                     act.InitallyActive = c.Active;
+                                    UnityEngine.Debug.Log($"[ActionExecutor] Updated action '{act.Name}' on Room '{room.Name}' to active={c.Active}");
+                                }
                             }
                         }
                     }
@@ -991,12 +1077,16 @@ namespace RagNextPlayer.Runtime
                 case PlayerSetActionActiveCommandData c:
                     {
                         var actionName = ctx.Resolve(c.ActionName);
+                        UnityEngine.Debug.Log($"[ActionExecutor] PlayerSetActionActive: ActionName='{c.ActionName}' (resolved='{actionName}'), c.Active={c.Active}");
                         if (ctx.Game.Player.Actions != null)
                         {
                             foreach (var act in ctx.Game.Player.Actions)
                             {
                                 if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                {
                                     act.InitallyActive = c.Active;
+                                    UnityEngine.Debug.Log($"[ActionExecutor] Updated player action '{act.Name}' to active={c.Active}");
+                                }
                             }
                         }
                     }
@@ -1005,13 +1095,17 @@ namespace RagNextPlayer.Runtime
                 case CharacterSetActionActiveCommandData c:
                     {
                         var actionName = ctx.Resolve(c.ActionName);
+                        UnityEngine.Debug.Log($"[ActionExecutor] CharacterSetActionActive: ActionName='{c.ActionName}' (resolved='{actionName}'), c.Active={c.Active}");
                         // 1. Player actions
                         if (ctx.Game.Player.Actions != null)
                         {
                             foreach (var act in ctx.Game.Player.Actions)
                             {
                                 if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                {
                                     act.InitallyActive = c.Active;
+                                    UnityEngine.Debug.Log($"[ActionExecutor] Updated player action '{act.Name}' to active={c.Active}");
+                                }
                             }
                         }
                         // 2. Room actions
@@ -1024,7 +1118,10 @@ namespace RagNextPlayer.Runtime
                                     foreach (var act in room.Actions)
                                     {
                                         if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                        {
                                             act.InitallyActive = c.Active;
+                                            UnityEngine.Debug.Log($"[ActionExecutor] Updated room action '{act.Name}' on Room '{room.Name}' to active={c.Active}");
+                                        }
                                     }
                                 }
                             }
@@ -1039,7 +1136,10 @@ namespace RagNextPlayer.Runtime
                                     foreach (var act in character.Actions)
                                     {
                                         if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                        {
                                             act.InitallyActive = c.Active;
+                                            UnityEngine.Debug.Log($"[ActionExecutor] Updated character action '{act.Name}' on Character '{character.Name}' to active={c.Active}");
+                                        }
                                     }
                                 }
                             }
@@ -1053,7 +1153,10 @@ namespace RagNextPlayer.Runtime
                                     foreach (var act in obj.Actions)
                                     {
                                         if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                        {
                                             act.InitallyActive = c.Active;
+                                            UnityEngine.Debug.Log($"[ActionExecutor] Updated object action '{act.Name}' on Object '{obj.Name}' to active={c.Active}");
+                                        }
                                     }
                                 }
                             }
@@ -1230,6 +1333,19 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case SetRoomAttributeCommandData c:
+                    {
+                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var resolvedVal = ctx.Resolve(c.Value);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, resolvedRoom, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase));
+                        if (room is not null)
+                        {
+                            room.Attributes[c.AttributeName] = resolvedVal;
+                            ctx.SetVariable($"room.{resolvedRoom}.{c.AttributeName}", resolvedVal);
+                        }
+                    }
+                    break;
+
                 default:
                     Debug.LogWarning($"[ActionExecutor] Unhandled command type: {cmd.Type}");
                     break;
@@ -1239,6 +1355,13 @@ namespace RagNextPlayer.Runtime
         // ── Condition Dispatch ────────────────────────────────────────────────
 
         internal static bool EvaluateCondition(ConditionData cond, GameExecutionContext ctx)
+        {
+            var result = EvaluateConditionInternal(cond, ctx);
+            Debug.Log($"[ActionExecutor] EvaluateCondition: Type={cond.GetType().Name}, cond.Type={cond.Type} -> {result}");
+            return result;
+        }
+
+        private static bool EvaluateConditionInternal(ConditionData cond, GameExecutionContext ctx)
         {
             return cond switch
             {

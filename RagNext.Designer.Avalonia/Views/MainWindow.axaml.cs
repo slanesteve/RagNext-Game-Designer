@@ -58,6 +58,48 @@ namespace RagNext.Designer.Avalonia.Views
                 };
             }
 
+            var pickerNames = new string[] { "NorthPicker", "SouthPicker", "EastPicker", "WestPicker", "NorthWestPicker", "NorthEastPicker", "SouthWestPicker", "SouthEastPicker", "UpPicker", "DownPicker", "InPicker", "OutPicker" };
+            foreach (var name in pickerNames)
+            {
+                var combo = this.FindControl<ComboBox>(name);
+                if (combo != null)
+                {
+                    combo.PropertyChanged += (s, e) =>
+                    {
+                        if (e.Property.Name == "ItemsSource" || e.Property.Name == "DataContext")
+                        {
+                            if (combo.ItemsSource != null && RoomsList.SelectedItem is Room room)
+                            {
+                                var direction = name.Replace("Picker", "");
+                                if (room.Exits.TryGetValue(direction, out var destId))
+                                {
+                                    var allRooms = combo.ItemsSource as System.Collections.IEnumerable;
+                                    if (allRooms != null)
+                                    {
+                                        foreach (var r in allRooms)
+                                        {
+                                            if (r is Room destRoom && destRoom.Id == destId)
+                                            {
+                                                _suppressExitEvents = true;
+                                                try
+                                                {
+                                                    combo.SelectedItem = destRoom;
+                                                }
+                                                finally
+                                                {
+                                                    _suppressExitEvents = false;
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                }
+            }
+
             AddHandler(TextBox.KeyUpEvent, OnTextBoxKeyUp, RoutingStrategies.Bubble, true);
             AddHandler(TextBox.KeyDownEvent, OnTextBoxKeyDown, RoutingStrategies.Bubble, true);
             AddHandler(TextBox.LostFocusEvent, OnTextBoxLostFocus, RoutingStrategies.Bubble, true);
@@ -1363,6 +1405,7 @@ namespace RagNext.Designer.Avalonia.Views
         private record ExitControl(ComboBox Picker, CheckBox OneWay, CheckBox Locked, string Direction);
         private System.Collections.Generic.List<ExitControl>? _exitControls;
         private bool _suppressExitEvents;
+        private bool _isClearingExit;
 
         private void OnRoomsSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
@@ -1420,8 +1463,6 @@ namespace RagNext.Designer.Avalonia.Views
             var vm = DataContext as ViewModels.MainWindowViewModel;
             if (vm != null) vm.SelectedSplashSoundAsset = asset;
         }
-
-
 
         private void LoadExits(Room room)
         {
@@ -1503,7 +1544,15 @@ namespace RagNext.Designer.Avalonia.Views
             var ec = _exitControls?.FirstOrDefault(x => string.Equals(x.Direction, direction, StringComparison.OrdinalIgnoreCase));
             if (ec != null)
             {
-                ec.Picker.SelectedItem = null;
+                _isClearingExit = true;
+                try
+                {
+                    ec.Picker.SelectedItem = null;
+                }
+                finally
+                {
+                    _isClearingExit = false;
+                }
             }
         }
 
@@ -1512,6 +1561,8 @@ namespace RagNext.Designer.Avalonia.Views
             if (_suppressExitEvents) return;
             if (sender is not ComboBox picker) return;
             if (RoomsList.SelectedItem is not Room room) return;
+
+            if (!picker.IsDropDownOpen && !picker.IsFocused && !_isClearingExit) return;
 
             var ec = _exitControls?.FirstOrDefault(x => x.Picker == picker);
             if (ec is null) return;
@@ -1562,6 +1613,9 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 _suppressExitEvents = false;
             }
+
+            var vm = DataContext as ViewModels.MainWindowViewModel;
+            if (vm != null) _ = vm.SaveGameAsync();
         }
 
         private void OnExitOneWayChanged(object? sender, RoutedEventArgs e)
@@ -1569,6 +1623,7 @@ namespace RagNext.Designer.Avalonia.Views
             if (_suppressExitEvents) return;
             if (sender is not CheckBox cb) return;
             if (RoomsList.SelectedItem is not Room room) return;
+            if (!cb.IsFocused) return;
 
             var ec = _exitControls?.FirstOrDefault(x => x.OneWay == cb);
             if (ec is null) return;
@@ -1594,6 +1649,9 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 _suppressExitEvents = false;
             }
+
+            var vm = DataContext as ViewModels.MainWindowViewModel;
+            if (vm != null) _ = vm.SaveGameAsync();
         }
 
         private void OnExitLockedChanged(object? sender, RoutedEventArgs e)
@@ -1601,11 +1659,15 @@ namespace RagNext.Designer.Avalonia.Views
             if (_suppressExitEvents) return;
             if (sender is not CheckBox cb) return;
             if (RoomsList.SelectedItem is not Room room) return;
+            if (!cb.IsFocused) return;
 
             var ec = _exitControls?.FirstOrDefault(x => x.Locked == cb);
             if (ec is null) return;
 
             room.LockedExits[ec.Direction] = cb.IsChecked == true;
+
+            var vm = DataContext as ViewModels.MainWindowViewModel;
+            if (vm != null) _ = vm.SaveGameAsync();
         }
 
         // Room Objects checklist sync logic
