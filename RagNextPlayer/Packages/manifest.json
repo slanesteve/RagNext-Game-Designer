@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.kyrylokuzyk.primetween": "file:Packages/com.kyrylokuzyk.primetween.tgz",
+    "com.kyrylokuzyk.primetween": "file:com.kyrylokuzyk.primetween.tgz",
     "com.unity.2d.animation": "13.0.2",
     "com.unity.2d.aseprite": "3.0.1",
     "com.unity.2d.psdimporter": "12.0.1",
