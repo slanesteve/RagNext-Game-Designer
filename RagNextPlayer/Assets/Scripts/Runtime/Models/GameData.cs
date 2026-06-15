@@ -307,7 +307,6 @@ namespace RagNextPlayer.Runtime.Models
         [JsonConverter(typeof(ActionStepListConverter))]
         public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();
 
-        [JsonIgnore]
         public float ElapsedSeconds { get; set; }
         [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();

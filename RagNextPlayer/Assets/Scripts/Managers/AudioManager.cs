@@ -39,6 +39,9 @@ namespace RagNextPlayer.Managers
         }
 
         private readonly Dictionary<AudioSource, string> _sourcePaths = new();
+        private readonly Dictionary<AudioSource, string> _sourceIds = new();
+        private readonly Dictionary<AudioSource, bool> _sourceLooping = new();
+        public string? CurrentMusicId { get; private set; }
 
         public void PlaySound(string soundId, float volume = 1f, bool loop = false, float startTime = 0f, float endTime = 0f)
         {
@@ -60,15 +63,15 @@ namespace RagNextPlayer.Managers
 
             if (_cache.TryGetValue(path, out var clip))
             {
-                PlayClip(clip, volume, loop, path, startTime, endTime);
+                PlayClip(clip, volume, loop, path, soundId, startTime, endTime);
             }
             else
             {
-                StartCoroutine(LoadAndPlayAudioRoutine(path, volume, loop, startTime, endTime));
+                StartCoroutine(LoadAndPlayAudioRoutine(path, soundId, volume, loop, startTime, endTime));
             }
         }
 
-        private void PlayClip(AudioClip clip, float volume, bool loop, string path, float startTime = 0f, float endTime = 0f)
+        private void PlayClip(AudioClip clip, float volume, bool loop, string path, string soundId, float startTime = 0f, float endTime = 0f)
         {
             var src = GetFreeSource();
             if (src is null) return;
@@ -88,6 +91,8 @@ namespace RagNextPlayer.Managers
 
             src.Play();
             _sourcePaths[src] = path;
+            _sourceIds[src]   = soundId;
+            _sourceLooping[src] = loop;
 
             if (startTime > 0f || (endTime > 0f && endTime < clip.length))
             {
@@ -172,6 +177,7 @@ namespace RagNextPlayer.Managers
         public void PlayMusic(string soundId)
         {
             if (string.IsNullOrWhiteSpace(soundId)) return;
+            CurrentMusicId = soundId;
             string path = soundId;
             var game = GameManager.Instance?.ActiveGame;
             if (game != null)
@@ -241,6 +247,7 @@ namespace RagNextPlayer.Managers
 
         public void StopMusic()
         {
+            CurrentMusicId = null;
             if (_musicSource != null && _musicSource.isPlaying)
             {
                 _musicSource.Stop();
@@ -248,7 +255,25 @@ namespace RagNextPlayer.Managers
             }
         }
 
-        private System.Collections.IEnumerator LoadAndPlayAudioRoutine(string path, float volume, bool loop, float startTime = 0f, float endTime = 0f)
+        public List<string> GetPlayingLoopingSoundIds()
+        {
+            var list = new List<string>();
+            foreach (var src in _pool)
+            {
+                bool isLooping = false;
+                _sourceLooping.TryGetValue(src, out isLooping);
+                if (src.isPlaying && isLooping && _sourceIds.TryGetValue(src, out var id))
+                {
+                    if (!list.Contains(id))
+                    {
+                        list.Add(id);
+                    }
+                }
+            }
+            return list;
+        }
+
+        private System.Collections.IEnumerator LoadAndPlayAudioRoutine(string path, string soundId, float volume, bool loop, float startTime = 0f, float endTime = 0f)
         {
             string url = FormatLocalPathForWeb(path);
             if (string.IsNullOrEmpty(url)) yield break;
@@ -269,7 +294,7 @@ namespace RagNextPlayer.Managers
                 if (clip != null)
                 {
                     _cache[path] = clip;
-                    PlayClip(clip, volume, loop, path, startTime, endTime);
+                    PlayClip(clip, volume, loop, path, soundId, startTime, endTime);
                     Debug.Log($"[AudioManager] Successfully loaded and played dynamic audio clip: '{path}'");
                 }
             }
@@ -280,7 +305,7 @@ namespace RagNextPlayer.Managers
                 if (clip != null)
                 {
                     _cache[path] = clip;
-                    PlayClip(clip, volume, loop, path, startTime, endTime);
+                    PlayClip(clip, volume, loop, path, soundId, startTime, endTime);
                 }
                 else
                 {

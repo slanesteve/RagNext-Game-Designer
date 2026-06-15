@@ -50,7 +50,15 @@ namespace RagNextPlayer.Managers
 
         private void Update()
         {
-            if (ActiveGame == null || CurrentState != GameState.Playing) return;
+            if (ActiveGame == null) return;
+
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard != null && keyboard[UnityEngine.InputSystem.Key.Escape].wasPressedThisFrame)
+            {
+                UIManager.Instance?.ToggleGameMenu();
+            }
+
+            if (CurrentState != GameState.Playing) return;
 
             // Handle Keyboard Navigation for Room Exits
             HandleKeyboardNavigation();
@@ -706,6 +714,74 @@ namespace RagNextPlayer.Managers
             return System.IO.Path.Combine(folder, $"save_slot_{slot}.json");
         }
 
+        public struct SaveInfo
+        {
+            public string RoomName;
+            public string Timestamp;
+            public bool HasSave;
+        }
+
+        public SaveInfo GetSaveInfo(int slot)
+        {
+            var info = new SaveInfo();
+            info.HasSave = false;
+
+            if (!HasSaveFile(slot)) return info;
+
+            try
+            {
+                var path = GetSaveFilePath(slot);
+                var fileInfo = new System.IO.FileInfo(path);
+                info.Timestamp = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+                var json = System.IO.File.ReadAllText(path);
+                var jObject = Newtonsoft.Json.Linq.JObject.Parse(json);
+                
+                string currentRoomId = null;
+                var variables = jObject["Variables"];
+                if (variables != null)
+                {
+                    foreach (var variable in variables)
+                    {
+                        if (string.Equals(variable["Name"]?.ToString(), "player.currentRoomId", StringComparison.OrdinalIgnoreCase))
+                        {
+                            currentRoomId = variable["Value"]?.ToString();
+                            break;
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(currentRoomId))
+                {
+                    var rooms = jObject["Rooms"];
+                    if (rooms != null)
+                    {
+                        foreach (var room in rooms)
+                        {
+                            if (string.Equals(room["Id"]?.ToString(), currentRoomId, StringComparison.OrdinalIgnoreCase))
+                            {
+                                info.RoomName = room["Name"]?.ToString();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(info.RoomName))
+                {
+                    info.RoomName = "Unknown Room";
+                }
+
+                info.HasSave = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GameManager] Error reading save info for slot {slot}: {ex.Message}");
+            }
+
+            return info;
+        }
+
         public bool HasSaveFile(int slot)
         {
             try
@@ -728,6 +804,20 @@ namespace RagNextPlayer.Managers
             };
         }
 
+        private void SetSystemVariable(string name, string value)
+        {
+            if (ActiveGame is null) return;
+            var variable = ActiveGame.Variables.Find(v => string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (variable is null)
+            {
+                ActiveGame.Variables.Add(new GameVariableData { Name = name, Value = value, Type = "string" });
+            }
+            else
+            {
+                variable.Value = value;
+            }
+        }
+
         public void SaveGame(int slot)
         {
             if (ActiveGame is null) return;
@@ -736,22 +826,30 @@ namespace RagNextPlayer.Managers
                 // Ensure room variable matches CurrentRoom before saving
                 if (CurrentRoom is not null)
                 {
-                    var roomVar = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
-                    if (roomVar is null)
-                    {
-                        ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = CurrentRoom.Id });
-                    }
-                    else
-                    {
-                        roomVar.Value = CurrentRoom.Id;
-                    }
+                    SetSystemVariable("player.currentRoomId", CurrentRoom.Id);
+                }
+
+                // Save playing audio state to system variables
+                if (AudioManager.Instance is not null)
+                {
+                    var loopingIds = AudioManager.Instance.GetPlayingLoopingSoundIds();
+                    string loopsStr = string.Join(",", loopingIds);
+                    SetSystemVariable("system.playingLoopSounds", loopsStr);
+
+                    string musicId = AudioManager.Instance.CurrentMusicId ?? "";
+                    SetSystemVariable("system.playingMusic", musicId);
                 }
 
                 var path = GetSaveFilePath(slot);
                 var settings = GetSaveLoadSettings();
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(ActiveGame, settings);
                 System.IO.File.WriteAllText(path, json);
-                Debug.Log($"[GameManager] Game saved to slot {slot} at: {path}");
+
+                // Save companion screenshot
+                string imagePath = System.IO.Path.ChangeExtension(path, ".png");
+                ScreenCapture.CaptureScreenshot(imagePath);
+
+                Debug.Log($"[GameManager] Game saved to slot {slot} at: {path} and screenshot at: {imagePath}");
             }
             catch (Exception ex)
             {
@@ -774,6 +872,27 @@ namespace RagNextPlayer.Managers
                 {
                     ActiveGame = loadedGame;
                     CurrentState = GameState.Playing;
+
+                    // Restore audio state
+                    if (AudioManager.Instance is not null)
+                    {
+                        // Play looping sounds
+                        string loopSounds = ActiveGame.Variables.Find(v => string.Equals(v.Name, "system.playingLoopSounds", StringComparison.OrdinalIgnoreCase))?.Value ?? "";
+                        if (!string.IsNullOrEmpty(loopSounds))
+                        {
+                            foreach (var sId in loopSounds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                AudioManager.Instance.PlaySound(sId, volume: 1f, loop: true);
+                            }
+                        }
+
+                        // Play music
+                        string musicId = ActiveGame.Variables.Find(v => string.Equals(v.Name, "system.playingMusic", StringComparison.OrdinalIgnoreCase))?.Value ?? "";
+                        if (!string.IsNullOrEmpty(musicId))
+                        {
+                            AudioManager.Instance.PlayMusic(musicId);
+                        }
+                    }
 
                     // Trigger loaded callbacks
                     OnGameLoaded?.Invoke(ActiveGame);

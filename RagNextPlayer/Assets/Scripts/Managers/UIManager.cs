@@ -34,8 +34,6 @@ namespace RagNextPlayer.Managers
         private Button _sidebarToggleBtn;
         private VisualElement _rightSidebarContainer;
         private bool _sidebarCollapsed = false;
-        private Button _hudToggleBtn;
-        private bool _hudOverlayMode = false;
         private PrimeTween.Tween _sidebarTween;
         private VisualElement _contentSplitter;
         private float _lastSidebarWidth = 300f;
@@ -49,13 +47,42 @@ namespace RagNextPlayer.Managers
 
         // Settings Elements
         private Button         _settingsBtn;
-        private VisualElement  _settingsMenu;
+        private Button         _historyLogBtn;
+        private Button         _helpBtn;
+
+        // Unified Game Menu Overlay
+        private VisualElement  _gameMenuOverlay;
+        private Label          _gameMenuTitle;
+        private Button         _menuBtnReturn;
+        private Button         _menuBtnSave;
+        private Button         _menuBtnLoad;
+        private Button         _menuBtnSettings;
+        private Button         _menuBtnHistory;
+        private Button         _menuBtnHelp;
+        private Button         _menuBtnRestart;
+        private Button         _menuBtnQuit;
+
+        private VisualElement  _panelSaveLoad;
+        private VisualElement  _panelSettings;
+        private VisualElement  _panelHistory;
+        private VisualElement  _panelHelp;
+
+        private Label          _saveLoadSubtitle;
+        private Button         _pagePrevBtn;
+        private Button         _pageNextBtn;
+        private readonly System.Collections.Generic.List<Button> _pageBtnList = new();
+
+        private ScrollView     _historyLogScroll;
+
+        private bool           _menuIsSaveMode = true;
+        private int            _menuCurrentPage = 1;
+
         private Button         _fullscreenToggleBtn;
         private Button         _typewriterToggleBtn;
         private Slider         _typewriterSpeedSlider;
         private SliderInt      _volumeSlider;
-        private Button         _quitGameBtn;
-        private Button         _closeSettingsBtn;
+        private Button         _quitGameBtn; // Obsolete but kept for safety reference if needed
+
         private VisualElement  _playerPortrait;
         private Label          _scenePlaceholder;
         private VisualElement  _splashScreen;
@@ -75,20 +102,11 @@ namespace RagNextPlayer.Managers
         private ScrollView     _promptSelectionScroll;
         private Button         _promptSubmitBtn;
 
-        // New Revamped HUD Elements
+        // Revamped HUD Elements
         private VisualElement  _roomActionThumbnail;
         private VisualElement  _roomActionThumbnailWrapper;
         private Button         _compassToggleBtn;
         private VisualElement  _compassDialOverlay;
-
-        private Button         _historyLogBtn;
-        private VisualElement  _historyLogMenu;
-        private ScrollView     _historyLogScroll;
-        private Button         _closeHistoryLogBtn;
-
-        private Button         _helpBtn;
-        private VisualElement  _helpMenu;
-        private Button         _closeHelpBtn;
 
         private readonly List<System.Tuple<string, string>> _historyLog = new();
         private string         _promptTargetVarName = string.Empty;
@@ -208,8 +226,6 @@ namespace RagNextPlayer.Managers
             _contentSplitter = _root.Q<VisualElement>("main-split-container");
             SetupSplitters();
 
-            _hudToggleBtn = _root.Q<Button>("hud-toggle-btn");
-            if (_hudToggleBtn is not null) _hudToggleBtn.clicked += ToggleHudOverlayMode;
 
             _objectsListContainer   = _root.Q<VisualElement>("objects-list");
             _charactersListContainer= _root.Q<VisualElement>("characters-list");
@@ -236,29 +252,79 @@ namespace RagNextPlayer.Managers
 
 
             _historyLogBtn = _root.Q<Button>("history-log-btn");
-            _historyLogMenu = _root.Q<VisualElement>("history-log-menu");
-            _historyLogScroll = _root.Q<ScrollView>("history-log-scroll");
-            _closeHistoryLogBtn = _root.Q<Button>("close-history-log-btn");
-
-            if (_historyLogBtn is not null) _historyLogBtn.clicked += OpenHistoryLog;
-            if (_closeHistoryLogBtn is not null) _closeHistoryLogBtn.clicked += CloseHistoryLog;
+            if (_historyLogBtn is not null) _historyLogBtn.clicked += () => OpenGameMenuTab("History");
 
             _helpBtn = _root.Q<Button>("help-btn");
-            _helpMenu = _root.Q<VisualElement>("help-menu");
-            _closeHelpBtn = _root.Q<Button>("close-help-btn");
+            if (_helpBtn is not null) _helpBtn.clicked += () => OpenGameMenuTab("Help");
 
-            if (_helpBtn is not null) _helpBtn.clicked += OpenHelpMenu;
-            if (_closeHelpBtn is not null) _closeHelpBtn.clicked += CloseHelpMenu;
+            _settingsBtn = _root.Q<Button>("settings-btn");
+            if (_settingsBtn is not null) _settingsBtn.clicked += () => OpenGameMenuTab("Settings");
 
-            // Settings components
-            _settingsBtn            = _root.Q<Button>("settings-btn");
-            _settingsMenu           = _root.Q<VisualElement>("settings-menu");
+            // Unified Game Menu Elements
+            _gameMenuOverlay = _root.Q<VisualElement>("game-menu-overlay");
+            _gameMenuTitle = _root.Q<Label>("game-menu-title");
+
+            _menuBtnReturn = _root.Q<Button>("menu-btn-return");
+            _menuBtnSave = _root.Q<Button>("menu-btn-save");
+            _menuBtnLoad = _root.Q<Button>("menu-btn-load");
+            _menuBtnSettings = _root.Q<Button>("menu-btn-settings");
+            _menuBtnHistory = _root.Q<Button>("menu-btn-history");
+            _menuBtnHelp = _root.Q<Button>("menu-btn-help");
+            _menuBtnRestart = _root.Q<Button>("menu-btn-restart");
+            _menuBtnQuit = _root.Q<Button>("menu-btn-quit");
+
+            _panelSaveLoad = _root.Q<VisualElement>("menu-panel-save-load");
+            _panelSettings = _root.Q<VisualElement>("menu-panel-settings");
+            _panelHistory = _root.Q<VisualElement>("menu-panel-history");
+            _panelHelp = _root.Q<VisualElement>("menu-panel-help");
+
+            _saveLoadSubtitle = _root.Q<Label>("save-load-subtitle");
+            _pagePrevBtn = _root.Q<Button>("page-prev-btn");
+            _pageNextBtn = _root.Q<Button>("page-next-btn");
+
+            _pageBtnList.Clear();
+            for (int i = 1; i <= 5; i++)
+            {
+                var pBtn = _root.Q<Button>($"page-btn-{i}");
+                if (pBtn is not null) _pageBtnList.Add(pBtn);
+            }
+
+            _historyLogScroll = _root.Q<ScrollView>("history-log-scroll");
+
+            // Event Bindings for Unified Menu
+            if (_menuBtnReturn is not null) _menuBtnReturn.clicked += CloseGameMenu;
+            if (_menuBtnSave is not null) _menuBtnSave.clicked += () => OpenGameMenuTab("Save");
+            if (_menuBtnLoad is not null) _menuBtnLoad.clicked += () => OpenGameMenuTab("Load");
+            if (_menuBtnSettings is not null) _menuBtnSettings.clicked += () => OpenGameMenuTab("Settings");
+            if (_menuBtnHistory is not null) _menuBtnHistory.clicked += () => OpenGameMenuTab("History");
+            if (_menuBtnHelp is not null) _menuBtnHelp.clicked += () => OpenGameMenuTab("Help");
+            if (_menuBtnRestart is not null) _menuBtnRestart.clicked += RestartGameAction;
+            if (_menuBtnQuit is not null) _menuBtnQuit.clicked += ExitGameAction;
+
+            if (_pagePrevBtn is not null) _pagePrevBtn.clicked += PagePrev;
+            if (_pageNextBtn is not null) _pageNextBtn.clicked += PageNext;
+
+            for (int i = 0; i < _pageBtnList.Count; i++)
+            {
+                int pageNum = i + 1;
+                _pageBtnList[i].clicked += () => SwitchPage(pageNum);
+            }
+
+            for (int i = 1; i <= 6; i++)
+            {
+                int slotIndex = i;
+                var slotCard = _root.Q<Button>($"save-slot-{slotIndex}");
+                if (slotCard is not null)
+                {
+                    slotCard.clicked += () => OnSaveSlotClicked(slotIndex);
+                }
+            }
+
+            // Settings components bindings
             _fullscreenToggleBtn    = _root.Q<Button>("fullscreen-toggle-btn");
             _typewriterToggleBtn    = _root.Q<Button>("typewriter-toggle-btn");
             _typewriterSpeedSlider  = _root.Q<Slider>("typewriter-speed-slider");
             _volumeSlider           = _root.Q<SliderInt>("volume-slider");
-            _quitGameBtn            = _root.Q<Button>("quit-game-btn");
-            _closeSettingsBtn       = _root.Q<Button>("close-settings-btn");
             _playerPortrait         = _root.Q<VisualElement>("player-portrait");
             _scenePlaceholder       = _root.Q<Label>("scene-placeholder");
             _splashScreen           = _root.Q<VisualElement>("splash-screen");
@@ -289,11 +355,8 @@ namespace RagNextPlayer.Managers
             float savedVolume      = PlayerPrefs.GetFloat("Pref_MasterVolume", 1.0f);
             AudioListener.volume   = savedVolume;
 
-            if (_settingsBtn is not null) _settingsBtn.clicked += OpenSettingsMenu;
             if (_fullscreenToggleBtn is not null) _fullscreenToggleBtn.clicked += ToggleFullscreen;
             if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked += ToggleTypewriter;
-            if (_quitGameBtn is not null) _quitGameBtn.clicked += QuitGame;
-            if (_closeSettingsBtn is not null) _closeSettingsBtn.clicked += CloseSettingsMenu;
 
             if (_typewriterSpeedSlider is not null)
             {
@@ -326,16 +389,6 @@ namespace RagNextPlayer.Managers
                 _playerPortrait.RegisterCallback<ClickEvent>(OnPlayerPortraitClicked);
             }
 
-            // Wire up Save / Load slot buttons
-            for (int slot = 1; slot <= 3; slot++)
-            {
-                int capturedSlot = slot;
-                var saveBtn = _root.Q<Button>($"save-slot-{capturedSlot}-btn");
-                if (saveBtn is not null) saveBtn.clicked += () => SaveGameSlot(capturedSlot);
-
-                var loadBtn = _root.Q<Button>($"load-slot-{capturedSlot}-btn");
-                if (loadBtn is not null) loadBtn.clicked += () => LoadGameSlot(capturedSlot);
-            }
 
             if (_roomActionsContainer is not null)
             {
@@ -1063,11 +1116,8 @@ namespace RagNextPlayer.Managers
 
             UnsubscribeEvents();
 
-            if (_settingsBtn is not null) _settingsBtn.clicked -= OpenSettingsMenu;
             if (_fullscreenToggleBtn is not null) _fullscreenToggleBtn.clicked -= ToggleFullscreen;
             if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked -= ToggleTypewriter;
-            if (_quitGameBtn is not null) _quitGameBtn.clicked -= QuitGame;
-            if (_closeSettingsBtn is not null) _closeSettingsBtn.clicked -= CloseSettingsMenu;
 
             // Unbind Game Over / Prompt Input click handlers
             if (_gameOverRestartBtn is not null) _gameOverRestartBtn.clicked -= RestartGameAction;
@@ -2080,46 +2130,321 @@ namespace RagNextPlayer.Managers
 
 
         // ── Settings Callbacks & Save/Load Slots ────────────────────────────────
-        private void OpenSettingsMenu()
+        // ── Unified Menu Callbacks ─────────────────────────────────────────────
+        public void ToggleGameMenu()
         {
-            if (_settingsMenu is null) return;
+            if (_gameMenuOverlay == null) return;
+            if (_gameMenuOverlay.style.display == DisplayStyle.Flex)
+            {
+                CloseGameMenu();
+            }
+            else
+            {
+                OpenGameMenuTab(_menuIsSaveMode ? "Save" : "Load");
+            }
+        }
 
-            // Sync toggle button texts with current engine states
-            if (_fullscreenToggleBtn is not null)
+        public void OpenGameMenuTab(string tabName)
+        {
+            if (_gameMenuOverlay == null) return;
+
+            // Stop scrolling typewriters to prevent overlaps
+            AutocompleteActiveTypewriters();
+
+            // Set Title text
+            if (_gameMenuTitle != null)
             {
-                _fullscreenToggleBtn.text = Screen.fullScreen ? "Windowed" : "Fullscreen";
-            }
-            if (_typewriterToggleBtn is not null)
-            {
-                _typewriterToggleBtn.text = _typewriterEnabled ? "Typewriter ON" : "Typewriter OFF";
-            }
-            if (_typewriterSpeedSlider is not null)
-            {
-                _typewriterSpeedSlider.value = _typewriterSpeed;
-            }
-            if (_volumeSlider is not null)
-            {
-                _volumeSlider.value = Mathf.RoundToInt(AudioListener.volume * 100f);
+                _gameMenuTitle.text = tabName.ToUpper() + " GAME";
+                if (tabName == "Settings") _gameMenuTitle.text = "SETTINGS / PREFERENCES";
+                else if (tabName == "History") _gameMenuTitle.text = "DIALOGUE LOG";
+                else if (tabName == "Help") _gameMenuTitle.text = "CONTROLS GUIDE";
             }
 
-            RefreshSaveLoadSlots();
+            // Sync menu navigation buttons highlight
+            HighlightNavButton(tabName);
 
-            _settingsMenu.style.display = DisplayStyle.Flex;
-            _settingsMenu.BringToFront();
-            _settingsMenu.transform.scale = Vector3.zero;
-            PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
-                _settingsMenu.transform.scale = new Vector3(val, val, 1f);
+            bool isOpening = (_gameMenuOverlay.style.display != DisplayStyle.Flex);
+
+            // Toggle panels display (hide during initial scale-up animation, toggle instantly if already open)
+            if (isOpening)
+            {
+                _panelSaveLoad.style.display = DisplayStyle.None;
+                _panelSettings.style.display = DisplayStyle.None;
+                _panelHistory.style.display = DisplayStyle.None;
+                _panelHelp.style.display = DisplayStyle.None;
+            }
+            else
+            {
+                _panelSaveLoad.style.display = (tabName == "Save" || tabName == "Load") ? DisplayStyle.Flex : DisplayStyle.None;
+                _panelSettings.style.display = (tabName == "Settings") ? DisplayStyle.Flex : DisplayStyle.None;
+                _panelHistory.style.display = (tabName == "History") ? DisplayStyle.Flex : DisplayStyle.None;
+                _panelHelp.style.display = (tabName == "Help") ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (tabName == "Save" || tabName == "Load")
+            {
+                _menuIsSaveMode = (tabName == "Save");
+                RefreshSaveLoadGrid();
+            }
+            else if (tabName == "Settings")
+            {
+                // Sync settings states
+                if (_fullscreenToggleBtn is not null)
+                    _fullscreenToggleBtn.text = Screen.fullScreen ? "Windowed" : "Fullscreen";
+                if (_typewriterToggleBtn is not null)
+                    _typewriterToggleBtn.text = _typewriterEnabled ? "Typewriter ON" : "Typewriter OFF";
+                if (_typewriterSpeedSlider is not null)
+                    _typewriterSpeedSlider.value = _typewriterSpeed;
+                if (_volumeSlider is not null)
+                    _volumeSlider.value = Mathf.RoundToInt(AudioListener.volume * 100f);
+            }
+            else if (tabName == "History")
+            {
+                PopulateHistoryLogScroll();
+            }
+
+            // Bring overlay into view with PrimeTween animation
+            if (isOpening)
+            {
+                _gameMenuOverlay.style.display = DisplayStyle.Flex;
+                _gameMenuOverlay.BringToFront();
+                _gameMenuOverlay.transform.scale = Vector3.zero;
+                PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _gameMenuOverlay.transform.scale = new Vector3(val, val, 1f);
+                }).OnComplete(() => {
+                    // Display the target panel now that parent scale is 1
+                    _panelSaveLoad.style.display = (tabName == "Save" || tabName == "Load") ? DisplayStyle.Flex : DisplayStyle.None;
+                    _panelSettings.style.display = (tabName == "Settings") ? DisplayStyle.Flex : DisplayStyle.None;
+                    _panelHistory.style.display = (tabName == "History") ? DisplayStyle.Flex : DisplayStyle.None;
+                    _panelHelp.style.display = (tabName == "Help") ? DisplayStyle.Flex : DisplayStyle.None;
+
+                    // Re-apply values to force UI Toolkit to layout drag handles correctly
+                    if (tabName == "Settings")
+                    {
+                        if (_typewriterSpeedSlider is not null)
+                        {
+                            float originalSpeed = _typewriterSpeed;
+                            _typewriterSpeedSlider.value = originalSpeed + 1f; // force event
+                            _typewriterSpeedSlider.value = originalSpeed;
+                        }
+                        if (_volumeSlider is not null)
+                        {
+                            int originalVol = Mathf.RoundToInt(AudioListener.volume * 100f);
+                            _volumeSlider.value = originalVol + 1; // force event
+                            _volumeSlider.value = originalVol;
+                        }
+                    }
+                });
+            }
+        }
+
+        private void HighlightNavButton(string tabName)
+        {
+            if (_menuBtnSave is null || _menuBtnLoad is null || _menuBtnSettings is null || _menuBtnHistory is null || _menuBtnHelp is null) return;
+            
+            _menuBtnSave.RemoveFromClassList("menu-nav-btn--active");
+            _menuBtnLoad.RemoveFromClassList("menu-nav-btn--active");
+            _menuBtnSettings.RemoveFromClassList("menu-nav-btn--active");
+            _menuBtnHistory.RemoveFromClassList("menu-nav-btn--active");
+            _menuBtnHelp.RemoveFromClassList("menu-nav-btn--active");
+
+            if (tabName == "Save") _menuBtnSave.AddToClassList("menu-nav-btn--active");
+            else if (tabName == "Load") _menuBtnLoad.AddToClassList("menu-nav-btn--active");
+            else if (tabName == "Settings") _menuBtnSettings.AddToClassList("menu-nav-btn--active");
+            else if (tabName == "History") _menuBtnHistory.AddToClassList("menu-nav-btn--active");
+            else if (tabName == "Help") _menuBtnHelp.AddToClassList("menu-nav-btn--active");
+        }
+
+        public void CloseGameMenu()
+        {
+            if (_gameMenuOverlay == null || _gameMenuOverlay.style.display == DisplayStyle.None) return;
+            PrimeTween.Tween.Custom(_gameMenuOverlay.transform.scale.x, 0.0f, 0.1f, val => {
+                _gameMenuOverlay.transform.scale = new Vector3(val, val, 1f);
+            }).OnComplete(() => {
+                _gameMenuOverlay.style.display = DisplayStyle.None;
             });
         }
 
-        private void CloseSettingsMenu()
+        private void CloseGameMenu(ClickEvent evt) => CloseGameMenu();
+
+        private void SwitchPage(int page)
         {
-            if (_settingsMenu is null) return;
-            PrimeTween.Tween.Custom(_settingsMenu.transform.scale.x, 0.0f, 0.1f, val => {
-                _settingsMenu.transform.scale = new Vector3(val, val, 1f);
-            }).OnComplete(() => {
-                _settingsMenu.style.display = DisplayStyle.None;
-            });
+            _menuCurrentPage = page;
+            
+            // Highlight active page button
+            for (int i = 0; i < _pageBtnList.Count; i++)
+            {
+                _pageBtnList[i].RemoveFromClassList("pagination-btn--active");
+                if (i == page - 1)
+                {
+                    _pageBtnList[i].AddToClassList("pagination-btn--active");
+                }
+            }
+
+            if (_saveLoadSubtitle != null)
+            {
+                _saveLoadSubtitle.text = $"Page {page}";
+            }
+
+            RefreshSaveLoadGrid();
+        }
+
+        private void PagePrev()
+        {
+            int nextP = _menuCurrentPage - 1;
+            if (nextP < 1) nextP = 5;
+            SwitchPage(nextP);
+        }
+
+        private void PageNext()
+        {
+            int nextP = _menuCurrentPage + 1;
+            if (nextP > 5) nextP = 1;
+            SwitchPage(nextP);
+        }
+
+        private void RefreshSaveLoadGrid()
+        {
+            if (GameManager.Instance == null) return;
+
+            int startSlot = (_menuCurrentPage - 1) * 6 + 1;
+
+            for (int i = 1; i <= 6; i++)
+            {
+                int slotId = startSlot + i - 1;
+                var slotInfo = GameManager.Instance.GetSaveInfo(slotId);
+
+                var slotCard = _root.Q<Button>($"save-slot-{i}");
+                var thumb = slotCard?.Q<VisualElement>($"save-slot-{i}-thumb");
+                var emptyLabel = thumb?.Q<Label>(className: "save-slot-empty-label");
+                var infoLabel = slotCard?.Q<Label>($"save-slot-{i}-info");
+                var numLabel = slotCard?.Q<Label>(className: "save-slot-num-label");
+
+                if (numLabel != null) numLabel.text = $"Slot {slotId}";
+
+                if (slotInfo.HasSave)
+                {
+                    if (emptyLabel != null) emptyLabel.style.display = DisplayStyle.None;
+                    if (infoLabel != null)
+                    {
+                        infoLabel.text = $"{slotInfo.RoomName}\n{slotInfo.Timestamp}";
+                    }
+
+                    // Load screenshot image into the visual element background
+                    string savePath = GameManager.Instance.GetSaveFilePath(slotId);
+                    string screenshotPath = System.IO.Path.ChangeExtension(savePath, ".png");
+                    if (System.IO.File.Exists(screenshotPath) && thumb != null)
+                    {
+                        LoadAndDisplayImageForElement(screenshotPath, thumb);
+                    }
+                    else if (thumb != null)
+                    {
+                        thumb.style.backgroundImage = null;
+                        if (emptyLabel != null)
+                        {
+                            emptyLabel.text = "No Screenshot";
+                            emptyLabel.style.display = DisplayStyle.Flex;
+                        }
+                    }
+                }
+                else
+                {
+                    if (thumb != null) thumb.style.backgroundImage = null;
+                    if (emptyLabel != null)
+                    {
+                        emptyLabel.text = "Empty Slot";
+                        emptyLabel.style.display = DisplayStyle.Flex;
+                    }
+                    if (infoLabel != null) infoLabel.text = "No Save Data";
+                }
+            }
+        }
+
+        private void OnSaveSlotClicked(int localSlot)
+        {
+            int globalSlot = (_menuCurrentPage - 1) * 6 + localSlot;
+            if (_menuIsSaveMode)
+            {
+                if (GameManager.Instance != null && GameManager.Instance.HasSaveFile(globalSlot))
+                {
+                    ShowOverwriteConfirmation(globalSlot);
+                }
+                else
+                {
+                    PerformSave(globalSlot);
+                }
+            }
+            else
+            {
+                if (GameManager.Instance != null && GameManager.Instance.HasSaveFile(globalSlot))
+                {
+                    CloseGameMenu();
+                    _ = GameManager.Instance.LoadGameAsync(globalSlot);
+                }
+            }
+        }
+
+        private void PopulateHistoryLogScroll()
+        {
+            if (_historyLogScroll is null) return;
+            _historyLogScroll.Clear();
+
+            foreach (var entry in _historyLog)
+            {
+                var itemContainer = new VisualElement();
+                itemContainer.style.marginBottom = 12f;
+
+                var header = new Label(entry.Item1);
+                header.AddToClassList("narrative-room-header");
+                header.style.color = new Color(0f, 188/255f, 212/255f); // Neon cyan
+                itemContainer.Add(header);
+
+                var bodyText = entry.Item2;
+                if (!string.IsNullOrWhiteSpace(bodyText))
+                {
+                    bodyText = bodyText.Replace("\r\n", "\n").Replace("\r", "\n");
+                    var paragraphs = bodyText.Split(new[] { "\n" }, StringSplitOptions.None);
+                    foreach (var para in paragraphs)
+                    {
+                        if (string.IsNullOrWhiteSpace(para))
+                        {
+                            var spacer = new VisualElement();
+                            spacer.AddToClassList("narrative-spacer");
+                            itemContainer.Add(spacer);
+                            continue;
+                        }
+
+                        var cleanPara = Regex.Replace(para, @"\[([^\]]+)\]", "$1");
+                        var paraLabel = new Label(cleanPara);
+                        paraLabel.AddToClassList("narrative-paragraph");
+                        paraLabel.style.whiteSpace = WhiteSpace.Normal;
+                        itemContainer.Add(paraLabel);
+                    }
+                }
+
+                var sep = new VisualElement();
+                sep.AddToClassList("narrative-separator");
+                itemContainer.Add(sep);
+
+                _historyLogScroll.Add(itemContainer);
+            }
+
+            ScrollHistoryLogToBottom();
+        }
+
+        private void ScrollHistoryLogToBottom()
+        {
+            if (_historyLogScroll is null) return;
+            StartCoroutine(ScrollHistoryLogToBottomCoroutine());
+        }
+
+        private IEnumerator ScrollHistoryLogToBottomCoroutine()
+        {
+            yield return null;
+            if (_historyLogScroll != null)
+            {
+                _historyLogScroll.scrollOffset = new Vector2(0f, _historyLogScroll.layout.height * 10f);
+            }
         }
 
         private void ToggleFullscreen()
@@ -2212,118 +2537,7 @@ namespace RagNextPlayer.Managers
         }
 
 
-        private void OpenHistoryLog()
-        {
-            if (_historyLogMenu is null || _historyLogScroll is null) return;
 
-            // Clear old children in the history scroll
-            _historyLogScroll.Clear();
-
-            // Populate from _historyLog
-            foreach (var entry in _historyLog)
-            {
-                var itemContainer = new VisualElement();
-                itemContainer.style.marginBottom = 12f;
-
-                var header = new Label(entry.Item1);
-                header.AddToClassList("narrative-room-header");
-                header.style.color = new Color(0f, 188/255f, 212/255f); // Neon cyan
-                itemContainer.Add(header);
-
-                var bodyText = entry.Item2;
-                if (!string.IsNullOrWhiteSpace(bodyText))
-                {
-                    bodyText = bodyText.Replace("\r\n", "\n").Replace("\r", "\n");
-                    var paragraphs = bodyText.Split(new[] { "\n" }, StringSplitOptions.None);
-                    foreach (var para in paragraphs)
-                    {
-                        if (string.IsNullOrWhiteSpace(para))
-                        {
-                            var spacer = new VisualElement();
-                            spacer.AddToClassList("narrative-spacer");
-                            itemContainer.Add(spacer);
-                            continue;
-                        }
-
-                        var cleanPara = Regex.Replace(para, @"\[([^\]]+)\]", "$1");
-                        var paraLabel = new Label(cleanPara);
-                        paraLabel.AddToClassList("narrative-paragraph");
-                        paraLabel.style.whiteSpace = WhiteSpace.Normal;
-                        itemContainer.Add(paraLabel);
-                    }
-                }
-
-                var sep = new VisualElement();
-                sep.AddToClassList("narrative-separator");
-                itemContainer.Add(sep);
-
-                _historyLogScroll.Add(itemContainer);
-            }
-
-            _historyLogMenu.style.display = DisplayStyle.Flex;
-            _historyLogMenu.BringToFront();
-            _historyLogMenu.transform.scale = Vector3.zero;
-            PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
-                _historyLogMenu.transform.scale = new Vector3(val, val, 1f);
-            });
-        }
-
-        private void CloseHistoryLog()
-        {
-            if (_historyLogMenu is null) return;
-            PrimeTween.Tween.Custom(1.0f, 0.0f, duration: 0.12f, ease: PrimeTween.Ease.InQuad, onValueChange: val => {
-                _historyLogMenu.transform.scale = new Vector3(val, val, 1f);
-            }).OnComplete(() => {
-                _historyLogMenu.style.display = DisplayStyle.None;
-            });
-        }
-
-        private void OpenHelpMenu()
-        {
-            if (_helpMenu is null) return;
-            _helpMenu.style.display = DisplayStyle.Flex;
-            _helpMenu.BringToFront();
-            _helpMenu.transform.scale = Vector3.zero;
-            PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
-                _helpMenu.transform.scale = new Vector3(val, val, 1f);
-            });
-        }
-
-        private void CloseHelpMenu()
-        {
-            if (_helpMenu is null) return;
-            PrimeTween.Tween.Custom(1.0f, 0.0f, duration: 0.12f, ease: PrimeTween.Ease.InQuad, onValueChange: val => {
-                _helpMenu.transform.scale = new Vector3(val, val, 1f);
-            }).OnComplete(() => {
-                _helpMenu.style.display = DisplayStyle.None;
-            });
-        }
-
-        private void RefreshSaveLoadSlots()
-        {
-            for (int slot = 1; slot <= 3; slot++)
-            {
-                var loadBtn = _root.Q<Button>($"load-slot-{slot}-btn");
-                if (loadBtn is not null)
-                {
-                    bool hasSave = GameManager.Instance is not null && GameManager.Instance.HasSaveFile(slot);
-                    loadBtn.SetEnabled(hasSave);
-                }
-            }
-        }
-
-        private void SaveGameSlot(int slot)
-        {
-            if (GameManager.Instance is null) return;
-            if (GameManager.Instance.HasSaveFile(slot))
-            {
-                ShowOverwriteConfirmation(slot);
-            }
-            else
-            {
-                PerformSave(slot);
-            }
-        }
 
         private void ShowOverwriteConfirmation(int slot)
         {
@@ -2435,17 +2649,28 @@ namespace RagNextPlayer.Managers
         private void PerformSave(int slot)
         {
             if (GameManager.Instance is null) return;
+            StartCoroutine(PerformSaveCoroutine(slot));
+        }
+
+        private System.Collections.IEnumerator PerformSaveCoroutine(int slot)
+        {
+            if (_gameMenuOverlay is not null)
+            {
+                _gameMenuOverlay.style.display = DisplayStyle.None;
+            }
+
+            yield return new UnityEngine.WaitForEndOfFrame();
+
             GameManager.Instance.SaveGame(slot);
             AppendNarrativeText($"Game saved successfully to Slot {slot}.");
-            CloseSettingsMenu();
-            RefreshSaveLoadSlots();
+            RefreshSaveLoadGrid();
         }
 
         private async void LoadGameSlot(int slot)
         {
             if (GameManager.Instance is null) return;
             AppendNarrativeText($"Loading save from Slot {slot}...");
-            CloseSettingsMenu();
+            CloseGameMenu();
             await GameManager.Instance.LoadGameAsync(slot);
             AppendNarrativeText($"Game loaded successfully from Slot {slot}.");
         }
@@ -2484,13 +2709,20 @@ namespace RagNextPlayer.Managers
 
         private void RestartGameAction()
         {
-            if (_gameOverMenu is null) return;
-            PrimeTween.Tween.Custom(_gameOverMenu.transform.scale.x, 0.0f, 0.1f, val => {
-                _gameOverMenu.transform.scale = new Vector3(val, val, 1f);
-            }).OnComplete(() => {
-                _gameOverMenu.style.display = DisplayStyle.None;
+            if (_gameOverMenu is not null && _gameOverMenu.style.display == DisplayStyle.Flex)
+            {
+                PrimeTween.Tween.Custom(_gameOverMenu.transform.scale.x, 0.0f, 0.1f, val => {
+                    _gameOverMenu.transform.scale = new Vector3(val, val, 1f);
+                }).OnComplete(() => {
+                    _gameOverMenu.style.display = DisplayStyle.None;
+                    GameManager.Instance?.RestartGame();
+                });
+            }
+            else
+            {
+                CloseGameMenu();
                 GameManager.Instance?.RestartGame();
-            });
+            }
         }
 
         private void OpenLoadGameFromGameOver()
@@ -2500,7 +2732,7 @@ namespace RagNextPlayer.Managers
                 _gameOverMenu.transform.scale = new Vector3(val, val, 1f);
             }).OnComplete(() => {
                 _gameOverMenu.style.display = DisplayStyle.None;
-                OpenSettingsMenu();
+                OpenGameMenuTab("Load");
             });
         }
 
@@ -2908,65 +3140,7 @@ namespace RagNextPlayer.Managers
             });
         }
 
-        private void ToggleHudOverlayMode()
-        {
-            _hudOverlayMode = !_hudOverlayMode;
-            if (_hudToggleBtn is not null)
-            {
-                _hudToggleBtn.text = _hudOverlayMode ? "HUD Mode ON" : "HUD Mode OFF";
-            }
 
-            if (_root is not null)
-            {
-                if (_hudOverlayMode)
-                {
-                    _root.AddToClassList("hud-mode-active");
-                }
-                else
-                {
-                    _root.RemoveFromClassList("hud-mode-active");
-                }
-            }
-
-            if (_narrativePanel is not null)
-            {
-                if (_hudOverlayMode)
-                {
-                    _narrativePanel.AddToClassList("text-container--hud-active");
-                }
-                else
-                {
-                    _narrativePanel.RemoveFromClassList("text-container--hud-active");
-                }
-            }
-
-            if (_rightSidebarContainer is not null)
-            {
-                if (_hudOverlayMode)
-                {
-                    _rightSidebarContainer.AddToClassList("sidebar--hud-overlay");
-                    _rightSidebarContainer.style.width = 300f;
-                    _rightSidebarContainer.style.flexBasis = 300f;
-                    if (_root is not null && _rightSidebarContainer.parent != _root)
-                    {
-                        _rightSidebarContainer.RemoveFromHierarchy();
-                        _root.Add(_rightSidebarContainer);
-                        _rightSidebarContainer.BringToFront();
-                    }
-                }
-                else
-                {
-                    _rightSidebarContainer.RemoveFromClassList("sidebar--hud-overlay");
-                    _rightSidebarContainer.style.width = _lastSidebarWidth;
-                    _rightSidebarContainer.style.flexBasis = _lastSidebarWidth;
-                    if (_contentSplitter is not null && _rightSidebarContainer.parent != _contentSplitter)
-                    {
-                        _rightSidebarContainer.RemoveFromHierarchy();
-                        _contentSplitter.Add(_rightSidebarContainer);
-                    }
-                }
-            }
-        }
 
         private void SetupSplitters()
         {

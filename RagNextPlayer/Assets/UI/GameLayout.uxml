@@ -136,75 +136,229 @@
     <!-- ══ INTERACTION POPUP MENU (hidden by default) ═══════════════════════ -->
     <ui:VisualElement name="interaction-menu" class="interaction-menu" style="display: none;" />
 
-    <!-- ══ SETTINGS POPUP MENU (hidden by default) ═══════════════════════════ -->
-    <ui:VisualElement name="settings-menu" class="settings-menu" style="display: none;">
-      <ui:Label class="settings-menu-title" text="Settings" />
+    <!-- ══ UNIFIED GAME MENU OVERLAY (hidden by default) ════════════════════ -->
+    <ui:VisualElement name="game-menu-overlay" class="game-menu-overlay" style="display: none;">
       
-      <!-- Screen Mode Toggle -->
-      <ui:VisualElement class="settings-row">
-        <ui:Label class="settings-label" text="Screen Mode" />
-        <ui:Button name="fullscreen-toggle-btn" class="settings-toggle-btn" text="Fullscreen" />
-      </ui:VisualElement>
+      <!-- Top Title Bar -->
+      <ui:Label name="game-menu-title" class="game-menu-title" text="SAVE GAME" />
 
-      <!-- HUD Overlay Toggle -->
-      <ui:VisualElement class="settings-row">
-        <ui:Label class="settings-label" text="HUD Overlay" />
-        <ui:Button name="hud-toggle-btn" class="settings-toggle-btn" text="HUD Mode OFF" />
-      </ui:VisualElement>
-
-      <!-- Typewriter reveal toggle -->
-      <ui:VisualElement class="settings-row">
-        <ui:Label class="settings-label" text="Text Scrolling" />
-        <ui:Button name="typewriter-toggle-btn" class="settings-toggle-btn" text="Typewriter ON" />
-      </ui:VisualElement>
-
-      <!-- Typewriter Speed Slider -->
-      <ui:VisualElement class="settings-row">
-        <ui:Label class="settings-label" text="Text Speed" />
-        <ui:Slider name="typewriter-speed-slider" class="settings-slider" low-value="0.001" high-value="0.05" value="0.018" />
-      </ui:VisualElement>
-
-      <!-- Master Volume Slider -->
-      <ui:VisualElement class="settings-row">
-        <ui:Label class="settings-label" text="Volume" />
-        <ui:SliderInt name="volume-slider" class="settings-slider" low-value="0" high-value="100" value="100" />
-      </ui:VisualElement>
-
-      <!-- Save slots -->
-      <ui:VisualElement class="settings-row">
-        <ui:Label class="settings-label" text="Save Game" />
-        <ui:VisualElement style="flex-direction: row; column-gap: 6px;">
-          <ui:Button name="save-slot-1-btn" class="slot-btn" text="Slot 1" />
-          <ui:Button name="save-slot-2-btn" class="slot-btn" text="Slot 2" />
-          <ui:Button name="save-slot-3-btn" class="slot-btn" text="Slot 3" />
+      <!-- Center Split Container -->
+      <ui:VisualElement class="game-menu-body" style="flex-grow: 1; flex-direction: row; min-height: 0;">
+        
+        <!-- Left Sidebar Navigation List -->
+        <ui:VisualElement class="game-menu-sidebar" style="width: 180px; flex-shrink: 0; padding-right: 16px; border-right-width: 1px; border-color: rgba(255, 255, 255, 0.1);">
+          <ui:Button name="menu-btn-return" class="menu-nav-btn menu-nav-btn--return" text="✕ Return" />
+          <ui:VisualElement style="height: 12px;" />
+          <ui:Button name="menu-btn-save" class="menu-nav-btn" text="💾 Save" />
+          <ui:Button name="menu-btn-load" class="menu-nav-btn" text="📂 Load" />
+          <ui:Button name="menu-btn-settings" class="menu-nav-btn" text="⚙ Settings" />
+          <ui:Button name="menu-btn-history" class="menu-nav-btn" text="📖 History" />
+          <ui:Button name="menu-btn-help" class="menu-nav-btn" text="❓ Help" />
+          <ui:VisualElement style="flex-grow: 1;" />
+          <ui:Button name="menu-btn-restart" class="menu-nav-btn" style="border-color: rgba(0, 188, 212, 0.3);" text="↺ Restart" />
+          <ui:Button name="menu-btn-quit" class="menu-nav-btn menu-nav-btn--quit" text="⏻ Quit" />
         </ui:VisualElement>
-      </ui:VisualElement>
 
-      <!-- Load slots -->
-      <ui:VisualElement class="settings-row">
-        <ui:Label class="settings-label" text="Load Game" />
-        <ui:VisualElement style="flex-direction: row; column-gap: 6px;">
-          <ui:Button name="load-slot-1-btn" class="slot-btn" text="Slot 1" />
-          <ui:Button name="load-slot-2-btn" class="slot-btn" text="Slot 2" />
-          <ui:Button name="load-slot-3-btn" class="slot-btn" text="Slot 3" />
+        <!-- Right Panels Area -->
+        <ui:VisualElement name="game-menu-content" style="flex-grow: 1; min-width: 0; padding-left: 24px; position: relative;">
+          
+          <!-- SAVE / LOAD TAB CONTENT -->
+          <ui:VisualElement name="menu-panel-save-load" style="flex-grow: 1; display: none; flex-direction: column;">
+            <ui:Label name="save-load-subtitle" class="menu-panel-subtitle" text="Page 1" />
+            
+            <!-- Slots grid (6 items: 3 columns x 2 rows) -->
+            <ui:VisualElement class="slots-grid" style="flex-grow: 1; flex-direction: row; flex-wrap: wrap; align-content: flex-start; justify-content: space-between; gap: 16px; min-height: 0; margin-bottom: 12px;">
+              
+              <!-- Slot 1 -->
+              <ui:Button name="save-slot-1" class="save-slot-card">
+                <ui:VisualElement name="save-slot-1-thumb" class="save-slot-thumbnail">
+                  <ui:Label text="Empty Slot" class="save-slot-empty-label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="save-slot-meta">
+                  <ui:Label text="Slot 1" class="save-slot-num-label" />
+                  <ui:Label text="No Save Data" name="save-slot-1-info" class="save-slot-info-label" />
+                </ui:VisualElement>
+              </ui:Button>
+
+              <!-- Slot 2 -->
+              <ui:Button name="save-slot-2" class="save-slot-card">
+                <ui:VisualElement name="save-slot-2-thumb" class="save-slot-thumbnail">
+                  <ui:Label text="Empty Slot" class="save-slot-empty-label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="save-slot-meta">
+                  <ui:Label text="Slot 2" class="save-slot-num-label" />
+                  <ui:Label text="No Save Data" name="save-slot-2-info" class="save-slot-info-label" />
+                </ui:VisualElement>
+              </ui:Button>
+
+              <!-- Slot 3 -->
+              <ui:Button name="save-slot-3" class="save-slot-card">
+                <ui:VisualElement name="save-slot-3-thumb" class="save-slot-thumbnail">
+                  <ui:Label text="Empty Slot" class="save-slot-empty-label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="save-slot-meta">
+                  <ui:Label text="Slot 3" class="save-slot-num-label" />
+                  <ui:Label text="No Save Data" name="save-slot-3-info" class="save-slot-info-label" />
+                </ui:VisualElement>
+              </ui:Button>
+
+              <!-- Slot 4 -->
+              <ui:Button name="save-slot-4" class="save-slot-card">
+                <ui:VisualElement name="save-slot-4-thumb" class="save-slot-thumbnail">
+                  <ui:Label text="Empty Slot" class="save-slot-empty-label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="save-slot-meta">
+                  <ui:Label text="Slot 4" class="save-slot-num-label" />
+                  <ui:Label text="No Save Data" name="save-slot-4-info" class="save-slot-info-label" />
+                </ui:VisualElement>
+              </ui:Button>
+
+              <!-- Slot 5 -->
+              <ui:Button name="save-slot-5" class="save-slot-card">
+                <ui:VisualElement name="save-slot-5-thumb" class="save-slot-thumbnail">
+                  <ui:Label text="Empty Slot" class="save-slot-empty-label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="save-slot-meta">
+                  <ui:Label text="Slot 5" class="save-slot-num-label" />
+                  <ui:Label text="No Save Data" name="save-slot-5-info" class="save-slot-info-label" />
+                </ui:VisualElement>
+              </ui:Button>
+
+              <!-- Slot 6 -->
+              <ui:Button name="save-slot-6" class="save-slot-card">
+                <ui:VisualElement name="save-slot-6-thumb" class="save-slot-thumbnail">
+                  <ui:Label text="Empty Slot" class="save-slot-empty-label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="save-slot-meta">
+                  <ui:Label text="Slot 6" class="save-slot-num-label" />
+                  <ui:Label text="No Save Data" name="save-slot-6-info" class="save-slot-info-label" />
+                </ui:VisualElement>
+              </ui:Button>
+
+            </ui:VisualElement>
+
+            <!-- Ren'Py Page Navigation footer strip -->
+            <ui:VisualElement class="pagination-container" style="flex-direction: row; justify-content: center; align-items: center; column-gap: 12px; margin-top: auto; padding-top: 8px; border-top-width: 1px; border-color: rgba(255, 255, 255, 0.05);">
+              <ui:Button name="page-prev-btn" class="pagination-btn" text="◀" />
+              <ui:VisualElement name="pagination-pages" style="flex-direction: row; column-gap: 8px;">
+                <ui:Button name="page-btn-1" class="pagination-btn pagination-btn--active" text="1" />
+                <ui:Button name="page-btn-2" class="pagination-btn" text="2" />
+                <ui:Button name="page-btn-3" class="pagination-btn" text="3" />
+                <ui:Button name="page-btn-4" class="pagination-btn" text="4" />
+                <ui:Button name="page-btn-5" class="pagination-btn" text="5" />
+              </ui:VisualElement>
+              <ui:Button name="page-next-btn" class="pagination-btn" text="▶" />
+            </ui:VisualElement>
+          </ui:VisualElement>
+
+          <!-- SETTINGS TAB CONTENT -->
+          <ui:VisualElement name="menu-panel-settings" style="flex-grow: 1; display: none; flex-direction: column; row-gap: 16px; max-width: 520px;">
+            <ui:Label class="menu-panel-subtitle" text="Preferences" />
+            
+            <ui:ScrollView style="flex-grow: 1;">
+              <ui:VisualElement style="padding: 10px; row-gap: 16px;">
+                <!-- Screen Mode Toggle -->
+                <ui:VisualElement class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                  <ui:Label class="settings-label" text="Screen Mode" style="font-size: 14px; color: #ffffff;" />
+                  <ui:Button name="fullscreen-toggle-btn" class="settings-toggle-btn" style="width: 180px;" text="Fullscreen" />
+                </ui:VisualElement>
+
+
+                <!-- Typewriter reveal toggle -->
+                <ui:VisualElement class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                  <ui:Label class="settings-label" text="Text Scrolling" style="font-size: 14px; color: #ffffff;" />
+                  <ui:Button name="typewriter-toggle-btn" class="settings-toggle-btn" style="width: 180px;" text="Typewriter ON" />
+                </ui:VisualElement>
+
+                <!-- Typewriter Speed Slider -->
+                <ui:VisualElement class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                  <ui:Label class="settings-label" text="Text Speed" style="font-size: 14px; color: #ffffff;" />
+                  <ui:Slider name="typewriter-speed-slider" class="settings-slider" style="width: 180px;" low-value="0.05" high-value="0.0001" value="0.018" />
+                </ui:VisualElement>
+
+                <!-- Master Volume Slider -->
+                <ui:VisualElement class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                  <ui:Label class="settings-label" text="Master Volume" style="font-size: 14px; color: #ffffff;" />
+                  <ui:SliderInt name="volume-slider" class="settings-slider" style="width: 180px;" low-value="0" high-value="100" value="100" />
+                </ui:VisualElement>
+              </ui:VisualElement>
+            </ui:ScrollView>
+          </ui:VisualElement>
+
+          <!-- HISTORY LOG TAB CONTENT -->
+          <ui:VisualElement name="menu-panel-history" style="flex-grow: 1; display: none; flex-direction: column;">
+            <ui:Label class="menu-panel-subtitle" text="Dialogue Log" />
+            <ui:ScrollView name="history-log-scroll" class="narrative-scroll" style="flex-grow: 1; border-width: 1px; border-color: rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 8px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden" />
+          </ui:VisualElement>
+
+          <!-- HELP TAB CONTENT -->
+          <ui:VisualElement name="menu-panel-help" style="flex-grow: 1; display: none; flex-direction: column;">
+            <ui:Label class="menu-panel-subtitle" text="Controls Guide" />
+            <ui:ScrollView style="flex-grow: 1; border-width: 1px; border-color: rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 8px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
+              <ui:VisualElement style="flex-direction: column; row-gap: 8px; padding: 10px;">
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between; border-bottom-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding-bottom: 4px; margin-bottom: 4px;">
+                  <ui:Label text="Action / Exit" style="font-weight: bold; color: #00bcd4; font-size: 13px;" />
+                  <ui:Label text="Keyboard Key" style="font-weight: bold; color: #00bcd4; font-size: 13px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="North / Forward" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="W / UpArrow / Numpad 8" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="South / Backward" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="S / DownArrow / Numpad 2" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="East / Right" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="D / RightArrow / Numpad 6" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="West / Left" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="A / LeftArrow / Numpad 4" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="North West" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="Numpad 7" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="North East" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="Numpad 9" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="South West" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="Numpad 1" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="South East" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="Numpad 3" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="Up" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="E / PageUp" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="Down" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="Q / PageDown" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="In" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="I" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                  <ui:Label text="Out" style="color: #ffffff; font-size: 12px;" />
+                  <ui:Label text="O" style="color: #b0bec5; font-size: 12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between; border-top-width: 1px; border-color: rgba(255, 255, 255, 0.1); padding-top: 8px; margin-top: 4px;">
+                  <ui:Label text="Toggle Menu" style="color: #ffffff; font-size: 12px; font-weight: bold;" />
+                  <ui:Label text="Escape (Esc)" style="color: #00bcd4; font-size: 12px; font-weight: bold;" />
+                </ui:VisualElement>
+              </ui:VisualElement>
+            </ui:ScrollView>
+          </ui:VisualElement>
+
         </ui:VisualElement>
+
       </ui:VisualElement>
-
-      <!-- Separator -->
-      <ui:VisualElement class="settings-separator" />
-
-      <!-- Quit Game -->
-      <ui:Button name="quit-game-btn" class="quit-btn" text="Quit Game" />
-      <ui:Button name="close-settings-btn" class="settings-menu-cancel" text="✕ Close" />
-    </ui:VisualElement>
-
-    <!-- ══ GAME OVER POPUP MENU (hidden by default) ══════════════════════════ -->
-    <ui:VisualElement name="game-over-menu" class="settings-menu" style="display: none;">
-      <ui:Label class="settings-menu-title" text="Game Over" />
-      <ui:Label name="game-over-message" class="game-over-message" text="Thank you for playing!" />
-      <ui:Button name="game-over-restart-btn" class="settings-toggle-btn" style="margin-top: 10px; width: auto;" text="↺ Restart Game" />
-      <ui:Button name="game-over-load-btn" class="settings-toggle-btn" style="margin-top: 6px; width: auto;" text="📥 Load Save Game" />
-      <ui:Button name="game-over-exit-btn" class="quit-btn" style="margin-top: 12px;" text="✕ Quit Game" />
     </ui:VisualElement>
 
     <!-- ══ PLAYER PROMPT INPUT POPUP (hidden by default) ══════════════════ -->
@@ -216,80 +370,12 @@
       <ui:VisualElement name="prompt-text-container" style="flex-direction: row; align-items: center; margin-top: 8px; margin-bottom: 4px;">
         <ui:TextField name="prompt-text-field" style="flex-grow: 1;" />
       </ui:VisualElement>
+      
       <!-- Selection list container (for Objects, Characters, and Custom list selection buttons) -->
       <ui:ScrollView name="prompt-selection-scroll" style="max-height: 150px; margin-top: 8px; display: none;" />
       
       <!-- Submit / Close options -->
       <ui:Button name="prompt-submit-btn" class="settings-toggle-btn" style="margin-top: 12px; width: auto;" text="✔ Submit" />
-    </ui:VisualElement>
-
-    <!-- ══ HISTORY LOG POPUP MENU (hidden by default) ════════════════════════ -->
-    <ui:VisualElement name="history-log-menu" class="history-log-menu" style="display: none;">
-      <ui:Label class="settings-menu-title" text="History Log" />
-      <ui:ScrollView name="history-log-scroll" class="narrative-scroll" style="flex-grow: 1; border-width: 1px; border-color: rgba(255, 255, 255, 0.1); padding: 8px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden" />
-      <ui:Button name="close-history-log-btn" class="settings-menu-cancel" text="✕ Close" />
-    </ui:VisualElement>
-
-    <!-- ══ HELP POPUP MENU (hidden by default) ═══════════════════════════════ -->
-    <ui:VisualElement name="help-menu" class="settings-menu help-menu" style="display: none;">
-      <ui:Label class="settings-menu-title" text="Keyboard Controls" />
-      <ui:ScrollView style="flex-grow: 1; margin-bottom: 12px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
-        <ui:VisualElement style="flex-direction: column; row-gap: 8px; padding: 10px;">
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between; border-bottom-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding-bottom: 4px; margin-bottom: 4px;">
-            <ui:Label text="Action / Exit" style="font-weight: bold; color: #00bcd4; font-size: 13px;" />
-            <ui:Label text="Keyboard Key" style="font-weight: bold; color: #00bcd4; font-size: 13px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="North" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="W / UpArrow / Numpad 8" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="South" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="S / DownArrow / Numpad 2" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="East" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="D / RightArrow / Numpad 6" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="West" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="A / LeftArrow / Numpad 4" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="North West" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="Numpad 7" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="North East" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="Numpad 9" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="South West" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="Numpad 1" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="South East" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="Numpad 3" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="Up" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="E / PageUp" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="Down" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="Q / PageDown" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="In" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="I" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-            <ui:Label text="Out" style="color: #ffffff; font-size: 12px;" />
-            <ui:Label text="O" style="color: #b0bec5; font-size: 12px;" />
-          </ui:VisualElement>
-        </ui:VisualElement>
-      </ui:ScrollView>
-      <ui:Button name="close-help-btn" class="settings-menu-cancel" text="✕ Close" />
     </ui:VisualElement>
 
     <!-- ══ SPLASH SCREEN OVERLAY ═════════════════════════════════════════════ -->
