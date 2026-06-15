@@ -116,6 +116,7 @@ namespace RagNextPlayer.Managers
         private TypewriterSession _currentSession;
         private readonly Queue<TypewriterJob> _typewriterQueue = new();
         private Coroutine _typewriterQueueCoroutine;
+        private Coroutine _revealCoroutine;
 
 
         private void Awake()
@@ -1620,6 +1621,12 @@ namespace RagNextPlayer.Managers
                 _typewriterQueueCoroutine = null;
             }
 
+            if (_revealCoroutine != null)
+            {
+                StopCoroutine(_revealCoroutine);
+                _revealCoroutine = null;
+            }
+
             if (_currentSession.CompleteAction != null)
             {
                 _currentSession.CompleteAction();
@@ -1659,7 +1666,9 @@ namespace RagNextPlayer.Managers
                     continue;
                 }
 
-                yield return StartCoroutine(TypewriterRevealRoutine(job.FlowElement, job.ParagraphText));
+                _revealCoroutine = StartCoroutine(TypewriterRevealRoutine(job.FlowElement, job.ParagraphText));
+                yield return _revealCoroutine;
+                _revealCoroutine = null;
             }
 
             _typewriterQueueCoroutine = null;
