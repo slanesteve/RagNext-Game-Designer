@@ -409,16 +409,32 @@
     flex-direction: row;
     align-items: center;
     background-color: transparent;
-    border-radius: 6px;
-    padding: 5px 8px;
-    height: 32px;
+    border-radius: 8px;
+    padding: 6px 8px;
+    min-height: 52px;
+    height: auto;
     transition-property: background-color;
     transition-duration: 0.1s;
 }
 
 .entity-row:hover {
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.05);
 }
+
+.entity-thumbnail {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(0, 188, 212, 0.3);
+    margin-right: 10px;
+    background-size: cover;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
 
 .entity-dot--object {
     width: 8px;

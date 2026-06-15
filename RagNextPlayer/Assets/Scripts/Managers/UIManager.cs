@@ -1788,9 +1788,21 @@ namespace RagNextPlayer.Managers
             row.AddToClassList("entity-row");
             row.pickingMode = PickingMode.Position;
 
-            var dot = new VisualElement();
-            dot.AddToClassList(entity.IsCharacter ? "entity-dot--character" : "entity-dot--object");
-            row.Add(dot);
+            var thumb = new VisualElement();
+            thumb.AddToClassList("entity-thumbnail");
+            if (!string.IsNullOrWhiteSpace(entity.PortraitImagePath))
+            {
+                LoadAndDisplayImageForElement(entity.PortraitImagePath, thumb);
+            }
+            else
+            {
+                var icon = new Label(entity.IsCharacter ? "👤" : "📦");
+                icon.style.unityTextAlign = TextAnchor.MiddleCenter;
+                icon.style.fontSize = 20f;
+                icon.style.color = new Color(0f, 188/255f, 212/255f, 0.6f);
+                thumb.Add(icon);
+            }
+            row.Add(thumb);
 
             var game = GameManager.Instance?.ActiveGame;
             var room = GameManager.Instance?.CurrentRoom;
@@ -1830,9 +1842,21 @@ namespace RagNextPlayer.Managers
             arrow.AddToClassList("entity-nested-arrow");
             row.Add(arrow);
 
-            var dot = new VisualElement();
-            dot.AddToClassList("entity-dot--object");
-            row.Add(dot);
+            var thumb = new VisualElement();
+            thumb.AddToClassList("entity-thumbnail");
+            if (!string.IsNullOrWhiteSpace(entity.PortraitImagePath))
+            {
+                LoadAndDisplayImageForElement(entity.PortraitImagePath, thumb);
+            }
+            else
+            {
+                var icon = new Label("📦");
+                icon.style.unityTextAlign = TextAnchor.MiddleCenter;
+                icon.style.fontSize = 20f;
+                icon.style.color = new Color(0f, 188/255f, 212/255f, 0.6f);
+                thumb.Add(icon);
+            }
+            row.Add(thumb);
 
             var game = GameManager.Instance?.ActiveGame;
             var room = GameManager.Instance?.CurrentRoom;
@@ -1956,6 +1980,28 @@ namespace RagNextPlayer.Managers
                 }
             }
             StartCoroutine(LoadImageCoroutine(path, elementName));
+        }
+
+        private void LoadAndDisplayImageForElement(string path, VisualElement targetElement)
+        {
+            if (targetElement is null || string.IsNullOrWhiteSpace(path)) return;
+            StartCoroutine(LoadImageForElementCoroutine(path, targetElement));
+        }
+
+        private IEnumerator LoadImageForElementCoroutine(string path, VisualElement targetElement)
+        {
+            string url = FormatLocalPathForWeb(path);
+            using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url);
+
+            yield return req.SendWebRequest();
+            if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+            {
+                var tex = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
+                if (targetElement is not null)
+                {
+                    targetElement.style.backgroundImage = new StyleBackground(tex);
+                }
+            }
         }
 
         private string FormatLocalPathForWeb(string path)
