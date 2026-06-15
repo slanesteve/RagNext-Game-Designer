@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.kyrylokuzyk.primetween": {
-      "version": "file:com.kyrylokuzyk.primetween.tgz",
+      "version": "file:Packages/com.kyrylokuzyk.primetween.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {}
