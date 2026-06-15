@@ -458,7 +458,9 @@
     flex-grow: 1;
     font-size: 13px;
     color: #E0E0E8;
+    white-space: normal;
 }
+
 
 .entity-action-btn {
     background-color: transparent;

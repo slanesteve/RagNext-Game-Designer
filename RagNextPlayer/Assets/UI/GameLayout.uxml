@@ -59,7 +59,7 @@
         </ui:VisualElement>
 
         <!-- Right Compartment: Interactive lists and collapsible compass -->
-        <ui:VisualElement name="hud-right-compartment" style="width: 320px; flex-shrink: 0; padding: 24px 24px 24px 0; pointer-events: none; flex-direction: column; justify-content: space-between; align-items: stretch;">
+        <ui:VisualElement name="hud-right-compartment" style="width: 380px; flex-shrink: 0; padding: 24px 24px 24px 0; pointer-events: none; flex-direction: column; justify-content: space-between; align-items: stretch;">
           
           <!-- Transparent Sidebar (Items and Inventory tabs) -->
           <ui:VisualElement name="right-sidebar-container" class="right-column glass-card" style="pointer-events: auto; flex-grow: 1; flex-shrink: 1; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-bottom: 20px;">
