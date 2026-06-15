@@ -10,94 +10,97 @@
       </ui:VisualElement>
       <ui:VisualElement style="flex-direction: row; align-items: center; column-gap: 12px;">
         <ui:Label name="game-info"  class="game-info"  text="by Author · v1.0" />
+        <ui:Button name="help-btn" class="settings-btn" text="❓ Help" />
+        <ui:Button name="history-log-btn" class="settings-btn" text="📖 Log" />
         <ui:Button name="settings-btn" class="settings-btn" text="⚙ Settings" />
       </ui:VisualElement>
     </ui:VisualElement>
 
     <!-- ══ MAIN VERTICAL CONTAINER ═══════════════════════════════════════════ -->
-    <ui:VisualElement name="main-container" style="flex-grow: 1; min-height: 0; flex-direction: column;">
+    <ui:VisualElement name="main-container" style="flex-grow: 1; min-height: 0; flex-direction: column; position: relative;">
+      
+      <!-- Blown-up Background Artwork -->
+      <ui:VisualElement name="media-canvas" class="scene-card" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; flex-grow: 1; width: 100%; height: 100%;">
+        <ui:VisualElement name="scene-image" class="scene-image" style="flex-grow: 1; width: 100%; height: 100%;" />
+        <ui:VisualElement name="media-vignette" class="media-vignette" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0;" />
+        <ui:Label name="scene-placeholder" class="scene-placeholder" text="🏰" style="position: absolute; left: 50%; top: 50%; translate: -50% -50%;" />
+      </ui:VisualElement>
 
-      <!-- Core flexible vertical compartment wrapping upper section -->
-      <ui:VisualElement name="main-upper-compartment" style="flex-grow: 1; flex-shrink: 1; flex-basis: 0px; min-height: 100px;">
-        <!-- Top Main Area: rigid flex row container -->
-        <ui:VisualElement name="main-split-container" class="content-area" style="flex-direction: row; width: 100%; height: 100%; flex-grow: 1; min-height: 0;">
-
-          <!-- Left Container wrapping left-column elements and toggle btn -->
-          <ui:VisualElement name="left-container" style="flex-grow: 1; flex-shrink: 1; flex-basis: 0px; min-height: 0; position: relative; flex-direction: column;">
-
-            <!-- Scene artwork card -->
-            <ui:VisualElement name="media-canvas" class="scene-card" style="flex-grow: 1.2; flex-shrink: 1; flex-basis: 0px; min-height: 100px;">
-              <ui:VisualElement name="scene-image" class="scene-image" />
-              <ui:VisualElement name="media-vignette" class="media-vignette" />
-              <ui:Label name="scene-placeholder" class="scene-placeholder" text="🏰" />
-
-              <!-- HUD Overlay Compass (styled in USS absolute positioning) -->
-              <ui:VisualElement name="compass-card-hud" class="compass-card">
-                <ui:Label name="navigation-title-hud" class="section-header" text="Navigation" />
-                <ui:VisualElement class="compass-rose">
-                  <ui:VisualElement class="compass-row">
-                    <ui:Button name="compass-dir-nw-hud" class="compass-rose-btn compass-btn--inactive" text="↖" />
-                    <ui:Button name="compass-dir-north-hud" class="compass-rose-btn compass-btn--inactive" text="▲" />
-                    <ui:Button name="compass-dir-ne-hud" class="compass-rose-btn compass-btn--inactive" text="↗" />
-                  </ui:VisualElement>
-                  <ui:VisualElement class="compass-row">
-                    <ui:Button name="compass-dir-west-hud" class="compass-rose-btn compass-btn--inactive" text="◀" />
-                    <ui:VisualElement class="compass-center">
-                      <ui:Label class="compass-center-dot" text="❖" />
-                    </ui:VisualElement>
-                    <ui:Button name="compass-dir-east-hud" class="compass-rose-btn compass-btn--inactive" text="▶" />
-                  </ui:VisualElement>
-                  <ui:VisualElement class="compass-row">
-                    <ui:Button name="compass-dir-sw-hud" class="compass-rose-btn compass-btn--inactive" text="↙" />
-                    <ui:Button name="compass-dir-south-hud" class="compass-rose-btn compass-btn--inactive" text="▼" />
-                    <ui:Button name="compass-dir-se-hud" class="compass-rose-btn compass-btn--inactive" text="↘" />
-                  </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement class="compass-auxiliary">
-                  <ui:Button name="compass-dir-up-hud" class="compass-aux-btn compass-btn--inactive" text="▲ Up" />
-                  <ui:Button name="compass-dir-down-hud" class="compass-aux-btn compass-btn--inactive" text="▼ Down" />
-                  <ui:Button name="compass-dir-in-hud" class="compass-aux-btn compass-btn--inactive" text="📥 In" />
-                  <ui:Button name="compass-dir-out-hud" class="compass-aux-btn compass-btn--inactive" text="📤 Out" />
-                </ui:VisualElement>
+      <!-- Overlay HUD Layout Wrapper -->
+      <ui:VisualElement name="hud-layout-wrapper" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; flex-direction: row; pointer-events: none;">
+        
+        <!-- Left Compartment: Floating profiles (player stats + room action thumbnail) & Narrative text card -->
+        <ui:VisualElement name="hud-left-compartment" style="flex-grow: 1; flex-shrink: 1; flex-basis: 0px; min-height: 0; padding: 24px; flex-direction: column; justify-content: space-between; pointer-events: none;">
+          
+          <!-- Floating Profiles (Top-Left) -->
+          <ui:VisualElement name="floating-profiles-container" style="flex-direction: row; column-gap: 16px; pointer-events: auto; align-self: flex-start;">
+            <!-- Player Portrait and Vitals Container -->
+            <ui:VisualElement name="floating-player-card" class="glass-card" style="padding: 12px; flex-direction: row; align-items: center; column-gap: 12px; border-radius: 40px 16px 16px 40px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15);">
+              <ui:VisualElement name="player-portrait" class="player-portrait" style="width: 56px; height: 56px; border-radius: 28px; border-width: 2px; border-color: #00bcd4;" />
+              <ui:VisualElement name="player-details" style="flex-direction: column;">
+                <ui:Label name="player-name" class="player-name" text="Player" style="font-weight: bold; font-size: 14px; color: #ffffff;" />
+                <ui:Label name="player-gender" class="player-gender" text="Male" style="font-size: 11px; color: #b0bec5; margin-top: 1px;" />
               </ui:VisualElement>
             </ui:VisualElement>
 
-            <!-- Text-Media Vertical Splitter -->
-            <ui:VisualElement name="text-media-splitter" class="drag-splitter drag-splitter--horizontal">
-              <ui:VisualElement class="drag-splitter-line" />
+            <!-- Room Action Thumbnail (Pulsing interaction target) -->
+            <ui:VisualElement name="room-action-thumbnail-wrapper" class="room-action-thumbnail-wrapper" style="width: 80px; height: 80px; border-radius: 40px; padding: 3px; border-width: 2px; border-color: rgba(0, 188, 212, 0.4); justify-content: center; align-items: center;">
+              <ui:VisualElement name="room-action-thumbnail" class="room-action-thumbnail" style="width: 100%; height: 100%; border-radius: 37px; background-color: rgba(0, 0, 0, 0.6);" />
             </ui:VisualElement>
-
-            <!-- Narrative scroll log -->
-            <ui:VisualElement name="narrative-panel" class="narrative-panel" style="flex-grow: 0.8; flex-shrink: 1; flex-basis: 0px; min-height: 100px;">
-              <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
-                             vertical-scroller-visibility="AlwaysVisible"
-                             horizontal-scroller-visibility="Hidden" />
-            </ui:VisualElement>
-
-            <!-- Sidebar Toggle Button on the dividing line -->
-            <ui:Button name="sidebar-toggle-btn" class="sidebar-toggle-btn" text="⏴" />
           </ui:VisualElement>
 
-          <!-- Main split handle (Custom draggable partition boundary) -->
-          <ui:VisualElement name="main-split-handle" class="drag-splitter drag-splitter--vertical">
-            <ui:VisualElement class="drag-splitter-line" />
+          <!-- Floating Narrative Description Card (Bottom-Left) -->
+          <ui:VisualElement name="narrative-panel" class="narrative-panel glass-card" style="pointer-events: auto; width: 780px; max-height: 240px; padding: 16px; border-radius: 12px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15);">
+            <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
+                           vertical-scroller-visibility="AlwaysVisible"
+                           horizontal-scroller-visibility="Hidden" style="flex-grow: 1;" />
           </ui:VisualElement>
 
-          <!-- Right Sidebar Container -->
-          <ui:VisualElement name="right-sidebar-container" class="right-column" style="width: 300px; flex-shrink: 0;">
+        </ui:VisualElement>
 
-            <!-- Static Compass Navigation Ring -->
-            <ui:VisualElement name="navigation-panel" class="compass-card">
-              <ui:Label name="navigation-title" class="section-header" text="Navigation" />
+        <!-- Right Compartment: Interactive lists and collapsible compass -->
+        <ui:VisualElement name="hud-right-compartment" style="width: 320px; flex-shrink: 0; padding: 24px 24px 24px 0; pointer-events: none; flex-direction: column; justify-content: space-between; align-items: stretch;">
+          
+          <!-- Transparent Sidebar (Items and Inventory tabs) -->
+          <ui:VisualElement name="right-sidebar-container" class="right-column glass-card" style="pointer-events: auto; flex-grow: 1; flex-shrink: 1; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-bottom: 20px;">
+            <ui:VisualElement name="room-legend" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; margin-bottom: 0; flex-direction: column;">
+              
+              <!-- Room Items Section -->
+              <ui:Label text="Room Items" class="section-header" style="margin-bottom: 6px; color: #00bcd4; font-size: 12px; -unity-font-style: bold;" />
+              <ui:ScrollView name="room-items-scroll" style="flex-grow: 1; flex-basis: 0; margin-bottom: 12px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
+                <ui:VisualElement name="characters-section">
+                  <ui:VisualElement name="characters-list" class="entity-list" />
+                </ui:VisualElement>
+                <ui:VisualElement name="objects-section" style="margin-top: 4px;">
+                  <ui:VisualElement name="objects-list" class="entity-list" />
+                </ui:VisualElement>
+              </ui:ScrollView>
+
+              <ui:VisualElement class="legend-separator" style="margin: 4px 0 8px 0; height: 1px; background-color: rgba(0, 188, 212, 0.2);" />
+
+              <!-- Inventory Section -->
+              <ui:Label text="Inventory" class="section-header" style="margin-bottom: 6px; color: #00bcd4; font-size: 12px; -unity-font-style: bold;" />
+              <ui:ScrollView name="inventory-scroll" style="flex-grow: 1; flex-basis: 0;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
+                <ui:VisualElement name="inventory-section">
+                  <ui:VisualElement name="inventory-list" class="entity-list" />
+                </ui:VisualElement>
+              </ui:ScrollView>
+
+            </ui:VisualElement>
+          </ui:VisualElement>
+
+          <!-- Floating Collapsible Compass Dial Overlay -->
+          <ui:VisualElement name="compass-hud-container" style="pointer-events: auto; align-items: flex-end; flex-shrink: 0;">
+            <ui:VisualElement name="compass-dial-overlay" class="compass-dial-overlay glass-card" style="display: none; padding: 16px; margin-bottom: 12px; border-radius: 20px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); align-items: center;">
+              
+              <ui:Label name="navigation-title-hud" class="section-header" text="Navigation" style="margin-bottom: 8px; font-size: 12px; color: #00bcd4;" />
               
               <ui:VisualElement class="compass-rose">
-                <!-- Row 1 -->
                 <ui:VisualElement class="compass-row">
                   <ui:Button name="compass-dir-nw" class="compass-rose-btn compass-btn--inactive" text="↖" />
                   <ui:Button name="compass-dir-north" class="compass-rose-btn compass-btn--inactive" text="▲" />
                   <ui:Button name="compass-dir-ne" class="compass-rose-btn compass-btn--inactive" text="↗" />
                 </ui:VisualElement>
-                <!-- Row 2 -->
                 <ui:VisualElement class="compass-row">
                   <ui:Button name="compass-dir-west" class="compass-rose-btn compass-btn--inactive" text="◀" />
                   <ui:VisualElement class="compass-center">
@@ -105,7 +108,6 @@
                   </ui:VisualElement>
                   <ui:Button name="compass-dir-east" class="compass-rose-btn compass-btn--inactive" text="▶" />
                 </ui:VisualElement>
-                <!-- Row 3 -->
                 <ui:VisualElement class="compass-row">
                   <ui:Button name="compass-dir-sw" class="compass-rose-btn compass-btn--inactive" text="↙" />
                   <ui:Button name="compass-dir-south" class="compass-rose-btn compass-btn--inactive" text="▼" />
@@ -113,61 +115,18 @@
                 </ui:VisualElement>
               </ui:VisualElement>
 
-              <!-- Auxiliary Portal Transitions -->
-              <ui:VisualElement class="compass-auxiliary">
+              <ui:VisualElement class="compass-auxiliary" style="margin-top: 8px; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px;">
                 <ui:Button name="compass-dir-up" class="compass-aux-btn compass-btn--inactive" text="▲ Up" />
                 <ui:Button name="compass-dir-down" class="compass-aux-btn compass-btn--inactive" text="▼ Down" />
                 <ui:Button name="compass-dir-in" class="compass-aux-btn compass-btn--inactive" text="📥 In" />
                 <ui:Button name="compass-dir-out" class="compass-aux-btn compass-btn--inactive" text="📤 Out" />
               </ui:VisualElement>
-              
             </ui:VisualElement>
 
-            <!-- Unified Room Legend Module -->
-            <ui:VisualElement name="room-legend" class="entity-card">
-              <ui:Label name="legend-title" class="section-header" text="Room Legend" />
-              
-              <ui:VisualElement name="characters-section">
-                <ui:VisualElement name="characters-list" class="entity-list" />
-              </ui:VisualElement>
-
-              <ui:VisualElement class="legend-separator" />
-
-              <ui:VisualElement name="objects-section">
-                <ui:VisualElement name="objects-list" class="entity-list" />
-              </ui:VisualElement>
-            </ui:VisualElement>
-
+            <!-- Compass Toggle Button -->
+            <ui:Button name="compass-toggle-btn" class="settings-btn" text="🧭 Navigation" style="font-size: 12px; font-weight: bold; padding: 10px 16px; border-radius: 20px; margin: 0; width: 100%;" />
           </ui:VisualElement>
 
-        </ui:VisualElement>
-      </ui:VisualElement>
-
-      <!-- Horizontal Profile Splitter (between upper compartments and bottom bar) -->
-      <ui:VisualElement name="profile-splitter" class="drag-splitter drag-splitter--horizontal">
-        <ui:VisualElement class="drag-splitter-line" />
-      </ui:VisualElement>
-
-      <!-- Bottom Bar (Player Strip) -->
-      <ui:VisualElement name="bottom-profile-bar" class="bottom-bar" style="height: 115px; flex-shrink: 0;">
-
-        <!-- Player portrait -->
-        <ui:VisualElement name="player-portrait" class="player-portrait" />
-
-        <!-- Player info -->
-        <ui:VisualElement name="player-info" class="player-info">
-          <ui:Label name="player-name"   class="player-name"   text="Player" />
-          <ui:Label name="player-gender" class="player-gender" text="Male" />
-        </ui:VisualElement>
-
-        <!-- Inventory -->
-        <ui:VisualElement name="inventory-card" class="inventory-card">
-          <ui:Label class="section-header" text="Inventory" />
-          <ui:ScrollView name="inventory-scroll" class="inventory-scroll"
-                         horizontal-scroller-visibility="AlwaysVisible"
-                         vertical-scroller-visibility="Hidden">
-            <ui:VisualElement name="inventory-list" class="inventory-list" />
-          </ui:ScrollView>
         </ui:VisualElement>
 
       </ui:VisualElement>
@@ -257,12 +216,80 @@
       <ui:VisualElement name="prompt-text-container" style="flex-direction: row; align-items: center; margin-top: 8px; margin-bottom: 4px;">
         <ui:TextField name="prompt-text-field" style="flex-grow: 1;" />
       </ui:VisualElement>
-      
       <!-- Selection list container (for Objects, Characters, and Custom list selection buttons) -->
       <ui:ScrollView name="prompt-selection-scroll" style="max-height: 150px; margin-top: 8px; display: none;" />
       
       <!-- Submit / Close options -->
       <ui:Button name="prompt-submit-btn" class="settings-toggle-btn" style="margin-top: 12px; width: auto;" text="✔ Submit" />
+    </ui:VisualElement>
+
+    <!-- ══ HISTORY LOG POPUP MENU (hidden by default) ════════════════════════ -->
+    <ui:VisualElement name="history-log-menu" class="history-log-menu" style="display: none;">
+      <ui:Label class="settings-menu-title" text="History Log" />
+      <ui:ScrollView name="history-log-scroll" class="narrative-scroll" style="flex-grow: 1; border-width: 1px; border-color: rgba(255, 255, 255, 0.1); padding: 8px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden" />
+      <ui:Button name="close-history-log-btn" class="settings-menu-cancel" text="✕ Close" />
+    </ui:VisualElement>
+
+    <!-- ══ HELP POPUP MENU (hidden by default) ═══════════════════════════════ -->
+    <ui:VisualElement name="help-menu" class="settings-menu help-menu" style="display: none;">
+      <ui:Label class="settings-menu-title" text="Keyboard Controls" />
+      <ui:ScrollView style="flex-grow: 1; margin-bottom: 12px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
+        <ui:VisualElement style="flex-direction: column; row-gap: 8px; padding: 10px;">
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between; border-bottom-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding-bottom: 4px; margin-bottom: 4px;">
+            <ui:Label text="Action / Exit" style="font-weight: bold; color: #00bcd4; font-size: 13px;" />
+            <ui:Label text="Keyboard Key" style="font-weight: bold; color: #00bcd4; font-size: 13px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="North" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="W / UpArrow / Numpad 8" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="South" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="S / DownArrow / Numpad 2" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="East" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="D / RightArrow / Numpad 6" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="West" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="A / LeftArrow / Numpad 4" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="North West" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="Numpad 7" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="North East" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="Numpad 9" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="South West" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="Numpad 1" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="South East" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="Numpad 3" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="Up" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="E / PageUp" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="Down" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="Q / PageDown" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="In" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="I" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+          <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:Label text="Out" style="color: #ffffff; font-size: 12px;" />
+            <ui:Label text="O" style="color: #b0bec5; font-size: 12px;" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+      </ui:ScrollView>
+      <ui:Button name="close-help-btn" class="settings-menu-cancel" text="✕ Close" />
     </ui:VisualElement>
 
     <!-- ══ SPLASH SCREEN OVERLAY ═════════════════════════════════════════════ -->

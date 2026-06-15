@@ -52,6 +52,9 @@ namespace RagNextPlayer.Managers
         {
             if (ActiveGame == null || CurrentState != GameState.Playing) return;
 
+            // Handle Keyboard Navigation for Room Exits
+            HandleKeyboardNavigation();
+
             // Tick active background timers
             if (ActiveGame.Timers != null)
             {
@@ -72,6 +75,52 @@ namespace RagNextPlayer.Managers
                         
                         ActionExecutor.Execute(actionData, ctx, sink);
                         UIManager.Instance?.RefreshEntityLists();
+                    }
+                }
+            }
+        }
+
+        private void HandleKeyboardNavigation()
+        {
+            if (CurrentRoom == null || CurrentRoom.Exits == null) return;
+
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard == null) return;
+
+            string directionToMove = null;
+
+            if (keyboard[UnityEngine.InputSystem.Key.W].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.UpArrow].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.Numpad8].wasPressedThisFrame)
+                directionToMove = "North";
+            else if (keyboard[UnityEngine.InputSystem.Key.S].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.DownArrow].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.Numpad2].wasPressedThisFrame)
+                directionToMove = "South";
+            else if (keyboard[UnityEngine.InputSystem.Key.D].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.RightArrow].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.Numpad6].wasPressedThisFrame)
+                directionToMove = "East";
+            else if (keyboard[UnityEngine.InputSystem.Key.A].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.LeftArrow].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.Numpad4].wasPressedThisFrame)
+                directionToMove = "West";
+            else if (keyboard[UnityEngine.InputSystem.Key.Numpad7].wasPressedThisFrame)
+                directionToMove = "NorthWest";
+            else if (keyboard[UnityEngine.InputSystem.Key.Numpad9].wasPressedThisFrame)
+                directionToMove = "NorthEast";
+            else if (keyboard[UnityEngine.InputSystem.Key.Numpad1].wasPressedThisFrame)
+                directionToMove = "SouthWest";
+            else if (keyboard[UnityEngine.InputSystem.Key.Numpad3].wasPressedThisFrame)
+                directionToMove = "SouthEast";
+            else if (keyboard[UnityEngine.InputSystem.Key.PageUp].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.E].wasPressedThisFrame)
+                directionToMove = "Up";
+            else if (keyboard[UnityEngine.InputSystem.Key.PageDown].wasPressedThisFrame || keyboard[UnityEngine.InputSystem.Key.Q].wasPressedThisFrame)
+                directionToMove = "Down";
+            else if (keyboard[UnityEngine.InputSystem.Key.I].wasPressedThisFrame)
+                directionToMove = "In";
+            else if (keyboard[UnityEngine.InputSystem.Key.O].wasPressedThisFrame)
+                directionToMove = "Out";
+
+            if (!string.IsNullOrEmpty(directionToMove))
+            {
+                if (CurrentRoom.Exits.TryGetValue(directionToMove, out var targetRoomId))
+                {
+                    if (!CurrentRoom.LockedExits.TryGetValue(directionToMove, out var isLocked) || !isLocked)
+                    {
+                        MovePlayerToRoom(targetRoomId);
                     }
                 }
             }

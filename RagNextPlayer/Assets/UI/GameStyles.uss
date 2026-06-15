@@ -1055,4 +1055,79 @@
     transition-duration: 0.2s;
 }
 
+/* ── Glassmorphic & Overlay HUD Revamp Styles ────────────────────────────────── */
+.glass-card {
+    background-color: rgba(13, 14, 18, 0.78);
+    border-width: 1px;
+    border-color: rgba(0, 188, 212, 0.25);
+    border-radius: 12px;
+}
+
+.room-action-thumbnail-wrapper {
+    cursor: link;
+    background-color: rgba(13, 14, 18, 0.78);
+    transition: scale 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.room-action-thumbnail-wrapper:hover {
+    scale: 1.05;
+    border-color: #FFB84A;
+}
+
+.room-action-thumbnail {
+    -unity-background-scale-mode: scale-and-crop;
+    border-radius: 35px;
+    overflow: hidden;
+}
+
+/* Pulsing neon border animation for room actions indicator */
+.room-action-thumbnail--pulse {
+    border-color: #00bcd4;
+    transition: border-color 0.3s ease-in-out;
+}
+
+/* Compass collapsible dial styling */
+.compass-dial-overlay {
+    background-color: rgba(13, 14, 18, 0.9);
+    border-color: rgba(0, 188, 212, 0.35);
+    transition: opacity 0.2s ease-in-out, scale 0.2s ease-in-out;
+}
+
+/* Tab button formatting */
+.active-tab-btn {
+    color: #00bcd4 !important;
+    background-color: rgba(0, 188, 212, 0.15) !important;
+    border-color: #00bcd4 !important;
+}
+
+/* History Log Revamped Overlay Class */
+.history-log-menu {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    background-color: rgba(13, 14, 18, 0.95);
+    border-radius: 12px;
+    border-width: 1.5px;
+    border-color: #00bcd4;
+    padding: 24px;
+    width: 780px;
+    height: 80%;
+    max-width: 780px;
+    max-height: 80%;
+    flex-direction: column;
+    z-index: 200;
+}
+
+/* Glassy Help Menu Popup Style */
+.help-menu {
+    border-color: #00bcd4;
+    width: 380px;
+    max-width: 380px;
+    height: 440px;
+    max-height: 440px;
+    background-color: rgba(13, 14, 18, 0.96);
+}
+
+
 

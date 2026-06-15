@@ -74,6 +74,23 @@ namespace RagNextPlayer.Managers
         private TextField      _promptTextField;
         private ScrollView     _promptSelectionScroll;
         private Button         _promptSubmitBtn;
+
+        // New Revamped HUD Elements
+        private VisualElement  _roomActionThumbnail;
+        private VisualElement  _roomActionThumbnailWrapper;
+        private Button         _compassToggleBtn;
+        private VisualElement  _compassDialOverlay;
+
+        private Button         _historyLogBtn;
+        private VisualElement  _historyLogMenu;
+        private ScrollView     _historyLogScroll;
+        private Button         _closeHistoryLogBtn;
+
+        private Button         _helpBtn;
+        private VisualElement  _helpMenu;
+        private Button         _closeHelpBtn;
+
+        private readonly List<System.Tuple<string, string>> _historyLog = new();
         private string         _promptTargetVarName = string.Empty;
         private string         _promptName = string.Empty;
         private PrimeTween.Tween _promptMenuCloseTween;
@@ -200,6 +217,37 @@ namespace RagNextPlayer.Managers
             _playerGenderLabel      = _root.Q<Label>("player-gender");
             _sceneImageContainer    = _root.Q<VisualElement>("scene-image");
             _narrativePanel         = _root.Q<VisualElement>("narrative-panel");
+
+            // Query revamped HUD elements
+            _roomActionThumbnail = _root.Q<VisualElement>("room-action-thumbnail");
+            _roomActionThumbnailWrapper = _root.Q<VisualElement>("room-action-thumbnail-wrapper");
+            if (_roomActionThumbnailWrapper is not null)
+            {
+                _roomActionThumbnailWrapper.RegisterCallback<ClickEvent>(OnRoomTitleClicked);
+            }
+
+            _compassToggleBtn = _root.Q<Button>("compass-toggle-btn");
+            _compassDialOverlay = _root.Q<VisualElement>("compass-dial-overlay");
+            if (_compassToggleBtn is not null)
+            {
+                _compassToggleBtn.clicked += ToggleCompassDial;
+            }
+
+
+            _historyLogBtn = _root.Q<Button>("history-log-btn");
+            _historyLogMenu = _root.Q<VisualElement>("history-log-menu");
+            _historyLogScroll = _root.Q<ScrollView>("history-log-scroll");
+            _closeHistoryLogBtn = _root.Q<Button>("close-history-log-btn");
+
+            if (_historyLogBtn is not null) _historyLogBtn.clicked += OpenHistoryLog;
+            if (_closeHistoryLogBtn is not null) _closeHistoryLogBtn.clicked += CloseHistoryLog;
+
+            _helpBtn = _root.Q<Button>("help-btn");
+            _helpMenu = _root.Q<VisualElement>("help-menu");
+            _closeHelpBtn = _root.Q<Button>("close-help-btn");
+
+            if (_helpBtn is not null) _helpBtn.clicked += OpenHelpMenu;
+            if (_closeHelpBtn is not null) _closeHelpBtn.clicked += CloseHelpMenu;
 
             // Settings components
             _settingsBtn            = _root.Q<Button>("settings-btn");
@@ -1135,6 +1183,20 @@ namespace RagNextPlayer.Managers
                 }
             }
 
+            // Revamped floating room actions thumbnail
+            if (_roomActionThumbnail is not null)
+            {
+                if (!string.IsNullOrWhiteSpace(room.PortraitImagePath))
+                {
+                    _roomActionThumbnail.style.display = DisplayStyle.Flex;
+                    LoadAndDisplayImage(room.PortraitImagePath, "room-action-thumbnail");
+                }
+                else
+                {
+                    _roomActionThumbnail.style.backgroundImage = null;
+                }
+            }
+
             // Scene image (preserve aspect ratio scale and hide placeholder)
             if (!string.IsNullOrWhiteSpace(room.PortraitImagePath))
             {
@@ -1167,10 +1229,18 @@ namespace RagNextPlayer.Managers
                 _pulseTween.Stop();
             }
 
-            if (_roomActionsContainer is null) return;
+            if (_roomActionThumbnailWrapper is null && _roomActionsContainer is null) return;
 
-            // Reset style state
-            _roomActionsContainer.style.opacity = 1f;
+            // Reset style states
+            if (_roomActionsContainer is not null) _roomActionsContainer.style.opacity = 1f;
+            if (_roomActionThumbnailWrapper is not null)
+            {
+                _roomActionThumbnailWrapper.RemoveFromClassList("room-action-thumbnail--pulse");
+                _roomActionThumbnailWrapper.style.borderLeftColor = new Color(0f, 188/255f, 212/255f, 0.4f);
+                _roomActionThumbnailWrapper.style.borderRightColor = new Color(0f, 188/255f, 212/255f, 0.4f);
+                _roomActionThumbnailWrapper.style.borderTopColor = new Color(0f, 188/255f, 212/255f, 0.4f);
+                _roomActionThumbnailWrapper.style.borderBottomColor = new Color(0f, 188/255f, 212/255f, 0.4f);
+            }
 
             bool hasActions = false;
             if (room?.Actions != null)
@@ -1187,11 +1257,24 @@ namespace RagNextPlayer.Managers
 
             if (hasActions)
             {
-                // Pulse opacity between 0.2 and 0.8 continuously using PrimeTween (2.0s sine oscillation)
-                _pulseTween = PrimeTween.Tween.Custom(0.2f, 0.8f, duration: 2.0f, ease: PrimeTween.Ease.InOutSine, cycles: -1, cycleMode: PrimeTween.CycleMode.Yoyo, onValueChange: val => {
+                if (_roomActionThumbnailWrapper is not null)
+                {
+                    _roomActionThumbnailWrapper.AddToClassList("room-action-thumbnail--pulse");
+                }
+
+                // Pulse opacity and border color continuously using PrimeTween (2.0s sine oscillation)
+                _pulseTween = PrimeTween.Tween.Custom(0.2f, 0.8f, duration: 1.0f, ease: PrimeTween.Ease.InOutSine, cycles: -1, cycleMode: PrimeTween.CycleMode.Yoyo, onValueChange: val => {
                     if (_roomActionsContainer is not null)
                     {
                         _roomActionsContainer.style.opacity = val;
+                    }
+                    if (_roomActionThumbnailWrapper is not null)
+                    {
+                        Color glowColor = new Color(0f, 188/255f, 212/255f, val + 0.2f);
+                        _roomActionThumbnailWrapper.style.borderLeftColor = glowColor;
+                        _roomActionThumbnailWrapper.style.borderRightColor = glowColor;
+                        _roomActionThumbnailWrapper.style.borderTopColor = glowColor;
+                        _roomActionThumbnailWrapper.style.borderBottomColor = glowColor;
                     }
                 });
             }
@@ -1202,6 +1285,22 @@ namespace RagNextPlayer.Managers
         {
             if (string.IsNullOrWhiteSpace(text) || _narrativeScroll is null) return;
             AutocompleteActiveTypewriters();
+
+            // Save old narrative entry into history log
+            var room = GameManager.Instance?.CurrentRoom;
+            string roomName = room is not null ? room.Name : "Action";
+            _historyLog.Add(new System.Tuple<string, string>(roomName, text));
+
+            // Clear narrative scroll to show current action text only
+            _narrativeScroll.Clear();
+
+            // Room name header
+            if (room is not null)
+            {
+                var header = new Label(room.Name);
+                header.AddToClassList("narrative-room-header");
+                _narrativeScroll.Add(header);
+            }
 
             // Use BuildNarrativeBody so the text is wrapped in a narrative-paragraph
             // VisualElement (flex-direction:row, flex-wrap:wrap). A bare Label with
@@ -1412,11 +1511,14 @@ namespace RagNextPlayer.Managers
                 ? TemplateResolver.Resolve(description, game, room)
                 : description;
 
+            // Save old narrative entry into history log
+            if (!string.IsNullOrWhiteSpace(resolved))
+            {
+                _historyLog.Add(new System.Tuple<string, string>(roomName, resolved));
+            }
 
-            // Separator
-            var sep = new VisualElement();
-            sep.AddToClassList("narrative-separator");
-            _narrativeScroll.Add(sep);
+            // Clear narrative scroll to show current action/room text only
+            _narrativeScroll.Clear();
 
             // Room name header
             var header = new Label(roomName);
@@ -1652,7 +1754,7 @@ namespace RagNextPlayer.Managers
                         btn.RemoveFromClassList("compass-btn--inactive");
                         btn.AddToClassList("compass-btn--active");
                         btn.SetEnabled(true);
-                        btn.clickable = new Clickable(() => GameManager.Instance?.MovePlayerToRoom(targetRoomId));
+                        btn.clickable = new Clickable(() => OnCompassExitClicked(targetRoomId));
 
                         PrimeTween.Tween.StopAll(btn);
                         PrimeTween.Tween.Custom(0.8f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
@@ -1668,7 +1770,7 @@ namespace RagNextPlayer.Managers
                         btnHud.RemoveFromClassList("compass-btn--inactive");
                         btnHud.AddToClassList("compass-btn--active");
                         btnHud.SetEnabled(true);
-                        btnHud.clickable = new Clickable(() => GameManager.Instance?.MovePlayerToRoom(targetRoomId));
+                        btnHud.clickable = new Clickable(() => OnCompassExitClicked(targetRoomId));
 
                         PrimeTween.Tween.StopAll(btnHud);
                         PrimeTween.Tween.Custom(0.8f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
@@ -2016,6 +2118,130 @@ namespace RagNextPlayer.Managers
         {
             Debug.Log("[UIManager] Gracefully quitting game standalone.");
             Application.Quit();
+        }
+
+        private void ToggleCompassDial()
+        {
+            if (_compassDialOverlay is null) return;
+
+            bool isCurrentlyVisible = _compassDialOverlay.style.display == DisplayStyle.Flex;
+
+            if (isCurrentlyVisible)
+            {
+                // Fade out
+                PrimeTween.Tween.Custom(1.0f, 0.0f, duration: 0.12f, ease: PrimeTween.Ease.InQuad, onValueChange: val => {
+                    _compassDialOverlay.style.opacity = val;
+                    _compassDialOverlay.transform.scale = new Vector3(val, val, 1f);
+                }).OnComplete(() => {
+                    _compassDialOverlay.style.display = DisplayStyle.None;
+                });
+            }
+            else
+            {
+                // Fade in
+                _compassDialOverlay.style.display = DisplayStyle.Flex;
+                _compassDialOverlay.style.opacity = 0f;
+                _compassDialOverlay.transform.scale = Vector3.zero;
+                _compassDialOverlay.BringToFront();
+                PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _compassDialOverlay.style.opacity = val;
+                    _compassDialOverlay.transform.scale = new Vector3(val, val, 1f);
+                });
+            }
+        }
+
+        private void OnCompassExitClicked(string targetRoomId)
+        {
+            // Trigger room movement
+            GameManager.Instance?.MovePlayerToRoom(targetRoomId);
+        }
+
+
+        private void OpenHistoryLog()
+        {
+            if (_historyLogMenu is null || _historyLogScroll is null) return;
+
+            // Clear old children in the history scroll
+            _historyLogScroll.Clear();
+
+            // Populate from _historyLog
+            foreach (var entry in _historyLog)
+            {
+                var itemContainer = new VisualElement();
+                itemContainer.style.marginBottom = 12f;
+
+                var header = new Label(entry.Item1);
+                header.AddToClassList("narrative-room-header");
+                header.style.color = new Color(0f, 188/255f, 212/255f); // Neon cyan
+                itemContainer.Add(header);
+
+                var bodyText = entry.Item2;
+                if (!string.IsNullOrWhiteSpace(bodyText))
+                {
+                    bodyText = bodyText.Replace("\r\n", "\n").Replace("\r", "\n");
+                    var paragraphs = bodyText.Split(new[] { "\n" }, StringSplitOptions.None);
+                    foreach (var para in paragraphs)
+                    {
+                        if (string.IsNullOrWhiteSpace(para))
+                        {
+                            var spacer = new VisualElement();
+                            spacer.AddToClassList("narrative-spacer");
+                            itemContainer.Add(spacer);
+                            continue;
+                        }
+
+                        var cleanPara = Regex.Replace(para, @"\[([^\]]+)\]", "$1");
+                        var paraLabel = new Label(cleanPara);
+                        paraLabel.AddToClassList("narrative-paragraph");
+                        paraLabel.style.whiteSpace = WhiteSpace.Normal;
+                        itemContainer.Add(paraLabel);
+                    }
+                }
+
+                var sep = new VisualElement();
+                sep.AddToClassList("narrative-separator");
+                itemContainer.Add(sep);
+
+                _historyLogScroll.Add(itemContainer);
+            }
+
+            _historyLogMenu.style.display = DisplayStyle.Flex;
+            _historyLogMenu.BringToFront();
+            _historyLogMenu.transform.scale = Vector3.zero;
+            PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                _historyLogMenu.transform.scale = new Vector3(val, val, 1f);
+            });
+        }
+
+        private void CloseHistoryLog()
+        {
+            if (_historyLogMenu is null) return;
+            PrimeTween.Tween.Custom(1.0f, 0.0f, duration: 0.12f, ease: PrimeTween.Ease.InQuad, onValueChange: val => {
+                _historyLogMenu.transform.scale = new Vector3(val, val, 1f);
+            }).OnComplete(() => {
+                _historyLogMenu.style.display = DisplayStyle.None;
+            });
+        }
+
+        private void OpenHelpMenu()
+        {
+            if (_helpMenu is null) return;
+            _helpMenu.style.display = DisplayStyle.Flex;
+            _helpMenu.BringToFront();
+            _helpMenu.transform.scale = Vector3.zero;
+            PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                _helpMenu.transform.scale = new Vector3(val, val, 1f);
+            });
+        }
+
+        private void CloseHelpMenu()
+        {
+            if (_helpMenu is null) return;
+            PrimeTween.Tween.Custom(1.0f, 0.0f, duration: 0.12f, ease: PrimeTween.Ease.InQuad, onValueChange: val => {
+                _helpMenu.transform.scale = new Vector3(val, val, 1f);
+            }).OnComplete(() => {
+                _helpMenu.style.display = DisplayStyle.None;
+            });
         }
 
         private void RefreshSaveLoadSlots()
