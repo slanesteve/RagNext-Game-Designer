@@ -2763,15 +2763,11 @@ namespace RagNextPlayer.Managers
         {
             if (_root == null) return;
             var topBar = _root.Q<VisualElement>("top-bar");
-            var mainSplitter = _root.Q<VisualElement>("main-split-container");
-            var profileSplitter = _root.Q<VisualElement>("profile-splitter");
-            var bottomProfileBar = _root.Q<VisualElement>("bottom-profile-bar");
+            var hudLayout = _root.Q<VisualElement>("hud-layout-wrapper");
 
             var display = visible ? DisplayStyle.Flex : DisplayStyle.None;
             if (topBar != null) topBar.style.display = display;
-            if (mainSplitter != null) mainSplitter.style.display = display;
-            if (profileSplitter != null) profileSplitter.style.display = display;
-            if (bottomProfileBar != null) bottomProfileBar.style.display = display;
+            if (hudLayout != null) hudLayout.style.display = display;
         }
 
         public void RegisterHoverSwell(VisualElement element)
@@ -2780,8 +2776,7 @@ namespace RagNextPlayer.Managers
 
             var textLabel = element.Q<Label>(className: "entity-name") ?? element;
 
-            // Force the row hitbox to remain completely dead-static
-            element.style.height = 32;
+            // Let stylesheet define the height (e.g. min-height: 52px for thumbnails)
             element.pickingMode = PickingMode.Position;
 
             element.RegisterCallback<PointerOverEvent>(evt => {
