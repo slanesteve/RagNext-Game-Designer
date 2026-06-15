@@ -4,11 +4,21 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      buildWindows:
+        description: 'Build Windows Distribution'
+        type: boolean
+        default: true
+      buildMac:
+        description: 'Build macOS Distribution'
+        type: boolean
+        default: true
 
 jobs:
   build-windows:
     name: Build Windows x64 Distribution
     runs-on: windows-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.buildWindows }}
 
     steps:
     - name: Checkout Code
@@ -63,6 +73,7 @@ jobs:
   build-mac:
     name: Build macOS Arm64 & Intel x64 Distributions
     runs-on: macos-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.buildMac }}
 
     steps:
     - name: Checkout Code
