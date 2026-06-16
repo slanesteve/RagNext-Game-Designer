@@ -483,6 +483,7 @@ namespace RagNext.Designer.Avalonia.Views
 
         public void OnCloseAttributeDialogClicked(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine("[DEBUG] OnCloseAttributeDialogClicked code-behind triggered");
             if (DataContext is MainWindowViewModel vm)
             {
                 if (vm.CloseAttributeDialogCommand.CanExecute(null))
@@ -494,6 +495,7 @@ namespace RagNext.Designer.Avalonia.Views
 
         public void OnSaveAttributeClicked(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine("[DEBUG] OnSaveAttributeClicked code-behind triggered");
             if (DataContext is MainWindowViewModel vm)
             {
                 if (vm.SaveAttributeCommand.CanExecute(null))
@@ -505,6 +507,7 @@ namespace RagNext.Designer.Avalonia.Views
 
         public void OnCloseActionSelectorClicked(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine("[DEBUG] OnCloseActionSelectorClicked code-behind triggered");
             if (DataContext is MainWindowViewModel vm)
             {
                 if (vm.CloseActionSelectorCommand.CanExecute(null))
@@ -516,10 +519,12 @@ namespace RagNext.Designer.Avalonia.Views
 
         public void OnSelectActionTemplateClicked(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine("[DEBUG] OnSelectActionTemplateClicked code-behind triggered");
             if (DataContext is MainWindowViewModel vm)
             {
                 var listBox = this.FindControl<ListBox>("SelectorTemplatesList");
                 var selectedItem = listBox?.SelectedItem;
+                Console.WriteLine($"[DEBUG] OnSelectActionTemplateClicked selected item: {selectedItem?.GetType().Name ?? "null"}");
                 if (vm.SelectActionTemplateCommand.CanExecute(selectedItem))
                 {
                     vm.SelectActionTemplateCommand.Execute(selectedItem);
@@ -529,6 +534,7 @@ namespace RagNext.Designer.Avalonia.Views
 
         public void OnCloseInventorySelectorClicked(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine("[DEBUG] OnCloseInventorySelectorClicked code-behind triggered");
             if (DataContext is MainWindowViewModel vm)
             {
                 if (vm.CloseInventorySelectorCommand.CanExecute(null))
@@ -540,10 +546,12 @@ namespace RagNext.Designer.Avalonia.Views
 
         public void OnSelectInventoryItemClicked(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine("[DEBUG] OnSelectInventoryItemClicked code-behind triggered");
             if (DataContext is MainWindowViewModel vm)
             {
                 var listBox = this.FindControl<ListBox>("SelectorItemsList");
                 var selectedItem = listBox?.SelectedItem;
+                Console.WriteLine($"[DEBUG] OnSelectInventoryItemClicked selected item: {selectedItem?.GetType().Name ?? "null"}");
                 if (vm.SelectInventoryItemCommand.CanExecute(selectedItem))
                 {
                     vm.SelectInventoryItemCommand.Execute(selectedItem);
