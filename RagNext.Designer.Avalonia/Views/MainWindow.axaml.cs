@@ -28,6 +28,7 @@ namespace RagNext.Designer.Avalonia.Views
     public partial class MainWindow : Window
     {
         private bool _isWebViewLoaded = false;
+        private bool _isWebViewEventsSubscribed = false;
         private int _composeSelectionStart = -1;
         private int _composeSelectionEnd = -1;
 
@@ -304,34 +305,38 @@ namespace RagNext.Designer.Avalonia.Views
                     if (!_isWebViewLoaded)
                     {
                         _isWebViewLoaded = true;
-                        CanvasWebView.NavigationStarted += OnWebViewNavigationStarted;
-                        CanvasWebView.NavigationCompleted += async (s, e) =>
+                        if (!_isWebViewEventsSubscribed)
                         {
-                            await Task.Delay(300); // Wait for scripts to settle
-                            LoadGraphData();
-                        };
-                        CanvasWebView.WebMessageReceived += (s, args) =>
-                        {
-                            try
+                            _isWebViewEventsSubscribed = true;
+                            CanvasWebView.NavigationStarted += OnWebViewNavigationStarted;
+                            CanvasWebView.NavigationCompleted += async (s, e) =>
                             {
-                                string? message = null;
-                                var type = args.GetType();
-                                var bodyProp = type.GetProperty("Body") ?? type.GetProperty("WebMessageAsJson") ?? type.GetProperty("Message");
-                                if (bodyProp != null)
-                                {
-                                    message = bodyProp.GetValue(args) as string;
-                                }
-                                
-                                if (!string.IsNullOrEmpty(message))
-                                {
-                                    HandleRagsAction(message);
-                                }
-                            }
-                            catch (Exception ex)
+                                await Task.Delay(300); // Wait for scripts to settle
+                                LoadGraphData();
+                            };
+                            CanvasWebView.WebMessageReceived += (s, args) =>
                             {
-                                System.Diagnostics.Debug.WriteLine($"[MainWindow] WebMessage callback error: {ex.Message}");
-                            }
-                        };
+                                try
+                                {
+                                    string? message = null;
+                                    var type = args.GetType();
+                                    var bodyProp = type.GetProperty("Body") ?? type.GetProperty("WebMessageAsJson") ?? type.GetProperty("Message");
+                                    if (bodyProp != null)
+                                    {
+                                        message = bodyProp.GetValue(args) as string;
+                                    }
+                                    
+                                    if (!string.IsNullOrEmpty(message))
+                                    {
+                                        HandleRagsAction(message);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[MainWindow] WebMessage callback error: {ex.Message}");
+                                }
+                            };
+                        }
                         CanvasWebView.Source = new Uri(htmlPath);
                     }
                     else
@@ -3542,7 +3547,11 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (overlayOpen)
             {
-                if (CanvasWebView != null) CanvasWebView.IsVisible = false;
+                if (CanvasWebView != null)
+                {
+                    CanvasWebView.IsVisible = false;
+                    _isWebViewLoaded = false;
+                }
                 if (PreviewWebView != null) PreviewWebView.IsVisible = false;
                 if (TabPreviewWebView != null) TabPreviewWebView.IsVisible = false;
                 if (SplashPreviewWebView != null) SplashPreviewWebView.IsVisible = false;
@@ -3551,9 +3560,26 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 if (DataContext is MainWindowViewModel vm)
                 {
-                    // To prevent destroying native window handles and causing blank recreation on closing,
-                    // keep CanvasWebView.IsVisible as true once loaded. 1x1 size collapses it visually.
-                    if (CanvasWebView != null) CanvasWebView.IsVisible = true;
+                    if (CanvasWebView != null)
+                    {
+                        bool shouldBeVisible = vm.IsVisualEditing;
+                        if (CanvasWebView.IsVisible != shouldBeVisible)
+                        {
+                            CanvasWebView.IsVisible = shouldBeVisible;
+                            if (!shouldBeVisible)
+                            {
+                                _isWebViewLoaded = false;
+                            }
+                            else
+                            {
+                                EnsureWebViewLoaded();
+                            }
+                        }
+                        else if (shouldBeVisible && !_isWebViewLoaded)
+                        {
+                            EnsureWebViewLoaded();
+                        }
+                    }
 
                     // If we are visual editing, hide other preview webviews to avoid any airspace overlap!
                     if (vm.IsVisualEditing)
