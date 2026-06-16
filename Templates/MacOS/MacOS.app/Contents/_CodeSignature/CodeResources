@@ -606,11 +606,11 @@
 		</data>
 		<key>Resources/Data/boot.config</key>
 		<data>
-		aIfurUale3znD/TO0SvMhFDwnek=
+		mgdj/HcA65hDai3FkP4F9CpCpjI=
 		</data>
 		<key>Resources/Data/globalgamemanagers</key>
 		<data>
-		UCAjXU+MeZh4A6qGLrmECprxRQQ=
+		chECj4kpupMECrULIrXWOprtz+E=
 		</data>
 		<key>Resources/Data/globalgamemanagers.assets</key>
 		<data>
@@ -626,7 +626,7 @@
 		</data>
 		<key>Resources/Data/resources.assets</key>
 		<data>
-		yJdfe10QRV6lP44qQ3uFE8Dh1co=
+		S9ihhYzSlBMdRpIR1LkhZKzEHjo=
 		</data>
 		<key>Resources/Data/resources.assets.resS</key>
 		<data>
@@ -821,10 +821,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			mLnYJ7OLF2vylo50YPlaqLdcC3s=
+			wJjrWlSOmIpwLfQ7GT21Wuox3jM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"98b9d827b38b176bf2968e7460f95aa8b75c0b7b" or cdhash H"852f11e5d070a23cec6c7739d55f9530fc04d54d"</string>
+			<string>cdhash H"c098eb5a548e988a702df43b193db55aea31de33" or cdhash H"6253f44fa9a2512305fa8a7045bab3b465bfe7e3"</string>
 		</dict>
 		<key>Resources/Data/Managed/Assembly-CSharp.dll</key>
 		<dict>
@@ -1880,14 +1880,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			LXx+nhiQQy9KN3DAVVDQ6k4Qga5CihtS3LPxg+SAyP4=
+			wJ/wkmdaqZHgLSw1YW6KyJSlTwcoUgy4iw4ID2ibwwk=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			zWm2SBRa/z9LsCb8279xZ3zzbMSRB2ePE+TJX+7J9Rw=
+			FEJ6WuGCIpOZFPxq8GGOGW1wgyCO1U9iPMQmZwHCono=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers.assets</key>
@@ -1915,7 +1915,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			jv9xbNPpUc5ODjHwKc6DUH9ZZEYdxqXMn9YFIkeYhe0=
+			tLfD00Cz57Lo56Xf6e/o1EfqjXQCY1mmMcQFP0p29qg=
 			</data>
 		</dict>
 		<key>Resources/Data/resources.assets.resS</key>
