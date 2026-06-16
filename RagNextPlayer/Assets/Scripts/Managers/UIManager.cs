@@ -2065,19 +2065,16 @@ namespace RagNextPlayer.Managers
                 return path;
 
             string fullPath = path;
-            if (!System.IO.Path.IsPathRooted(path))
+            bool isRooted = System.IO.Path.IsPathRooted(path) || (path.Length >= 2 && path[1] == ':');
+            if (!isRooted)
             {
                 fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, path);
             }
             else
             {
                 // Standalone fallback: redirect designer AppData path to current StreamingAssets/Assets/ copy
-                var fileName = System.IO.Path.GetFileName(path);
-                var streamingLocalPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Assets", fileName);
-                if (System.IO.File.Exists(streamingLocalPath))
-                {
-                    fullPath = streamingLocalPath;
-                }
+                var fileName = System.IO.Path.GetFileName(path.Replace("\\", "/"));
+                fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Assets", fileName);
             }
 
             fullPath = fullPath.Replace("\\", "/");
