@@ -112,8 +112,9 @@ jobs:
           cp -R Templates Publish/RagNext_Arm64.app/Contents/Resources/Templates
         fi
 
-        # Ensure core executable has +x execution rights
-        chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext.Designer.Avalonia
+        # Ensure core executable has +x execution rights and is named cleanly without dots
+        mv Publish/RagNext_Arm64.app/Contents/MacOS/RagNext.Designer.Avalonia Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
+        chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
 
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -123,7 +124,7 @@ jobs:
         echo '    <key>CFBundleDevelopmentRegion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <string>English</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleExecutable</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
-        echo '    <string>RagNext.Designer.Avalonia</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>RagNext</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleIdentifier</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <string>com.slanesteve.ragnext</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleInfoDictionaryVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -167,8 +168,9 @@ jobs:
           cp -R Templates Publish/RagNext_Intel.app/Contents/Resources/Templates
         fi
 
-        # Ensure core executable has +x execution rights
-        chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext.Designer.Avalonia
+        # Ensure core executable has +x execution rights and is named cleanly without dots
+        mv Publish/RagNext_Intel.app/Contents/MacOS/RagNext.Designer.Avalonia Publish/RagNext_Intel.app/Contents/MacOS/RagNext
+        chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext
 
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Intel.app/Contents/Info.plist
@@ -178,7 +180,7 @@ jobs:
         echo '    <key>CFBundleDevelopmentRegion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <string>English</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleExecutable</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
-        echo '    <string>RagNext.Designer.Avalonia</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>RagNext</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleIdentifier</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <string>com.slanesteve.ragnext</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleInfoDictionaryVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
