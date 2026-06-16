@@ -142,6 +142,7 @@ jobs:
         echo '    <key>CFBundleVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <string>1.0.0</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>LSMinimumSystemVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>10.13</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>NSHighResolutionCapable</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <true/>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '</dict>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -200,6 +201,7 @@ jobs:
         echo '    <key>CFBundleVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <string>1.0.0</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>LSMinimumSystemVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>10.13</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>NSHighResolutionCapable</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <true/>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '</dict>' >> Publish/RagNext_Intel.app/Contents/Info.plist
