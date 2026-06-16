@@ -2186,7 +2186,7 @@
                     </StackPanel>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
-                        <Button Content="Cancel" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerAddAttributeCommand}" CommandParameter="{x:Null}" Click="OnCancelLoadClicked" Background="Transparent" Foreground="Gray"/>
+                        <Button Content="Cancel" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloseAttributeDialogCommand}" Background="Transparent" Foreground="Gray"/>
                         <Button Content="Save Parameter" Command="{Binding SaveAttributeCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
                     </StackPanel>
                 </StackPanel>

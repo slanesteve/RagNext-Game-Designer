@@ -814,6 +814,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand RemoveInventoryItemCommand { get; }
 
         public ICommand TriggerAddAttributeCommand { get; }
+        public ICommand CloseAttributeDialogCommand { get; }
         public ICommand SaveAttributeCommand { get; }
         public ICommand RemoveAttributeCommand { get; }
 
@@ -1505,6 +1506,13 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 NewAttributeName = string.Empty;
                 NewAttributeValue = string.Empty;
                 ShowAttributeDialogOverlay = true;
+            });
+
+            CloseAttributeDialogCommand = new Command(() =>
+            {
+                Console.WriteLine("[DEBUG] CloseAttributeDialogCommand triggered");
+                ShowAttributeDialogOverlay = false;
+                AttributeTarget = null;
             });
 
             SaveAttributeCommand = new Command(async () =>
