@@ -2277,7 +2277,7 @@
                         <!-- Right side: Preview -->
                         <Grid Grid.Column="1" RowDefinitions="Auto,*" Margin="12,0,0,0">
                             <TextBlock Grid.Row="0" Text="👁️ Live Preview" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,8" FontWeight="SemiBold"/>
-                            <Border Grid.Row="1" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
+                            <Border x:Name="ComposePreviewWebViewContainer" Grid.Row="1" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
                                 <wv:NativeWebView x:Name="ComposePreviewWebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                             </Border>
                         </Grid>

@@ -41,6 +41,7 @@ namespace RagNext.Designer.Avalonia.Views
             if (PreviewWebView != null && PreviewWebView.Parent is Grid previewParent) previewParent.Children.Remove(PreviewWebView);
             if (TabPreviewWebView != null && TabPreviewWebView.Parent is Grid tabParent) tabParent.Children.Remove(TabPreviewWebView);
             if (SplashPreviewWebView != null && SplashPreviewWebView.Parent is Border splashParent) splashParent.Child = null;
+            if (ComposePreviewWebView != null && ComposePreviewWebView.Parent is Border composeParent) composeParent.Child = null;
 
             DataContextChanged += OnDataContextChanged;
 
@@ -3637,9 +3638,30 @@ namespace RagNext.Designer.Avalonia.Views
                     SplashPreviewWebView.IsVisible = false;
                     if (SplashPreviewWebView.Parent is Border splashParent) splashParent.Child = null;
                 }
+
+                // Attach ComposePreviewWebView
+                var composeContainer = this.FindControl<Border>("ComposePreviewWebViewContainer");
+                if (ComposePreviewWebView != null && composeContainer != null)
+                {
+                    if (ComposePreviewWebView.Parent == null)
+                    {
+                        composeContainer.Child = ComposePreviewWebView;
+                    }
+                    ComposePreviewWebView.IsVisible = true;
+                }
             }
             else
             {
+                // Detach ComposePreviewWebView
+                if (ComposePreviewWebView != null)
+                {
+                    ComposePreviewWebView.IsVisible = false;
+                    if (ComposePreviewWebView.Parent is Border composeParent)
+                    {
+                        composeParent.Child = null;
+                    }
+                }
+
                 // If we are visual editing, hide other preview webviews to avoid any airspace overlap!
                 if (vm.IsVisualEditing)
                 {
