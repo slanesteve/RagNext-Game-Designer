@@ -1299,6 +1299,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             AddActionCommand = new Command<object>(parameter =>
             {
+                Console.WriteLine($"[DEBUG] AddActionCommand triggered. Parameter type: {parameter?.GetType().Name ?? "null"}");
                 if (parameter == null) return;
                 _actionTargetEntity = parameter;
 
@@ -1325,6 +1326,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 }
 
                 ShowActionSelectorOverlay = true;
+                Console.WriteLine("[DEBUG] AddActionCommand completed. ShowActionSelectorOverlay is now true.");
             });
 
             DeleteActionCommand = new Command<RagsCore.Models.Action>(async action =>
@@ -1501,6 +1503,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             // Attributes Editor Dialog Setup
             TriggerAddAttributeCommand = new Command<object>(target =>
             {
+                Console.WriteLine($"[DEBUG] TriggerAddAttributeCommand triggered. Target type: {target?.GetType().Name ?? "null"}");
                 if (target == null) return;
                 AttributeTarget = target;
                 NewAttributeName = string.Empty;
@@ -1517,7 +1520,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             SaveAttributeCommand = new Command(async () =>
             {
-                if (AttributeTarget == null || string.IsNullOrWhiteSpace(NewAttributeName)) return;
+                Console.WriteLine($"[DEBUG] SaveAttributeCommand triggered. Target: {AttributeTarget?.GetType().Name ?? "null"}, Name: '{NewAttributeName}', Value: '{NewAttributeValue}'");
+                if (AttributeTarget == null || string.IsNullOrWhiteSpace(NewAttributeName))
+                {
+                    Console.WriteLine("[DEBUG] SaveAttributeCommand aborted: Target is null or Name is empty");
+                    return;
+                }
 
                 global::System.Collections.ObjectModel.ObservableCollection<CustomAttribute>? attrs = null;
                 if (AttributeTarget is Player p) attrs = p.Attributes;
@@ -1528,6 +1536,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (attrs != null)
                 {
                     CustomAttribute.SetAttribute(NewAttributeName.Trim(), NewAttributeValue.Trim(), attrs);
+                    Console.WriteLine($"[DEBUG] SaveAttributeCommand: Successfully set attribute '{NewAttributeName}' = '{NewAttributeValue}'");
+                }
+                else
+                {
+                    Console.WriteLine("[DEBUG] SaveAttributeCommand: attrs collection was null");
                 }
 
                 ShowAttributeDialogOverlay = false;
