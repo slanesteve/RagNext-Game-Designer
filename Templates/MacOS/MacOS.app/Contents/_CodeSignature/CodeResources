@@ -6,7 +6,7 @@
 	<dict>
 		<key>Resources/Data/Managed/Assembly-CSharp.dll</key>
 		<data>
-		H5+o52N2rMRuVsX7C11WnHYYJPo=
+		aAe+EYW1p0QkTKlwYx9RNJbXXlU=
 		</data>
 		<key>Resources/Data/Managed/Mono.Security.dll</key>
 		<data>
@@ -606,15 +606,15 @@
 		</data>
 		<key>Resources/Data/boot.config</key>
 		<data>
-		ck8d8JCOjSzpRiy0jLlUKHqroZk=
+		aIfurUale3znD/TO0SvMhFDwnek=
 		</data>
 		<key>Resources/Data/globalgamemanagers</key>
 		<data>
-		6xSgRzar61qi3rrVd8TaQ0f9NgE=
+		UCAjXU+MeZh4A6qGLrmECprxRQQ=
 		</data>
 		<key>Resources/Data/globalgamemanagers.assets</key>
 		<data>
-		P9VA8wtIfycc/BNxN4Rp6PTOMQk=
+		D45vtiVzhZPJOQ6np2Ig7oSKpUM=
 		</data>
 		<key>Resources/Data/globalgamemanagers.assets.resS</key>
 		<data>
@@ -821,16 +821,16 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			L4rsA7ZCDi5R3iAucJXjGeKwCJk=
+			mLnYJ7OLF2vylo50YPlaqLdcC3s=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"2f8aec03b6420e2e51de202e7095e319e2b00899" or cdhash H"b9d2084e6bfad11f3a0747d3e54bdd5e0f2f323b"</string>
+			<string>cdhash H"98b9d827b38b176bf2968e7460f95aa8b75c0b7b" or cdhash H"852f11e5d070a23cec6c7739d55f9530fc04d54d"</string>
 		</dict>
 		<key>Resources/Data/Managed/Assembly-CSharp.dll</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			+BG1LQORxk1F8GxR9sZfbSVfIXUQTl1vSpy143jzSwE=
+			l3enmN0rN1Mm9i7nPNX5kWizoCNszrwlE7gPs0UfEAw=
 			</data>
 		</dict>
 		<key>Resources/Data/Managed/Mono.Security.dll</key>
@@ -1880,21 +1880,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			gjEUMG19rtyB3QzEUk3vj7k6om7AAPOW4yxXCQ541vo=
+			LXx+nhiQQy9KN3DAVVDQ6k4Qga5CihtS3LPxg+SAyP4=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			R3SguNsxLkFh/YuzJWG+MYsUuq7xUNT5ufV9yJLBaak=
+			zWm2SBRa/z9LsCb8279xZ3zzbMSRB2ePE+TJX+7J9Rw=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers.assets</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			/n5ySKMMxWMb+fSKW9fhSLohoAprp8iWujOGmQC3awI=
+			21XeLEcJ5Tavc7GHJodbcXm0q45UnGfOBRR8ikSjAh0=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers.assets.resS</key>
