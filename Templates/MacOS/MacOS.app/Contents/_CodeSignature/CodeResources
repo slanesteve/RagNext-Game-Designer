@@ -606,11 +606,11 @@
 		</data>
 		<key>Resources/Data/boot.config</key>
 		<data>
-		mgdj/HcA65hDai3FkP4F9CpCpjI=
+		reibLxkVb7shoPgJ1PnuPVDeImw=
 		</data>
 		<key>Resources/Data/globalgamemanagers</key>
 		<data>
-		chECj4kpupMECrULIrXWOprtz+E=
+		6+dN/ylBQm4/Uc1enePsZCr/FME=
 		</data>
 		<key>Resources/Data/globalgamemanagers.assets</key>
 		<data>
@@ -622,7 +622,7 @@
 		</data>
 		<key>Resources/Data/level0</key>
 		<data>
-		cCaTGGdmxHLpOpQgstY1ApEQcJo=
+		CaX9z+pXG+zV275tkdwQ/NNO+E8=
 		</data>
 		<key>Resources/Data/resources.assets</key>
 		<data>
@@ -634,7 +634,11 @@
 		</data>
 		<key>Resources/Data/sharedassets0.assets</key>
 		<data>
-		Q1W42LwdzN6UmN4E5f+u+lcOaNs=
+		1vbX0vPHo9P3VlkWdsmc03OKMfU=
+		</data>
+		<key>Resources/Data/sharedassets0.assets.resS</key>
+		<data>
+		/aVifP3EmO53HY3JXMqOb+sSDzA=
 		</data>
 		<key>Resources/DefaultPreferences.plist</key>
 		<data>
@@ -821,10 +825,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			wJjrWlSOmIpwLfQ7GT21Wuox3jM=
+			W8RT+bId43CT77zkdLF1BTukbQs=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"c098eb5a548e988a702df43b193db55aea31de33" or cdhash H"6253f44fa9a2512305fa8a7045bab3b465bfe7e3"</string>
+			<string>cdhash H"5bc453f9b21de37093efbce474b175053ba46d0b" or cdhash H"3122a3c2412c0a9e6d882db7f3e630d0cb4d6b1f"</string>
 		</dict>
 		<key>Resources/Data/Managed/Assembly-CSharp.dll</key>
 		<dict>
@@ -1880,14 +1884,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			wJ/wkmdaqZHgLSw1YW6KyJSlTwcoUgy4iw4ID2ibwwk=
+			QpbwNQM0bZtVmw6gnl07NyM4PMGNjdZ92L0c4unTrPw=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			FEJ6WuGCIpOZFPxq8GGOGW1wgyCO1U9iPMQmZwHCono=
+			ryM6X04VuodltK+oj2QkY2BRLTeUpQ5LSZ3YiH3KSEA=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers.assets</key>
@@ -1908,7 +1912,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4BhHUerNTh/NvFklSxcpVuT16Sw6ZidXytjlETh0L0M=
+			OdWluVlhQSAFJk/NRY1vx8cVgVCX3Tuu1CniVH17rBs=
 			</data>
 		</dict>
 		<key>Resources/Data/resources.assets</key>
@@ -1929,7 +1933,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			YjRSY3VIl1cho+kJA2PAXC+UVO0ClpnR2HaOUPkmdBA=
+			+UXBgLZrpdrNgpTdAdrTIOqDSotgKpNuXssN58YGlHg=
+			</data>
+		</dict>
+		<key>Resources/Data/sharedassets0.assets.resS</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			lI1irlgdImPCl2LKCTlItYniSZXgR5YwXkntYWdQQq0=
 			</data>
 		</dict>
 		<key>Resources/DefaultPreferences.plist</key>
