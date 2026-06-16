@@ -44,6 +44,28 @@ namespace RagNext.Designer.Avalonia.Views
 
             DataContextChanged += OnDataContextChanged;
 
+            // Programmatically subscribe to event handlers to ensure they are not trimmed by NativeAOT
+            var saveAttrBtn = this.FindControl<Button>("SaveAttributeButton");
+            if (saveAttrBtn != null) saveAttrBtn.Click += OnSaveAttributeClicked;
+
+            var cancelAttrBtn = this.FindControl<Button>("CancelAttributeButton");
+            if (cancelAttrBtn != null) cancelAttrBtn.Click += OnCloseAttributeDialogClicked;
+
+            var cancelActionBtn = this.FindControl<Button>("CancelActionSelectorButton");
+            if (cancelActionBtn != null) cancelActionBtn.Click += OnCloseActionSelectorClicked;
+
+            var selectActionBtn = this.FindControl<Button>("SelectActionTemplateButton");
+            if (selectActionBtn != null) selectActionBtn.Click += OnSelectActionTemplateClicked;
+
+            var cancelInvBtn = this.FindControl<Button>("CancelInventorySelectorButton");
+            if (cancelInvBtn != null) cancelInvBtn.Click += OnCloseInventorySelectorClicked;
+
+            var selectInvBtn = this.FindControl<Button>("SelectInventoryItemButton");
+            if (selectInvBtn != null) selectInvBtn.Click += OnSelectInventoryItemClicked;
+
+            var cancelLoadBtn = this.FindControl<Button>("CancelLoadButton");
+            if (cancelLoadBtn != null) cancelLoadBtn.Click += OnCancelLoadClicked;
+
             var startingRoomCombo = this.FindControl<ComboBox>("StartingRoomComboBox");
             if (startingRoomCombo != null)
             {

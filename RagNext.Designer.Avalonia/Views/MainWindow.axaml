@@ -2116,7 +2116,7 @@
                     <ListBox ItemsSource="{Binding AvailableSaves}" SelectedItem="{Binding SelectedSave}" Height="180" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6"/>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-                        <Button Content="Cancel" Click="OnCancelLoadClicked" Background="Transparent" Foreground="Gray"/>
+                        <Button x:Name="CancelLoadButton" Content="Cancel" Background="Transparent" Foreground="Gray"/>
                         <Button Content="Load Game" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSelectedGameCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
                     </StackPanel>
                 </StackPanel>
@@ -2139,8 +2139,8 @@
                     </ListBox>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-                        <Button Content="Cancel" Click="OnCloseInventorySelectorClicked" Background="Transparent" Foreground="Gray"/>
-                        <Button Content="Add to Inventory" Click="OnSelectInventoryItemClicked" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorItemsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <Button x:Name="CancelInventorySelectorButton" Content="Cancel" Background="Transparent" Foreground="Gray"/>
+                        <Button x:Name="SelectInventoryItemButton" Content="Add to Inventory" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorItemsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -2162,8 +2162,8 @@
                     </ListBox>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-                        <Button Content="Cancel" Click="OnCloseActionSelectorClicked" Background="Transparent" Foreground="Gray"/>
-                        <Button Content="Add Action" Click="OnSelectActionTemplateClicked" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorTemplatesList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <Button x:Name="CancelActionSelectorButton" Content="Cancel" Background="Transparent" Foreground="Gray"/>
+                        <Button x:Name="SelectActionTemplateButton" Content="Add Action" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorTemplatesList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -2186,8 +2186,8 @@
                     </StackPanel>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
-                        <Button Content="Cancel" Click="OnCloseAttributeDialogClicked" Background="Transparent" Foreground="Gray"/>
-                        <Button Content="Save Parameter" Click="OnSaveAttributeClicked" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                        <Button x:Name="CancelAttributeButton" Content="Cancel" Background="Transparent" Foreground="Gray"/>
+                        <Button x:Name="SaveAttributeButton" Content="Save Parameter" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
