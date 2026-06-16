@@ -437,6 +437,55 @@ namespace RagNext.Designer.Avalonia.Services
                     }
                 }
             }
+
+            // Post-process ZIP to change Platform compatibility byte of central directory headers to Unix (3)
+            PatchZipPlatformToUnix(zipFilePath);
+        }
+
+        private static void PatchZipPlatformToUnix(string zipFilePath)
+        {
+            if (!File.Exists(zipFilePath)) return;
+
+            try
+            {
+                byte[] bytes = File.ReadAllBytes(zipFilePath);
+                bool modified = false;
+
+                for (int i = 0; i < bytes.Length - 46; i++)
+                {
+                    // Central Directory Header Signature: 0x02014b50 (PK\x01\x02)
+                    if (bytes[i] == 0x50 && bytes[i + 1] == 0x4B && bytes[i + 2] == 0x01 && bytes[i + 3] == 0x02)
+                    {
+                        // Read file name length to check matching entries
+                        ushort fileNameLength = BitConverter.ToUInt16(bytes, i + 28);
+                        if (i + 46 + fileNameLength <= bytes.Length)
+                        {
+                            string fileName = System.Text.Encoding.UTF8.GetString(bytes, i + 46, fileNameLength);
+
+                            // Only change platform to Unix for files inside .app bundle to avoid breaking standard Windows files unnecessarily
+                            if (fileName.Contains(".app/", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Offset 4: Version Made By (2 bytes). Upper byte (offset 5) is the host platform.
+                                // Set it to 3 (Unix) so macOS Archive Utility reads Unix permissions (ExternalAttributes).
+                                if (bytes[i + 5] != 3)
+                               {
+                                    bytes[i + 5] = 3;
+                                    modified = true;
+                               }
+                            }
+                        }
+                    }
+                }
+
+                if (modified)
+                {
+                    File.WriteAllBytes(zipFilePath, bytes);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error patching ZIP file headers: {ex.Message}");
+            }
         }
     }
 
