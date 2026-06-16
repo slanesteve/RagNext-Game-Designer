@@ -84,8 +84,7 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 Report("Creating distribution ZIP...");
                 string zipPath = outputDirectory.TrimEnd(Path.DirectorySeparatorChar) + ".zip";
-                if (File.Exists(zipPath)) File.Delete(zipPath);
-                ZipFile.CreateFromDirectory(outputDirectory, zipPath);
+                CreateZipWithUnixPermissions(outputDirectory, zipPath);
                 Report($"ZIP created: {Path.GetFileName(zipPath)}");
             }
 
@@ -391,6 +390,43 @@ namespace RagNext.Designer.Avalonia.Services
             var invalid = Path.GetInvalidFileNameChars();
             var clean   = new string(name.Where(c => !invalid.Contains(c)).ToArray()).Trim();
             return string.IsNullOrEmpty(clean) ? "Adventure" : clean.Replace(" ", "_");
+        }
+
+        private static void CreateZipWithUnixPermissions(string sourceDirectory, string zipFilePath)
+        {
+            if (File.Exists(zipFilePath)) File.Delete(zipFilePath);
+
+            using (var zipStream = new FileStream(zipFilePath, FileMode.Create))
+            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
+            {
+                var files = Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    string relativePath = Path.GetRelativePath(sourceDirectory, file).Replace('\\', '/');
+                    var entry = archive.CreateEntry(relativePath, CompressionLevel.Optimal);
+
+                    // Write file bytes
+                    using (var sourceStream = new FileStream(file, FileMode.Open, FileAccess.Read))
+                    using (var entryStream = entry.Open())
+                    {
+                        sourceStream.CopyTo(entryStream);
+                    }
+
+                    // Detect if file is a macOS executable binary inside the app bundle
+                    bool isMacExecutable = relativePath.Contains(".app/Contents/MacOS/", StringComparison.OrdinalIgnoreCase);
+
+                    if (isMacExecutable)
+                    {
+                        // Permissions: -rwxr-xr-x (0755) -> 0x81ED in hex
+                        entry.ExternalAttributes = unchecked((int)0x81ED0000);
+                    }
+                    else
+                    {
+                        // Permissions: -rw-r--r-- (0644) -> 0x81A4 in hex
+                        entry.ExternalAttributes = unchecked((int)0x81A40000);
+                    }
+                }
+            }
         }
     }
 

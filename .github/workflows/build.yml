@@ -112,9 +112,11 @@ jobs:
           cp -R Templates Publish/RagNext_Arm64.app/Contents/Resources/Templates
         fi
 
-        # Ensure core executable has +x execution rights and is named cleanly without dots
-        mv Publish/RagNext_Arm64.app/Contents/MacOS/RagNext.Designer.Avalonia Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
+        # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
+        # Clean up build artifacts that can trigger macOS bundle layout validation errors
+        rm -rf Publish/RagNext_Arm64.app/Contents/MacOS/*.dSYM
+        rm -f Publish/RagNext_Arm64.app/Contents/MacOS/*.pdb
 
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -168,9 +170,11 @@ jobs:
           cp -R Templates Publish/RagNext_Intel.app/Contents/Resources/Templates
         fi
 
-        # Ensure core executable has +x execution rights and is named cleanly without dots
-        mv Publish/RagNext_Intel.app/Contents/MacOS/RagNext.Designer.Avalonia Publish/RagNext_Intel.app/Contents/MacOS/RagNext
+        # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext
+        # Clean up build artifacts that can trigger macOS bundle layout validation errors
+        rm -rf Publish/RagNext_Intel.app/Contents/MacOS/*.dSYM
+        rm -f Publish/RagNext_Intel.app/Contents/MacOS/*.pdb
 
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Intel.app/Contents/Info.plist
