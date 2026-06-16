@@ -613,8 +613,7 @@ namespace RagNextPlayer.Managers
                     _videoPlayer.targetTexture = _videoTexture;
 
                     string url = FormatLocalPathForWeb(asset.RelativePath);
-                    if (url.StartsWith("file:///")) _videoPlayer.url = url.Substring(8);
-                    else if (url.StartsWith("file://")) _videoPlayer.url = url.Substring(7);
+                    if (url.StartsWith("file://")) _videoPlayer.url = new Uri(url).LocalPath;
                     else _videoPlayer.url = url;
 
                     _splashScreen.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
@@ -1986,14 +1985,9 @@ namespace RagNextPlayer.Managers
             _videoPlayer.targetTexture = _videoTexture;
 
             string url = FormatLocalPathForWeb(path);
-            // Standalone fallback: URL might need standard path format instead of file:// for Unity's VideoPlayer on Windows
-            if (url.StartsWith("file:///"))
+            if (url.StartsWith("file://"))
             {
-                _videoPlayer.url = url.Substring(8);
-            }
-            else if (url.StartsWith("file://"))
-            {
-                _videoPlayer.url = url.Substring(7);
+                _videoPlayer.url = new Uri(url).LocalPath;
             }
             else
             {
