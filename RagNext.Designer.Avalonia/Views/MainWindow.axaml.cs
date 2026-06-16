@@ -481,6 +481,76 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        public void OnCloseAttributeDialogClicked(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                if (vm.CloseAttributeDialogCommand.CanExecute(null))
+                {
+                    vm.CloseAttributeDialogCommand.Execute(null);
+                }
+            }
+        }
+
+        public void OnSaveAttributeClicked(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                if (vm.SaveAttributeCommand.CanExecute(null))
+                {
+                    vm.SaveAttributeCommand.Execute(null);
+                }
+            }
+        }
+
+        public void OnCloseActionSelectorClicked(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                if (vm.CloseActionSelectorCommand.CanExecute(null))
+                {
+                    vm.CloseActionSelectorCommand.Execute(null);
+                }
+            }
+        }
+
+        public void OnSelectActionTemplateClicked(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                var listBox = this.FindControl<ListBox>("SelectorTemplatesList");
+                var selectedItem = listBox?.SelectedItem;
+                if (vm.SelectActionTemplateCommand.CanExecute(selectedItem))
+                {
+                    vm.SelectActionTemplateCommand.Execute(selectedItem);
+                }
+            }
+        }
+
+        public void OnCloseInventorySelectorClicked(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                if (vm.CloseInventorySelectorCommand.CanExecute(null))
+                {
+                    vm.CloseInventorySelectorCommand.Execute(null);
+                }
+            }
+        }
+
+        public void OnSelectInventoryItemClicked(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                var listBox = this.FindControl<ListBox>("SelectorItemsList");
+                var selectedItem = listBox?.SelectedItem;
+                if (vm.SelectInventoryItemCommand.CanExecute(selectedItem))
+                {
+                    vm.SelectInventoryItemCommand.Execute(selectedItem);
+                }
+            }
+        }
+
         public void OnReportIssueClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
             try

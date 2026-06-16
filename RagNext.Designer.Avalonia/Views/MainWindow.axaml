@@ -2139,8 +2139,8 @@
                     </ListBox>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-                        <Button Content="Cancel" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloseInventorySelectorCommand}" Background="Transparent" Foreground="Gray"/>
-                        <Button Content="Add to Inventory" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectInventoryItemCommand}" CommandParameter="{Binding #SelectorItemsList.SelectedItem}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorItemsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <Button Content="Cancel" Click="OnCloseInventorySelectorClicked" Background="Transparent" Foreground="Gray"/>
+                        <Button Content="Add to Inventory" Click="OnSelectInventoryItemClicked" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorItemsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -2162,8 +2162,8 @@
                     </ListBox>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-                        <Button Content="Cancel" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloseActionSelectorCommand}" Background="Transparent" Foreground="Gray"/>
-                        <Button Content="Add Action" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectActionTemplateCommand}" CommandParameter="{Binding #SelectorTemplatesList.SelectedItem}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorTemplatesList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <Button Content="Cancel" Click="OnCloseActionSelectorClicked" Background="Transparent" Foreground="Gray"/>
+                        <Button Content="Add Action" Click="OnSelectActionTemplateClicked" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorTemplatesList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -2186,8 +2186,8 @@
                     </StackPanel>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
-                        <Button Content="Cancel" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloseAttributeDialogCommand}" Background="Transparent" Foreground="Gray"/>
-                        <Button Content="Save Parameter" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveAttributeCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                        <Button Content="Cancel" Click="OnCloseAttributeDialogClicked" Background="Transparent" Foreground="Gray"/>
+                        <Button Content="Save Parameter" Click="OnSaveAttributeClicked" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
