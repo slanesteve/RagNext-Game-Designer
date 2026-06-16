@@ -102,3 +102,30 @@ Templates/
 ```
 
 When building or publishing, the Designer automatically expects to locate `Templates/{Platform}/` right next to its executing path to seamlessly bundle the exported project save payload.
+
+---
+
+## 🔒 5. NativeAOT & WebView Airspace Best Practices
+
+When adding views, buttons, or native browser components (`NativeWebView`) to the Designer, follow these strict rules to ensure compatibility with macOS NativeAOT compilation and prevent UI hit-testing/click-blocking bugs:
+
+### 1. Programmatic Delegate Click Subscriptions (Anti-Trimming)
+Avoid defining click event handlers directly in XAML (e.g. `Click="OnSaveClicked"`) for critical overlay controls, dialogs, or settings buttons.
+* **Problem**: Under NativeAOT, the compiler trims methods that are only referenced in XAML by string, which silences click events completely.
+* **Solution**: Assign an `x:Name` in XAML and register click handlers programmatically in the C# code-behind constructor:
+  ```csharp
+  var saveBtn = this.FindControl<Button>("SaveButton");
+  if (saveBtn != null) saveBtn.Click += OnSaveClicked;
+  ```
+
+### 2. Dynamic WebView Mounting (Anti-Airspace Blocking)
+Native web browser views (`NativeWebView` hosted via `WKWebView`/`NativeControlHost` on macOS) do not honor standard visual properties like `IsVisible="False"`, parent opacity `Opacity="0.0"`, or parent bounds sizing like `Width="1" Height="1"` inside the native OS window manager. They remain active and intercept all pointer click events in their target regions.
+* **Problem**: An inactive webview will invisibly cover overlay panels and block clicks.
+* **Solution**: Physically mount and unmount WebViews to and from the visual tree dynamically. Detach them on startup and when hidden, and only insert them into their parent grid/border container when they are actively displayed.
+  ```csharp
+  // Detach / Unmount
+  if (CanvasWebView.Parent is Border parent) parent.Child = null;
+
+  // Attach / Mount
+  if (CanvasWebView.Parent == null) container.Child = CanvasWebView;
+  ```
