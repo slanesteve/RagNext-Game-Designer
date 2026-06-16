@@ -1235,8 +1235,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             SelectActionTemplateCommand = new Command<RagsCore.Models.Action>(async template =>
             {
+                Console.WriteLine($"[DEBUG] SelectActionTemplateCommand triggered. Template: {template?.Name ?? "null"}");
                 if (_actionTargetEntity == null)
                 {
+                    Console.WriteLine("[DEBUG] SelectActionTemplateCommand: _actionTargetEntity is null");
                     ShowActionSelectorOverlay = false;
                     return;
                 }
@@ -1268,8 +1270,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             act = new RagsCore.Models.Action { Name = template.Name, Trigger = template.Trigger, InitallyActive = true };
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.WriteLine($"[DEBUG] SelectActionTemplateCommand serialization exception: {ex.Message}");
                         act = new RagsCore.Models.Action { Name = template.Name, Trigger = template.Trigger, InitallyActive = true };
                     }
                 }
@@ -1279,13 +1282,16 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 else if (_actionTargetEntity is GameObject obj) obj.Actions.Add(act);
                 else if (_actionTargetEntity is Player player) player.Actions.Add(act);
 
+                Console.WriteLine("[DEBUG] SelectActionTemplateCommand: Saving game...");
                 await SaveGameAsync();
                 ShowActionSelectorOverlay = false;
                 _actionTargetEntity = null;
+                Console.WriteLine("[DEBUG] SelectActionTemplateCommand completed successfully");
             });
 
             CloseActionSelectorCommand = new Command(() =>
             {
+                Console.WriteLine("[DEBUG] CloseActionSelectorCommand triggered");
                 ShowActionSelectorOverlay = false;
                 _actionTargetEntity = null;
             });
