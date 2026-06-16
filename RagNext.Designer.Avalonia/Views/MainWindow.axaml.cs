@@ -245,6 +245,9 @@ namespace RagNext.Designer.Avalonia.Views
                         UpdateMediaPreview(vm.Media);
                     }
                 };
+                
+                // Initialize web view airspace state upon startup
+                UpdateWebViewsAirspace(vm.ShowComposeOverlay);
 
                 // Splash screen 3.5 seconds timer transition
                 if (vm.ShowWelcomeOverlay)

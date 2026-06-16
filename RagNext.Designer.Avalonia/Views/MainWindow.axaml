@@ -2004,7 +2004,7 @@
 
                 <!-- Visual Graph WebView Canvas -->
                 <Border Grid.Row="1" Background="{DynamicResource InputBg}" ClipToBounds="True">
-                    <wv:NativeWebView x:Name="CanvasWebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    <wv:NativeWebView x:Name="CanvasWebView" IsVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 </Border>
             </Grid>
         </Border>
