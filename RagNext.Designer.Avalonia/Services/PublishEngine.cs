@@ -83,9 +83,19 @@ namespace RagNext.Designer.Avalonia.Services
             if (createZip)
             {
                 Report("Creating distribution ZIP...");
-                string zipPath = outputDirectory.TrimEnd(Path.DirectorySeparatorChar) + ".zip";
-                CreateZipWithUnixPermissions(outputDirectory, zipPath);
-                Report($"ZIP created: {Path.GetFileName(zipPath)}");
+                string cleanOutput = outputDirectory.TrimEnd(Path.DirectorySeparatorChar);
+                string parentDir = Path.GetDirectoryName(cleanOutput) ?? cleanOutput;
+                string zipName = Path.GetFileName(cleanOutput) + ".zip";
+                string tempZipPath = Path.Combine(parentDir, zipName);
+
+                CreateZipWithUnixPermissions(outputDirectory, tempZipPath);
+
+                // Move the completed ZIP inside the output folder next to the executable/.app
+                string finalZipPath = Path.Combine(outputDirectory, zipName);
+                if (File.Exists(finalZipPath)) File.Delete(finalZipPath);
+                File.Move(tempZipPath, finalZipPath);
+
+                Report($"ZIP created: {zipName} (saved inside the export folder)");
             }
 
             Report("✅ Publish complete!");
