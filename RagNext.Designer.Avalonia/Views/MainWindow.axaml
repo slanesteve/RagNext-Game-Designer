@@ -1550,7 +1550,7 @@
                                 
                                 <!-- Preview Area -->
                                 <Border Grid.Row="1" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16" ClipToBounds="True">
-                                    <Grid>
+                                    <Grid x:Name="TabPreviewWebViewContainer">
                                         <!-- No selection fallback -->
                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" IsVisible="{Binding !HasSelectedFile}">
                                             <TextBlock Text="📂" FontSize="48" HorizontalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
@@ -1951,7 +1951,7 @@
                         
                         <!-- Media Preview Pane at Bottom -->
                         <Border Grid.Row="4" Height="180" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="8" ClipToBounds="True">
-                            <Grid>
+                            <Grid x:Name="PreviewWebViewContainer">
                                 <!-- No selection fallback -->
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6" IsVisible="{Binding !HasSelectedFile}">
                                     <TextBlock Text="📂" FontSize="32" HorizontalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
@@ -2003,7 +2003,7 @@
                 </Border>
 
                 <!-- Visual Graph WebView Canvas -->
-                <Border Grid.Row="1" Background="{DynamicResource InputBg}" ClipToBounds="True">
+                <Border x:Name="CanvasWebViewContainer" Grid.Row="1" Background="{DynamicResource InputBg}" ClipToBounds="True">
                     <wv:NativeWebView x:Name="CanvasWebView" IsVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 </Border>
             </Grid>

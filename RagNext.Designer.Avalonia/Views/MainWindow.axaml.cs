@@ -35,6 +35,13 @@ namespace RagNext.Designer.Avalonia.Views
         public MainWindow()
         {
             InitializeComponent();
+
+            // Detach webviews on startup so their native hosts are not created initially and don't block clicks.
+            if (CanvasWebView != null && CanvasWebView.Parent is Border canvasParent) canvasParent.Child = null;
+            if (PreviewWebView != null && PreviewWebView.Parent is Grid previewParent) previewParent.Children.Remove(PreviewWebView);
+            if (TabPreviewWebView != null && TabPreviewWebView.Parent is Grid tabParent) tabParent.Children.Remove(TabPreviewWebView);
+            if (SplashPreviewWebView != null && SplashPreviewWebView.Parent is Border splashParent) splashParent.Child = null;
+
             DataContextChanged += OnDataContextChanged;
 
             var startingRoomCombo = this.FindControl<ComboBox>("StartingRoomComboBox");
@@ -2409,13 +2416,18 @@ namespace RagNext.Designer.Avalonia.Views
                     File.WriteAllText(tempHtmlPath, htmlContent, Encoding.UTF8);
                     
                     var playerUri = new Uri(tempHtmlPath);
-                    if (PreviewWebView != null)
+                    var previewContainer = this.FindControl<Grid>("PreviewWebViewContainer");
+                    var tabPreviewContainer = this.FindControl<Grid>("TabPreviewWebViewContainer");
+
+                    if (PreviewWebView != null && previewContainer != null)
                     {
+                        if (PreviewWebView.Parent == null) previewContainer.Children.Add(PreviewWebView);
                         PreviewWebView.Source = playerUri;
                         PreviewWebView.IsVisible = true;
                     }
-                    if (TabPreviewWebView != null)
+                    if (TabPreviewWebView != null && tabPreviewContainer != null)
                     {
+                        if (TabPreviewWebView.Parent == null) tabPreviewContainer.Children.Add(TabPreviewWebView);
                         TabPreviewWebView.Source = playerUri;
                         TabPreviewWebView.IsVisible = true;
                     }
@@ -2426,11 +2438,13 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         PreviewWebView.IsVisible = false;
                         PreviewWebView.Source = new Uri("about:blank");
+                        if (PreviewWebView.Parent is Grid previewParent) previewParent.Children.Remove(PreviewWebView);
                     }
                     if (TabPreviewWebView != null)
                     {
                         TabPreviewWebView.IsVisible = false;
                         TabPreviewWebView.Source = new Uri("about:blank");
+                        if (TabPreviewWebView.Parent is Grid tabParent) tabParent.Children.Remove(TabPreviewWebView);
                     }
                 }
             }
@@ -2666,6 +2680,11 @@ namespace RagNext.Designer.Avalonia.Views
                     File.WriteAllText(tempHtmlPath, htmlContent, Encoding.UTF8);
                     
                     var targetUri = new Uri(tempHtmlPath);
+                    var splashContainer = this.FindControl<Border>("SplashPreviewContainer");
+                    if (splashContainer != null && SplashPreviewWebView.Parent == null)
+                    {
+                        splashContainer.Child = SplashPreviewWebView;
+                    }
                     if (SplashPreviewWebView.Source != targetUri)
                     {
                         SplashPreviewWebView.Source = targetUri;
@@ -2693,6 +2712,7 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     SplashPreviewWebView.IsVisible = false;
                     SplashPreviewWebView.Source = new Uri("about:blank");
+                    if (SplashPreviewWebView.Parent is Border splashParent) splashParent.Child = null;
                 }
             }
             catch (Exception ex)
@@ -3548,57 +3568,85 @@ namespace RagNext.Designer.Avalonia.Views
 
         private void UpdateWebViewsAirspace(bool overlayOpen)
         {
-            if (overlayOpen)
+            if (DataContext is not MainWindowViewModel vm) return;
+
+            // 1. CanvasWebView
+            var canvasContainer = this.FindControl<Border>("CanvasWebViewContainer");
+            if (CanvasWebView != null && canvasContainer != null)
             {
-                if (CanvasWebView != null)
+                bool shouldBeVisible = vm.IsVisualEditing && !overlayOpen;
+                if (shouldBeVisible)
+                {
+                    if (CanvasWebView.Parent == null)
+                    {
+                        canvasContainer.Child = CanvasWebView;
+                    }
+                    CanvasWebView.IsVisible = true;
+                    if (!_isWebViewLoaded)
+                    {
+                        EnsureWebViewLoaded();
+                    }
+                }
+                else
                 {
                     CanvasWebView.IsVisible = false;
+                    if (CanvasWebView.Parent != null)
+                    {
+                        canvasContainer.Child = null;
+                    }
                     _isWebViewLoaded = false;
                 }
-                if (PreviewWebView != null) PreviewWebView.IsVisible = false;
-                if (TabPreviewWebView != null) TabPreviewWebView.IsVisible = false;
-                if (SplashPreviewWebView != null) SplashPreviewWebView.IsVisible = false;
+            }
+
+            if (overlayOpen)
+            {
+                if (PreviewWebView != null)
+                {
+                    PreviewWebView.IsVisible = false;
+                    if (PreviewWebView.Parent is Grid previewParent) previewParent.Children.Remove(PreviewWebView);
+                }
+                if (TabPreviewWebView != null)
+                {
+                    TabPreviewWebView.IsVisible = false;
+                    if (TabPreviewWebView.Parent is Grid tabParent) tabParent.Children.Remove(TabPreviewWebView);
+                }
+                if (SplashPreviewWebView != null)
+                {
+                    SplashPreviewWebView.IsVisible = false;
+                    if (SplashPreviewWebView.Parent is Border splashParent) splashParent.Child = null;
+                }
             }
             else
             {
-                if (DataContext is MainWindowViewModel vm)
+                // If we are visual editing, hide other preview webviews to avoid any airspace overlap!
+                if (vm.IsVisualEditing)
                 {
-                    if (CanvasWebView != null)
+                    if (PreviewWebView != null)
                     {
-                        bool shouldBeVisible = vm.IsVisualEditing;
-                        if (CanvasWebView.IsVisible != shouldBeVisible)
-                        {
-                            CanvasWebView.IsVisible = shouldBeVisible;
-                            if (!shouldBeVisible)
-                            {
-                                _isWebViewLoaded = false;
-                            }
-                            else
-                            {
-                                EnsureWebViewLoaded();
-                            }
-                        }
-                        else if (shouldBeVisible && !_isWebViewLoaded)
-                        {
-                            EnsureWebViewLoaded();
-                        }
+                        PreviewWebView.IsVisible = false;
+                        PreviewWebView.Source = new Uri("about:blank");
+                        if (PreviewWebView.Parent is Grid previewParent) previewParent.Children.Remove(PreviewWebView);
                     }
-
-                    // If we are visual editing, hide other preview webviews to avoid any airspace overlap!
-                    if (vm.IsVisualEditing)
+                    if (TabPreviewWebView != null)
                     {
-                        if (PreviewWebView != null) { PreviewWebView.IsVisible = false; PreviewWebView.Source = new Uri("about:blank"); }
-                        if (TabPreviewWebView != null) { TabPreviewWebView.IsVisible = false; TabPreviewWebView.Source = new Uri("about:blank"); }
-                        if (SplashPreviewWebView != null) { SplashPreviewWebView.IsVisible = false; SplashPreviewWebView.Source = new Uri("about:blank"); }
+                        TabPreviewWebView.IsVisible = false;
+                        TabPreviewWebView.Source = new Uri("about:blank");
+                        if (TabPreviewWebView.Parent is Grid tabParent) tabParent.Children.Remove(TabPreviewWebView);
                     }
-                    else
+                    if (SplashPreviewWebView != null)
                     {
-                        if (vm.Media != null)
-                        {
-                            UpdateMediaPreview(vm.Media);
-                        }
-                        UpdateSplashVideoPreview(vm);
+                        SplashPreviewWebView.IsVisible = false;
+                        SplashPreviewWebView.Source = new Uri("about:blank");
+                        if (SplashPreviewWebView.Parent is Border splashParent) splashParent.Child = null;
                     }
+                }
+                else
+                {
+                    if (vm.Media != null)
+                    {
+                        UpdateMediaPreview(vm.Media);
+                    }
+                    UpdateSplashVideoPreview(vm);
                 }
             }
         }
