@@ -685,10 +685,28 @@ namespace RagNextPlayer.Runtime
                 case PlayerSetPortraitMediaCommandData c:
                     {
                         var resolved = ctx.Resolve(c.MediaId);
-                        var asset = ctx.Game.MediaAssets.Find(a => a.Id == resolved);
+                        var asset = ctx.Game.MediaAssets.Find(a => a.Id == resolved 
+                            || string.Equals(a.Name, resolved, StringComparison.OrdinalIgnoreCase) 
+                            || string.Equals(System.IO.Path.GetFileNameWithoutExtension(a.Name), resolved, StringComparison.OrdinalIgnoreCase));
                         ctx.Player.PortraitImagePath = asset?.RelativePath ?? resolved;
                     }
                     break;
+
+                case CharacterSetPortraitMediaCommandData c:
+                    {
+                        var charId = ctx.Resolve(c.CharacterId);
+                        var resolved = ctx.Resolve(c.MediaId);
+                        var asset = ctx.Game.MediaAssets.Find(a => a.Id == resolved 
+                            || string.Equals(a.Name, resolved, StringComparison.OrdinalIgnoreCase) 
+                            || string.Equals(System.IO.Path.GetFileNameWithoutExtension(a.Name), resolved, StringComparison.OrdinalIgnoreCase));
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character != null)
+                        {
+                            character.PortraitImagePath = asset?.RelativePath ?? resolved;
+                        }
+                    }
+                    break;
+
 
                 case CharacterMoveToRoomCommandData c:
                     {
@@ -1360,6 +1378,52 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case ShowStatusElementCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.ElementId);
+                        var element = ctx.Game.StatusBarElements.Find(e => e.Id == resolved || string.Equals(e.Name, resolved, StringComparison.OrdinalIgnoreCase));
+                        if (element != null)
+                        {
+                            element.IsVisible = true;
+                        }
+                    }
+                    break;
+
+                case HideStatusElementCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.ElementId);
+                        var element = ctx.Game.StatusBarElements.Find(e => e.Id == resolved || string.Equals(e.Name, resolved, StringComparison.OrdinalIgnoreCase));
+                        if (element != null)
+                        {
+                            element.IsVisible = false;
+                        }
+                    }
+                    break;
+
+                case SetStatusElementTextCommandData c:
+                    {
+                        var resolvedId = ctx.Resolve(c.ElementId);
+                        var resolvedText = ctx.Resolve(c.Text);
+                        var element = ctx.Game.StatusBarElements.Find(e => e.Id == resolvedId || string.Equals(e.Name, resolvedId, StringComparison.OrdinalIgnoreCase));
+                        if (element != null)
+                        {
+                            element.Text = resolvedText;
+                        }
+                    }
+                    break;
+
+                case SetStatusElementImageCommandData c:
+                    {
+                        var resolvedId = ctx.Resolve(c.ElementId);
+                        var resolvedMedia = ctx.Resolve(c.MediaId);
+                        var element = ctx.Game.StatusBarElements.Find(e => e.Id == resolvedId || string.Equals(e.Name, resolvedId, StringComparison.OrdinalIgnoreCase));
+                        if (element != null)
+                        {
+                            element.MediaAssetId = resolvedMedia;
+                        }
+                    }
+                    break;
+
                 default:
                     Debug.LogWarning($"[ActionExecutor] Unhandled command type: {cmd.Type}");
                     break;
@@ -1469,6 +1533,10 @@ namespace RagNextPlayer.Runtime
 
                 ItemWornConditionData c =>
                     FindGameObject(ctx.Resolve(c.ItemId), ctx.Game)?.IsWorn ?? false,
+
+                StatusElementVisibleConditionData c =>
+                    ctx.Game.StatusBarElements.Find(e => e.Id == ctx.Resolve(c.ElementId) || string.Equals(e.Name, ctx.Resolve(c.ElementId), StringComparison.OrdinalIgnoreCase))
+                        ?.IsVisible ?? false,
 
                 ForEachLoopCommandData => true,
 

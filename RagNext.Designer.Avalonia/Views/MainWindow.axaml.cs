@@ -31,6 +31,9 @@ namespace RagNext.Designer.Avalonia.Views
         private bool _isWebViewEventsSubscribed = false;
         private int _composeSelectionStart = -1;
         private int _composeSelectionEnd = -1;
+        private int _inlineSelectionStart = -1;
+        private int _inlineSelectionEnd = -1;
+        private TextBox? _lastFocusedTextBox = null;
 
         public MainWindow()
         {
@@ -41,7 +44,6 @@ namespace RagNext.Designer.Avalonia.Views
             if (PreviewWebView != null && PreviewWebView.Parent is Grid previewParent) previewParent.Children.Remove(PreviewWebView);
             if (TabPreviewWebView != null && TabPreviewWebView.Parent is Grid tabParent) tabParent.Children.Remove(TabPreviewWebView);
             if (SplashPreviewWebView != null && SplashPreviewWebView.Parent is Border splashParent) splashParent.Child = null;
-            if (ComposePreviewWebView != null && ComposePreviewWebView.Parent is Border composeParent) composeParent.Child = null;
 
             DataContextChanged += OnDataContextChanged;
 
@@ -134,6 +136,12 @@ namespace RagNext.Designer.Avalonia.Views
             AddHandler(TextBox.KeyUpEvent, OnTextBoxKeyUp, RoutingStrategies.Bubble, true);
             AddHandler(TextBox.KeyDownEvent, OnTextBoxKeyDown, RoutingStrategies.Bubble, true);
             AddHandler(TextBox.LostFocusEvent, OnTextBoxLostFocus, RoutingStrategies.Bubble, true);
+            AddHandler(TextBox.GotFocusEvent, (s, e) => {
+                if (e.Source is TextBox tb)
+                {
+                    _lastFocusedTextBox = tb;
+                }
+            }, RoutingStrategies.Bubble, true);
 
             var composeTextBox = this.FindControl<TextBox>("ComposeTextBox");
             if (composeTextBox != null)
@@ -147,6 +155,63 @@ namespace RagNext.Designer.Avalonia.Views
                     _composeSelectionStart = composeTextBox.SelectionStart;
                     _composeSelectionEnd = composeTextBox.SelectionEnd;
                 };
+
+                composeTextBox.LostFocus += (s, e) => {
+                    if (composeTextBox.SelectionStart != composeTextBox.SelectionEnd && composeTextBox.SelectionStart >= 0)
+                    {
+                        _composeSelectionStart = composeTextBox.SelectionStart;
+                        _composeSelectionEnd = composeTextBox.SelectionEnd;
+                    }
+                };
+            }
+
+            var composeTextBoxStatus = this.FindControl<TextBox>("ComposeTextBox_Status");
+            if (composeTextBoxStatus != null)
+            {
+                composeTextBoxStatus.AddHandler(TextBox.PointerReleasedEvent, (s, e) => {
+                    _composeSelectionStart = composeTextBoxStatus.SelectionStart;
+                    _composeSelectionEnd = composeTextBoxStatus.SelectionEnd;
+                }, RoutingStrategies.Bubble, true);
+
+                composeTextBoxStatus.KeyUp += (s, e) => {
+                    _composeSelectionStart = composeTextBoxStatus.SelectionStart;
+                    _composeSelectionEnd = composeTextBoxStatus.SelectionEnd;
+                };
+
+                composeTextBoxStatus.LostFocus += (s, e) => {
+                    if (composeTextBoxStatus.SelectionStart != composeTextBoxStatus.SelectionEnd && composeTextBoxStatus.SelectionStart >= 0)
+                    {
+                        _composeSelectionStart = composeTextBoxStatus.SelectionStart;
+                        _composeSelectionEnd = composeTextBoxStatus.SelectionEnd;
+                    }
+                };
+            }
+
+            var inlineNames = new[] { "PlayerDescriptionTextBox", "RoomDescriptionTextBox", "CharacterDescriptionTextBox", "ObjectDescriptionTextBox" };
+            foreach (var name in inlineNames)
+            {
+                var tb = this.FindControl<TextBox>(name);
+                if (tb != null)
+                {
+                    tb.AddHandler(TextBox.PointerReleasedEvent, (s, e) => {
+                        _inlineSelectionStart = tb.SelectionStart;
+                        _inlineSelectionEnd = tb.SelectionEnd;
+                    }, RoutingStrategies.Bubble, true);
+
+                    tb.KeyUp += (s, e) => {
+                        _inlineSelectionStart = tb.SelectionStart;
+                        _inlineSelectionEnd = tb.SelectionEnd;
+                    };
+
+                    tb.LostFocus += (s, e) => {
+                        // Keep current selections if the new focus is inside the window or temporary flyout picker
+                        if (tb.SelectionStart != tb.SelectionEnd && tb.SelectionStart >= 0)
+                        {
+                            _inlineSelectionStart = tb.SelectionStart;
+                            _inlineSelectionEnd = tb.SelectionEnd;
+                        }
+                    };
+                }
             }
 
             // Setup MediaLibraryViewModel hooks
@@ -171,12 +236,62 @@ namespace RagNext.Designer.Avalonia.Views
                 return folder?.Path.LocalPath ?? string.Empty;
             };
 
+            MainWindowViewModel.PickImportPackageFileAsync = async () =>
+            {
+                var files = await StorageProvider.OpenFilePickerAsync(new global::Avalonia.Platform.Storage.FilePickerOpenOptions
+                {
+                    AllowMultiple = false,
+                    Title = "Import RagNext Design Package",
+                    FileTypeFilter = new[]
+                    {
+                        new global::Avalonia.Platform.Storage.FilePickerFileType("RagNext Design Packages")
+                        {
+                            Patterns = new[] { "*.ragnext" }
+                        }
+                    }
+                });
+                return global::System.Linq.Enumerable.FirstOrDefault(files)?.Path.LocalPath;
+            };
+
+            MainWindowViewModel.PickExportPackageFileAsync = async (defaultFileName) =>
+            {
+                var file = await StorageProvider.SaveFilePickerAsync(new global::Avalonia.Platform.Storage.FilePickerSaveOptions
+                {
+                    Title = "Export RagNext Design Package",
+                    DefaultExtension = ".ragnext",
+                    SuggestedFileName = defaultFileName,
+                    FileTypeChoices = new[]
+                    {
+                        new global::Avalonia.Platform.Storage.FilePickerFileType("RagNext Design Packages")
+                        {
+                            Patterns = new[] { "*.ragnext" }
+                        }
+                    }
+                });
+                return file?.Path.LocalPath;
+            };
+
             MediaLibraryViewModel.PromptInputAsync = async (title, message) =>
             {
                 return await PromptDialog.ShowAsync(this, title, message);
             };
 
             MediaLibraryViewModel.ConfirmDialogAsync = async (title, message) =>
+            {
+                return await ConfirmDialog.ShowAsync(this, title, message);
+            };
+
+            MediaLibraryViewModel.ConfirmPublishDialogAsync = async (title, message) =>
+            {
+                return await ConfirmPublishDialog.ShowAsync(this, title, message);
+            };
+
+            MainWindowViewModel.ShowAlertDialogAsync = async (title, message) =>
+            {
+                await AlertDialog.ShowAsync(this, title, message);
+            };
+
+            MainWindowViewModel.ShowConfirmDialogAsync = async (title, message) =>
             {
                 return await ConfirmDialog.ShowAsync(this, title, message);
             };
@@ -265,6 +380,14 @@ namespace RagNext.Designer.Avalonia.Views
                     else if (ev.PropertyName == nameof(MainWindowViewModel.ShowComposeOverlay))
                     {
                         UpdateWebViewsAirspace(vm.ShowComposeOverlay);
+                        if (vm.ShowComposeOverlay)
+                        {
+                            global::Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                            {
+                                await Task.Delay(250);
+                                UpdateComposePreview(vm.ComposeText);
+                            });
+                        }
                     }
                 };
 
@@ -296,8 +419,15 @@ namespace RagNext.Designer.Avalonia.Views
 
                 vm.ComposeApplied += async (nodeId, fieldName, text) =>
                 {
-                    var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
-                    await CanvasWebView.InvokeScript($"if (typeof updateNodeAIResult === 'function') {{ updateNodeAIResult('{nodeId}', '{fieldName}', atob('{base64}')); }}");
+                    try
+                    {
+                        var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
+                        await CanvasWebView.InvokeScript($"if (typeof updateNodeAIResult === 'function') {{ updateNodeAIResult('{nodeId}', '{fieldName}', atob('{base64}')); }}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to invoke ComposeApplied script: {ex.Message}");
+                    }
                 };
 
                 vm.PropertyChanged += (s, ev) =>
@@ -483,7 +613,8 @@ namespace RagNext.Designer.Avalonia.Views
                     Functions = vm.CurrentGame.Functions.Select(f => new CatalogEntityDto { Id = f.Name, Name = f.Name }).ToList(),
                     Timers = vm.CurrentGame.Timers.Select(t => new CatalogEntityDto { Id = t.Name, Name = t.Name, Attributes = t.Attributes.Select(a => a.Name).ToList() }).ToList(),
                     // Bug #5: Top-level PlayerActions for the player.setActionActive command.
-                    PlayerActions = vm.CurrentGame.Player.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
+                    PlayerActions = vm.CurrentGame.Player.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList(),
+                    StatusBarElements = vm.CurrentGame.StatusBarElements.Select(s => new CatalogEntityDto { Id = s.Id.ToString(), Name = s.Name }).ToList()
                 };
                 string catalogsJson = JsonSerializer.Serialize(catalogsObj, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.CatalogsDto);
 
@@ -555,17 +686,57 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        public void OnSelectActionTemplateClicked(object sender, RoutedEventArgs e)
+        public async void OnSelectActionTemplateClicked(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("[DEBUG] OnSelectActionTemplateClicked code-behind triggered");
             if (DataContext is MainWindowViewModel vm)
             {
                 var listBox = this.FindControl<ListBox>("SelectorTemplatesList");
                 var selectedItem = listBox?.SelectedItem;
+                var target = vm._actionTargetEntity;
                 Console.WriteLine($"[DEBUG] OnSelectActionTemplateClicked selected item: {selectedItem?.GetType().Name ?? "null"}");
                 if (vm.SelectActionTemplateCommand.CanExecute(selectedItem))
                 {
                     vm.SelectActionTemplateCommand.Execute(selectedItem);
+
+                    var newAction = vm.LastAddedAction;
+                    if (newAction != null && target != null)
+                    {
+                        ListBox? targetList = null;
+                        TextBox? targetTextBox = null;
+
+                        if (target is Player)
+                        {
+                            targetList = this.FindControl<ListBox>("PlayerActionsList");
+                            targetTextBox = this.FindControl<TextBox>("PlayerActionNameTextBox");
+                        }
+                        else if (target is Room)
+                        {
+                            targetList = this.FindControl<ListBox>("RoomActionsList");
+                            targetTextBox = this.FindControl<TextBox>("RoomActionNameTextBox");
+                        }
+                        else if (target is Character)
+                        {
+                            targetList = this.FindControl<ListBox>("CharacterActionsList");
+                            targetTextBox = this.FindControl<TextBox>("CharacterActionNameTextBox");
+                        }
+                        else if (target is GameObject)
+                        {
+                            targetList = this.FindControl<ListBox>("ObjectActionsList");
+                            targetTextBox = this.FindControl<TextBox>("ObjectActionNameTextBox");
+                        }
+
+                        if (targetList != null)
+                        {
+                            targetList.SelectedItem = newAction;
+                        }
+                        if (targetTextBox != null)
+                        {
+                            await Task.Delay(100);
+                            targetTextBox.Focus();
+                            targetTextBox.SelectAll();
+                        }
+                    }
                 }
             }
         }
@@ -1553,6 +1724,43 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private void OnStatusBarListSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (StatusBarList.SelectedItem is RagsCore.Models.StatusBarElement element)
+            {
+                if (element.MediaAssetId.HasValue && App.CurrentGame != null)
+                {
+                    var asset = App.CurrentGame.MediaAssets.FirstOrDefault(a => a.Id == element.MediaAssetId.Value);
+                    StatusIconComboBox.SelectedItem = asset;
+                }
+                else
+                {
+                    StatusIconComboBox.SelectedItem = null;
+                }
+            }
+            else
+            {
+                StatusIconComboBox.SelectedItem = null;
+            }
+        }
+
+        private void OnStatusIconSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count == 0)
+            {
+                if (StatusBarList.SelectedItem is RagsCore.Models.StatusBarElement element)
+                {
+                    element.MediaAssetId = null;
+                }
+                return;
+            }
+            if (e.AddedItems[0] is not RagsCore.Models.MediaAsset asset) return;
+            if (StatusBarList.SelectedItem is RagsCore.Models.StatusBarElement el)
+            {
+                el.MediaAssetId = asset.Id;
+            }
+        }
+
         // Bug #3 fix: Use code-behind SelectionChanged instead of TwoWay binding so that
         // Avalonia's ComboBox ItemsSource-refresh-induced SelectedItem reset (which sends null
         // to the setter) never overwrites the persisted asset ID.
@@ -1714,15 +1922,32 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     room.Exits[ec.Direction] = destRoom.Id;
 
-                    if (ec.OneWay.IsChecked == false && _opposites.TryGetValue(ec.Direction, out var opposite))
+                    if (destRoom.Id != room.Id)
                     {
-                        destRoom.Exits[opposite] = room.Id;
-                    }
+                        if (ec.OneWay.IsChecked == true)
+                        {
+                            if (_opposites.TryGetValue(ec.Direction, out var opposite))
+                            {
+                                if (destRoom.Exits.TryGetValue(opposite, out var backId) && backId == room.Id)
+                                {
+                                    destRoom.Exits.Remove(opposite);
+                                    destRoom.LockedExits.Remove(opposite);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (_opposites.TryGetValue(ec.Direction, out var opposite))
+                            {
+                                destRoom.Exits[opposite] = room.Id;
+                            }
 
-                    bool hasBack = _opposites.TryGetValue(ec.Direction, out var opp2)
-                        && destRoom.Exits.TryGetValue(opp2, out var backId)
-                        && backId == room.Id;
-                    ec.OneWay.IsChecked = !hasBack;
+                            bool hasBack = _opposites.TryGetValue(ec.Direction, out var opp2)
+                                && destRoom.Exits.TryGetValue(opp2, out var backId)
+                                && backId == room.Id;
+                            ec.OneWay.IsChecked = !hasBack;
+                        }
+                    }
                 }
             }
             finally
@@ -1748,13 +1973,18 @@ namespace RagNext.Designer.Avalonia.Views
             if (destRoom is null) return;
             if (!_opposites.TryGetValue(ec.Direction, out var opposite)) return;
 
+            if (destRoom.Id == room.Id) return; // Self-looping exits don't manage opposite rooms
+
             _suppressExitEvents = true;
             try
             {
                 if (cb.IsChecked == true)
                 {
-                    destRoom.Exits.Remove(opposite);
-                    destRoom.LockedExits.Remove(opposite);
+                    if (destRoom.Exits.TryGetValue(opposite, out var backId) && backId == room.Id)
+                    {
+                        destRoom.Exits.Remove(opposite);
+                        destRoom.LockedExits.Remove(opposite);
+                    }
                 }
                 else
                 {
@@ -2444,12 +2674,14 @@ namespace RagNext.Designer.Avalonia.Views
 
                     if (PreviewWebView != null && previewContainer != null)
                     {
+                        PreviewWebView.Source = new Uri("about:blank");
                         if (PreviewWebView.Parent == null) previewContainer.Children.Add(PreviewWebView);
                         PreviewWebView.Source = playerUri;
                         PreviewWebView.IsVisible = true;
                     }
                     if (TabPreviewWebView != null && tabPreviewContainer != null)
                     {
+                        TabPreviewWebView.Source = new Uri("about:blank");
                         if (TabPreviewWebView.Parent == null) tabPreviewContainer.Children.Add(TabPreviewWebView);
                         TabPreviewWebView.Source = playerUri;
                         TabPreviewWebView.IsVisible = true;
@@ -3613,11 +3845,6 @@ namespace RagNext.Designer.Avalonia.Views
                 else
                 {
                     CanvasWebView.IsVisible = false;
-                    if (CanvasWebView.Parent != null)
-                    {
-                        canvasContainer.Child = null;
-                    }
-                    _isWebViewLoaded = false;
                 }
             }
 
@@ -3652,14 +3879,10 @@ namespace RagNext.Designer.Avalonia.Views
             }
             else
             {
-                // Detach ComposePreviewWebView
+                // Hide ComposePreviewWebView
                 if (ComposePreviewWebView != null)
                 {
                     ComposePreviewWebView.IsVisible = false;
-                    if (ComposePreviewWebView.Parent is Border composeParent)
-                    {
-                        composeParent.Child = null;
-                    }
                 }
 
                 // If we are visual editing, hide other preview webviews to avoid any airspace overlap!
@@ -3706,6 +3929,7 @@ namespace RagNext.Designer.Avalonia.Views
             vm.ComposeTitle = $"Compose {fieldName} - Node {nodeId}";
             vm.ComposeTarget = null;
             vm.ShowComposeOverlay = true;
+            UpdateComposePreview(currentText);
         }
 
         private void UpdateComposePreview(string text)
@@ -3763,8 +3987,22 @@ namespace RagNext.Designer.Avalonia.Views
                 .Replace("&lt;u&gt;", "<u>")
                 .Replace("&lt;/u&gt;", "</u>");
 
-            html = System.Text.RegularExpressions.Regex.Replace(html, @"&lt;color=(#[a-f0-9]{6})&gt;(.*?)&lt;/color&gt;", "<span style=\"color: $1;\">$2</span>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            html = System.Text.RegularExpressions.Regex.Replace(html, @"&lt;mark=(#[a-f0-9]{6,8})&gt;(.*?)&lt;/mark&gt;", "<span style=\"background-color: $1; padding: 2px 4px; border-radius: 4px;\">$2</span>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            html = System.Text.RegularExpressions.Regex.Replace(html, @"&lt;color=(#[a-f0-9]{6,8})&gt;(.*?)&lt;/color&gt;", m => {
+                var color = m.Groups[1].Value;
+                if (color.Length == 9) // #AARRGGBB
+                {
+                    color = "#" + color.Substring(3) + color.Substring(1, 2);
+                }
+                return $"<span style=\"color: {color};\">{m.Groups[2].Value}</span>";
+            }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            html = System.Text.RegularExpressions.Regex.Replace(html, @"&lt;mark=(#[a-f0-9]{6,8})&gt;(.*?)&lt;/mark&gt;", m => {
+                var color = m.Groups[1].Value;
+                if (color.Length == 9) // #AARRGGBB
+                {
+                    color = "#" + color.Substring(3) + color.Substring(1, 2);
+                }
+                return $"<span style=\"background-color: {color}; padding: 2px 4px; border-radius: 4px;\">{m.Groups[2].Value}</span>";
+            }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
             html = html.Replace("\n", "<br>");
             return html;
@@ -4250,16 +4488,39 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private TextBox? GetActiveTextBox()
+        {
+            if (_lastFocusedTextBox != null) return _lastFocusedTextBox;
+            
+            var names = new[] { "ComposeTextBox", "ComposeTextBox_Status", "PlayerDescriptionTextBox", "RoomDescriptionTextBox", "CharacterDescriptionTextBox", "ObjectDescriptionTextBox" };
+            foreach (var name in names)
+            {
+                var tb = this.FindControl<TextBox>(name);
+                if (tb != null && tb.IsFocused) return tb;
+            }
+            foreach (var name in names)
+            {
+                var tb = this.FindControl<TextBox>(name);
+                if (tb != null && tb.IsVisible) return tb;
+            }
+            return null;
+        }
+
         private void WrapComposeSelection(string startTag, string endTag)
         {
-            var tb = this.FindControl<TextBox>("ComposeTextBox");
+            var tb = GetActiveTextBox();
             if (tb == null) return;
 
             int start, end;
-            if (_composeSelectionStart >= 0 && _composeSelectionEnd >= 0)
+            if (_composeSelectionStart >= 0 && _composeSelectionEnd >= 0 && (tb.Name == "ComposeTextBox" || tb.Name == "ComposeTextBox_Status"))
             {
                 start = Math.Min(_composeSelectionStart, _composeSelectionEnd);
                 end = Math.Max(_composeSelectionStart, _composeSelectionEnd);
+            }
+            else if (_inlineSelectionStart >= 0 && _inlineSelectionEnd >= 0 && tb.Name != "ComposeTextBox" && tb.Name != "ComposeTextBox_Status")
+            {
+                start = Math.Min(_inlineSelectionStart, _inlineSelectionEnd);
+                end = Math.Max(_inlineSelectionStart, _inlineSelectionEnd);
             }
             else
             {
@@ -4327,8 +4588,16 @@ namespace RagNext.Designer.Avalonia.Views
                 }
             }
 
-            _composeSelectionStart = tb.SelectionStart;
-            _composeSelectionEnd = tb.SelectionEnd;
+            if (tb.Name == "ComposeTextBox" || tb.Name == "ComposeTextBox_Status")
+            {
+                _composeSelectionStart = tb.SelectionStart;
+                _composeSelectionEnd = tb.SelectionEnd;
+            }
+            else
+            {
+                _inlineSelectionStart = tb.SelectionStart;
+                _inlineSelectionEnd = tb.SelectionEnd;
+            }
         }
 
         private void OnComposeBoldClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
@@ -4346,32 +4615,143 @@ namespace RagNext.Designer.Avalonia.Views
             WrapComposeSelection("<u>", "</u>");
         }
 
-        private void OnComposeColorSelected(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        private void OnComposeColorPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (sender is MenuItem item && item.CommandParameter is string hex)
+            var picker = this.FindControl<ColorPicker>("ComposeColorPicker");
+            if (picker != null)
             {
+                var hex = picker.Color.ToString();
                 WrapComposeSelection($"<color={hex}>", "</color>");
             }
+            CloseParentFlyout(sender);
         }
 
-        private void OnComposeHighlightSelected(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        private void OnComposeHighlightPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (sender is MenuItem item && item.CommandParameter is string hex)
+            var picker = this.FindControl<ColorPicker>("ComposeHighlightPicker");
+            if (picker != null)
             {
+                var hex = picker.Color.ToString();
                 WrapComposeSelection($"<mark={hex}>", "</mark>");
+            }
+            CloseParentFlyout(sender);
+        }
+
+        private void OnInlineColorPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            ColorPicker? picker = null;
+            if (sender is Visual visual)
+            {
+                var parent = visual.GetVisualParent();
+                while (parent != null)
+                {
+                    picker = parent.FindDescendantOfType<ColorPicker>();
+                    if (picker != null) break;
+                    parent = parent.GetVisualParent();
+                }
+            }
+
+            if (picker != null)
+            {
+                var hex = picker.Color.ToString();
+                WrapComposeSelection($"<color={hex}>", "</color>");
+            }
+            CloseParentFlyout(sender);
+        }
+
+        private void OnInlineHighlightPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            ColorPicker? picker = null;
+            if (sender is Visual visual)
+            {
+                var parent = visual.GetVisualParent();
+                while (parent != null)
+                {
+                    picker = parent.FindDescendantOfType<ColorPicker>();
+                    if (picker != null) break;
+                    parent = parent.GetVisualParent();
+                }
+            }
+
+            if (picker != null)
+            {
+                var hex = picker.Color.ToString();
+                WrapComposeSelection($"<mark={hex}>", "</mark>");
+            }
+            CloseParentFlyout(sender);
+        }
+
+        private void CloseParentFlyout(object? sender)
+        {
+            if (sender is Visual visual)
+            {
+                // Walk up both Visual and Logical trees to find Popup or FlyoutPresenter
+                var currentVisual = visual;
+                global::Avalonia.Controls.Primitives.Popup? popup = null;
+                while (currentVisual != null)
+                {
+                    if (currentVisual is global::Avalonia.Controls.Primitives.Popup p)
+                    {
+                        popup = p;
+                        break;
+                    }
+                    if (currentVisual.GetType().Name == "FlyoutPresenter")
+                    {
+                        // Flyouts are managed via their parent Popup inside VisualRoot
+                        popup = currentVisual.FindAncestorOfType<global::Avalonia.Controls.Primitives.Popup>();
+                        if (popup != null) break;
+                    }
+                    currentVisual = currentVisual.GetVisualParent();
+                }
+
+                if (popup == null)
+                {
+                    var currentLogical = visual as global::Avalonia.LogicalTree.ILogical;
+                    while (currentLogical != null)
+                    {
+                        if (currentLogical is global::Avalonia.Controls.Primitives.Popup p)
+                        {
+                            popup = p;
+                            break;
+                        }
+                        currentLogical = currentLogical.LogicalParent;
+                    }
+                }
+
+                if (popup != null)
+                {
+                    popup.IsOpen = false;
+                }
+                else
+                {
+                    // Fallback to closing all popups hosted on the window
+                    var root = global::Avalonia.Controls.TopLevel.GetTopLevel(visual);
+                    if (root != null)
+                    {
+                        foreach (var pop in global::Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(root).OfType<global::Avalonia.Controls.Primitives.Popup>())
+                        {
+                            pop.IsOpen = false;
+                        }
+                    }
+                }
             }
         }
 
         private void OnComposeClearClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
-            var tb = this.FindControl<TextBox>("ComposeTextBox");
+            var tb = GetActiveTextBox();
             if (tb == null) return;
 
             int start, end;
-            if (_composeSelectionStart >= 0 && _composeSelectionEnd >= 0)
+            if (_composeSelectionStart >= 0 && _composeSelectionEnd >= 0 && (tb.Name == "ComposeTextBox" || tb.Name == "ComposeTextBox_Status"))
             {
                 start = Math.Min(_composeSelectionStart, _composeSelectionEnd);
                 end = Math.Max(_composeSelectionStart, _composeSelectionEnd);
+            }
+            else if (_inlineSelectionStart >= 0 && _inlineSelectionEnd >= 0 && tb.Name != "ComposeTextBox" && tb.Name != "ComposeTextBox_Status")
+            {
+                start = Math.Min(_inlineSelectionStart, _inlineSelectionEnd);
+                end = Math.Max(_inlineSelectionStart, _inlineSelectionEnd);
             }
             else
             {
@@ -4388,13 +4768,40 @@ namespace RagNext.Designer.Avalonia.Views
                 var selected = text.Substring(start, selectionLength);
                 var after = text.Substring(start + selectionLength);
 
+                // Loop to strip enclosing matching formatting tags from before and after
+                bool stripped;
+                do
+                {
+                    stripped = false;
+                    var openMatch = System.Text.RegularExpressions.Regex.Match(before, @"<([a-zA-Z0-9]+)(=[^>]+)?>$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (openMatch.Success)
+                    {
+                        var tagName = openMatch.Groups[1].Value.ToLower();
+                        var closeTag = $"</{tagName}>";
+                        if (after.StartsWith(closeTag, StringComparison.OrdinalIgnoreCase))
+                        {
+                            before = before.Substring(0, before.Length - openMatch.Length);
+                            after = after.Substring(closeTag.Length);
+                            stripped = true;
+                        }
+                    }
+                } while (stripped);
+
                 var cleaned = System.Text.RegularExpressions.Regex.Replace(selected, @"<[^>]+>", "");
                 tb.Text = before + cleaned + after;
                 tb.Focus();
-                tb.SelectionStart = start;
-                tb.SelectionEnd = start + cleaned.Length;
-                _composeSelectionStart = tb.SelectionStart;
-                _composeSelectionEnd = tb.SelectionEnd;
+                tb.SelectionStart = before.Length;
+                tb.SelectionEnd = before.Length + cleaned.Length;
+                if (tb.Name == "ComposeTextBox" || tb.Name == "ComposeTextBox_Status")
+                {
+                    _composeSelectionStart = tb.SelectionStart;
+                    _composeSelectionEnd = tb.SelectionEnd;
+                }
+                else
+                {
+                    _inlineSelectionStart = tb.SelectionStart;
+                    _inlineSelectionEnd = tb.SelectionEnd;
+                }
             }
         }
 
@@ -4613,7 +5020,7 @@ namespace RagNext.Designer.Avalonia.Views
 
             // Buttons
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 10, Margin = new Thickness(0, 10, 0, 0) };
-            var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
+            var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White, IsDefault = true };
             var cancelBtn = new Button { Content = "Cancel", Width = 80 };
             cancelBtn.Bind(Button.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("ToolbarBtnBg"));
             cancelBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
@@ -4692,7 +5099,7 @@ namespace RagNext.Designer.Avalonia.Views
             stack.Children.Add(input);
 
             var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
-            var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
+            var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White, IsDefault = true };
             var cancelBtn = new Button { Content = "Cancel", Width = 80 };
             cancelBtn.Bind(Button.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("ToolbarBtnBg"));
             cancelBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
@@ -4743,7 +5150,7 @@ namespace RagNext.Designer.Avalonia.Views
             stack.Children.Add(msgBlock);
 
             var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
-            var yesBtn = new Button { Content = "Yes", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
+            var yesBtn = new Button { Content = "Yes", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White, IsDefault = true };
             var noBtn = new Button { Content = "No", Width = 80 };
             noBtn.Bind(Button.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("ToolbarBtnBg"));
             noBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
@@ -4754,6 +5161,54 @@ namespace RagNext.Designer.Avalonia.Views
 
             buttons.Children.Add(yesBtn);
             buttons.Children.Add(noBtn);
+            stack.Children.Add(buttons);
+
+            dialog.Content = stack;
+            dialog.ShowDialog(parent);
+            return tcs.Task;
+        }
+    }
+
+    public static class ConfirmPublishDialog
+    {
+        public static Task<string> ShowAsync(Window parent, string title, string message)
+        {
+            var tcs = new TaskCompletionSource<string>();
+            var dialog = new Window
+            {
+                Title = title,
+                Width = 500,
+                SizeToContent = global::Avalonia.Controls.SizeToContent.Height,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Padding = new global::Avalonia.Thickness(20)
+            };
+            dialog.Bind(global::Avalonia.Controls.Window.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("MainBg"));
+            dialog.Bind(global::Avalonia.Controls.Window.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+
+            var stack = new StackPanel { Spacing = 16 };
+            var msgBlock = new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap };
+            msgBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
+            stack.Children.Add(msgBlock);
+
+            var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
+            var yesBtn = new Button { Content = "Yes", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White, IsDefault = true };
+            var noBtn = new Button { Content = "No", Width = 80 };
+            noBtn.Bind(Button.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("ToolbarBtnBg"));
+            noBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            noBtn.Bind(Button.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
+
+            var cancelBtn = new Button { Content = "Cancel", Width = 80 };
+            cancelBtn.Bind(Button.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("ToolbarBtnBg"));
+            cancelBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            cancelBtn.Bind(Button.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
+
+            yesBtn.Click += (s, e) => { tcs.SetResult("Yes"); dialog.Close(); };
+            noBtn.Click += (s, e) => { tcs.SetResult("No"); dialog.Close(); };
+            cancelBtn.Click += (s, e) => { tcs.SetResult("Cancel"); dialog.Close(); };
+
+            buttons.Children.Add(yesBtn);
+            buttons.Children.Add(noBtn);
+            buttons.Children.Add(cancelBtn);
             stack.Children.Add(buttons);
 
             dialog.Content = stack;
@@ -4784,7 +5239,7 @@ namespace RagNext.Designer.Avalonia.Views
             stack.Children.Add(msgBlock);
 
             var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
-            var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White };
+            var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White, IsDefault = true };
 
             okBtn.Click += (s, e) => { tcs.SetResult(); dialog.Close(); };
 
@@ -4827,6 +5282,43 @@ namespace RagNext.Designer.Avalonia.Views
                     catch
                     {
                         // Fall through
+                    }
+                }
+            }
+            return null;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class MediaIdToBitmapConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly MediaIdToBitmapConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            Guid? id = null;
+            if (value is Guid g) id = g;
+
+            if (id.HasValue && id.Value != Guid.Empty && App.CurrentGame != null)
+            {
+                var asset = App.CurrentGame.MediaAssets.FirstOrDefault(a => a.Id == id.Value);
+                if (asset != null)
+                {
+                    var path = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(App.CurrentGame, asset);
+                    if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                    {
+                        try
+                        {
+                            return new global::Avalonia.Media.Imaging.Bitmap(path);
+                        }
+                        catch
+                        {
+                            // ignore
+                        }
                     }
                 }
             }
@@ -4910,6 +5402,154 @@ namespace RagNext.Designer.Avalonia.Views
                 return color.ToString();
             }
             return "#FFFFFF";
+        }
+    }
+
+    public class HexToBrushConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly HexToBrushConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string hex && !string.IsNullOrWhiteSpace(hex))
+            {
+                if (global::Avalonia.Media.Color.TryParse(hex, out var color))
+                {
+                    return new global::Avalonia.Media.SolidColorBrush(color);
+                }
+            }
+            return global::Avalonia.Media.Brushes.White;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is global::Avalonia.Media.SolidColorBrush brush)
+            {
+                return brush.Color.ToString();
+            }
+            return "#FFFFFF";
+        }
+    }
+
+    public class DesignerTemplateResolverConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly DesignerTemplateResolverConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string text && !string.IsNullOrEmpty(text))
+            {
+                var game = App.CurrentGame;
+                if (game != null)
+                {
+                    var resolved = global::System.Text.RegularExpressions.Regex.Replace(text, @"\{([^{}]+)\}", match =>
+                    {
+                        var path = match.Groups[1].Value.Trim();
+                        if (path.StartsWith("variables.", StringComparison.OrdinalIgnoreCase))
+                            path = path.Substring(10);
+                        else if (path.StartsWith("variable.", StringComparison.OrdinalIgnoreCase))
+                            path = path.Substring(9);
+
+                        var v = game.Variables.FirstOrDefault(x => string.Equals(x.Name, path, StringComparison.OrdinalIgnoreCase));
+                        if (v != null) return v.Value ?? "0";
+
+                        if (string.Equals(path, "player.name", StringComparison.OrdinalIgnoreCase))
+                            return game.Player?.Name ?? "Player";
+
+                        return match.Value;
+                    });
+                    return resolved;
+                }
+            }
+            return value;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public static class TextBlockExtensions
+    {
+        public static readonly AttachedProperty<string?> HtmlTextProperty =
+            AvaloniaProperty.RegisterAttached<TextBlock, string?>("HtmlText", typeof(TextBlockExtensions));
+
+        public static string? GetHtmlText(TextBlock element) => element.GetValue(HtmlTextProperty);
+        public static void SetHtmlText(TextBlock element, string? value) => element.SetValue(HtmlTextProperty, value);
+
+        static TextBlockExtensions()
+        {
+            HtmlTextProperty.Changed.AddClassHandler<TextBlock>(OnHtmlTextChanged);
+        }
+
+        private static void OnHtmlTextChanged(TextBlock tb, AvaloniaPropertyChangedEventArgs args)
+        {
+            tb.Inlines?.Clear();
+            var text = args.NewValue as string;
+            if (string.IsNullOrEmpty(text)) return;
+
+            text = DesignerTemplateResolverConverter.Instance.Convert(text, typeof(string), null, System.Globalization.CultureInfo.InvariantCulture) as string ?? text;
+
+            var regex = new global::System.Text.RegularExpressions.Regex(@"<(color|mark)=([^>]+)>(.*?)</\1>|<(b|i|u)>(.*?)</\4>|([^<>]+)", global::System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var matches = regex.Matches(text);
+
+            foreach (global::System.Text.RegularExpressions.Match m in matches)
+            {
+                if (m.Groups[6].Success)
+                {
+                    tb.Inlines?.Add(new global::Avalonia.Controls.Documents.Run(m.Groups[6].Value));
+                }
+                else if (m.Groups[4].Success)
+                {
+                    var tag = m.Groups[4].Value.ToLower();
+                    var content = m.Groups[5].Value;
+                    var run = new global::Avalonia.Controls.Documents.Run(content);
+                    if (tag == "b") run.FontWeight = FontWeight.Bold;
+                    else if (tag == "i") run.FontStyle = FontStyle.Italic;
+                    else if (tag == "u") run.TextDecorations = TextDecorations.Underline;
+                    tb.Inlines?.Add(run);
+                }
+                else if (m.Groups[1].Success)
+                {
+                    var tag = m.Groups[1].Value.ToLower();
+                    var param = m.Groups[2].Value.Trim('\'', '"');
+                    var content = m.Groups[3].Value;
+                    var run = new global::Avalonia.Controls.Documents.Run(content);
+                    
+                    if (tag == "color")
+                    {
+                        if (Color.TryParse(param, out var clr))
+                            run.Foreground = new SolidColorBrush(clr);
+                    }
+                    else if (tag == "mark")
+                    {
+                        if (Color.TryParse(param, out var clr))
+                            run.Background = new SolidColorBrush(clr);
+                    }
+                    tb.Inlines?.Add(run);
+                }
+            }
+        }
+    }
+
+    public class MediaIdToMediaAssetConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly MediaIdToMediaAssetConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is Guid g && App.CurrentGame != null)
+            {
+                return App.CurrentGame.MediaAssets.FirstOrDefault(a => a.Id == g);
+            }
+            return null;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is MediaAsset asset)
+            {
+                return asset.Id;
+            }
+            return null;
         }
     }
 }

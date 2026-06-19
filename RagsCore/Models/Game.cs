@@ -51,6 +51,7 @@ namespace RagsCore.Models
         public ObservableCollection<GameVariable> Variables { get; set; } = new();
         public ObservableCollection<GlobalFunction> Functions { get; set; } = new();
         public ObservableCollection<GameTimer> Timers { get; set; } = new();
+        public ObservableCollection<StatusBarElement> StatusBarElements { get; set; } = new();
 
         public SplashScreenSettings SplashScreen { get; set; } = new();
 

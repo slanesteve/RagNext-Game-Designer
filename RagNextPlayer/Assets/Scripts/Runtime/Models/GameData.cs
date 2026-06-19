@@ -21,6 +21,7 @@ namespace RagNextPlayer.Runtime.Models
         public List<GlobalFunctionData>   Functions   { get; set; } = new List<GlobalFunctionData>();
         public List<GameTimerData>        Timers      { get; set; } = new List<GameTimerData>();
         public SplashScreenSettingsData   SplashScreen{ get; set; } = new SplashScreenSettingsData();
+        public List<StatusBarElementData> StatusBarElements { get; set; } = new List<StatusBarElementData>();
 
         [JsonIgnore]
         public List<RuntimeCustomChoice> CustomChoices { get; } = new List<RuntimeCustomChoice>();
@@ -212,6 +213,13 @@ namespace RagNextPlayer.Runtime.Models
     public class RoomSetActionActiveCommandData     : CommandData { public string RoomId      { get; set; } = string.Empty; public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
     public class PlayerSetActionActiveCommandData   : CommandData { public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
     public class SetTimerActiveCommandData          : CommandData { public string TimerId { get; set; } = string.Empty; public bool Active { get; set; } = true; }
+    
+    // Status Bar Commands & Conditions
+    public class ShowStatusElementCommandData       : CommandData { public string ElementId { get; set; } = string.Empty; }
+    public class HideStatusElementCommandData       : CommandData { public string ElementId { get; set; } = string.Empty; }
+    public class SetStatusElementTextCommandData    : CommandData { public string ElementId { get; set; } = string.Empty; public string Text { get; set; } = string.Empty; }
+    public class SetStatusElementImageCommandData   : CommandData { public string ElementId { get; set; } = string.Empty; public string MediaId { get; set; } = string.Empty; }
+    public class StatusElementVisibleConditionData  : ConditionData { public string ElementId { get; set; } = string.Empty; }
 
     public class RuntimeCustomChoice
     {
@@ -329,5 +337,16 @@ namespace RagNextPlayer.Runtime.Models
         public string RelativePath     { get; set; } = string.Empty;
         public string MediaType        { get; set; } = string.Empty;
         public string OriginalFileName { get; set; } = string.Empty;
+    }
+
+    public class StatusBarElementData
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string VisualOption { get; set; } = "TextOnly";
+        public string Text { get; set; } = string.Empty;
+        public string TextColor { get; set; } = "#FFFFFF";
+        public string? MediaAssetId { get; set; }
+        public bool IsVisible { get; set; } = true;
     }
 }

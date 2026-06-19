@@ -50,6 +50,7 @@ namespace RagNext.Designer.Avalonia.Views
         public List<CatalogEntityDto>? Timers { get; set; }
         // Bug #5: Top-level player action names for the PlayerSetActionActive picker.
         public List<CatalogActionDto>? PlayerActions { get; set; }
+        public List<CatalogEntityDto>? StatusBarElements { get; set; }
     }
 
     public class CatalogEntityDto

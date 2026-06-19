@@ -79,6 +79,8 @@ namespace RagNextPlayer.Managers
 
         private Button         _fullscreenToggleBtn;
         private Button         _typewriterToggleBtn;
+        private Button         _fontSizeToggleBtn;
+        private string         _fontSizePref = "Normal";
         private Slider         _typewriterSpeedSlider;
         private SliderInt      _volumeSlider;
         private Button         _quitGameBtn; // Obsolete but kept for safety reference if needed
@@ -107,6 +109,7 @@ namespace RagNextPlayer.Managers
         private VisualElement  _roomActionThumbnailWrapper;
         private Button         _compassToggleBtn;
         private VisualElement  _compassDialOverlay;
+        private VisualElement  _playerHudContainer;
 
         private readonly List<System.Tuple<string, string>> _historyLog = new();
         private string         _promptTargetVarName = string.Empty;
@@ -236,6 +239,7 @@ namespace RagNextPlayer.Managers
             _narrativePanel         = _root.Q<VisualElement>("narrative-panel");
 
             // Query revamped HUD elements
+            _playerHudContainer = _root.Q<VisualElement>("player-hud-container");
             _roomActionThumbnail = _root.Q<VisualElement>("room-action-thumbnail");
             _roomActionThumbnailWrapper = _root.Q<VisualElement>("room-action-thumbnail-wrapper");
             if (_roomActionThumbnailWrapper is not null)
@@ -323,6 +327,7 @@ namespace RagNextPlayer.Managers
             // Settings components bindings
             _fullscreenToggleBtn    = _root.Q<Button>("fullscreen-toggle-btn");
             _typewriterToggleBtn    = _root.Q<Button>("typewriter-toggle-btn");
+            _fontSizeToggleBtn      = _root.Q<Button>("font-size-toggle-btn");
             _typewriterSpeedSlider  = _root.Q<Slider>("typewriter-speed-slider");
             _volumeSlider           = _root.Q<SliderInt>("volume-slider");
             _playerPortrait         = _root.Q<VisualElement>("player-portrait");
@@ -355,8 +360,12 @@ namespace RagNextPlayer.Managers
             float savedVolume      = PlayerPrefs.GetFloat("Pref_MasterVolume", 1.0f);
             AudioListener.volume   = savedVolume;
 
+            _fontSizePref          = PlayerPrefs.GetString("Pref_FontSize", "Normal");
+            UpdateFontSizeUI();
+
             if (_fullscreenToggleBtn is not null) _fullscreenToggleBtn.clicked += ToggleFullscreen;
             if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked += ToggleTypewriter;
+            if (_fontSizeToggleBtn is not null)   _fontSizeToggleBtn.clicked   += CycleFontSize;
 
             if (_typewriterSpeedSlider is not null)
             {
@@ -1117,6 +1126,7 @@ namespace RagNextPlayer.Managers
 
             if (_fullscreenToggleBtn is not null) _fullscreenToggleBtn.clicked -= ToggleFullscreen;
             if (_typewriterToggleBtn is not null) _typewriterToggleBtn.clicked -= ToggleTypewriter;
+            if (_fontSizeToggleBtn is not null)   _fontSizeToggleBtn.clicked   -= CycleFontSize;
 
             // Unbind Game Over / Prompt Input click handlers
             if (_gameOverRestartBtn is not null) _gameOverRestartBtn.clicked -= RestartGameAction;
@@ -1494,12 +1504,12 @@ namespace RagNextPlayer.Managers
 
         public void RefreshPlayerPanel()
         {
-            var player = GameManager.Instance?.ActiveGame?.Player;
+            var game = GameManager.Instance?.ActiveGame;
+            var player = game?.Player;
             if (player is null) return;
 
             if (_playerNameLabel is not null)
             {
-                var game = GameManager.Instance?.ActiveGame;
                 var room = GameManager.Instance?.CurrentRoom;
                 _playerNameLabel.text = game is not null
                     ? TemplateResolver.Resolve(player.Name, game, room, player)
@@ -1507,6 +1517,59 @@ namespace RagNextPlayer.Managers
             }
             if (_playerGenderLabel is not null) _playerGenderLabel.text = player.Gender;
             RefreshPlayerPortrait();
+
+            // Render status bar elements
+            if (_playerHudContainer != null && game != null)
+            {
+                _playerHudContainer.Clear();
+                var room = GameManager.Instance?.CurrentRoom;
+                if (game.StatusBarElements != null)
+                {
+                    foreach (var elem in game.StatusBarElements)
+                    {
+                        if (elem == null || !elem.IsVisible) continue;
+
+                        var container = new VisualElement();
+                        container.style.flexDirection = FlexDirection.Row;
+                        container.style.alignItems = Align.Center;
+                        container.style.justifyContent = Justify.FlexStart;
+                        container.style.marginRight = 4;
+                        container.style.marginBottom = 4;
+                        container.style.maxWidth = 180;
+
+                        // Background icon/image
+                        if (elem.VisualOption == "ImageOnly" || elem.VisualOption == "ImageAndText")
+                        {
+                            if (!string.IsNullOrEmpty(elem.MediaAssetId))
+                            {
+                                var asset = game.MediaAssets.Find(a => a.Id == elem.MediaAssetId);
+                                var path = asset != null ? asset.RelativePath : elem.MediaAssetId;
+                                var imgEl = new VisualElement();
+                                imgEl.style.width = 16;
+                                imgEl.style.height = 16;
+                                imgEl.style.marginRight = (elem.VisualOption == "ImageAndText") ? 4 : 0;
+                                LoadAndDisplayImageForElement(path, imgEl);
+                                container.Add(imgEl);
+                            }
+                        }
+
+                        // Text Label
+                        if (elem.VisualOption == "TextOnly" || elem.VisualOption == "ImageAndText")
+                        {
+                            var lbl = new Label();
+                            lbl.text = TemplateResolver.Resolve(elem.Text, game, room, player);
+                            lbl.style.fontSize = 11;
+                            lbl.style.whiteSpace = WhiteSpace.Normal;
+                            lbl.style.flexGrow = 1;
+                            lbl.style.flexShrink = 1;
+                            
+                            container.Add(lbl);
+                        }
+
+                        _playerHudContainer.Add(container);
+                    }
+                }
+            }
         }
 
 
@@ -2017,8 +2080,15 @@ namespace RagNextPlayer.Managers
             }
         }
 
+        private readonly System.Collections.Generic.Dictionary<string, string> _latestElementUrls = new();
+        private readonly System.Collections.Generic.Dictionary<VisualElement, string> _latestElementDirectUrls = new();
+
         private void LoadAndDisplayImage(string path, string elementName)
         {
+            if (string.IsNullOrWhiteSpace(path)) return;
+            string url = FormatLocalPathForWeb(path);
+            _latestElementUrls[elementName] = url;
+
             if (elementName == "scene-image")
             {
                 string ext = System.IO.Path.GetExtension(path).ToLower();
@@ -2032,23 +2102,29 @@ namespace RagNextPlayer.Managers
                     StopVideo();
                 }
             }
-            StartCoroutine(LoadImageCoroutine(path, elementName));
+            StartCoroutine(LoadImageCoroutine(url, elementName));
         }
 
         private void LoadAndDisplayImageForElement(string path, VisualElement targetElement)
         {
             if (targetElement is null || string.IsNullOrWhiteSpace(path)) return;
-            StartCoroutine(LoadImageForElementCoroutine(path, targetElement));
+            string url = FormatLocalPathForWeb(path);
+            _latestElementDirectUrls[targetElement] = url;
+            StartCoroutine(LoadImageForElementCoroutine(url, targetElement));
         }
 
-        private IEnumerator LoadImageForElementCoroutine(string path, VisualElement targetElement)
+        private IEnumerator LoadImageForElementCoroutine(string url, VisualElement targetElement)
         {
-            string url = FormatLocalPathForWeb(path);
             using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url);
 
             yield return req.SendWebRequest();
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
+                if (_latestElementDirectUrls.TryGetValue(targetElement, out var latestUrl) && latestUrl != url)
+                {
+                    yield break;
+                }
+
                 var tex = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
                 if (targetElement is not null)
                 {
@@ -2072,9 +2148,16 @@ namespace RagNextPlayer.Managers
             }
             else
             {
-                // Standalone fallback: redirect designer AppData path to current StreamingAssets/Assets/ copy
-                var fileName = System.IO.Path.GetFileName(path.Replace("\\", "/"));
-                fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Assets", fileName);
+                if (System.IO.File.Exists(path))
+                {
+                    fullPath = path;
+                }
+                else
+                {
+                    // Standalone fallback: redirect designer AppData path to current StreamingAssets/Assets/ copy
+                    var fileName = System.IO.Path.GetFileName(path.Replace("\\", "/"));
+                    fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Assets", fileName);
+                }
             }
 
             fullPath = fullPath.Replace("\\", "/");
@@ -2084,15 +2167,19 @@ namespace RagNextPlayer.Managers
                 return "file://" + fullPath;
         }
 
-        private IEnumerator LoadImageCoroutine(string path, string elementName)
+        private IEnumerator LoadImageCoroutine(string url, string elementName)
         {
-            string url = FormatLocalPathForWeb(path);
             Debug.Log($"[UIManager] Loading texture for '{elementName}' from URL: '{url}'");
             using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url);
 
             yield return req.SendWebRequest();
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
+                if (_latestElementUrls.TryGetValue(elementName, out var latestUrl) && latestUrl != url)
+                {
+                    yield break;
+                }
+
                 var tex  = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
                 var elem = _root?.Q<VisualElement>(elementName);
                 if (elem is not null)
@@ -2484,6 +2571,37 @@ namespace RagNextPlayer.Managers
              PlayerPrefs.SetFloat("Pref_MasterVolume", vol);
              PlayerPrefs.Save();
          }
+
+        private void CycleFontSize()
+        {
+            if (_fontSizePref == "Small") _fontSizePref = "Normal";
+            else if (_fontSizePref == "Normal") _fontSizePref = "Large";
+            else _fontSizePref = "Small";
+
+            PlayerPrefs.SetString("Pref_FontSize", _fontSizePref);
+            PlayerPrefs.Save();
+
+            UpdateFontSizeUI();
+        }
+
+        private void UpdateFontSizeUI()
+        {
+            if (_fontSizeToggleBtn is not null)
+            {
+                _fontSizeToggleBtn.text = $"Text: {_fontSizePref}";
+            }
+
+            if (_root is not null)
+            {
+                _root.RemoveFromClassList("font-size-small");
+                _root.RemoveFromClassList("font-size-normal");
+                _root.RemoveFromClassList("font-size-large");
+
+                if (_fontSizePref == "Small") _root.AddToClassList("font-size-small");
+                else if (_fontSizePref == "Normal") _root.AddToClassList("font-size-normal");
+                else if (_fontSizePref == "Large") _root.AddToClassList("font-size-large");
+            }
+        }
 
         private void QuitGame()
         {
@@ -2987,10 +3105,12 @@ namespace RagNextPlayer.Managers
             if (_root == null) return;
             var topBar = _root.Q<VisualElement>("top-bar");
             var hudLayout = _root.Q<VisualElement>("hud-layout-wrapper");
+            var mediaCanvas = _root.Q<VisualElement>("media-canvas");
 
             var display = visible ? DisplayStyle.Flex : DisplayStyle.None;
             if (topBar != null) topBar.style.display = display;
             if (hudLayout != null) hudLayout.style.display = display;
+            if (mediaCanvas != null) mediaCanvas.style.display = display;
         }
 
         public void RegisterHoverSwell(VisualElement element)

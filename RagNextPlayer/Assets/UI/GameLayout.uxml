@@ -35,9 +35,12 @@
           <!-- Floating Profiles (Top-Left) -->
           <ui:VisualElement name="floating-profiles-container" style="flex-direction: row; column-gap: 16px; pointer-events: auto; align-self: flex-start;">
             <!-- Player Portrait and Vitals Container -->
-            <ui:VisualElement name="floating-player-card" class="glass-card" style="padding: 12px; flex-direction: row; align-items: center; column-gap: 12px; border-radius: 40px 16px 16px 40px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15);">
-              <ui:VisualElement name="player-portrait" class="player-portrait" style="width: 56px; height: 56px; border-radius: 28px; border-width: 2px; border-color: #00bcd4;" />
-              <ui:VisualElement name="player-details" style="flex-direction: column;">
+            <ui:VisualElement name="floating-player-card" class="glass-card" style="padding: 12px; flex-direction: row; align-items: flex-start; column-gap: 12px; border-radius: 56px 16px 16px 56px; border-width: 1px; border-color: rgba(0, 188, 212, 0.4);">
+              <ui:VisualElement style="flex-direction: column; align-items: flex-start; max-width: 180px;">
+                <ui:VisualElement name="player-portrait" class="player-portrait" style="width: 80px; height: 80px; border-radius: 40px; border-width: 2.5px; border-color: #00bcd4; align-self: center;" />
+                <ui:VisualElement name="player-hud-container" style="flex-direction: column; align-items: flex-start; margin-top: 6px; margin-left: 16px; gap: 4px; width: 100%; max-width: 180px;" />
+              </ui:VisualElement>
+              <ui:VisualElement name="player-details" style="flex-direction: column; margin-top: 8px;">
                 <ui:Label name="player-name" class="player-name" text="Player" style="font-weight: bold; font-size: 14px; color: #ffffff;" />
                 <ui:Label name="player-gender" class="player-gender" text="Male" style="font-size: 11px; color: #b0bec5; margin-top: 1px;" />
               </ui:VisualElement>
@@ -50,7 +53,7 @@
           </ui:VisualElement>
 
           <!-- Floating Narrative Description Card (Bottom-Left) -->
-          <ui:VisualElement name="narrative-panel" class="narrative-panel glass-card" style="pointer-events: auto; width: 780px; max-height: 240px; padding: 16px; border-radius: 12px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15);">
+          <ui:VisualElement name="narrative-panel" class="narrative-panel glass-card" style="pointer-events: auto; padding: 16px; border-radius: 12px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15);">
             <ui:ScrollView name="narrative-scroll" class="narrative-scroll"
                            vertical-scroller-visibility="AlwaysVisible"
                            horizontal-scroller-visibility="Hidden" style="flex-grow: 1;" />
@@ -59,14 +62,14 @@
         </ui:VisualElement>
 
         <!-- Right Compartment: Interactive lists and collapsible compass -->
-        <ui:VisualElement name="hud-right-compartment" style="width: 380px; flex-shrink: 0; padding: 24px 24px 24px 0; pointer-events: none; flex-direction: column; justify-content: space-between; align-items: stretch;">
+        <ui:VisualElement name="hud-right-compartment" style="flex-shrink: 0; padding: 24px 24px 24px 0; pointer-events: none; flex-direction: column; justify-content: space-between; align-items: stretch;">
           
           <!-- Transparent Sidebar (Items and Inventory tabs) -->
           <ui:VisualElement name="right-sidebar-container" class="right-column glass-card" style="pointer-events: auto; flex-grow: 1; flex-shrink: 1; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-bottom: 20px;">
             <ui:VisualElement name="room-legend" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; margin-bottom: 0; flex-direction: column;">
               
               <!-- Room Items Section -->
-              <ui:Label text="Room Items" class="section-header" style="margin-bottom: 6px; color: #00bcd4; font-size: 12px; -unity-font-style: bold;" />
+              <ui:Label text="Room Items" class="section-header" style="margin-bottom: 6px; color: #00bcd4; -unity-font-style: bold;" />
               <ui:ScrollView name="room-items-scroll" style="flex-grow: 1; flex-basis: 0; margin-bottom: 12px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
                 <ui:VisualElement name="characters-section">
                   <ui:VisualElement name="characters-list" class="entity-list" />
@@ -79,7 +82,7 @@
               <ui:VisualElement class="legend-separator" style="margin: 4px 0 8px 0; height: 1px; background-color: rgba(0, 188, 212, 0.2);" />
 
               <!-- Inventory Section -->
-              <ui:Label text="Inventory" class="section-header" style="margin-bottom: 6px; color: #00bcd4; font-size: 12px; -unity-font-style: bold;" />
+              <ui:Label text="Inventory" class="section-header" style="margin-bottom: 6px; color: #00bcd4; -unity-font-style: bold;" />
               <ui:ScrollView name="inventory-scroll" style="flex-grow: 1; flex-basis: 0;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
                 <ui:VisualElement name="inventory-section">
                   <ui:VisualElement name="inventory-list" class="entity-list" />
@@ -93,7 +96,7 @@
           <ui:VisualElement name="compass-hud-container" style="pointer-events: auto; align-items: flex-end; flex-shrink: 0;">
             <ui:VisualElement name="compass-dial-overlay" class="compass-dial-overlay glass-card" style="display: none; padding: 16px; margin-bottom: 12px; border-radius: 20px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); align-items: center;">
               
-              <ui:Label name="navigation-title-hud" class="section-header" text="Navigation" style="margin-bottom: 8px; font-size: 12px; color: #00bcd4;" />
+              <ui:Label name="navigation-title-hud" class="section-header" text="Navigation" style="margin-bottom: 8px; color: #00bcd4;" />
               
               <ui:VisualElement class="compass-rose">
                 <ui:VisualElement class="compass-row">
@@ -124,7 +127,7 @@
             </ui:VisualElement>
 
             <!-- Compass Toggle Button -->
-            <ui:Button name="compass-toggle-btn" class="settings-btn" text="🧭 Navigation" style="font-size: 12px; font-weight: bold; padding: 10px 16px; border-radius: 20px; margin: 0; width: 100%;" />
+            <ui:Button name="compass-toggle-btn" class="settings-btn" text="🧭 Navigation" style="font-weight: bold; padding: 10px 16px; border-radius: 20px; margin: 0; width: 100%;" />
           </ui:VisualElement>
 
         </ui:VisualElement>
@@ -261,6 +264,12 @@
                 <ui:VisualElement class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
                   <ui:Label class="settings-label" text="Screen Mode" style="font-size: 14px; color: #ffffff;" />
                   <ui:Button name="fullscreen-toggle-btn" class="settings-toggle-btn" style="width: 180px;" text="Fullscreen" />
+                </ui:VisualElement>
+
+                <!-- Text Size Toggle -->
+                <ui:VisualElement class="settings-row" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                  <ui:Label class="settings-label" text="Text Size" style="font-size: 14px; color: #ffffff;" />
+                  <ui:Button name="font-size-toggle-btn" class="settings-toggle-btn" style="width: 180px;" text="Text: Normal" />
                 </ui:VisualElement>
 
 

@@ -22,6 +22,8 @@ namespace RagsCore
     [JsonSerializable(typeof(GameObject))]
     [JsonSerializable(typeof(MediaAsset))]
     [JsonSerializable(typeof(SplashScreenSettings))]
+    [JsonSerializable(typeof(StatusBarElement))]
+    [JsonSerializable(typeof(System.Collections.ObjectModel.ObservableCollection<StatusBarElement>))]
     [JsonSerializable(typeof(StepDefinitionBase))]
     [JsonSerializable(typeof(CommandDefinition))]
     [JsonSerializable(typeof(ConditionDefinition))]

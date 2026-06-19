@@ -108,6 +108,19 @@ namespace RagNextPlayer.Managers
                         if (!string.IsNullOrEmpty(targetId))
                             GameManager.Instance?.MovePlayerToRoom(targetId);
                     }
+                    UIManager.Instance?.RefreshPlayerPanel();
+                    break;
+
+                case VariableIncrementCommandData:
+                case VariableDecrementCommandData:
+                case VariableSetToVariableCommandData:
+                case SetNumericRandomlyCommandData:
+                case SetArrayElementCommandData:
+                case AddArrayRowCommandData:
+                case RemoveArrayRowCommandData:
+                case AppendTextCommandData:
+                case AppendLineCommandData:
+                    UIManager.Instance?.RefreshPlayerPanel();
                     break;
 
                 case PlayerSetNameCommandData:
@@ -125,6 +138,11 @@ namespace RagNextPlayer.Managers
                 case PlayerSetPortraitMediaCommandData:
                     UIManager.Instance?.RefreshPlayerPortrait();
                     break;
+
+                case CharacterSetPortraitMediaCommandData:
+                    UIManager.Instance?.RefreshEntityLists();
+                    break;
+
 
                 case DisplayMultimediaCommandData:
                     {
@@ -206,6 +224,13 @@ namespace RagNextPlayer.Managers
 
                 case StartDialogueCommandData c:
                     UIManager.Instance?.ShowDialogueScreen(c, ctx);
+                    break;
+
+                case ShowStatusElementCommandData:
+                case HideStatusElementCommandData:
+                case SetStatusElementTextCommandData:
+                case SetStatusElementImageCommandData:
+                    UIManager.Instance?.RefreshPlayerPanel();
                     break;
 
                 case AddCustomChoiceCommandData:

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -87,6 +88,27 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             OnPropertyChanged(nameof(ImageMediaAssets));
                             OnPropertyChanged(nameof(AudioMediaAssets));
                         };
+
+                        if (value.StatusBarElements != null)
+                        {
+                            void Sub(RagsCore.Models.StatusBarElement s)
+                            {
+                                s.PropertyChanged += (sender, args) =>
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[DEBUG] StatusBarElement PropertyChanged: {args.PropertyName}");
+                                    _ = SaveGameAsync();
+                                };
+                            }
+                            foreach (var s in value.StatusBarElements) Sub(s);
+                            value.StatusBarElements.CollectionChanged += (sender, args) =>
+                            {
+                                if (args.NewItems != null)
+                                {
+                                    foreach (RagsCore.Models.StatusBarElement s in args.NewItems) Sub(s);
+                                }
+                                _ = SaveGameAsync();
+                            };
+                        }
 
                         if (value.Player != null)
                         {
@@ -268,6 +290,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public GlobalFunctionsViewModel Functions { get; }
         public MediaLibraryViewModel Media { get; }
         public PreferencesViewModel Preferences { get; }
+        public StatusBarViewModel StatusBar { get; }
 
         // Active properties
         public Player? Player => CurrentGame?.Player;
@@ -679,6 +702,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         {
                             prop.SetValue(_composeTarget, value);
                         }
+                        else
+                        {
+                            var textProp = _composeTarget.GetType().GetProperty("Text");
+                            if (textProp != null && textProp.CanWrite)
+                            {
+                                textProp.SetValue(_composeTarget, value);
+                            }
+                        }
                     }
                 }
             }
@@ -698,7 +729,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             set => SetProperty(ref _composeFieldName, value);
         }
 
-        public event Action<string, string, string>? ComposeApplied;
+        public event Func<string, string, string, Task>? ComposeApplied;
 
         private object? _attributeTarget; // Can be Player, Room, Character, or GameObject
         public object? AttributeTarget
@@ -731,7 +762,13 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand PublishCommand { get; }
 
         public static Func<Task<string>> PickFolderAsync { get; set; }
+        public static Func<Task<string?>>? PickImportPackageFileAsync { get; set; }
+        public static Func<string, Task<string?>>? PickExportPackageFileAsync { get; set; }
+        public static Func<string, string, Task>? ShowAlertDialogAsync { get; set; }
+        public static Func<string, string, Task<bool>>? ShowConfirmDialogAsync { get; set; }
         public ICommand BrowsePublishDestinationCommand { get; }
+        public ICommand ImportPackageCommand { get; }
+        public ICommand ExportPackageCommand { get; }
 
         public ICommand StartEditingActionCommand { get; }
         public ICommand StopEditingActionCommand { get; }
@@ -824,7 +861,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private bool _showActionSelectorOverlay;
         public bool ShowActionSelectorOverlay { get => _showActionSelectorOverlay; set => SetProperty(ref _showActionSelectorOverlay, value); }
 
-        private object? _actionTargetEntity;
+        internal object? _actionTargetEntity;
+
+        private RagsCore.Models.Action? _lastAddedAction;
+        public RagsCore.Models.Action? LastAddedAction { get => _lastAddedAction; set => SetProperty(ref _lastAddedAction, value); }
 
         public ICommand AddGlobalActionCommand { get; }
         public ICommand DeleteGlobalActionCommand { get; }
@@ -856,6 +896,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             Functions = new GlobalFunctionsViewModel(_storage);
             Media = new MediaLibraryViewModel();
             Preferences = new PreferencesViewModel();
+            StatusBar = new StatusBarViewModel(_storage);
 
             App.GameChanged += (g) => 
             { 
@@ -1088,6 +1129,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 }
             });
 
+            ImportPackageCommand = new Command(async () => await ImportPackageAsync());
+            ExportPackageCommand = new Command(async () => await ExportPackageAsync());
+            LoadSampleGameCommand = new Command<SampleGameItem>(async sample => await LoadSampleGameAsync(sample));
+            LoadSampleGames();
+
             NewGameCommand = new Command(() =>
             {
                 CurrentGame = new Game
@@ -1278,10 +1324,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     }
                 }
 
-                if (_actionTargetEntity is Room room) room.Actions.Add(act);
-                else if (_actionTargetEntity is Character character) character.Actions.Add(act);
-                else if (_actionTargetEntity is GameObject obj) obj.Actions.Add(act);
-                else if (_actionTargetEntity is Player player) player.Actions.Add(act);
+                if (_actionTargetEntity is Room room) { room.Actions.Add(act); LastAddedAction = act; }
+                else if (_actionTargetEntity is Character character) { character.Actions.Add(act); LastAddedAction = act; }
+                else if (_actionTargetEntity is GameObject obj) { obj.Actions.Add(act); LastAddedAction = act; }
+                else if (_actionTargetEntity is Player player) { player.Actions.Add(act); LastAddedAction = act; }
 
                 Console.WriteLine("[DEBUG] SelectActionTemplateCommand: Saving game...");
                 await SaveGameAsync();
@@ -1400,12 +1446,18 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     name = nameProp.GetValue(parameter)?.ToString() ?? "";
                 }
-                ComposeTitle = $"Compose Description - {name}";
 
                 var descProp = parameter.GetType().GetProperty("Description");
+                var textProp = parameter.GetType().GetProperty("Text");
                 if (descProp != null)
                 {
+                    ComposeTitle = $"Compose Description - {name}";
                     ComposeText = descProp.GetValue(parameter)?.ToString() ?? "";
+                }
+                else if (textProp != null)
+                {
+                    ComposeTitle = $"Compose Status Text - {name}";
+                    ComposeText = textProp.GetValue(parameter)?.ToString() ?? "";
                 }
                 
                 ShowComposeOverlay = true;
@@ -1416,7 +1468,13 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 ShowComposeOverlay = false;
                 if (!string.IsNullOrEmpty(ComposeNodeId))
                 {
-                    ComposeApplied?.Invoke(ComposeNodeId, ComposeFieldName ?? "", ComposeText);
+                    if (ComposeApplied != null)
+                    {
+                        // Fire and wait for the event delegates to finish executing their async steps (such as WebView script invokes)
+                        var tasks = ComposeApplied.GetInvocationList()
+                            .Select(d => ((Func<string, string, string, Task>)d)(ComposeNodeId, ComposeFieldName ?? "", ComposeText));
+                        await Task.WhenAll(tasks);
+                    }
                     ComposeNodeId = null;
                     ComposeFieldName = null;
                 }
@@ -1697,26 +1755,35 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 // Overwrite warning check
                 if (Directory.Exists(destination) && Directory.GetFileSystemEntries(destination).Length > 0)
                 {
-                    bool clearDir = false;
-                    if (MediaLibraryViewModel.ConfirmDialogAsync != null)
+                    string clearResult = "No";
+                    if (MediaLibraryViewModel.ConfirmPublishDialogAsync != null)
                     {
-                        clearDir = await MediaLibraryViewModel.ConfirmDialogAsync(
+                        clearResult = await MediaLibraryViewModel.ConfirmPublishDialogAsync(
                             "Overwrite Warning",
                             "The destination folder is not empty. To prevent mixing game assets or loading outdated configurations, it is highly recommended to clear this folder.\n\nDo you want to delete its contents before publishing?");
                     }
 
-                    if (clearDir)
+                    if (clearResult == "Cancel")
                     {
-                        PublishLogs += "Clearing destination folder...\n";
+                        PublishLogs += "❌ Publishing cancelled by user.\n";
+                        PublishStatus = "Cancelled";
+                        IsPublishing = false;
+                        return;
+                    }
+
+                    if (clearResult == "Yes")
+                    {
+                        PublishLogs += "Clearing old game assets from destination folder...\n";
                         try
                         {
-                            foreach (var file in Directory.GetFiles(destination)) File.Delete(file);
-                            foreach (var dir in Directory.GetDirectories(destination)) Directory.Delete(dir, true);
-                            PublishLogs += "✔️ Folder cleared successfully.\n";
+                            string cleanTitle = PublishEngine.SanitizeName(title);
+                            string templateDir = PublishEngine.GetTemplateDir(SelectedPublishTarget);
+                            PublishEngine.SafeClearDestination(templateDir, destination, cleanTitle, SelectedPublishTarget);
+                            PublishLogs += "✔️ Old game assets cleared successfully.\n";
                         }
                         catch (Exception ex)
                         {
-                            PublishLogs += $"❌ Error: Could not clear folder: {ex.Message}\n";
+                            PublishLogs += $"❌ Error: Could not clear old game assets: {ex.Message}\n";
                             PublishStatus = "Failed";
                             IsPublishing = false;
                             return;
@@ -1778,6 +1845,135 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private string RecentProjectsFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "recent_projects.json");
 
         public ObservableCollection<string> RecentProjects { get; } = new();
+
+        public class SampleGameItem
+        {
+            public string Title { get; set; } = string.Empty;
+            public string Description { get; set; } = string.Empty;
+            public string FilePath { get; set; } = string.Empty;
+        }
+
+        public ObservableCollection<SampleGameItem> SampleGames { get; } = new();
+
+        public ICommand LoadSampleGameCommand { get; }
+
+        public void LoadSampleGames()
+        {
+            try
+            {
+                SampleGames.Clear();
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var samplesDir = Path.Combine(appDir, "Samples");
+                if (Directory.Exists(samplesDir))
+                {
+                    foreach (var file in Directory.GetFiles(samplesDir, "*.ragnext"))
+                    {
+                        var fileName = Path.GetFileNameWithoutExtension(file);
+                        // Make a friendly display title from filename
+                        var friendlyTitle = System.Text.RegularExpressions.Regex.Replace(fileName, "([a-z])([A-Z])", "$1 $2");
+                        SampleGames.Add(new SampleGameItem
+                        {
+                            Title = friendlyTitle,
+                            Description = $"Click to import a playable copy of the \"{friendlyTitle}\" demo.",
+                            FilePath = file
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Failed to load sample games: {ex.Message}");
+            }
+        }
+
+        public async Task LoadSampleGameAsync(SampleGameItem sample)
+        {
+            if (sample == null || !File.Exists(sample.FilePath)) return;
+
+            try
+            {
+                using var zip = ZipFile.OpenRead(sample.FilePath);
+                var gameEntry = zip.GetEntry("game.json");
+                if (gameEntry == null) return;
+
+                Game? importedGame;
+                using (var s = gameEntry.Open())
+                {
+                    importedGame = await JsonSerializer.DeserializeAsync(s, RagsCore.RagsJsonContext.CustomDefault.Game);
+                }
+
+                if (importedGame == null) return;
+
+                // Always assign a new ID to avoid conflict with the original template/demo
+                importedGame.Id = Guid.NewGuid();
+                var originalTitle = importedGame.Title ?? "Sample Adventure";
+                
+                // Ensure a unique filename and save path under active saved games
+                var saves = await _storage.ListSavesAsync();
+                var baseName = originalTitle;
+                var cleanName = new string(baseName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).Trim();
+                if (string.IsNullOrEmpty(cleanName)) cleanName = "SampleGame";
+
+                var attempt = 1;
+                var testName = cleanName;
+                while (saves.Any(s => string.Equals(s, testName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    attempt++;
+                    testName = $"{cleanName} ({attempt})";
+                }
+                
+                importedGame.Title = attempt > 1 ? $"{originalTitle} ({attempt})" : originalTitle;
+                importedGame.FileName = testName;
+
+                // Extract assets to the new local app data path
+                var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", importedGame.Id.ToString("N"));
+                var assetsDir = Path.Combine(root, "Assets");
+                if (!Directory.Exists(assetsDir)) Directory.CreateDirectory(assetsDir);
+
+                foreach (var entry in zip.Entries)
+                {
+                    if (entry.FullName.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase) ||
+                        entry.FullName.StartsWith("Assets\\", StringComparison.OrdinalIgnoreCase) ||
+                        entry.FullName.Equals("media_tree.json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var relativePath = entry.FullName.Replace('\\', '/');
+                        var targetPath = Path.Combine(root, relativePath);
+                        var targetDir = Path.GetDirectoryName(targetPath);
+                        if (!string.IsNullOrEmpty(targetDir) && !Directory.Exists(targetDir))
+                        {
+                            Directory.CreateDirectory(targetDir);
+                        }
+                        
+                        if (!string.IsNullOrEmpty(entry.Name))
+                        {
+                            entry.ExtractToFile(targetPath, overwrite: true);
+                        }
+                    }
+                }
+
+                await _storage.SaveAsync(importedGame, importedGame.FileName);
+
+                CurrentGame = importedGame;
+                ShowWelcomeOverlay = false;
+                ShowSplashOverlay = false;
+                ShowSavesOverlay = false;
+                ActiveView = "Dashboard";
+                SaveRecentProject(importedGame.FileName);
+
+                if (ShowAlertDialogAsync != null)
+                {
+                    await ShowAlertDialogAsync("Sample Loaded", $"Successfully imported demo copy: \"{importedGame.Title}\"");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Load sample game failed: {ex.Message}");
+                if (ShowAlertDialogAsync != null)
+                {
+                    await ShowAlertDialogAsync("Import Error", $"An error occurred loading the sample:\n{ex.Message}");
+                }
+            }
+        }
 
         private readonly System.Threading.SemaphoreSlim _saveSemaphore = new System.Threading.SemaphoreSlim(1, 1);
 
@@ -1890,6 +2086,193 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             catch { }
         }
+        public async Task ImportPackageAsync()
+        {
+            if (PickImportPackageFileAsync == null) return;
+            var file = await PickImportPackageFileAsync();
+            if (string.IsNullOrEmpty(file) || !File.Exists(file)) return;
+
+            try
+            {
+                using var zip = ZipFile.OpenRead(file);
+                var gameEntry = zip.GetEntry("game.json");
+                if (gameEntry == null)
+                {
+                    if (ShowAlertDialogAsync != null)
+                    {
+                        await ShowAlertDialogAsync("Import Failed", "The selected archive is not a valid RagNext package (missing game.json).");
+                    }
+                    return;
+                }
+
+                Game? importedGame;
+                using (var s = gameEntry.Open())
+                {
+                    importedGame = await JsonSerializer.DeserializeAsync(s, RagsCore.RagsJsonContext.CustomDefault.Game);
+                }
+
+                if (importedGame == null)
+                {
+                    if (ShowAlertDialogAsync != null)
+                    {
+                        await ShowAlertDialogAsync("Import Failed", "Failed to parse the game data file. The package may be corrupted.");
+                    }
+                    return;
+                }
+
+                // Check if a game with the same ID or title already exists in the system
+                var saves = await _storage.ListSavesAsync();
+                var exists = false;
+                var overwriteId = importedGame.Id;
+                
+                // We consider it existing if the exact ID matches or if a save exists with the sanitized filename of the title
+                var baseName = importedGame.Title ?? "Untitled Game";
+                var cleanName = new string(baseName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).Trim();
+                if (string.IsNullOrEmpty(cleanName)) cleanName = "ImportedGame";
+
+                if (saves.Any(s => string.Equals(s, cleanName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    exists = true;
+                }
+                
+                if (exists && ShowConfirmDialogAsync != null)
+                {
+                    var replace = await ShowConfirmDialogAsync("Game Already Exists", $"A game named '{cleanName}' already exists. Would you like to overwrite it?\n\nSelecting 'No' will import it as a separate game copy.");
+                    if (!replace)
+                    {
+                        // Assign a new ID and modify filename to be unique
+                        importedGame.Id = Guid.NewGuid();
+                        
+                        var attempt = 1;
+                        var newTitle = $"{baseName} (Copy)";
+                        var testName = $"{cleanName} (Copy)";
+                        while (saves.Any(s => string.Equals(s, testName, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            attempt++;
+                            newTitle = $"{baseName} (Copy {attempt})";
+                            testName = $"{cleanName} (Copy {attempt})";
+                        }
+                        importedGame.Title = newTitle;
+                        importedGame.FileName = testName;
+                    }
+                    else
+                    {
+                        // Overwriting: keep original ID and original filename to allow replacement
+                        importedGame.FileName = cleanName;
+                    }
+                }
+
+                var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", importedGame.Id.ToString("N"));
+                var assetsDir = Path.Combine(root, "Assets");
+                if (!Directory.Exists(assetsDir)) Directory.CreateDirectory(assetsDir);
+
+                foreach (var entry in zip.Entries)
+                {
+                    if (entry.FullName.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase) ||
+                        entry.FullName.StartsWith("Assets\\", StringComparison.OrdinalIgnoreCase) ||
+                        entry.FullName.Equals("media_tree.json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var relativePath = entry.FullName.Replace('\\', '/');
+                        var targetPath = Path.Combine(root, relativePath);
+                        var targetDir = Path.GetDirectoryName(targetPath);
+                        if (!string.IsNullOrEmpty(targetDir) && !Directory.Exists(targetDir))
+                        {
+                            Directory.CreateDirectory(targetDir);
+                        }
+                        
+                        if (!string.IsNullOrEmpty(entry.Name))
+                        {
+                            entry.ExtractToFile(targetPath, overwrite: true);
+                        }
+                    }
+                }
+
+                await _storage.SaveAsync(importedGame, importedGame.FileName ?? importedGame.Title ?? "ImportedGame");
+
+                CurrentGame = importedGame;
+                ShowWelcomeOverlay = false;
+                ShowSplashOverlay = false;
+                ShowSavesOverlay = false;
+                ActiveView = "Dashboard";
+                if (!string.IsNullOrEmpty(importedGame.FileName))
+                {
+                    SaveRecentProject(importedGame.FileName);
+                }
+
+                if (ShowAlertDialogAsync != null)
+                {
+                    await ShowAlertDialogAsync("Import Success", $"Successfully imported game design package: \"{importedGame.Title ?? "Untitled Game"}\"");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Import package failed: {ex.Message}");
+                if (ShowAlertDialogAsync != null)
+                {
+                    await ShowAlertDialogAsync("Import Error", $"An error occurred during import:\n{ex.Message}");
+                }
+            }
+        }
+
+        public async Task ExportPackageAsync()
+        {
+            if (CurrentGame == null || PickExportPackageFileAsync == null) return;
+            var defaultName = $"{SanitizeFileName(CurrentGame.Title ?? "MyGame")}.ragnext";
+            var file = await PickExportPackageFileAsync(defaultName);
+            if (string.IsNullOrEmpty(file)) return;
+
+            try
+            {
+                if (File.Exists(file)) File.Delete(file);
+
+                using var zip = ZipFile.Open(file, ZipArchiveMode.Create);
+
+                var gameEntry = zip.CreateEntry("game.json", CompressionLevel.Optimal);
+                await using (var s = gameEntry.Open())
+                {
+                    await JsonSerializer.SerializeAsync(s, CurrentGame, RagsCore.RagsJsonContext.CustomDefault.Game);
+                }
+
+                var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", CurrentGame.Id.ToString("N"));
+                
+                var mediaTreePath = Path.Combine(root, "media_tree.json");
+                if (File.Exists(mediaTreePath))
+                {
+                    zip.CreateEntryFromFile(mediaTreePath, "media_tree.json", CompressionLevel.Optimal);
+                }
+
+                var assetsDir = Path.Combine(root, "Assets");
+                if (Directory.Exists(assetsDir))
+                {
+                    foreach (var f in Directory.EnumerateFiles(assetsDir))
+                    {
+                        var name = Path.GetFileName(f);
+                        zip.CreateEntryFromFile(f, Path.Combine("Assets", name), CompressionLevel.Optimal);
+                    }
+                }
+
+                if (ShowAlertDialogAsync != null)
+                {
+                    await ShowAlertDialogAsync("Export Success", $"Successfully exported design package to:\n{file}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Export package failed: {ex.Message}");
+                if (ShowAlertDialogAsync != null)
+                {
+                    await ShowAlertDialogAsync("Export Error", $"An error occurred during export:\n{ex.Message}");
+                }
+            }
+        }
+
+        private static string SanitizeFileName(string name)
+        {
+            var invalid = Path.GetInvalidFileNameChars();
+            var sanitized = new string(name.Where(c => !invalid.Contains(c)).ToArray()).Trim();
+            return string.IsNullOrEmpty(sanitized) ? "save" : sanitized;
+        }
+
         public static global::Avalonia.Data.Converters.IMultiValueConverter MakeTupleConverter { get; } = new FuncMultiValueConverter<object, Tuple<object, object>>(parts =>
         {
             if (parts == null || parts.Count < 2) return new Tuple<object, object>(null!, null!);

@@ -447,6 +447,17 @@
           "dataType": "Variable"
         }
       ]
+    },
+    {
+      "name": "Is Status Element Visible",
+      "category": "Status",
+      "inputs": [
+        {
+          "label": "ElementId",
+          "controlType": "ComboBox",
+          "dataType": "StatusBarElement"
+        }
+      ]
     }
   ]
 }

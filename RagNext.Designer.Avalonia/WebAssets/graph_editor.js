@@ -78,6 +78,11 @@ function triggerAutoSave() {
 
 // Comprehensive fallback map of friendly names to C# polymorphic type discriminators
 const fallbackDiscriminators = {
+    "statusshowstatuselement": "status.show",
+    "statushidestatuselement": "status.hide",
+    "statussetstatuselementtext": "status.setText",
+    "statussetstatuselementimage": "status.setImage",
+    "statusisstatuselementvisible": "status.isVisible",
     "actionaddcustomchoice": "general.addCustomChoice",
     "actionclearcustomchoice": "general.clearCustomChoice",
     "characterdisplaydescription": "char.displayDescription",
@@ -518,12 +523,21 @@ function renderRichTextPreview(text) {
         .replace(/&lt;u&gt;/gi, "<u>")
         .replace(/&lt;\/u&gt;/gi, "</u>");
 
-    let colorRegex = /&lt;color=(#[a-f0-9]{6})&gt;(.*?)&lt;\/color&gt;/gi;
-    html = html.replace(colorRegex, '<span style="color: $1;">$2</span>');
+    let colorRegex = /&lt;color=(#[a-f0-9]{6,8})&gt;(.*?)&lt;\/color&gt;/gi;
+    html = html.replace(colorRegex, function(match, color, content) {
+        if (color.length === 9) {
+            color = '#' + color.substring(3) + color.substring(1, 3);
+        }
+        return '<span style="color: ' + color + ';">' + content + '</span>';
+    });
 
-    let markRegex = /&lt;mark=(#[a-f0-9]{8}|#[a-f0-9]{6})&gt;(.*?)&lt;\/mark&gt;/gi;
-    html = html.replace(markRegex, '<span style="background-color: $2; padding: 2px 4px; border-radius: 4px;">$3</span>');
-    html = html.replace(/&lt;mark=(#[a-f0-9]{6}|#[a-f0-9]{8})&gt;(.*?)&lt;\/mark&gt;/gi, '<span style="background-color: $1; padding: 2px 4px; border-radius: 4px;">$2</span>');
+    let markRegex = /&lt;mark=(#[a-f0-9]{6,8})&gt;(.*?)&lt;\/mark&gt;/gi;
+    html = html.replace(markRegex, function(match, color, content) {
+        if (color.length === 9) {
+            color = '#' + color.substring(3) + color.substring(1, 3);
+        }
+        return '<span style="background-color: ' + color + '; padding: 2px 4px; border-radius: 4px;">' + content + '</span>';
+    });
 
     html = html.replace(/\n/g, "<br>");
     return html;
@@ -690,6 +704,31 @@ function showColorDropdown(button, textarea, previewElement) {
         dropdown.appendChild(item);
     });
 
+    // Custom Color Picker input
+    const pickerLabel = document.createElement('div');
+    pickerLabel.innerText = 'Custom:';
+    pickerLabel.style.color = '#fff';
+    pickerLabel.style.fontSize = '10px';
+    pickerLabel.style.width = '100%';
+    pickerLabel.style.marginTop = '4px';
+    dropdown.appendChild(pickerLabel);
+
+    const customPicker = document.createElement('input');
+    customPicker.type = 'color';
+    customPicker.value = '#ef4444';
+    customPicker.style.width = '100%';
+    customPicker.style.height = '28px';
+    customPicker.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+    customPicker.style.borderRadius = '4px';
+    customPicker.style.cursor = 'pointer';
+    customPicker.style.padding = '0';
+    customPicker.style.backgroundColor = 'transparent';
+    customPicker.onchange = (e) => {
+        wrapSelection(textarea, `<color=${customPicker.value}>`, '</color>', previewElement);
+        dropdown.remove();
+    };
+    dropdown.appendChild(customPicker);
+
     const closeBtn = document.createElement('button');
     closeBtn.innerText = '✕ Close';
     closeBtn.className = 'btn-format';
@@ -767,6 +806,31 @@ function showHighlightDropdown(button, textarea, previewElement) {
         };
         dropdown.appendChild(item);
     });
+
+    // Custom Color Picker input
+    const pickerLabel = document.createElement('div');
+    pickerLabel.innerText = 'Custom:';
+    pickerLabel.style.color = '#fff';
+    pickerLabel.style.fontSize = '10px';
+    pickerLabel.style.width = '100%';
+    pickerLabel.style.marginTop = '4px';
+    dropdown.appendChild(pickerLabel);
+
+    const customPicker = document.createElement('input');
+    customPicker.type = 'color';
+    customPicker.value = '#eab308';
+    customPicker.style.width = '100%';
+    customPicker.style.height = '28px';
+    customPicker.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+    customPicker.style.borderRadius = '4px';
+    customPicker.style.cursor = 'pointer';
+    customPicker.style.padding = '0';
+    customPicker.style.backgroundColor = 'transparent';
+    customPicker.onchange = (e) => {
+        wrapSelection(textarea, `<mark=${customPicker.value}55>`, '</mark>', previewElement);
+        dropdown.remove();
+    };
+    dropdown.appendChild(customPicker);
 
     const closeBtn = document.createElement('button');
     closeBtn.innerText = '✕ Close';
@@ -1892,7 +1956,7 @@ function refreshCommandFields(node) {
             listWrapper.appendChild(addGroup);
 
             inputElement = listWrapper;
-        } else if (inputSchema.controlType === 'ComboBox' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'PromptName' || inputSchema.dataType === 'ActionName') {
+        } else if (inputSchema.controlType === 'ComboBox' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'Function' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'PromptName' || inputSchema.dataType === 'ActionName' || inputSchema.dataType === 'StatusBarElement') {
             // Container for both controls
             const fieldWrapper = document.createElement('div');
             fieldWrapper.className = 'toggle-field-wrapper';
@@ -1928,7 +1992,7 @@ function refreshCommandFields(node) {
             }
             else if (inputSchema.dataType === 'Media') {
                 optionsList = catalogs.Media || [];
-                const isSoundCommand = (type === 'media.playSound');
+                const isSoundCommand = (type === 'media.playSound' || type === 'media.setBackgroundMusic');
                 const isVideoCommand = (type === 'media.playVideo');
                 if (isSoundCommand) {
                     optionsList = optionsList.filter(m => {
@@ -1944,6 +2008,7 @@ function refreshCommandFields(node) {
             }
             else if (inputSchema.dataType === 'Function') optionsList = catalogs.Functions || [];
             else if (inputSchema.dataType === 'Timer') optionsList = catalogs.Timers || [];
+            else if (inputSchema.dataType === 'StatusBarElement') optionsList = catalogs.StatusBarElements || [];
             else if (inputSchema.dataType === 'PromptName') {
                 optionsList = [];
                 nodes.forEach(n => {
@@ -3576,7 +3641,7 @@ window.updateNodeAIResult = function(nodeId, fieldName, resultText) {
             previewBody.innerHTML = renderRichTextPreview(resultText);
         }
         node.data[fieldName || 'characterLines'] = resultText;
-        triggerAutoSave();
+        saveAndSyncCsharp(true);
     }
 };
 

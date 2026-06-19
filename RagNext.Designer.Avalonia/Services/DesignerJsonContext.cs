@@ -26,6 +26,8 @@ namespace RagNext.Designer.Avalonia.Services
     [JsonSerializable(typeof(ExportFunctionDto))]
     [JsonSerializable(typeof(ExportTimerDto))]
     [JsonSerializable(typeof(ExportSplashScreenDto))]
+    [JsonSerializable(typeof(ExportStatusBarElementDto))]
+    [JsonSerializable(typeof(List<ExportStatusBarElementDto>))]
     [JsonSerializable(typeof(AICoAuthorRequest))]
     [JsonSerializable(typeof(AICoAuthorMessage))]
     [JsonSerializable(typeof(AIResponseFormat))]

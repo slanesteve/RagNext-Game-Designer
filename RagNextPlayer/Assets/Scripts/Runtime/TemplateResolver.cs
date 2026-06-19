@@ -52,6 +52,14 @@ namespace RagNextPlayer.Runtime
                 resolved = Resolve(resolved, game, currentRoom, focusEntity);
             }
 
+            // Rearrange any AARRGGBB hex colors to RRGGBBAA for Unity UI Toolkit / TMP
+            resolved = System.Text.RegularExpressions.Regex.Replace(resolved, @"<(color|mark)=(#[a-f0-9]{8})>", m => {
+                var tag = m.Groups[1].Value;
+                var color = m.Groups[2].Value; // #AARRGGBB
+                var correctedColor = "#" + color.Substring(3) + color.Substring(1, 2);
+                return $"<{tag}={correctedColor}>";
+            }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
             return resolved;
         }
 

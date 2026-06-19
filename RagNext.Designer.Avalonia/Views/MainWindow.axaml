@@ -100,6 +100,7 @@
                         <Button Classes="nav" Content="⏱️ System Timers" Command="{Binding NavigateCommand}" CommandParameter="Timers" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Timers, Converter={x:Static ObjectConverters.Equal}}"/>
                         <Button Classes="nav" Content="📜 Global Functions" Command="{Binding NavigateCommand}" CommandParameter="Functions" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Functions, Converter={x:Static ObjectConverters.Equal}}"/>
                         <Button Classes="nav" Content="🎨 Splash Screen" Command="{Binding NavigateCommand}" CommandParameter="SplashScreen" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=SplashScreen, Converter={x:Static ObjectConverters.Equal}}"/>
+                        <Button Classes="nav" Content="📊 Status Elements" Command="{Binding NavigateCommand}" CommandParameter="StatusBar" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=StatusBar, Converter={x:Static ObjectConverters.Equal}}"/>
                         <Button Classes="nav" Content="📂 Media Asset Library" Command="{Binding NavigateCommand}" CommandParameter="Media" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Media, Converter={x:Static ObjectConverters.Equal}}"/>
                         <Button Classes="nav" Content="🛠️ Action Library" Command="{Binding NavigateCommand}" CommandParameter="ActionLibrary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=ActionLibrary, Converter={x:Static ObjectConverters.Equal}}"/>
 
@@ -134,6 +135,10 @@
                                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Version:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
                                     <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding GameVersion, Mode=TwoWay}" PlaceholderText="e.g. 1.0.0" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
                                 </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="140,12,0,0">
+                                    <Button Content="📦 Export Design Package (.ragnext)" Command="{Binding ExportPackageCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" CornerRadius="4" Padding="12,8"/>
+                                    <Button Content="📥 Import Design Package (.ragnext)" Command="{Binding ImportPackageCommand}" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12,8"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
@@ -190,16 +195,34 @@
                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" VerticalAlignment="Top" Margin="0,6,0,0" Foreground="{DynamicResource TextMuted}"/>
                                     <StackPanel Grid.Row="1" Grid.Column="1">
                                          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                                             <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                             <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                             <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                             <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0"/>
-                                             <Button Content="🖌️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0"/>
-                                             <Button Content="Clear" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextMuted}" FontSize="11" Padding="8,0"/>
+                                             <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeBoldClicked"/>
+                                             <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeItalicClicked"/>
+                                             <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeUnderlineClicked"/>
+                                             <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                                 <Button.Flyout>
+                                                     <Flyout>
+                                                         <StackPanel Spacing="6" Width="200">
+                                                             <ColorPicker Color="#FFFFFF" Margin="0" HorizontalAlignment="Center"/>
+                                                             <Button Content="Apply" Click="OnInlineColorPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                         </StackPanel>
+                                                     </Flyout>
+                                                 </Button.Flyout>
+                                             </Button>
+                                             <Button Content="🖊️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                                 <Button.Flyout>
+                                                     <Flyout>
+                                                         <StackPanel Spacing="6" Width="200">
+                                                             <ColorPicker Color="#EF4444" Margin="0" HorizontalAlignment="Center"/>
+                                                             <Button Content="Apply" Click="OnInlineHighlightPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                         </StackPanel>
+                                                     </Flyout>
+                                                 </Button.Flyout>
+                                             </Button>
+                                             <Button Content="Clear" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextMuted}" FontSize="11" Padding="8,0" Click="OnComposeClearClicked"/>
                                              <Button Content="📝 Compose Description" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
                                          </StackPanel>
                                          <Grid ColumnDefinitions="*,Auto">
-                                             <TextBox Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                             <TextBox x:Name="PlayerDescriptionTextBox" Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
                                              <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
                                                  <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
                                                  <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
@@ -326,7 +349,7 @@
                                         <ScrollViewer>
                                             <StackPanel Spacing="10" DataContext="{Binding #PlayerActionsList.SelectedItem}" x:DataType="models:Action">
                                                 <TextBlock Text="Edit Action" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
-                                                <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
+                                                <TextBox x:Name="PlayerActionNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
                                                 <TextBlock Text="Trigger Event:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                 <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PlayerTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                 <StackPanel Spacing="6" Margin="0,6,0,0" IsVisible="{Binding IsDirectionFilterVisible}">
@@ -383,16 +406,34 @@
                                             <!-- Description -->
                                             <TextBlock Text="Description" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,0"/>
                                             <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                                                <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                                <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                                <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                                <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0"/>
-                                                <Button Content="🖌️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0"/>
-                                                <Button Content="Clear" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextMuted}" FontSize="11" Padding="8,0"/>
+                                                <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeBoldClicked"/>
+                                                <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeItalicClicked"/>
+                                                <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeUnderlineClicked"/>
+                                                <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                                    <Button.Flyout>
+                                                        <Flyout>
+                                                            <StackPanel Spacing="6" Width="200">
+                                                                <ColorPicker Color="#FFFFFF" Margin="0" HorizontalAlignment="Center"/>
+                                                                <Button Content="Apply" Click="OnInlineColorPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                            </StackPanel>
+                                                        </Flyout>
+                                                    </Button.Flyout>
+                                                </Button>
+                                                <Button Content="🖊️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                                    <Button.Flyout>
+                                                        <Flyout>
+                                                            <StackPanel Spacing="6" Width="200">
+                                                                <ColorPicker Color="#EF4444" Margin="0" HorizontalAlignment="Center"/>
+                                                                <Button Content="Apply" Click="OnInlineHighlightPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                            </StackPanel>
+                                                        </Flyout>
+                                                    </Button.Flyout>
+                                                </Button>
+                                                <Button Content="Clear" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextMuted}" FontSize="11" Padding="8,0" Click="OnComposeClearClicked"/>
                                                 <Button Content="📝 Compose Description" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
                                             </StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBox Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                                <TextBox x:Name="RoomDescriptionTextBox" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
                                                 <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
                                                     <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
                                                     <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
@@ -680,7 +721,7 @@
                                                     <ScrollViewer>
                                                         <StackPanel Spacing="10" DataContext="{Binding #RoomActionsList.SelectedItem}" x:DataType="models:Action">
                                                             <TextBlock Text="Edit Action" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
-                                                            <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
+                                                            <TextBox x:Name="RoomActionNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
                                                             <TextBlock Text="Trigger Event:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                             <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RoomTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                             <StackPanel Spacing="6" Margin="0,6,0,0" IsVisible="{Binding IsDirectionFilterVisible}">
@@ -730,22 +771,41 @@
                                     <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                 </Grid>
                                 
-                                <TextBlock Text="Description:" Foreground="{DynamicResource TextMuted}"/>
+                                 <TextBlock Text="Description:" Foreground="{DynamicResource TextMuted}"/>
                                  <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                                     <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                     <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                     <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                     <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0"/>
-                                     <Button Content="🖌️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0"/>
+                                     <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeBoldClicked"/>
+                                     <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeItalicClicked"/>
+                                     <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeUnderlineClicked"/>
+                                     <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                         <Button.Flyout>
+                                             <Flyout>
+                                                 <StackPanel Spacing="6" Width="200">
+                                                     <ColorPicker Color="#FFFFFF" Margin="0" HorizontalAlignment="Center"/>
+                                                     <Button Content="Apply" Click="OnInlineColorPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                 </StackPanel>
+                                             </Flyout>
+                                         </Button.Flyout>
+                                     </Button>
+                                     <Button Content="🖊️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                         <Button.Flyout>
+                                             <Flyout>
+                                                 <StackPanel Spacing="6" Width="200">
+                                                     <ColorPicker Color="#EF4444" Margin="0" HorizontalAlignment="Center"/>
+                                                     <Button Content="Apply" Click="OnInlineHighlightPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                 </StackPanel>
+                                             </Flyout>
+                                         </Button.Flyout>
+                                     </Button>
+                                     <Button Content="Clear" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextMuted}" FontSize="11" Padding="8,0" Click="OnComposeClearClicked"/>
                                      <Button Content="📝 Compose Description" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
                                  </StackPanel>
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBox Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
-                                    <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
-                                        <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
-                                        <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                                    </StackPanel>
-                                </Grid>
+                                 <Grid ColumnDefinitions="*,Auto">
+                                     <TextBox x:Name="CharacterDescriptionTextBox" Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                     <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                                         <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
+                                         <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                     </StackPanel>
+                                 </Grid>
 
                                 <!-- Portrait Image -->
                                 <TextBlock Text="Portrait" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,0"/>
@@ -858,7 +918,7 @@
                                         <ScrollViewer>
                                             <StackPanel Spacing="10" DataContext="{Binding #CharacterActionsList.SelectedItem}" x:DataType="models:Action">
                                                 <TextBlock Text="Edit Action" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
-                                                <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
+                                                <TextBox x:Name="CharacterActionNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
                                                 <TextBlock Text="Trigger Event:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                 <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CharacterTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                 <StackPanel Spacing="6" Margin="0,6,0,0" IsVisible="{Binding IsDirectionFilterVisible}">
@@ -922,16 +982,34 @@
                                             <!-- Description -->
                                             <TextBlock Text="Description" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,0"/>
                                             <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                                                <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                                <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                                <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11"/>
-                                                <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0"/>
-                                                <Button Content="🖌️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0"/>
-                                                <Button Content="Clear" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextMuted}" FontSize="11" Padding="8,0"/>
+                                                <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeBoldClicked"/>
+                                                <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeItalicClicked"/>
+                                                <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeUnderlineClicked"/>
+                                                <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                                    <Button.Flyout>
+                                                        <Flyout>
+                                                            <StackPanel Spacing="6" Width="200">
+                                                                <ColorPicker Color="#FFFFFF" Margin="0" HorizontalAlignment="Center"/>
+                                                                <Button Content="Apply" Click="OnInlineColorPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                            </StackPanel>
+                                                        </Flyout>
+                                                    </Button.Flyout>
+                                                </Button>
+                                                <Button Content="🖊️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                                    <Button.Flyout>
+                                                        <Flyout>
+                                                            <StackPanel Spacing="6" Width="200">
+                                                                <ColorPicker Color="#EF4444" Margin="0" HorizontalAlignment="Center"/>
+                                                                <Button Content="Apply" Click="OnInlineHighlightPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                            </StackPanel>
+                                                        </Flyout>
+                                                    </Button.Flyout>
+                                                </Button>
+                                                <Button Content="Clear" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextMuted}" FontSize="11" Padding="8,0" Click="OnComposeClearClicked"/>
                                                 <Button Content="📝 Compose Description" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
                                             </StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBox Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                                <TextBox x:Name="ObjectDescriptionTextBox" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
                                                 <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
                                                     <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
                                                     <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
@@ -1030,7 +1108,7 @@
                                                     <ScrollViewer>
                                                         <StackPanel Spacing="10" DataContext="{Binding #ObjectActionsList.SelectedItem}" x:DataType="models:Action">
                                                             <TextBlock Text="Edit Action" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
-                                                            <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
+                                                            <TextBox x:Name="ObjectActionNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="Action Name" FontSize="12" Background="{DynamicResource CardBg}"/>
                                                             <TextBlock Text="Trigger Event:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                             <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ObjectTriggers}" SelectedItem="{Binding Trigger, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                             <StackPanel Spacing="6" Margin="0,6,0,0" IsVisible="{Binding IsDirectionFilterVisible}">
@@ -1448,7 +1526,7 @@
  
                         <!-- Right Side: Live WYSIWYG Screen Coordinates & Preview -->
                         <StackPanel Grid.Column="1" Spacing="20" VerticalAlignment="Top">
-                            <TextBlock Text="Live WYSIWYG Screen Preview" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
+                            <TextBlock Text="Live Screen Preview" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
                             
                             <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
                                 <StackPanel Spacing="16">
@@ -1508,6 +1586,152 @@
                         </StackPanel>
                     </Grid>
                 </ScrollViewer>
+
+                <!-- 5b. Status Elements Tab -->
+                <Grid IsVisible="{Binding ActiveView, ConverterParameter=StatusBar, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
+                    <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
+                        <Grid RowDefinitions="Auto,*,Auto">
+                            <TextBlock Grid.Row="0" Text="Status Elements" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <ListBox Grid.Row="1" ItemsSource="{Binding StatusBar.Elements}" Background="Transparent" x:Name="StatusBarList" SelectionChanged="OnStatusBarListSelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:StatusBarElement">
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
+                                <Button Grid.Column="0" Content="+ Define Element" Command="{Binding StatusBar.AddElementCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Delete" Command="{Binding StatusBar.DeleteElementCommand}" CommandParameter="{Binding #StatusBarList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                    
+                    <Grid Grid.Column="1" RowDefinitions="*,Auto" Margin="12,0,0,0">
+                        <!-- Upper panel with properties -->
+                        <Border Grid.Row="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="16" DataContext="{Binding #StatusBarList.SelectedItem}" x:DataType="models:StatusBarElement" Margin="0,0,12,0" IsVisible="{Binding Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <TextBlock Text="Edit Status Element" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
+                                    
+                                    <TextBlock Text="Name:" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBox Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    
+                                    <TextBlock Text="Visual Option:" Foreground="{DynamicResource TextMuted}"/>
+                                    <ComboBox SelectedItem="{Binding VisualOption, Mode=TwoWay}"
+                                              HorizontalAlignment="Stretch"
+                                              Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}">
+                                        <!-- Use raw strings to match the model property -->
+                                        <x:String>TextOnly</x:String>
+                                        <x:String>ImageOnly</x:String>
+                                        <x:String>ImageAndText</x:String>
+                                    </ComboBox>
+
+                                    <TextBlock Text="Text / Expression:" Foreground="{DynamicResource TextMuted}" IsVisible="{Binding VisualOption, ConverterParameter=ImageOnly, Converter={x:Static ObjectConverters.NotEqual}}"/>
+                                    <StackPanel IsVisible="{Binding VisualOption, ConverterParameter=ImageOnly, Converter={x:Static ObjectConverters.NotEqual}}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                            <Button Content="B" FontWeight="Bold" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeBoldClicked"/>
+                                            <Button Content="/" FontStyle="Italic" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeItalicClicked"/>
+                                            <Button Content="U" Width="28" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Click="OnComposeUnderlineClicked"/>
+                                            <Button Content="🎨 Color" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                                <Button.Flyout>
+                                                    <Flyout>
+                                                        <StackPanel Spacing="6" Width="200">
+                                                            <ColorPicker x:Name="InlineColorPicker" Color="#FFFFFF" Margin="0" HorizontalAlignment="Center"/>
+                                                            <Button Content="Apply" Click="OnInlineColorPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                        </StackPanel>
+                                                    </Flyout>
+                                                </Button.Flyout>
+                                            </Button>
+                                            <Button Content="🖊️ Highlight" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Padding="8,0">
+                                                <Button.Flyout>
+                                                    <Flyout>
+                                                        <StackPanel Spacing="6" Width="200">
+                                                            <ColorPicker x:Name="InlineHighlightPicker" Color="#EF4444" Margin="0" HorizontalAlignment="Center"/>
+                                                            <Button Content="Apply" Click="OnInlineHighlightPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                                        </StackPanel>
+                                                    </Flyout>
+                                                </Button.Flyout>
+                                            </Button>
+                                            <Button Content="Clear" Height="28" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextMuted}" FontSize="11" Padding="8,0" Click="OnComposeClearClicked"/>
+                                            <Button Content="📝 Compose Text" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Height="28" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,0" Margin="10,0,0,0" FontWeight="Bold"/>
+                                        </StackPanel>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBox x:Name="ComposeTextBox_Status" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                            <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                                                <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <TextBlock Text="Icon Image:" Foreground="{DynamicResource TextMuted}" IsVisible="{Binding VisualOption, ConverterParameter=TextOnly, Converter={x:Static ObjectConverters.NotEqual}}"/>
+                                    <ComboBox x:Name="StatusIconComboBox"
+                                              ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}"
+                                              HorizontalAlignment="Stretch"
+                                              Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"
+                                              IsVisible="{Binding VisualOption, ConverterParameter=TextOnly, Converter={x:Static ObjectConverters.NotEqual}}"
+                                              SelectionChanged="OnStatusIconSelectionChanged">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="models:MediaAsset">
+                                                <TextBlock Text="{Binding OriginalFileName}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+
+                                    <CheckBox Content="Initially Visible" IsChecked="{Binding IsVisible, Mode=TwoWay}" Foreground="{DynamicResource TextNormal}"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+
+                        <!-- WYSIWYG Preview Panel -->
+                        <Border Grid.Row="1" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,12,0,0">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="🖥️ Status Preview" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2"/>
+                                <Border Background="#0D0E12" CornerRadius="56 16 16 56" Padding="16" BorderBrush="#00bcd4" BorderThickness="1.5" HorizontalAlignment="Left" MinWidth="300">
+                                    <!-- Horizontal layout like the player's card -->
+                                    <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Top">
+                                        <!-- Left Column: Portrait and Status elements -->
+                                        <StackPanel Orientation="Vertical" Spacing="6" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="180">
+                                            <!-- Mock Portrait -->
+                                            <Border CornerRadius="28" Width="56" Height="56" Background="#2A2A38" BorderBrush="#00bcd4" BorderThickness="2" HorizontalAlignment="Center">
+                                                <TextBlock Text="👤" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            
+                                            <!-- Status elements stacked vertically under the portrait circle -->
+                                            <ItemsControl ItemsSource="{Binding StatusBar.Elements}" Margin="12,0,0,0">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Spacing="4" HorizontalAlignment="Left"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="models:StatusBarElement">
+                                                        <Border Margin="0,0,0,2" IsVisible="{Binding IsVisible}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                                <Image Width="14" Height="14" Stretch="Uniform"
+                                                                       IsVisible="{Binding ShowImage}"
+                                                                       Source="{Binding MediaAssetId, Converter={x:Static views:MediaIdToBitmapConverter.Instance}}"/>
+                                                                <TextBlock views:TextBlockExtensions.HtmlText="{Binding Text}" 
+                                                                           IsVisible="{Binding VisualOption, ConverterParameter=ImageOnly, Converter={x:Static ObjectConverters.NotEqual}}"
+                                                                           FontSize="12" Foreground="#E2E2EC" VerticalAlignment="Center"
+                                                                           TextWrapping="Wrap" MaxWidth="180"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+
+                                        <!-- Right Column: Details like Name/Gender -->
+                                        <StackPanel Orientation="Vertical" Spacing="2" VerticalAlignment="Top" Margin="0,8,0,0">
+                                            <TextBlock Text="Bilbo" FontWeight="Bold" Foreground="White" FontSize="14"/>
+                                            <TextBlock Text="Male" Foreground="#B0BEC5" FontSize="11"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
 
                 <!-- 7c. Media Asset Library Tab -->
                 <Grid IsVisible="{Binding ActiveView, ConverterParameter=Media, Converter={x:Static ObjectConverters.Equal}}" RowDefinitions="Auto,*">
@@ -2034,11 +2258,11 @@
                     </Grid>
                 </Border>
 
-                <!-- Stage 2: Sleek Dual-Column Launcher Dashboard -->
-                <Border IsVisible="{Binding !ShowSplashOverlay}" Width="750" Height="480" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource CardBg}" BorderBrush="#35354A" BorderThickness="1" CornerRadius="16" Padding="32" ClipToBounds="True">
-                    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,300">
+                <!-- Stage 2: Sleek Launcher Dashboard with Sample Games support -->
+                <Border IsVisible="{Binding !ShowSplashOverlay}" Width="1050" Height="500" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource CardBg}" BorderBrush="#35354A" BorderThickness="1" CornerRadius="16" Padding="32" ClipToBounds="True">
+                    <Grid RowDefinitions="Auto,*" ColumnDefinitions="260,*,300">
                         <!-- Header -->
-                        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Margin="0,0,0,24">
+                        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="12" Margin="0,0,0,24">
                             <Border CornerRadius="4" Width="36" Height="36">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -2055,16 +2279,17 @@
                         </StackPanel>
 
                         <!-- Left Column: Actions -->
-                        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="16" Margin="0,0,24,0" VerticalAlignment="Center">
-                            <Button Content="✨ Create New Story Project" Command="{Binding NewGameCommand}" Height="54" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold" CornerRadius="8" FontSize="14"/>
-                            <Button Content="📂 Load Existing Save" Command="{Binding ShowLoadGameCommand}" Height="54" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" CornerRadius="8" FontSize="14"/>
-                            <Button Content="⏱️ Load Last Workspace" Command="{Binding LoadLastWorkspaceCommand}" Height="54" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" FontSize="14" Foreground="{DynamicResource AccentBrush}"/>
+                        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="12" Margin="0,0,24,0" VerticalAlignment="Center">
+                            <Button Content="✨ Create New Story Project" Command="{Binding NewGameCommand}" Height="46" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold" CornerRadius="8" FontSize="13"/>
+                            <Button Content="📂 Load Existing Save" Command="{Binding ShowLoadGameCommand}" Height="46" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" CornerRadius="8" FontSize="13"/>
+                            <Button Content="📦 Import Design Package (.ragnext)" Command="{Binding ImportPackageCommand}" Height="46" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" CornerRadius="8" FontSize="13"/>
+                            <Button Content="⏱️ Load Last Workspace" Command="{Binding LoadLastWorkspaceCommand}" Height="46" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" FontSize="13" Foreground="{DynamicResource AccentBrush}"/>
                             
-                            <Button Content="🚪 Close Launcher" Command="{Binding CloseWelcomeCommand}" FontSize="12" HorizontalAlignment="Center" Foreground="Gray" Background="Transparent" Margin="0,12,0,0"/>
+                            <Button Content="🚪 Close Launcher" Command="{Binding CloseWelcomeCommand}" FontSize="12" HorizontalAlignment="Center" Foreground="Gray" Background="Transparent" Margin="0,6,0,0"/>
                         </StackPanel>
 
-                        <!-- Right Column: Recent Projects -->
-                        <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+                        <!-- Middle Column: Recent Workspaces -->
+                        <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,24,0">
                             <Grid RowDefinitions="Auto,*">
                                 <TextBlock Grid.Row="0" Text="Recent Workspaces" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,12"/>
                                 
@@ -2097,6 +2322,37 @@
                                                         Padding="6,4"
                                                         Margin="4,0,0,0"/>
                                             </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Border>
+
+                        <!-- Right Column: Sample/Demo Projects -->
+                        <Border Grid.Row="1" Grid.Column="2" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+                            <Grid RowDefinitions="Auto,*">
+                                <TextBlock Grid.Row="0" Text="Quick Start Sample Games" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,12"/>
+                                
+                                <!-- Empty state for samples -->
+                                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" IsVisible="{Binding !SampleGames.Count}">
+                                    <TextBlock Text="No sample games found." Foreground="{DynamicResource TextMuted}" FontSize="11" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Place .ragnext packages inside the 'Samples' folder." Foreground="{DynamicResource TextMuted}" FontSize="9" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <ListBox Grid.Row="1" ItemsSource="{Binding SampleGames}" Background="Transparent" BorderThickness="0" IsVisible="{Binding SampleGames.Count}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button HorizontalAlignment="Stretch" 
+                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSampleGameCommand}" 
+                                                    CommandParameter="{Binding}"
+                                                    Background="Transparent"
+                                                    Padding="4,8"
+                                                    Margin="0,0,0,4">
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </Button>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
@@ -2140,7 +2396,7 @@
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
                         <Button x:Name="CancelInventorySelectorButton" Content="Cancel" Background="Transparent" Foreground="Gray"/>
-                        <Button x:Name="SelectInventoryItemButton" Content="Add to Inventory" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorItemsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <Button x:Name="SelectInventoryItemButton" Content="Add to Inventory" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorItemsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" IsDefault="True"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -2163,7 +2419,7 @@
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
                         <Button x:Name="CancelActionSelectorButton" Content="Cancel" Background="Transparent" Foreground="Gray"/>
-                        <Button x:Name="SelectActionTemplateButton" Content="Add Action" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorTemplatesList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <Button x:Name="SelectActionTemplateButton" Content="Add Action" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsEnabled="{Binding #SelectorTemplatesList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" IsDefault="True"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -2187,7 +2443,7 @@
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
                         <Button x:Name="CancelAttributeButton" Content="Cancel" Background="Transparent" Foreground="Gray"/>
-                        <Button x:Name="SaveAttributeButton" Content="Save Parameter" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                        <Button x:Name="SaveAttributeButton" Content="Save Parameter" Background="#8E2DE2" Foreground="White" FontWeight="Bold" IsDefault="True"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -2242,29 +2498,22 @@
                                 </Button>
                                 <Button Content="🎨 Color" Height="30" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="8,4" FontSize="11">
                                     <Button.Flyout>
-                                        <MenuFlyout>
-                                            <MenuItem Header="Red" CommandParameter="#EF4444" Click="OnComposeColorSelected"/>
-                                            <MenuItem Header="Orange" CommandParameter="#F97316" Click="OnComposeColorSelected"/>
-                                            <MenuItem Header="Yellow" CommandParameter="#F59E0B" Click="OnComposeColorSelected"/>
-                                            <MenuItem Header="Green" CommandParameter="#10B981" Click="OnComposeColorSelected"/>
-                                            <MenuItem Header="Blue" CommandParameter="#3B82F6" Click="OnComposeColorSelected"/>
-                                            <MenuItem Header="Purple" CommandParameter="#8B5CF6" Click="OnComposeColorSelected"/>
-                                            <MenuItem Header="Pink" CommandParameter="#EC4899" Click="OnComposeColorSelected"/>
-                                            <MenuItem Header="White" CommandParameter="#FFFFFF" Click="OnComposeColorSelected"/>
-                                        </MenuFlyout>
+                                        <Flyout>
+                                            <StackPanel Spacing="6" Width="200">
+                                                <ColorPicker x:Name="ComposeColorPicker" Color="#FFFFFF" Margin="0" HorizontalAlignment="Center"/>
+                                                <Button Content="Apply" Click="OnComposeColorPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </Flyout>
                                     </Button.Flyout>
                                 </Button>
                                 <Button Content="🖊️ Highlight" Height="30" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="8,4" FontSize="11">
                                     <Button.Flyout>
-                                        <MenuFlyout>
-                                            <MenuItem Header="Red" CommandParameter="#EF4444" Click="OnComposeHighlightSelected"/>
-                                            <MenuItem Header="Orange" CommandParameter="#F97316" Click="OnComposeHighlightSelected"/>
-                                            <MenuItem Header="Yellow" CommandParameter="#F59E0B" Click="OnComposeHighlightSelected"/>
-                                            <MenuItem Header="Green" CommandParameter="#10B981" Click="OnComposeHighlightSelected"/>
-                                            <MenuItem Header="Blue" CommandParameter="#3B82F6" Click="OnComposeHighlightSelected"/>
-                                            <MenuItem Header="Purple" CommandParameter="#8B5CF6" Click="OnComposeHighlightSelected"/>
-                                            <MenuItem Header="Pink" CommandParameter="#EC4899" Click="OnComposeHighlightSelected"/>
-                                        </MenuFlyout>
+                                        <Flyout>
+                                            <StackPanel Spacing="6" Width="200">
+                                                <ColorPicker x:Name="ComposeHighlightPicker" Color="#EF4444" Margin="0" HorizontalAlignment="Center"/>
+                                                <Button Content="Apply" Click="OnComposeHighlightPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </Flyout>
                                     </Button.Flyout>
                                 </Button>
                                 <Button Content="✕ Clear" Click="OnComposeClearClicked" Height="30" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource ToolbarBtnFg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="8,4" FontSize="11"/>

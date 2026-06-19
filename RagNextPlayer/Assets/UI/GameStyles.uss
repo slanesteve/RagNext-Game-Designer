@@ -150,6 +150,7 @@
     font-size: 64px;
     color: rgba(0, 168, 204, 0.2);
     -unity-text-align: middle-center;
+    display: none;
 }
 
 /* Narrative Panel */
@@ -158,6 +159,8 @@
     flex-shrink: 1;
     flex-basis: 0px;
     min-height: 0px;
+    width: 780px;
+    max-height: 240px;
     background-color: var(--color-bg-card);
     border-radius: 8px;
     border-left-width: 0;
@@ -235,6 +238,10 @@
 }
 
 /* ── Right Column ─────────────────────────────────────────────────────────── */
+#hud-right-compartment {
+    width: 380px;
+}
+
 .right-column {
     flex-direction: column;
     row-gap: 10px;
@@ -1271,6 +1278,68 @@
     color: #00bcd4;
     -unity-font-style: bold;
 }
+
+/* ── Font Size Customizations ────────────────────────────────────────────────── */
+
+/* 1. Small Font Size Class */
+.font-size-small .narrative-room-header { font-size: 14px; }
+.font-size-small .narrative-text { font-size: 13px; }
+.font-size-small .narrative-status { font-size: 13px; }
+.font-size-small .narrative-hotlink { font-size: 13px; }
+.font-size-small .inventory-item-name { font-size: 11px; }
+.font-size-small .settings-label { font-size: 12px; }
+.font-size-small .settings-toggle-btn { font-size: 12px; }
+.font-size-small .menu-btn { font-size: 12px; }
+.font-size-small .entity-name { font-size: 12px; }
+.font-size-small .section-header { font-size: 10px; }
+.font-size-small #compass-toggle-btn { font-size: 11px; }
+.font-size-small .entity-thumbnail { width: 32px; height: 32px; }
+.font-size-small #hud-right-compartment { width: 320px; }
+.font-size-small #narrative-panel { width: 680px; max-height: 200px; }
+.font-size-small .settings-menu { min-width: 240px; max-width: 320px; }
+.font-size-small .settings-menu-title { font-size: 13px; }
+.font-size-small .prompt-input-message { font-size: 11px; }
+.font-size-small .unity-text-field__input { font-size: 11px; }
+
+/* 2. Normal Font Size Class (Default, but larger) */
+.font-size-normal .narrative-room-header { font-size: 19px; }
+.font-size-normal .narrative-text { font-size: 17px; }
+.font-size-normal .narrative-status { font-size: 17px; }
+.font-size-normal .narrative-hotlink { font-size: 17px; }
+.font-size-normal .inventory-item-name { font-size: 14px; }
+.font-size-normal .settings-label { font-size: 16px; }
+.font-size-normal .settings-toggle-btn { font-size: 14px; }
+.font-size-normal .menu-btn { font-size: 15px; }
+.font-size-normal .entity-name { font-size: 15px; }
+.font-size-normal .section-header { font-size: 13px; }
+.font-size-normal #compass-toggle-btn { font-size: 13px; }
+.font-size-normal .entity-thumbnail { width: 40px; height: 40px; }
+.font-size-normal #hud-right-compartment { width: 380px; }
+.font-size-normal #narrative-panel { width: 780px; max-height: 240px; }
+.font-size-normal .settings-menu { min-width: 280px; max-width: 360px; }
+.font-size-normal .settings-menu-title { font-size: 17px; }
+.font-size-normal .prompt-input-message { font-size: 14px; }
+.font-size-normal .unity-text-field__input { font-size: 14px; }
+
+/* 3. Large Font Size Class */
+.font-size-large .narrative-room-header { font-size: 24px; }
+.font-size-large .narrative-text { font-size: 21px; }
+.font-size-large .narrative-status { font-size: 21px; }
+.font-size-large .narrative-hotlink { font-size: 21px; }
+.font-size-large .inventory-item-name { font-size: 18px; }
+.font-size-large .settings-label { font-size: 20px; }
+.font-size-large .settings-toggle-btn { font-size: 18px; }
+.font-size-large .menu-btn { font-size: 19px; }
+.font-size-large .entity-name { font-size: 18px; }
+.font-size-large .section-header { font-size: 17px; }
+.font-size-large #compass-toggle-btn { font-size: 17px; }
+.font-size-large .entity-thumbnail { width: 56px; height: 56px; }
+.font-size-large #hud-right-compartment { width: 460px; }
+.font-size-large #narrative-panel { width: 900px; max-height: 300px; }
+.font-size-large .settings-menu { min-width: 340px; max-width: 440px; }
+.font-size-large .settings-menu-title { font-size: 21px; }
+.font-size-large .prompt-input-message { font-size: 18px; }
+.font-size-large .unity-text-field__input { font-size: 18px; }
 
 
 

@@ -953,6 +953,60 @@
           "dataType": "String"
         }
       ]
+    },
+    {
+      "name": "Show Status Element",
+      "category": "Status",
+      "inputs": [
+        {
+          "label": "ElementId",
+          "controlType": "ComboBox",
+          "dataType": "StatusBarElement"
+        }
+      ]
+    },
+    {
+      "name": "Hide Status Element",
+      "category": "Status",
+      "inputs": [
+        {
+          "label": "ElementId",
+          "controlType": "ComboBox",
+          "dataType": "StatusBarElement"
+        }
+      ]
+    },
+    {
+      "name": "Set Status Element Text",
+      "category": "Status",
+      "inputs": [
+        {
+          "label": "ElementId",
+          "controlType": "ComboBox",
+          "dataType": "StatusBarElement"
+        },
+        {
+          "label": "Text",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Set Status Element Image",
+      "category": "Status",
+      "inputs": [
+        {
+          "label": "ElementId",
+          "controlType": "ComboBox",
+          "dataType": "StatusBarElement"
+        },
+        {
+          "label": "MediaId",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
     }
   ]
 }

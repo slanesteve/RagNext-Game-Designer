@@ -444,64 +444,156 @@ namespace RagNextPlayer.Managers
             await _transitionLock.WaitAsync();
             try
             {
-                var room = ActiveGame?.Rooms.Find(r => r.Id == roomId);
-                if (room is null)
-                {
-                    Debug.LogWarning($"[GameManager] Target room '{roomId}' not found.");
-                    return;
-                }
+                string currentTargetRoomId = roomId;
+                string? currentDirection = direction;
 
-                CurrentState = GameState.Transitioning;
-
-                // Resolve direction if not explicitly provided
-                if (direction == null && CurrentRoom != null)
+                while (!string.IsNullOrEmpty(currentTargetRoomId))
                 {
-                    foreach (var kvp in CurrentRoom.Exits)
+                    var room = ActiveGame?.Rooms.Find(r => r.Id == currentTargetRoomId);
+                    if (room is null)
                     {
-                        if (string.Equals(kvp.Value, roomId, StringComparison.OrdinalIgnoreCase))
-                        {
-                            direction = kvp.Key;
-                            break;
-                        }
+                        Debug.LogWarning($"[GameManager] Target room '{currentTargetRoomId}' not found.");
+                        break;
                     }
-                }
 
-                // Sync currentRoomId variable to the target room before firing exit actions
-                var roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
-                if (roomVar is null)
-                {
-                    ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = roomId });
-                }
-                else
-                {
-                    roomVar.Value = roomId;
-                }
+                    CurrentState = GameState.Transitioning;
 
-                // Run current room's OnPlayerExit actions before moving
-                if (CurrentRoom is not null)
-                {
-                    var exitCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, null, CurrentRoom);
-                    foreach (var action in CurrentRoom.Actions)
+                    // Resolve direction if not explicitly provided
+                    if (currentDirection == null && CurrentRoom != null)
                     {
-                        if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
+                        foreach (var kvp in CurrentRoom.Exits)
                         {
-                            if (MatchesDirection(action.DirectionFilter, direction))
+                            if (string.Equals(kvp.Value, currentTargetRoomId, StringComparison.OrdinalIgnoreCase))
                             {
-                                ActionExecutor.Execute(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                currentDirection = kvp.Key;
+                                break;
                             }
                         }
                     }
 
-                    // Bubble OnPlayerExit globally to Player-level hooks
-                    if (ActiveGame?.Player?.Actions != null)
+                    // Sync currentRoomId variable to the target room before firing exit actions
+                    var roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                    if (roomVar is null)
                     {
-                        var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description };
-                        var playerCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, playerStub, ActiveGame.Player);
-                        foreach (var action in ActiveGame.Player.Actions)
+                        ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = currentTargetRoomId });
+                    }
+                    else
+                    {
+                        roomVar.Value = currentTargetRoomId;
+                    }
+
+                    // Run current room's OnPlayerExit actions before moving
+                    if (CurrentRoom is not null)
+                    {
+                        var exitCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, null, CurrentRoom);
+                        foreach (var action in CurrentRoom.Actions)
                         {
                             if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
                             {
-                                if (MatchesDirection(action.DirectionFilter, direction))
+                                if (MatchesDirection(action.DirectionFilter, currentDirection))
+                                {
+                                    ActionExecutor.Execute(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                }
+                            }
+                        }
+
+                        // Bubble OnPlayerExit globally to Player-level hooks
+                        if (ActiveGame?.Player?.Actions != null)
+                        {
+                            var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description };
+                            var playerCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, playerStub, ActiveGame.Player);
+                            foreach (var action in ActiveGame.Player.Actions)
+                            {
+                                if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    if (MatchesDirection(action.DirectionFilter, currentDirection))
+                                    {
+                                        ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                    }
+                                }
+                            }
+                        }
+
+                        // Execute OnPlayerExit actions for items in the current room
+                        var itemsInRoomExit = ActiveGame.Objects.FindAll(o => CurrentRoom.ObjectIds.Contains(o.Id));
+                        foreach (var item in itemsInRoomExit)
+                        {
+                            if (item.Actions != null)
+                            {
+                                var itemCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, item, item);
+                                foreach (var action in item.Actions)
+                                {
+                                    if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        if (MatchesDirection(action.DirectionFilter, currentDirection))
+                                        {
+                                            ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Check if currentRoomId was redirected/overridden during OnPlayerExit
+                        var finalRoomId = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
+                        if (!string.IsNullOrEmpty(finalRoomId) && !string.Equals(finalRoomId, currentTargetRoomId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            currentTargetRoomId = finalRoomId;
+                            currentDirection = null;
+                            continue;
+                        }
+
+                        // Robust Interception Check: if redirected back to the starting/current room, abort early
+                        if (string.Equals(currentTargetRoomId, CurrentRoom.Id, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var rVar = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                            if (rVar != null) rVar.Value = CurrentRoom.Id;
+                            break;
+                        }
+                    }
+
+                    // 1. Fade out
+                    if (UIManager.Instance is not null)
+                        await UIManager.Instance.FadeNarrativeAsync(0f, 300);
+
+                    // 2. Update state
+                    CurrentRoom = room;
+                    roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
+                    if (roomVar is null)
+                    {
+                        ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = currentTargetRoomId });
+                    }
+                    else
+                    {
+                        roomVar.Value = currentTargetRoomId;
+                    }
+
+                    // 3. Notify UI
+                    OnRoomEntered?.Invoke(room);
+
+                    // Run room's OnPlayerEnter actions
+                    var enterCtx = new GameExecutionContext(ActiveGame!, room, null, room);
+                    foreach (var action in room.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (MatchesDirection(action.DirectionFilter, currentDirection))
+                            {
+                                ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                            }
+                        }
+                    }
+
+                    // Bubble OnPlayerEnter globally to Player-level hooks
+                    if (ActiveGame?.Player?.Actions != null)
+                    {
+                        var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description };
+                        var playerCtx = new GameExecutionContext(ActiveGame!, room, playerStub, ActiveGame.Player);
+                        foreach (var action in ActiveGame.Player.Actions)
+                        {
+                            if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (MatchesDirection(action.DirectionFilter, currentDirection))
                                 {
                                     ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
                                 }
@@ -509,18 +601,18 @@ namespace RagNextPlayer.Managers
                         }
                     }
 
-                    // Execute OnPlayerExit actions for items in the current room
-                    var itemsInRoomExit = ActiveGame.Objects.FindAll(o => CurrentRoom.ObjectIds.Contains(o.Id));
-                    foreach (var item in itemsInRoomExit)
+                    // Execute OnPlayerEnter actions for items in the entered room
+                    var itemsInRoomEnter = ActiveGame.Objects.FindAll(o => room.ObjectIds.Contains(o.Id));
+                    foreach (var item in itemsInRoomEnter)
                     {
                         if (item.Actions != null)
                         {
-                            var itemCtx = new GameExecutionContext(ActiveGame!, CurrentRoom, item, item);
+                            var itemCtx = new GameExecutionContext(ActiveGame!, room, item, item);
                             foreach (var action in item.Actions)
                             {
-                                if (string.Equals(action.Trigger, "OnPlayerExit", StringComparison.OrdinalIgnoreCase))
+                                if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    if (MatchesDirection(action.DirectionFilter, direction))
+                                    if (MatchesDirection(action.DirectionFilter, currentDirection))
                                     {
                                         ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
                                     }
@@ -529,106 +621,24 @@ namespace RagNextPlayer.Managers
                         }
                     }
 
-                    // Check if currentRoomId was redirected/overridden during OnPlayerExit
-                    var finalRoomId = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
-                    if (!string.IsNullOrEmpty(finalRoomId) && !string.Equals(finalRoomId, roomId, StringComparison.OrdinalIgnoreCase))
+                    // Run all unified OnTurnTick actions across player, rooms, and active entities
+                    FireTurnTickTriggers();
+
+                    // Check if currentRoomId was redirected/overridden during OnPlayerEnter or TurnTick
+                    var postEnterRoomId = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
+                    if (!string.IsNullOrEmpty(postEnterRoomId) && !string.Equals(postEnterRoomId, currentTargetRoomId, StringComparison.OrdinalIgnoreCase))
                     {
-                        roomId = finalRoomId;
-                        room = ActiveGame.Rooms.Find(r => r.Id == roomId);
-                        if (room is null)
-                        {
-                            Debug.LogWarning($"[GameManager] Redirect target room '{roomId}' not found.");
-                            CurrentState = GameState.Playing;
-                            return;
-                        }
+                        currentTargetRoomId = postEnterRoomId;
+                        currentDirection = null;
+                        continue;
                     }
 
-                    // Robust Interception Check: if redirected back to the starting/current room, abort early
-                    if (string.Equals(roomId, CurrentRoom.Id, StringComparison.OrdinalIgnoreCase))
-                    {
-                        var rVar = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
-                        if (rVar != null) rVar.Value = CurrentRoom.Id;
-                        
-                        CurrentState = GameState.Playing;
-                        return;
-                    }
+                    // 4. Fade in
+                    if (UIManager.Instance is not null)
+                        await UIManager.Instance.FadeNarrativeAsync(1f, 300);
+
+                    break;
                 }
-
-                // 1. Fade out
-                if (UIManager.Instance is not null)
-                    await UIManager.Instance.FadeNarrativeAsync(0f, 300);
-
-                // 2. Update state
-                CurrentRoom = room;
-                roomVar = ActiveGame!.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
-                if (roomVar is null)
-                {
-                    ActiveGame.Variables.Add(new GameVariableData { Name = "player.currentRoomId", Value = roomId });
-                }
-                else
-                {
-                    roomVar.Value = roomId;
-                }
-
-                // 3. Notify UI
-                OnRoomEntered?.Invoke(room);
-
-                // Run room's OnPlayerEnter actions
-                var enterCtx = new GameExecutionContext(ActiveGame!, room, null, room);
-                foreach (var action in room.Actions)
-                {
-                    if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (MatchesDirection(action.DirectionFilter, direction))
-                        {
-                            ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
-                        }
-                    }
-                }
-
-                // Bubble OnPlayerEnter globally to Player-level hooks
-                if (ActiveGame?.Player?.Actions != null)
-                {
-                    var playerStub = new GameObjectData { Id = ActiveGame.Player.Id, Name = ActiveGame.Player.Name, Description = ActiveGame.Player.Description };
-                    var playerCtx = new GameExecutionContext(ActiveGame!, room, playerStub, ActiveGame.Player);
-                    foreach (var action in ActiveGame.Player.Actions)
-                    {
-                        if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (MatchesDirection(action.DirectionFilter, direction))
-                            {
-                                ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
-                            }
-                        }
-                    }
-                }
-
-                // Execute OnPlayerEnter actions for items in the entered room
-                var itemsInRoomEnter = ActiveGame.Objects.FindAll(o => room.ObjectIds.Contains(o.Id));
-                foreach (var item in itemsInRoomEnter)
-                {
-                    if (item.Actions != null)
-                    {
-                        var itemCtx = new GameExecutionContext(ActiveGame!, room, item, item);
-                        foreach (var action in item.Actions)
-                        {
-                            if (string.Equals(action.Trigger, "OnPlayerEnter", StringComparison.OrdinalIgnoreCase))
-                            {
-                                if (MatchesDirection(action.DirectionFilter, direction))
-                                {
-                                    ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Run all unified OnTurnTick actions across player, rooms, and active entities
-                FireTurnTickTriggers();
-
-                // 4. Fade in
-                if (UIManager.Instance is not null)
-                    await UIManager.Instance.FadeNarrativeAsync(1f, 300);
 
                 CurrentState = GameState.Playing;
             }
@@ -847,7 +857,7 @@ namespace RagNextPlayer.Managers
 
                 // Save companion screenshot
                 string imagePath = System.IO.Path.ChangeExtension(path, ".png");
-                ScreenCapture.CaptureScreenshot(imagePath);
+                StartCoroutine(CaptureScreenshotCoroutine(imagePath));
 
                 Debug.Log($"[GameManager] Game saved to slot {slot} at: {path} and screenshot at: {imagePath}");
             }
@@ -914,6 +924,30 @@ namespace RagNextPlayer.Managers
             catch (Exception ex)
             {
                 Debug.LogError($"[GameManager] Load error: {ex.Message}");
+            }
+        }
+
+        private System.Collections.IEnumerator CaptureScreenshotCoroutine(string imagePath)
+        {
+            yield return new UnityEngine.WaitForEndOfFrame();
+
+            int width = UnityEngine.Screen.width;
+            int height = UnityEngine.Screen.height;
+            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(width, height, UnityEngine.TextureFormat.RGB24, false);
+            tex.ReadPixels(new UnityEngine.Rect(0, 0, width, height), 0, 0);
+            tex.Apply();
+
+            byte[] bytes = tex.EncodeToPNG();
+            UnityEngine.Object.Destroy(tex);
+
+            try
+            {
+                System.IO.File.WriteAllBytes(imagePath, bytes);
+                UnityEngine.Debug.Log($"[GameManager] Custom screenshot saved successfully to: {imagePath}");
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($"[GameManager] Failed to write custom screenshot: {ex.Message}");
             }
         }
 

@@ -38,6 +38,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public static Func<Task<string[]>>? PickMultipleFilesAsync { get; set; }
         public static Func<string, string, Task<string>>? PromptInputAsync { get; set; }
         public static Func<string, string, Task<bool>>? ConfirmDialogAsync { get; set; }
+        public static Func<string, string, Task<string>>? ConfirmPublishDialogAsync { get; set; }
         public static Action<string>? ShowNotification { get; set; }
 
         public Node? Selected

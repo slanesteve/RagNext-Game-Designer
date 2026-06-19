@@ -24,6 +24,18 @@ namespace RagNext.Designer.Avalonia.Services
         public List<ExportFunctionDto>? Functions { get; set; }
         public List<ExportTimerDto>? Timers { get; set; }
         public ExportSplashScreenDto? SplashScreen { get; set; }
+        public List<ExportStatusBarElementDto>? StatusBarElements { get; set; }
+    }
+
+    public class ExportStatusBarElementDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? VisualOption { get; set; }
+        public string? Text { get; set; }
+        public string? TextColor { get; set; }
+        public string? MediaAssetId { get; set; }
+        public bool IsVisible { get; set; }
     }
 
     public class ExportPlayerDto
@@ -218,7 +230,17 @@ namespace RagNext.Designer.Avalonia.Services
                 BorderWidth = game.SplashScreen.BorderWidth,
                 BorderColor = game.SplashScreen.BorderColor,
                 BorderRadius = game.SplashScreen.BorderRadius
-            } : null
+            } : null,
+            StatusBarElements = game.StatusBarElements.Select(s => new ExportStatusBarElementDto
+            {
+                Id = s.Id.ToString(),
+                Name = s.Name,
+                VisualOption = s.VisualOption,
+                Text = s.Text,
+                TextColor = s.TextColor,
+                MediaAssetId = s.MediaAssetId?.ToString(),
+                IsVisible = s.IsVisible
+            }).ToList()
         };
 
         private static string NormalizeNewlines(string? val)

@@ -42,7 +42,12 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(DateTimeCompareDifferenceCondition), "date.diffCompare")]
     [JsonDerivedType(typeof(DateTimeCompareConstantCondition), "date.compareConst")]
     [JsonDerivedType(typeof(DateTimeIsValidCondition), "date.isValid")]
+    [JsonDerivedType(typeof(StatusElementVisibleCondition), "status.isVisible")]
     // Commands
+    [JsonDerivedType(typeof(ShowStatusElementCommand), "status.show")]
+    [JsonDerivedType(typeof(HideStatusElementCommand), "status.hide")]
+    [JsonDerivedType(typeof(SetStatusElementTextCommand), "status.setText")]
+    [JsonDerivedType(typeof(SetStatusElementImageCommand), "status.setImage")]
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
     [JsonDerivedType(typeof(AddObjectToRoomCommand), "room.addObject")]
@@ -2122,6 +2127,82 @@ namespace RagsCore.Actions
             var resolved = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
             var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolved, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolved, StringComparison.OrdinalIgnoreCase));
             return obj != null && obj.IsWorn;
+        }
+    }
+
+    public sealed class ShowStatusElementCommand : GameCommand
+    {
+        public string ElementId { get; set; } = string.Empty;
+        public override string TypeName => "Status: Show Status Element";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ElementId, ctx);
+            var element = ctx.Game.StatusBarElements.FirstOrDefault(e => e.Id.ToString() == resolved || string.Equals(e.Name, resolved, StringComparison.OrdinalIgnoreCase));
+            if (element != null)
+            {
+                element.IsVisible = true;
+            }
+        }
+    }
+
+    public sealed class HideStatusElementCommand : GameCommand
+    {
+        public string ElementId { get; set; } = string.Empty;
+        public override string TypeName => "Status: Hide Status Element";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ElementId, ctx);
+            var element = ctx.Game.StatusBarElements.FirstOrDefault(e => e.Id.ToString() == resolved || string.Equals(e.Name, resolved, StringComparison.OrdinalIgnoreCase));
+            if (element != null)
+            {
+                element.IsVisible = false;
+            }
+        }
+    }
+
+    public sealed class SetStatusElementTextCommand : GameCommand
+    {
+        public string ElementId { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public override string TypeName => "Status: Set Status Element Text";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedId = RagsCore.Services.TemplateResolver.Resolve(ElementId, ctx);
+            var resolvedText = RagsCore.Services.TemplateResolver.Resolve(Text, ctx);
+            var element = ctx.Game.StatusBarElements.FirstOrDefault(e => e.Id.ToString() == resolvedId || string.Equals(e.Name, resolvedId, StringComparison.OrdinalIgnoreCase));
+            if (element != null)
+            {
+                element.Text = resolvedText;
+            }
+        }
+    }
+
+    public sealed class SetStatusElementImageCommand : GameCommand
+    {
+        public string ElementId { get; set; } = string.Empty;
+        public string MediaId { get; set; } = string.Empty;
+        public override string TypeName => "Status: Set Status Element Image";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedId = RagsCore.Services.TemplateResolver.Resolve(ElementId, ctx);
+            var resolvedMedia = RagsCore.Services.TemplateResolver.Resolve(MediaId, ctx);
+            var element = ctx.Game.StatusBarElements.FirstOrDefault(e => e.Id.ToString() == resolvedId || string.Equals(e.Name, resolvedId, StringComparison.OrdinalIgnoreCase));
+            if (element != null && Guid.TryParse(resolvedMedia, out var mediaGuid))
+            {
+                element.MediaAssetId = mediaGuid;
+            }
+        }
+    }
+
+    public sealed class StatusElementVisibleCondition : Condition
+    {
+        public string ElementId { get; set; } = string.Empty;
+        public override string TypeName => "Status: Is Status Element Visible";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ElementId, ctx);
+            var element = ctx.Game.StatusBarElements.FirstOrDefault(e => e.Id.ToString() == resolved || string.Equals(e.Name, resolved, StringComparison.OrdinalIgnoreCase));
+            return element != null && element.IsVisible;
         }
     }
 }

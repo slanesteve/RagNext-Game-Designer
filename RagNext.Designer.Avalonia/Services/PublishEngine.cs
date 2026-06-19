@@ -60,8 +60,7 @@ namespace RagNext.Designer.Avalonia.Services
             ValidateGame(game);
 
             Report($"Preparing output folder: {outputDirectory}");
-            if (Directory.Exists(outputDirectory))
-                Directory.Delete(outputDirectory, recursive: true);
+            SafeClearDestination(templateDir, outputDirectory, cleanTitle, target);
             Directory.CreateDirectory(outputDirectory);
 
             switch (target)
@@ -343,6 +342,62 @@ namespace RagNext.Designer.Avalonia.Services
         // ── Helpers ───────────────────────────────────────────────────────────
 
         private static void Report(string message) => OnProgress?.Invoke(message);
+
+        public static void SafeClearDestination(string templateDir, string outputDir, string title, PackagingTarget target)
+        {
+            if (!Directory.Exists(outputDir)) return;
+
+            // 1. Delete the ZIP file if it exists
+            string zipName = title + ".zip";
+            string zipPath = Path.Combine(outputDir, zipName);
+            if (File.Exists(zipPath))
+            {
+                try { File.Delete(zipPath); } catch { }
+            }
+
+            // 2. Clear only the template-specific files and folders from the destination
+            try
+            {
+                if (!Directory.Exists(templateDir)) return;
+                var templateItems = Directory.GetFileSystemEntries(templateDir);
+                foreach (var item in templateItems)
+                {
+                    string name = Path.GetFileName(item);
+                    string targetName = name;
+
+                    // Map renamed template items to their build output names
+                    if (target == PackagingTarget.Windows)
+                    {
+                        if (name == "RagNextPlayer.exe") targetName = $"{title}.exe";
+                        else if (name == "RagNextPlayer_Data") targetName = $"{title}_Data";
+                    }
+                    else if (target == PackagingTarget.MacOS)
+                    {
+                        if (name.EndsWith(".app", StringComparison.OrdinalIgnoreCase) || name == "MacOS.app")
+                            targetName = $"{title}.app";
+                    }
+                    else if (target == PackagingTarget.Linux)
+                    {
+                        if (name == "RagNextPlayer") targetName = title;
+                        else if (name == "RagNextPlayer_Data") targetName = $"{title}_Data";
+                    }
+
+                    string destPath = Path.Combine(outputDir, targetName);
+                    if (File.Exists(destPath))
+                    {
+                        File.Delete(destPath);
+                    }
+                    else if (Directory.Exists(destPath))
+                    {
+                        Directory.Delete(destPath, recursive: true);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Report($"Warning during safe clear: {ex.Message}");
+            }
+        }
 
         private static void ValidateGame(Game game)
         {
