@@ -2403,22 +2403,24 @@
                                     <TextBlock Text="Place .ragnext packages inside the 'Samples' folder." Foreground="{DynamicResource TextMuted}" FontSize="9" HorizontalAlignment="Center"/>
                                 </StackPanel>
                                 
-                                <ListBox Grid.Row="1" ItemsSource="{Binding SampleGames}" Background="Transparent" BorderThickness="0" IsVisible="{Binding SampleGames.Count}">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:MainWindowViewModel+SampleGameItem">
-                                            <Button HorizontalAlignment="Stretch" 
-                                                    Command="{Binding LoadCommand}" 
-                                                    Background="Transparent"
-                                                    Padding="4,8"
-                                                    Margin="0,0,0,4">
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
-                                                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding SampleGames}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:MainWindowViewModel+SampleGameItem">
+                                                <Button HorizontalAlignment="Stretch" 
+                                                        Command="{Binding LoadCommand}" 
+                                                        Background="Transparent"
+                                                        Padding="4,8"
+                                                        Margin="0,0,0,4">
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                                        <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
                             </Grid>
                         </Border>
                     </Grid>
