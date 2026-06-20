@@ -298,23 +298,6 @@ namespace RagNext.Designer.Avalonia.Views
 
             // Responsive sizing subscription to prevent native airspace overlap/spillout
             SplashPreviewParentPanel.SizeChanged += OnSplashPreviewParentPanelSizeChanged;
-
-            // Programmatic click registration for Sample Games ListBox to bypass NativeAOT trimming on reflection bindings
-            var sampleGamesListBox = this.FindControl<ListBox>("SampleGamesListBox");
-            if (sampleGamesListBox != null)
-            {
-                sampleGamesListBox.SelectionChanged += async (s, e) =>
-                {
-                    if (sampleGamesListBox.SelectedItem is MainWindowViewModel.SampleGameItem sample)
-                    {
-                        sampleGamesListBox.SelectedItem = null;
-                        if (DataContext is MainWindowViewModel vm)
-                        {
-                            await vm.LoadSampleGameAsync(sample);
-                        }
-                    }
-                };
-            }
         }
 
         private void OnDataContextChanged(object? sender, EventArgs e)
