@@ -1888,13 +1888,28 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public async Task LoadSampleGameAsync(SampleGameItem sample)
         {
-            if (sample == null || !File.Exists(sample.FilePath)) return;
+            if (sample == null) return;
+            if (!File.Exists(sample.FilePath))
+            {
+                if (ShowAlertDialogAsync != null)
+                {
+                    await ShowAlertDialogAsync("Import Error", $"The sample package file could not be found or read at:\n{sample.FilePath}");
+                }
+                return;
+            }
 
             try
             {
                 using var zip = ZipFile.OpenRead(sample.FilePath);
                 var gameEntry = zip.GetEntry("game.json");
-                if (gameEntry == null) return;
+                if (gameEntry == null)
+                {
+                    if (ShowAlertDialogAsync != null)
+                    {
+                        await ShowAlertDialogAsync("Import Error", "The sample package is invalid (missing 'game.json').");
+                    }
+                    return;
+                }
 
                 Game? importedGame;
                 using (var s = gameEntry.Open())
@@ -1902,7 +1917,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     importedGame = await JsonSerializer.DeserializeAsync(s, RagsCore.RagsJsonContext.CustomDefault.Game);
                 }
 
-                if (importedGame == null) return;
+                if (importedGame == null)
+                {
+                    if (ShowAlertDialogAsync != null)
+                    {
+                        await ShowAlertDialogAsync("Import Error", "Failed to deserialize the sample game data.");
+                    }
+                    return;
+                }
 
                 // Always assign a new ID to avoid conflict with the original template/demo
                 importedGame.Id = Guid.NewGuid();
