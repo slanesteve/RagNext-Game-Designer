@@ -92,6 +92,21 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
+    - name: Generate macOS .icns App Icon
+      run: |
+        mkdir -p RagNext.iconset
+        sips -z 16 16     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_16x16.png
+        sips -z 32 32     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_16x16@2x.png
+        sips -z 32 32     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_32x32.png
+        sips -z 64 64     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_32x32@2x.png
+        sips -z 128 128   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_128x128.png
+        sips -z 256 256   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_128x128@2x.png
+        sips -z 256 256   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_256x256.png
+        sips -z 512 512   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_256x256@2x.png
+        sips -z 512 512   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_512x512.png
+        sips -z 1024 1024 RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_512x512@2x.png
+        iconutil -c icns RagNext.iconset -o RagNext.icns
+
     - name: Build & Publish Standalone macOS Arm64
       run: |
         # 1. Temporarily target net9.0 only to bypass mobile Mono restores
@@ -111,6 +126,7 @@ jobs:
         if [ -d "Templates" ]; then
           cp -R Templates Publish/RagNext_Arm64.app/Contents/Resources/Templates
         fi
+        cp RagNext.icns Publish/RagNext_Arm64.app/Contents/Resources/
 
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
@@ -145,6 +161,8 @@ jobs:
         echo '    <string>10.13</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>NSHighResolutionCapable</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <true/>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <key>CFBundleIconFile</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>RagNext.icns</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '</dict>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '</plist>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
 
@@ -170,13 +188,14 @@ jobs:
         if [ -d "Templates" ]; then
           cp -R Templates Publish/RagNext_Intel.app/Contents/Resources/Templates
         fi
+        cp RagNext.icns Publish/RagNext_Intel.app/Contents/Resources/
 
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext
         # Clean up build artifacts that can trigger macOS bundle layout validation errors
         rm -rf Publish/RagNext_Intel.app/Contents/MacOS/*.dSYM
         rm -f Publish/RagNext_Intel.app/Contents/MacOS/*.pdb
-
+ 
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Intel.app/Contents/Info.plist
         echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> Publish/RagNext_Intel.app/Contents/Info.plist
@@ -204,6 +223,8 @@ jobs:
         echo '    <string>10.13</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>NSHighResolutionCapable</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <true/>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <key>CFBundleIconFile</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>RagNext.icns</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '</dict>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '</plist>' >> Publish/RagNext_Intel.app/Contents/Info.plist
 
