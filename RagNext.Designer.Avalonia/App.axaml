@@ -75,6 +75,14 @@
                     <SolidColorBrush x:Key="ToolbarBtnBg" Color="#EAEAEA"/>
                     <SolidColorBrush x:Key="ToolbarBtnFg" Color="#1E1E1E"/>
                     <SolidColorBrush x:Key="ToolbarBtnBorder" Color="#CCCCCC"/>
+                    
+                    <!-- Native Button Overrides to fix hover stickiness -->
+                    <SolidColorBrush x:Key="ButtonBackground" Color="#EAEAEA"/>
+                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#D6D6D6"/>
+                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#CCCCCC"/>
+                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#CCCCCC"/>
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#BBBBBB"/>
+                    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#007ACC"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="MainBg" Color="#1E1E1E"/>
@@ -93,6 +101,14 @@
                     <SolidColorBrush x:Key="ToolbarBtnBg" Color="#262635"/>
                     <SolidColorBrush x:Key="ToolbarBtnFg" Color="White"/>
                     <SolidColorBrush x:Key="ToolbarBtnBorder" Color="#3D3D5A"/>
+                    
+                    <!-- Native Button Overrides to fix hover stickiness -->
+                    <SolidColorBrush x:Key="ButtonBackground" Color="#262635"/>
+                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#252535"/>
+                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#2D2D3E"/>
+                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#3D3D5A"/>
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#4E4E6E"/>
+                    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#007ACC"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>

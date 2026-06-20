@@ -1700,7 +1700,6 @@ namespace RagNext.Designer.Avalonia.Views
             if (roomsList?.SelectedItem is Room room)
             {
                 LoadExits(room);
-                LoadRoomObjects(room);
             }
             if (RoomDetailsScrollViewer != null)
             {
@@ -2016,43 +2015,46 @@ namespace RagNext.Designer.Avalonia.Views
             if (vm != null) _ = vm.SaveGameAsync();
         }
 
-        // Room Objects checklist sync logic
-        private void LoadRoomObjects(Room room)
-        {
-            var game = App.CurrentGame;
-            if (game?.Objects is null) return;
+        private bool _isSyncingRoomObjects = false;
 
-            var list = new System.Collections.Generic.List<ObjectCheckItem>();
-            foreach (var obj in game.Objects)
+        public void OnRoomObjectCheckBoxLoaded(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
+            if (RoomsList.SelectedItem is not Room room) return;
+
+            _isSyncingRoomObjects = true;
+            try
             {
-                bool isChecked = room.ObjectIds.Contains(obj.Id);
-                list.Add(new ObjectCheckItem(obj.Id, obj.Name, isChecked));
+                cb.IsChecked = room.ObjectIds.Contains(item.Id);
             }
-            ObjectsCheckList.ItemsSource = list;
+            finally
+            {
+                _isSyncingRoomObjects = false;
+            }
         }
 
-        private void OnRoomObjectClicked(object? sender, RoutedEventArgs e)
+        public void OnRoomObjectCheckedChanged(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
+            if (_isSyncingRoomObjects) return;
+            if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
             if (RoomsList.SelectedItem is not Room room) return;
-            if (sender is CheckBox cb && cb.DataContext is ObjectCheckItem item)
-            {
-                if (cb.IsChecked == true)
-                {
-                    if (!room.ObjectIds.Contains(item.Id))
-                    {
-                        room.ObjectIds.Add(item.Id);
-                    }
-                }
-                else
-                {
-                    room.ObjectIds.Remove(item.Id);
-                }
 
-                // Save changes automatically
-                if (DataContext is MainWindowViewModel vm)
+            if (cb.IsChecked == true)
+            {
+                if (!room.ObjectIds.Contains(item.Id))
                 {
-                    vm.SaveGameCommand.Execute(null);
+                    room.ObjectIds.Add(item.Id);
                 }
+            }
+            else
+            {
+                room.ObjectIds.Remove(item.Id);
+            }
+
+            // Save changes automatically
+            if (DataContext is MainWindowViewModel vm)
+            {
+                vm.SaveGameCommand.Execute(null);
             }
         }
 
