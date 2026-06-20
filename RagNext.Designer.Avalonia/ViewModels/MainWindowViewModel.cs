@@ -1851,6 +1851,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             public string Title { get; set; } = string.Empty;
             public string Description { get; set; } = string.Empty;
             public string FilePath { get; set; } = string.Empty;
+            public ICommand? LoadCommand { get; set; }
         }
 
         public ObservableCollection<SampleGameItem> SampleGames { get; } = new();
@@ -1869,14 +1870,15 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     foreach (var file in Directory.GetFiles(samplesDir, "*.ragnext"))
                     {
                         var fileName = Path.GetFileNameWithoutExtension(file);
-                        // Make a friendly display title from filename
                         var friendlyTitle = System.Text.RegularExpressions.Regex.Replace(fileName, "([a-z])([A-Z])", "$1 $2");
-                        SampleGames.Add(new SampleGameItem
+                        var item = new SampleGameItem
                         {
                             Title = friendlyTitle,
                             Description = $"Click to import a playable copy of the \"{friendlyTitle}\" demo.",
                             FilePath = file
-                        });
+                        };
+                        item.LoadCommand = new Command(async () => await LoadSampleGameAsync(item));
+                        SampleGames.Add(item);
                     }
                 }
             }
