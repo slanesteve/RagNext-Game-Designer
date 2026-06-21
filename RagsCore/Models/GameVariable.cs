@@ -43,6 +43,7 @@ namespace RagsCore.Models
             get => _type; 
             set 
             {
+                if (string.IsNullOrEmpty(value)) return;
                 if (SetProperty(ref _type, value))
                 {
                     if (_type == "datetime")
