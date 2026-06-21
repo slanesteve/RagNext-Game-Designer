@@ -911,12 +911,39 @@ namespace RagsCore.Actions
         {
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
             var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
-            if (!Guid.TryParse(resolvedChar, out var cId) || !Guid.TryParse(resolvedRoom, out var rId)) return;
 
-            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+            Guid? cId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                cId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) cId = match.Id;
+            }
+
+            Guid? rId = null;
+            if (Guid.TryParse(resolvedRoom, out var parsedRoomId))
+            {
+                rId = parsedRoomId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedRoom))
+            {
+                var match = ctx.Game.Rooms.FirstOrDefault(r => 
+                    string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r.Name.Replace(" ", ""), resolvedRoom, StringComparison.OrdinalIgnoreCase));
+                if (match != null) rId = match.Id;
+            }
+
+            if (cId == null || rId == null) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId.Value);
             if (character is not null)
             {
-                ctx.SetVariable($"char.{cId}.currentRoomId", rId.ToString());
+                ctx.SetVariable($"char.{cId.Value}.currentRoomId", rId.Value.ToString());
             }
         }
     }
