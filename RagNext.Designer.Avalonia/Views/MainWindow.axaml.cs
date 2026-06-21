@@ -878,6 +878,70 @@ namespace RagNext.Designer.Avalonia.Views
                     string base64 = msg.Substring("sync?data=".Length);
                     await SyncGraphData(base64);
                 }
+                else if (msg.StartsWith("add-element?"))
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("add-element?".Length));
+                    string type = query["type"] ?? "";
+                    string name = query["name"] ?? "";
+                    string varType = query["varType"] ?? "string";
+
+                    if (vm.CurrentGame != null && !string.IsNullOrWhiteSpace(name))
+                    {
+                        if (type.Equals("Room", StringComparison.OrdinalIgnoreCase))
+                        {
+                            vm.CurrentGame.Rooms.Add(new Room { Id = Guid.NewGuid(), Name = name, Description = $"A newly created room named {name}." });
+                        }
+                        else if (type.Equals("GameObject", StringComparison.OrdinalIgnoreCase))
+                        {
+                            vm.CurrentGame.Objects.Add(new GameObject { Id = Guid.NewGuid(), Name = name, Description = $"A newly created object named {name}." });
+                        }
+                        else if (type.Equals("Character", StringComparison.OrdinalIgnoreCase))
+                        {
+                            vm.CurrentGame.Characters.Add(new Character { Id = Guid.NewGuid(), Name = name, Description = $"A newly created character named {name}." });
+                        }
+                        else if (type.Equals("Variable", StringComparison.OrdinalIgnoreCase))
+                        {
+                            vm.CurrentGame.Variables.Add(new GameVariable { Id = Guid.NewGuid(), Name = name, Type = varType, Value = varType == "number" ? "0" : (varType == "bool" ? "false" : "") });
+                        }
+                        else if (type.Equals("Timer", StringComparison.OrdinalIgnoreCase))
+                        {
+                            vm.CurrentGame.Timers.Add(new GameTimer { Id = Guid.NewGuid(), Name = name, IntervalSeconds = 1 });
+                        }
+                        else if (type.Equals("Function", StringComparison.OrdinalIgnoreCase))
+                        {
+                            vm.CurrentGame.Functions.Add(new GlobalFunction { Id = Guid.NewGuid(), Name = name });
+                        }
+
+                        await vm.SaveGameAsync();
+                        // Trigger catalogs list updates to notify VM tabs and refresh dropdown sources inside WebView
+                        if (vm.Rooms != null)
+                        {
+                            vm.Rooms.OnPropertyChanged(nameof(vm.Rooms.Rooms));
+                        }
+                        if (vm.Objects != null)
+                        {
+                            vm.Objects.OnPropertyChanged(nameof(vm.Objects.Objects));
+                        }
+                        if (vm.Characters != null)
+                        {
+                            vm.Characters.OnPropertyChanged(nameof(vm.Characters.Characters));
+                        }
+                        if (vm.Variables != null)
+                        {
+                            vm.Variables.OnPropertyChanged(nameof(vm.Variables.Variables));
+                        }
+                        if (vm.Timers != null)
+                        {
+                            vm.Timers.OnPropertyChanged(nameof(vm.Timers.Timers));
+                        }
+                        if (vm.Functions != null)
+                        {
+                            vm.Functions.OnPropertyChanged(nameof(vm.Functions.Functions));
+                        }
+                        
+                        LoadGraphData();
+                    }
+                }
                 else if (msg.StartsWith("graph-ai?"))
                 {
                     var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("graph-ai?".Length));

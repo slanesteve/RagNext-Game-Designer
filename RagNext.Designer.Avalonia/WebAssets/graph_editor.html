@@ -114,6 +114,36 @@
         </div>
     </div>
 
+    <!-- Quick Element Creation Modal -->
+    <div id="add-element-modal" class="modal-overlay hide">
+        <div class="modal-card" style="width: 380px;">
+            <div class="modal-header">
+                <span class="modal-title" id="add-element-title">➕ Add New Element</span>
+                <button class="modal-close" onclick="closeAddElementModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Name</label>
+                    <input type="text" id="new-element-name" style="width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--node-border); border-radius: 6px; color: #fff; padding: 8px 10px; outline: none; font-size: 13px;" placeholder="e.g. Jail">
+                </div>
+                <div id="new-variable-type-wrapper" style="display: none; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Variable Type</label>
+                    <select id="new-variable-type" style="width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--node-border); border-radius: 6px; color: #fff; padding: 8px 10px; outline: none; font-size: 13px;">
+                        <option value="string">string</option>
+                        <option value="number">number</option>
+                        <option value="bool">bool</option>
+                        <option value="datetime">datetime</option>
+                        <option value="array">array</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+                <button class="btn" onclick="closeAddElementModal()">Cancel</button>
+                <button class="btn primary" onclick="submitAddElement()">Create</button>
+            </div>
+        </div>
+    </div>
+
     <script src="graph_editor.js?v=1.0.7"></script>
 </body>
 </html>

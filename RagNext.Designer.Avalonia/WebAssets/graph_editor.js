@@ -2121,6 +2121,17 @@ function refreshCommandFields(node) {
                 }
             }
 
+            // Add "+ Add New..." option if elements catalog type is supported
+            const supportQuickAdd = ['Room', 'Character', 'GameObject', 'Item', 'Variable', 'Timer', 'Function'].includes(inputSchema.dataType);
+            if (supportQuickAdd) {
+                const addOpt = document.createElement('option');
+                addOpt.value = "_add_new_";
+                addOpt.innerText = "+ Add New...";
+                addOpt.style.color = "#a855f7";
+                addOpt.style.fontWeight = "bold";
+                pickerSelect.appendChild(addOpt);
+            }
+
             optionsList.forEach(opt => {
                 const o = document.createElement('option');
                 const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
@@ -2170,7 +2181,7 @@ function refreshCommandFields(node) {
                     textInput.style.display = 'block';
                     pickerSelect.style.display = 'none';
                     toggleLink.innerText = "👁️ Dropdown";
-                    textInput.value = pickerSelect.value;
+                    textInput.value = pickerSelect.value === "_add_new_" ? "" : pickerSelect.value;
                 } else {
                     textInput.style.display = 'none';
                     pickerSelect.style.display = 'block';
@@ -2184,12 +2195,19 @@ function refreshCommandFields(node) {
             textInput.value = initialVal || "";
 
             pickerSelect.addEventListener('change', () => {
+                if (pickerSelect.value === "_add_new_") {
+                    let dt = inputSchema.dataType;
+                    if (dt === "Item") dt = "GameObject"; // align with backend types
+                    openAddElementModal(dt, node, pickerSelect, inputSchema);
+                    return;
+                }
                 textInput.value = pickerSelect.value;
                 node.data[inputSchema.label] = pickerSelect.value;
                 const aliases = propertyMappings[inputSchema.label] || [];
                 aliases.forEach(alias => {
                     node.data[alias] = pickerSelect.value;
                 });
+
                 if (inputSchema.dataType === 'Media') {
                     node.data["Start Time"] = "0.00";
                     node.data["StartTime"] = "0.00";
@@ -3344,6 +3362,43 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
 
         redrawConnections();
         updateTransform();
+
+        // Automatically assign newly created element to the calling node's field
+        if (window.lastAddedElementContext) {
+            const ctx = window.lastAddedElementContext;
+            window.lastAddedElementContext = null;
+            const targetNode = nodes.find(n => n.id === ctx.nodeId);
+            if (targetNode) {
+                // Find matching newly added element ID / Name in catalogs
+                let valToAssign = ctx.name;
+                if (ctx.dataType === "Room" && catalogs.Rooms) {
+                    const match = catalogs.Rooms.find(r => r.Name === ctx.name);
+                    if (match) valToAssign = match.Id || match.id;
+                } else if (ctx.dataType === "GameObject" && catalogs.GameObjects) {
+                    const match = catalogs.GameObjects.find(o => o.Name === ctx.name);
+                    if (match) valToAssign = match.Id || match.id;
+                } else if (ctx.dataType === "Character" && catalogs.Characters) {
+                    const match = catalogs.Characters.find(c => c.Name === ctx.name);
+                    if (match) valToAssign = match.Id || match.id;
+                } else if (ctx.dataType === "Timer" && catalogs.Timers) {
+                    const match = catalogs.Timers.find(t => t.Name === ctx.name);
+                    if (match) valToAssign = match.Id || match.id;
+                } else if (ctx.dataType === "Function" && catalogs.Functions) {
+                    const match = catalogs.Functions.find(f => f.Name === ctx.name);
+                    if (match) valToAssign = match.Id || match.id;
+                }
+                
+                targetNode.data[ctx.fieldLabel] = valToAssign;
+                const aliases = propertyMappings[ctx.fieldLabel] || [];
+                aliases.forEach(alias => {
+                    targetNode.data[alias] = valToAssign;
+                });
+                
+                // Refresh visual representation and save graph state
+                refreshCommandFields(targetNode);
+                triggerAutoSave();
+            }
+        }
     } catch (err) {
         console.error("Visual editor load failed: ", err);
         alert("Visual action editor failed to load:\n\nError: " + err.message + "\n\nStack:\n" + err.stack);
@@ -4546,4 +4601,66 @@ window.stopSpeechRecognitionForCsharp = function() {
         recognition.stop();
     }
 };
+
+// Quick Add Element Dialog Modal Logic
+let currentAddElementFieldCtx = null; // { dataType: string, node: object, select: element, inputSchema: object }
+
+window.openAddElementModal = function(dataType, node, select, inputSchema) {
+    currentAddElementFieldCtx = { dataType, node, select, inputSchema };
+    
+    document.getElementById("new-element-name").value = "";
+    document.getElementById("add-element-title").innerText = "➕ Add New " + dataType;
+    
+    const varTypeWrapper = document.getElementById("new-variable-type-wrapper");
+    if (dataType === "Variable") {
+        varTypeWrapper.style.display = "flex";
+        document.getElementById("new-variable-type").value = "string";
+    } else {
+        varTypeWrapper.style.display = "none";
+    }
+    
+    document.getElementById("add-element-modal").classList.remove("hide");
+    document.getElementById("new-element-name").focus();
+};
+
+window.closeAddElementModal = function() {
+    document.getElementById("add-element-modal").classList.add("hide");
+    if (currentAddElementFieldCtx && currentAddElementFieldCtx.select) {
+        // Reset the dropdown so it doesn't stay stuck on "+ Add New..."
+        const val = currentAddElementFieldCtx.node.data[currentAddElementFieldCtx.inputSchema.label] || "";
+        currentAddElementFieldCtx.select.value = val;
+    }
+    currentAddElementFieldCtx = null;
+};
+
+window.submitAddElement = function() {
+    if (!currentAddElementFieldCtx) return;
+    const name = document.getElementById("new-element-name").value.trim();
+    if (!name) {
+        alert("Please enter a name.");
+        return;
+    }
+    
+    const dataType = currentAddElementFieldCtx.dataType;
+    const varType = dataType === "Variable" ? document.getElementById("new-variable-type").value : "";
+    
+    // Remember which node & field we are adding this for so we can set its value after reload
+    window.lastAddedElementContext = {
+        nodeId: currentAddElementFieldCtx.node.id,
+        fieldLabel: currentAddElementFieldCtx.inputSchema.label,
+        name: name,
+        dataType: dataType
+    };
+    
+    document.getElementById("add-element-modal").classList.add("hide");
+    
+    const actionUrl = "add-element?type=" + encodeURIComponent(dataType) + "&name=" + encodeURIComponent(name) + "&varType=" + encodeURIComponent(varType);
+    if (typeof invokeCSharpAction === 'function') {
+        invokeCSharpAction(actionUrl);
+    } else {
+        window.location.href = "rags-action://" + actionUrl;
+    }
+    currentAddElementFieldCtx = null;
+};
+
 
