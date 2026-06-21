@@ -1499,8 +1499,7 @@ namespace RagNextPlayer.Runtime
                     string.Equals(ctx.Player.Gender, c.Gender, StringComparison.OrdinalIgnoreCase),
 
                 IsRoomExitLockedConditionData c =>
-                    (ctx.Game.Rooms.Find(r => r.Id == (string.IsNullOrWhiteSpace(c.RoomId) ? ctx.CurrentRoom?.Id : ResolveRoomId(c.RoomId, ctx)))
-                        ?.LockedExits.TryGetValue(ctx.Resolve(c.Direction), out var isLocked) ?? false) && isLocked,
+                    HasLockedExit(c, ctx),
 
                 CharacterAttributeCheckConditionData c =>
                     EvaluateAttribute(
@@ -1781,6 +1780,39 @@ namespace RagNextPlayer.Runtime
                 }
             }
         }
+
+        private static bool HasLockedExit(IsRoomExitLockedConditionData c, GameExecutionContext ctx)
+        {
+            var rId = string.IsNullOrWhiteSpace(c.RoomId) ? ctx.CurrentRoom?.Id : ResolveRoomId(c.RoomId, ctx);
+            var room = ctx.Game.Rooms.Find(r => r.Id == rId);
+            if (room != null && room.LockedExits.TryGetValue(ctx.Resolve(c.Direction), out var isLocked))
+            {
+                return isLocked;
+            }
+            return false;
+        }
+
+        private static string ResolveCharacterId(string input, GameExecutionContext ctx)
+        {
+            var resolved = ctx.Resolve(input);
+            if (Guid.TryParse(resolved, out _)) return resolved;
+            if (string.IsNullOrEmpty(resolved)) return resolved;
+            var match = ctx.Game.Characters.Find(c => 
+                string.Equals(c.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
+            return match?.Id ?? resolved;
+        }
+
+        private static string ResolveRoomId(string input, GameExecutionContext ctx)
+        {
+            var resolved = ctx.Resolve(input);
+            if (Guid.TryParse(resolved, out _)) return resolved;
+            if (string.IsNullOrEmpty(resolved)) return resolved;
+            var match = ctx.Game.Rooms.Find(r => 
+                string.Equals(r.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
+            return match?.Id ?? resolved;
+        }
     }
 
     internal static class DateTimeHelper
@@ -1873,28 +1905,6 @@ namespace RagNextPlayer.Runtime
                 };
             }
             return null;
-        }
-
-        private static string ResolveCharacterId(string input, GameExecutionContext ctx)
-        {
-            var resolved = ctx.Resolve(input);
-            if (Guid.TryParse(resolved, out _)) return resolved;
-            if (string.IsNullOrEmpty(resolved)) return resolved;
-            var match = ctx.Game.Characters.Find(c => 
-                string.Equals(c.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(c.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
-            return match?.Id ?? resolved;
-        }
-
-        private static string ResolveRoomId(string input, GameExecutionContext ctx)
-        {
-            var resolved = ctx.Resolve(input);
-            if (Guid.TryParse(resolved, out _)) return resolved;
-            if (string.IsNullOrEmpty(resolved)) return resolved;
-            var match = ctx.Game.Rooms.Find(r => 
-                string.Equals(r.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(r.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
-            return match?.Id ?? resolved;
         }
     }
 }
