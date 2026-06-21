@@ -74,19 +74,59 @@ namespace RagNextPlayer.Runtime
         public void SetVariable(string name, string? value)
         {
             if (string.IsNullOrEmpty(name)) return;
-            if (name.StartsWith("variables.", StringComparison.OrdinalIgnoreCase))
+
+            var cleanName = name;
+            if (cleanName.StartsWith("{") && cleanName.EndsWith("}"))
             {
-                name = name.Substring(10);
-            }
-            else if (name.StartsWith("variable.", StringComparison.OrdinalIgnoreCase))
-            {
-                name = name.Substring(9);
+                cleanName = cleanName.Substring(1, cleanName.Length - 2);
             }
 
-            var v = GetVariable(name);
+            if (cleanName.StartsWith("variables.", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanName = cleanName.Substring(10);
+            }
+            else if (cleanName.StartsWith("variable.", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanName = cleanName.Substring(9);
+            }
+
+            var parts = cleanName.Split('.');
+            if (parts.Length >= 3)
+            {
+                var baseVar = Game.Variables.Find(v => string.Equals(v.Name, parts[0], StringComparison.OrdinalIgnoreCase));
+                if (baseVar != null && (string.Equals(baseVar.Type, "array", StringComparison.OrdinalIgnoreCase) || baseVar.Columns.Count > 0))
+                {
+                    int rowIndex = -1;
+                    string colName = "";
+                    if (int.TryParse(parts[1], out var idx1))
+                    {
+                        rowIndex = idx1;
+                        colName = parts[2];
+                    }
+                    else if (int.TryParse(parts[2], out var idx2))
+                    {
+                        rowIndex = idx2;
+                        colName = parts[1];
+                    }
+
+                    if (rowIndex >= 0 && rowIndex < baseVar.Rows.Count)
+                    {
+                        int colIdx = baseVar.Columns.FindIndex(c => string.Equals(c, colName, StringComparison.OrdinalIgnoreCase));
+                        if (colIdx >= 0)
+                        {
+                            var row = baseVar.Rows[rowIndex];
+                            while (row.Count <= colIdx) row.Add(string.Empty);
+                            row[colIdx] = value ?? string.Empty;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            var v = GetVariable(cleanName);
             if (v is null)
             {
-                v = new GameVariableData { Name = name, Value = value };
+                v = new GameVariableData { Name = cleanName, Value = value };
                 Game.Variables.Add(v);
             }
             else
@@ -1458,21 +1498,32 @@ namespace RagNextPlayer.Runtime
             return result;
         }
 
+        private static bool EvaluateVariableEquals(VariableEqualsConditionData c, GameExecutionContext ctx)
+        {
+            var v = (c.Name.StartsWith("{") && c.Name.EndsWith("}")) ? ctx.Resolve(c.Name) : ctx.GetVariable(c.Name)?.Value;
+            var resolvedVal = ctx.Resolve(c.Value);
+            var isBool = string.Equals(v, "true", StringComparison.OrdinalIgnoreCase) || 
+                         string.Equals(v, "false", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(resolvedVal, "true", StringComparison.OrdinalIgnoreCase) || 
+                         string.Equals(resolvedVal, "false", StringComparison.OrdinalIgnoreCase);
+
+            return (c.CaseInsensitive || isBool)
+                ? string.Equals(v, resolvedVal, StringComparison.OrdinalIgnoreCase)
+                : string.Equals(v, resolvedVal, StringComparison.Ordinal);
+        }
+
         private static bool EvaluateConditionInternal(ConditionData cond, GameExecutionContext ctx)
         {
             return cond switch
             {
                 VariableEqualsConditionData c =>
-                    (c.CaseInsensitive || 
-                     string.Equals(ctx.GetVariable(c.Name)?.Value, "true", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(ctx.GetVariable(c.Name)?.Value, "false", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(ctx.Resolve(c.Value), "true", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(ctx.Resolve(c.Value), "false", StringComparison.OrdinalIgnoreCase))
-                        ? string.Equals(ctx.GetVariable(c.Name)?.Value, ctx.Resolve(c.Value), StringComparison.OrdinalIgnoreCase)
-                        : string.Equals(ctx.GetVariable(c.Name)?.Value, ctx.Resolve(c.Value), StringComparison.Ordinal),
+                    EvaluateVariableEquals(c, ctx),
 
                 VariableComparisonConditionData c =>
-                    CompareValues(ctx.GetVariable(c.Name)?.Value ?? "", ctx.Resolve(c.Value) ?? "", c.Comparison),
+                    CompareValues(
+                        (c.Name.StartsWith("{") && c.Name.EndsWith("}")) ? (ctx.Resolve(c.Name) ?? "") : (ctx.GetVariable(c.Name)?.Value ?? ""),
+                        ctx.Resolve(c.Value) ?? "",
+                        c.Comparison),
 
                 VariableComparisonToVariableConditionData c =>
                     CompareValues(ctx.GetVariable(c.NameA)?.Value ?? "", ctx.GetVariable(c.NameB)?.Value ?? "", c.Comparison),

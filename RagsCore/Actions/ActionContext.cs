@@ -56,10 +56,60 @@ namespace RagsCore.Actions
 
         public void SetVariable(string name, string? value)
         {
-            var v = GetVariable(name);
+            if (string.IsNullOrEmpty(name)) return;
+
+            var cleanName = name;
+            if (cleanName.StartsWith("{") && cleanName.EndsWith("}"))
+            {
+                cleanName = cleanName.Substring(1, cleanName.Length - 2);
+            }
+
+            if (cleanName.StartsWith("variables.", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanName = cleanName.Substring(10);
+            }
+            else if (cleanName.StartsWith("variable.", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanName = cleanName.Substring(9);
+            }
+
+            var parts = cleanName.Split('.');
+            if (parts.Length >= 3)
+            {
+                var baseVar = Game.Variables.FirstOrDefault(v => string.Equals(v.Name, parts[0], StringComparison.OrdinalIgnoreCase));
+                if (baseVar != null && (string.Equals(baseVar.Type, "array", StringComparison.OrdinalIgnoreCase) || baseVar.Columns.Count > 0))
+                {
+                    int rowIndex = -1;
+                    string colName = "";
+                    if (int.TryParse(parts[1], out var idx1))
+                    {
+                        rowIndex = idx1;
+                        colName = parts[2];
+                    }
+                    else if (int.TryParse(parts[2], out var idx2))
+                    {
+                        rowIndex = idx2;
+                        colName = parts[1];
+                    }
+
+                    if (rowIndex >= 0 && rowIndex < baseVar.Rows.Count)
+                    {
+                        int colIdx = baseVar.Columns.IndexOf(baseVar.Columns.FirstOrDefault(c => string.Equals(c, colName, StringComparison.OrdinalIgnoreCase)));
+                        if (colIdx >= 0)
+                        {
+                            var row = baseVar.Rows[rowIndex];
+                            while (row.Count <= colIdx) row.Add(string.Empty);
+                            row[colIdx] = value ?? string.Empty;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            var v = GetVariable(cleanName);
             if (v is null)
             {
-                v = new GameVariable { Name = name, Value = value };
+                v = new GameVariable { Name = cleanName, Value = value };
                 Game.Variables.Add(v);
             }
             else

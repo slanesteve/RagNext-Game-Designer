@@ -264,7 +264,9 @@ namespace RagsCore.Actions
         public override string TypeName => "Variable: Equals String";
         public override bool Evaluate(ActionContext ctx)
         {
-            var v = ctx.GetVariable(Name)?.Value;
+            var v = (Name.StartsWith("{") && Name.EndsWith("}")) 
+                ? RagsCore.Services.TemplateResolver.Resolve(Name, ctx) 
+                : ctx.GetVariable(Name)?.Value;
             var isBool = string.Equals(v, "true", StringComparison.OrdinalIgnoreCase) || 
                          string.Equals(v, "false", StringComparison.OrdinalIgnoreCase) ||
                          string.Equals(Value, "true", StringComparison.OrdinalIgnoreCase) || 
@@ -1031,7 +1033,9 @@ namespace RagsCore.Actions
         public override string TypeName => "Variable: Comparison";
         public override bool Evaluate(ActionContext ctx)
         {
-            var varVal = ctx.GetVariable(Name)?.Value ?? string.Empty;
+            var varVal = (Name.StartsWith("{") && Name.EndsWith("}"))
+                ? RagsCore.Services.TemplateResolver.Resolve(Name, ctx) ?? string.Empty
+                : ctx.GetVariable(Name)?.Value ?? string.Empty;
             var compVal = Value ?? string.Empty;
 
             if (double.TryParse(varVal, out double varNum) && double.TryParse(compVal, out double compNum))
