@@ -299,10 +299,16 @@ namespace RagsCore.Actions
             var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(ExpectedValue, ctx);
             var resolvedAttr = RagsCore.Services.TemplateResolver.Resolve(AttributeName, ctx);
             
-            var character = ctx.Game.Characters.FirstOrDefault(c => string.Equals(c.Id.ToString(), resolvedChar, StringComparison.OrdinalIgnoreCase));
+            var character = ctx.Game.Characters.FirstOrDefault(c => 
+                string.Equals(c.Id.ToString(), resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
             if (character == null)
             {
-                var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                var obj = ctx.Game.Objects.FirstOrDefault(o => 
+                    string.Equals(o.Id.ToString(), resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(o.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(o.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
                 if (obj != null)
                 {
                     return string.Equals(CustomAttribute.GetAttribute(resolvedAttr, obj.Attributes), resolvedVal, StringComparison.OrdinalIgnoreCase);
@@ -516,18 +522,35 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             // Scoped resolution: when CharacterId is set, only toggle on that character.
-            if (!string.IsNullOrEmpty(CharacterId) && Guid.TryParse(CharacterId, out var charGuid))
+            if (!string.IsNullOrEmpty(CharacterId))
             {
-                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charGuid);
-                if (character != null)
+                var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+                Guid? charGuid = null;
+                if (Guid.TryParse(resolvedChar, out var parsedCharId))
                 {
-                    foreach (var action in character.Actions)
-                    {
-                        if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
-                            action.InitallyActive = Active;
-                    }
+                    charGuid = parsedCharId;
                 }
-                return;
+                else
+                {
+                    var match = ctx.Game.Characters.FirstOrDefault(c => 
+                        string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                    if (match != null) charGuid = match.Id;
+                }
+
+                if (charGuid != null)
+                {
+                    var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charGuid.Value);
+                    if (character != null)
+                    {
+                        foreach (var action in character.Actions)
+                        {
+                            if (string.Equals(action.Name, ActionName, StringComparison.OrdinalIgnoreCase))
+                                action.InitallyActive = Active;
+                        }
+                    }
+                    return;
+                }
             }
 
             // Legacy global name-match (backward compat when CharacterId is empty).
@@ -710,9 +733,22 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
-            if (Guid.TryParse(resolvedChar, out var cId))
+            Guid? cId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
             {
-                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+                cId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) cId = match.Id;
+            }
+
+            if (cId != null)
+            {
+                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId.Value);
                 if (character != null)
                 {
                     character.Properties["Gender"] = Gender;
@@ -955,7 +991,21 @@ namespace RagsCore.Actions
         public override bool Evaluate(ActionContext ctx)
         {
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
-            var charRoomVar = ctx.GetVariable($"char.{resolvedChar}.currentRoomId")?.Value;
+            Guid? charId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                charId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) charId = match.Id;
+            }
+
+            var finalCharKey = charId?.ToString() ?? resolvedChar;
+            var charRoomVar = ctx.GetVariable($"char.{finalCharKey}.currentRoomId")?.Value;
             var playerRoomId = ctx.CurrentRoom?.Id.ToString() ?? ctx.GetVariable("player.currentRoomId")?.Value;
             return charRoomVar != null && playerRoomId != null && string.Equals(charRoomVar, playerRoomId, StringComparison.OrdinalIgnoreCase);
         }
@@ -1185,9 +1235,22 @@ namespace RagsCore.Actions
         public override bool Evaluate(ActionContext ctx)
         {
             var resolved = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
-            if (!Guid.TryParse(resolved, out var cId)) return false;
+            Guid? cId = null;
+            if (Guid.TryParse(resolved, out var parsedCharId))
+            {
+                cId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolved))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
+                if (match != null) cId = match.Id;
+            }
+
+            if (cId == null) return false;
             
-            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId.Value);
             if (character is null) return false;
             var charGender = character.Properties.TryGetValue("Gender", out var g) ? g : "Male";
             return string.Equals(charGender, Gender, StringComparison.OrdinalIgnoreCase);
@@ -1216,7 +1279,21 @@ namespace RagsCore.Actions
         {
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
             var resolvedPort = RagsCore.Services.TemplateResolver.Resolve(PortraitId, ctx);
-            ctx.SetVariable($"char.{resolvedChar}.displayedPortraitId", resolvedPort);
+            Guid? charId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                charId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) charId = match.Id;
+            }
+
+            var finalCharKey = charId?.ToString() ?? resolvedChar;
+            ctx.SetVariable($"char.{finalCharKey}.displayedPortraitId", resolvedPort);
         }
     }
 
@@ -1230,9 +1307,22 @@ namespace RagsCore.Actions
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
             var resolvedMedia = RagsCore.Services.TemplateResolver.Resolve(MediaId, ctx);
             
-            if (Guid.TryParse(resolvedChar, out var charId))
+            Guid? charId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
             {
-                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+                charId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) charId = match.Id;
+            }
+
+            if (charId != null)
+            {
+                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId.Value);
                 if (character is not null)
                 {
                     if (Guid.TryParse(resolvedMedia, out var mediaGuid))
@@ -1285,8 +1375,37 @@ namespace RagsCore.Actions
         {
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
             var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
-            var charRoomVar = ctx.GetVariable($"char.{resolvedChar}.currentRoomId")?.Value;
-            return charRoomVar != null && string.Equals(charRoomVar, resolvedRoom, StringComparison.OrdinalIgnoreCase);
+
+            Guid? cId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                cId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) cId = match.Id;
+            }
+
+            Guid? rId = null;
+            if (Guid.TryParse(resolvedRoom, out var parsedRoomId))
+            {
+                rId = parsedRoomId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedRoom))
+            {
+                var match = ctx.Game.Rooms.FirstOrDefault(r => 
+                    string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r.Name.Replace(" ", ""), resolvedRoom, StringComparison.OrdinalIgnoreCase));
+                if (match != null) rId = match.Id;
+            }
+
+            if (cId == null || rId == null) return false;
+
+            var charRoomVar = ctx.GetVariable($"char.{cId.Value}.currentRoomId")?.Value;
+            return charRoomVar != null && string.Equals(charRoomVar, rId.Value.ToString(), StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -1325,9 +1444,24 @@ namespace RagsCore.Actions
         {
             var resolvedItem = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
-            if (!Guid.TryParse(resolvedItem, out var itemId) || !Guid.TryParse(resolvedChar, out var charId)) return false;
+            if (!Guid.TryParse(resolvedItem, out var itemId)) return false;
 
-            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+            Guid? charId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                charId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) charId = match.Id;
+            }
+
+            if (charId == null) return false;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId.Value);
             return character is not null && character.Inventory.Any(i => i.Id == itemId);
         }
     }
@@ -1658,9 +1792,22 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
-            if (!Guid.TryParse(resolvedChar, out var charId)) return;
+            Guid? charId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                charId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) charId = match.Id;
+            }
 
-            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+            if (charId == null) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId.Value);
             if (character is not null)
             {
                 character.Properties.TryGetValue("Health", out var hpStr);
@@ -1684,9 +1831,22 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
-            if (!Guid.TryParse(resolvedChar, out var charId)) return;
+            Guid? charId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                charId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) charId = match.Id;
+            }
 
-            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+            if (charId == null) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId.Value);
             if (character is not null)
             {
                 character.Properties["State"] = State;
@@ -1704,9 +1864,22 @@ namespace RagsCore.Actions
         {
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
             var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
-            if (!Guid.TryParse(resolvedChar, out var charId)) return;
+            Guid? charId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                charId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) charId = match.Id;
+            }
 
-            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId);
+            if (charId == null) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == charId.Value);
             if (character is not null)
             {
                 CustomAttribute.SetAttribute(AttributeName, resolvedVal, character.Attributes);
@@ -1887,10 +2060,24 @@ namespace RagsCore.Actions
         {
             var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
             var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
-            if (Guid.TryParse(resolvedObj, out var oId) && Guid.TryParse(resolvedChar, out var cId))
+
+            Guid? cId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                cId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) cId = match.Id;
+            }
+
+            if (Guid.TryParse(resolvedObj, out var oId) && cId != null)
             {
                 AddObjectToRoomCommand.RemoveObjectFromEverywhere(ctx, oId);
-                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+                var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId.Value);
                 if (character != null && !character.Inventory.Any(i => i.Id == oId))
                 {
                     var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == oId);
@@ -1958,9 +2145,22 @@ namespace RagsCore.Actions
         public override void Execute(ActionContext ctx)
         {
             var resolved = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
-            if (Guid.TryParse(resolved, out var cId))
+            Guid? cId = null;
+            if (Guid.TryParse(resolved, out var parsedCharId))
             {
-                var chr = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+                cId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolved))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
+                if (match != null) cId = match.Id;
+            }
+
+            if (cId != null)
+            {
+                var chr = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId.Value);
                 if (chr != null)
                 {
                     ctx.SetVariable("system.lastDisplayedText", RagsCore.Services.TemplateResolver.Resolve(chr.Description, ctx));
