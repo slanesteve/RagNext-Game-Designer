@@ -115,6 +115,12 @@ namespace RagNextPlayer.Managers
         private string         _promptTargetVarName = string.Empty;
         private string         _promptName = string.Empty;
         private PrimeTween.Tween _promptMenuCloseTween;
+        private bool           _hasClearedForCurrentAction = false;
+
+        public void PrepareForNewAction()
+        {
+            _hasClearedForCurrentAction = false;
+        }
 
         // ── Typewriter effect ─────────────────────────────────────────────────
         [Header("Narrative Settings")]
@@ -1351,15 +1357,33 @@ namespace RagNextPlayer.Managers
             string roomName = room is not null ? room.Name : "Action";
             _historyLog.Add(new System.Tuple<string, string>(roomName, text));
 
-            // Clear narrative scroll to show current action text only
-            _narrativeScroll.Clear();
-
-            // Room name header
-            if (room is not null)
+            if (!_hasClearedForCurrentAction)
             {
-                var header = new Label(room.Name);
-                header.AddToClassList("narrative-room-header");
-                _narrativeScroll.Add(header);
+                // Clear narrative scroll to show current action text only
+                _narrativeScroll.Clear();
+
+                // Room name header
+                if (room is not null)
+                {
+                    var header = new Label(room.Name);
+                    header.AddToClassList("narrative-room-header");
+                    _narrativeScroll.Add(header);
+                }
+                _hasClearedForCurrentAction = true;
+            }
+            else
+            {
+                // Add a spacer or double-newline to separate sequential display text commands
+                if (_typewriterEnabled)
+                {
+                    _typewriterQueue.Enqueue(new TypewriterJob { ParagraphText = null });
+                }
+                else
+                {
+                    var spacer = new VisualElement();
+                    spacer.AddToClassList("narrative-spacer");
+                    _narrativeScroll.Add(spacer);
+                }
             }
 
             // Use BuildNarrativeBody so the text is wrapped in a narrative-paragraph
@@ -1637,6 +1661,9 @@ namespace RagNextPlayer.Managers
             var header = new Label(roomName);
             header.AddToClassList("narrative-room-header");
             _narrativeScroll.Add(header);
+
+            // Since we cleared and printed the room description, subsequent display texts in the same action should append
+            _hasClearedForCurrentAction = true;
 
             // Body — built as inline spans with [hotlink] support
             BuildNarrativeBody(resolved);

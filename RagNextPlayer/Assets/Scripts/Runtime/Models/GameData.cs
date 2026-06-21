@@ -73,8 +73,8 @@ namespace RagNextPlayer.Runtime.Models
         public string  Name               { get; set; } = string.Empty;
         public string  Description        { get; set; } = string.Empty;
         public string? PortraitImagePath  { get; set; }
-        public Dictionary<string, string> Exits     { get; set; } = new Dictionary<string, string>();
-        public Dictionary<string, bool>   LockedExits { get; set; } = new Dictionary<string, bool>();
+        public Dictionary<string, string> Exits     { get; set; } = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, bool>   LockedExits { get; set; } = new Dictionary<string, bool>(System.StringComparer.OrdinalIgnoreCase);
         public List<string>               ObjectIds { get; set; } = new List<string>();
         public List<ActionData>           Actions   { get; set; } = new List<ActionData>();
         [JsonConverter(typeof(AttributesConverter))]

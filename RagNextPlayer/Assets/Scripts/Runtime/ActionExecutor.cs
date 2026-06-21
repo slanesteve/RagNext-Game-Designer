@@ -168,6 +168,8 @@ namespace RagNextPlayer.Runtime
             _rows = rows;
         }
 
+        public ForEachLoopCommandData LoopNode => _loopNode;
+
         public ActionStepData Current => _currentBodyEnumerator?.Current ?? _loopNode;
 
         object System.Collections.IEnumerator.Current => Current;
@@ -287,6 +289,14 @@ namespace RagNextPlayer.Runtime
                                 {
                                     var loopScope = _scopes.Pop();
                                     loopScope.Dispose();
+                                    if (loopScope is LoopScopeTracker loopTracker)
+                                    {
+                                        var completedBranch = loopTracker.LoopNode.FalseBranch;
+                                        if (completedBranch != null && completedBranch.Count > 0)
+                                        {
+                                            _scopes.Push(completedBranch.GetEnumerator());
+                                        }
+                                    }
                                 }
                             }
                             else
@@ -375,6 +385,13 @@ namespace RagNextPlayer.Runtime
                                     var loopTracker = new LoopScopeTracker(loopNode, _ctx, arrayVar.Rows);
                                     _scopes.Push(loopTracker);
                                 }
+                                else
+                                {
+                                    if (loopNode.FalseBranch != null && loopNode.FalseBranch.Count > 0)
+                                    {
+                                        _scopes.Push(loopNode.FalseBranch.GetEnumerator());
+                                    }
+                                }
                             }
                             else
                             {
@@ -398,6 +415,14 @@ namespace RagNextPlayer.Runtime
                 {
                     currentScope.Dispose();
                     _scopes.Pop();
+                    if (currentScope is LoopScopeTracker loopTracker)
+                    {
+                        var completedBranch = loopTracker.LoopNode.FalseBranch;
+                        if (completedBranch != null && completedBranch.Count > 0)
+                        {
+                            _scopes.Push(completedBranch.GetEnumerator());
+                        }
+                    }
                 }
             }
             if (_scopes.Count == 0)
@@ -422,6 +447,7 @@ namespace RagNextPlayer.Runtime
     public static class ActionExecutor
     {
         private static readonly System.Collections.Generic.List<ActionRunner> _runners = new();
+        private static int _executionDepth = 0;
 
         public static ActionRunner? ActiveRunner { get; set; }
 
@@ -447,14 +473,16 @@ namespace RagNextPlayer.Runtime
                 if (_runners[i].IsSuspended)
                 {
                     Debug.Log($"[ActionExecutor] Resuming suspended runner: '{_runners[i].ActionName}'");
+                    RagNextPlayer.Managers.UIManager.Instance?.PrepareForNewAction();
                     _runners[i].Resume();
                     return;
                 }
             }
+            RagNextPlayer.Managers.UIManager.Instance?.PrepareForNewAction();
             ActiveRunner?.Resume();
         }
 
-        public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null)
+        public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null, bool isUserInteraction = true)
         {
             if (action is null || ctx is null) return;
             if (!action.InitallyActive)
@@ -463,9 +491,22 @@ namespace RagNextPlayer.Runtime
                 return;
             }
             
-            Debug.Log($"[ActionExecutor] Execute called for action: '{action.Name}' ({action.Id}).");
-            var runner = new ActionRunner(action, ctx, sink);
-            runner.ExecuteNext();
+            _executionDepth++;
+            try
+            {
+                if (_executionDepth == 1 && isUserInteraction)
+                {
+                    RagNextPlayer.Managers.UIManager.Instance?.PrepareForNewAction();
+                }
+
+                Debug.Log($"[ActionExecutor] Execute called for action: '{action.Name}' ({action.Id}).");
+                var runner = new ActionRunner(action, ctx, sink);
+                runner.ExecuteNext();
+            }
+            finally
+            {
+                _executionDepth--;
+            }
         }
 
         // ── Command Dispatch ──────────────────────────────────────────────────

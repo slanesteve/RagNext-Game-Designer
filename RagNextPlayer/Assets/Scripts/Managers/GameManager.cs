@@ -81,7 +81,7 @@ namespace RagNextPlayer.Managers
                         var ctx = new GameExecutionContext(ActiveGame!, CurrentRoom, null, timer);
                         var sink = InteractionController.Instance?.GetComponent<CommandEffectRouter>();
                         
-                        ActionExecutor.Execute(actionData, ctx, sink);
+                        ActionExecutor.Execute(actionData, ctx, sink, isUserInteraction: false);
                         UIManager.Instance?.RefreshEntityLists();
                     }
                 }
