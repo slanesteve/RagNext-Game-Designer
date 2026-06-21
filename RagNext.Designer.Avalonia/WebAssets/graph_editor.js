@@ -3850,6 +3850,8 @@ function getAutocompleteSuggestions(triggerChar) {
                     if (cols) {
                         getArray(cols).forEach(col => {
                             list.push({ token: `Loop.${col}`, typeName: `Loop Variable (${v.Name})`, desc: `Value of column '${col}' for current iteration of '${v.Name}'.` });
+                            list.push({ token: `variables.${v.Name}.${col}.0`, typeName: "Array Cell Lookup", desc: `Value of column '${col}' at Row 0 for array '${v.Name}'.` });
+                            list.push({ token: `variables.${v.Name}.0.${col}`, typeName: "Array Cell Lookup (Alt)", desc: `Value at Row 0, column '${col}' for array '${v.Name}'.` });
                         });
                     }
                 } else {
