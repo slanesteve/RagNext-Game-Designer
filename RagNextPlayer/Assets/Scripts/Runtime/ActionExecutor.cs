@@ -1113,7 +1113,26 @@ namespace RagNextPlayer.Runtime
                 case CharacterSetActionActiveCommandData c:
                     {
                         var actionName = ctx.Resolve(c.ActionName);
-                        UnityEngine.Debug.Log($"[ActionExecutor] CharacterSetActionActive: ActionName='{c.ActionName}' (resolved='{actionName}'), c.Active={c.Active}");
+                        UnityEngine.Debug.Log($"[ActionExecutor] CharacterSetActionActive: CharacterId='{c.CharacterId}', ActionName='{c.ActionName}' (resolved='{actionName}'), c.Active={c.Active}");
+                        
+                        var resolvedCharId = string.IsNullOrEmpty(c.CharacterId) ? null : ResolveCharacterId(c.CharacterId, ctx);
+                        if (!string.IsNullOrEmpty(resolvedCharId))
+                        {
+                            var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedCharId, StringComparison.OrdinalIgnoreCase));
+                            if (character != null && character.Actions != null)
+                            {
+                                foreach (var act in character.Actions)
+                                {
+                                    if (string.Equals(act.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        act.InitallyActive = c.Active;
+                                        UnityEngine.Debug.Log($"[ActionExecutor] Updated character action '{act.Name}' on Character '{character.Name}' to active={c.Active}");
+                                    }
+                                }
+                            }
+                            break;
+                        }
+
                         // 1. Player actions
                         if (ctx.Game.Player.Actions != null)
                         {
