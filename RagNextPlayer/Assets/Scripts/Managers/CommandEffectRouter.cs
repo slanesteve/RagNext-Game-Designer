@@ -77,6 +77,7 @@ namespace RagNextPlayer.Managers
                 case ObjectMoveInsideObjectCommandData:
                 case WearItemCommandData:
                 case RemoveItemCommandData:
+                case CharacterMoveToRoomCommandData:
                     UIManager.Instance?.RefreshEntityLists();
                     break;
 
@@ -158,7 +159,7 @@ namespace RagNextPlayer.Managers
 
                 case CharacterDisplayPortraitCommandData c:
                     {
-                        var portId = ctx.GetVariable($"char.{ctx.Resolve(c.CharacterId)}.displayedPortraitId")?.Value;
+                        var portId = ctx.GetVariable($"char.{ResolveCharacterId(c.CharacterId, ctx)}.displayedPortraitId")?.Value;
                         if (!string.IsNullOrEmpty(portId))
                         {
                             var asset  = ctx.Game.MediaAssets.Find(a => a.Id == portId);
@@ -238,6 +239,17 @@ namespace RagNextPlayer.Managers
                 case RemoveCustomChoiceCommandData:
                     break;
             }
+        }
+
+        private string ResolveCharacterId(string input, GameExecutionContext ctx)
+        {
+            var resolved = ctx.Resolve(input);
+            if (System.Guid.TryParse(resolved, out _)) return resolved;
+            if (string.IsNullOrEmpty(resolved)) return resolved;
+            var match = ctx.Game.Characters.Find(c => 
+                string.Equals(c.Name, resolved, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Name.Replace(" ", ""), resolved, System.StringComparison.OrdinalIgnoreCase));
+            return match?.Id ?? resolved;
         }
     }
 }
