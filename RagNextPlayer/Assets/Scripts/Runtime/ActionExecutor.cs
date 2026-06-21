@@ -694,7 +694,7 @@ namespace RagNextPlayer.Runtime
 
                 case CharacterSetPortraitMediaCommandData c:
                     {
-                        var charId = ctx.Resolve(c.CharacterId);
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
                         var resolved = ctx.Resolve(c.MediaId);
                         var asset = ctx.Game.MediaAssets.Find(a => a.Id == resolved 
                             || string.Equals(a.Name, resolved, StringComparison.OrdinalIgnoreCase) 
@@ -710,8 +710,8 @@ namespace RagNextPlayer.Runtime
 
                 case CharacterMoveToRoomCommandData c:
                     {
-                        var charId = ctx.Resolve(c.CharacterId);
-                        var targetRoomId = ctx.Resolve(c.RoomId);
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var targetRoomId = ResolveRoomId(c.RoomId, ctx);
                         var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
                         
                         var oldRoomId = ctx.GetVariable($"char.{charId}.currentRoomId")?.Value;
@@ -794,7 +794,7 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case CharacterDisplayPortraitCommandData c:
-                    ctx.SetVariable($"char.{ctx.Resolve(c.CharacterId)}.displayedPortraitId", ctx.Resolve(c.PortraitId));
+                    ctx.SetVariable($"char.{ResolveCharacterId(c.CharacterId, ctx)}.displayedPortraitId", ctx.Resolve(c.PortraitId));
                     break;
 
                 case PlaySoundEffectCommandData c:
@@ -901,7 +901,7 @@ namespace RagNextPlayer.Runtime
 
                 case DamageCharacterCommandData c:
                     {
-                        var resolvedChar = ctx.Resolve(c.CharacterId);
+                        var resolvedChar = ResolveCharacterId(c.CharacterId, ctx);
                         var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
                         if (character == null)
                         {
@@ -937,7 +937,7 @@ namespace RagNextPlayer.Runtime
 
                 case SetCharacterStateCommandData c:
                     {
-                        var resolvedChar = ctx.Resolve(c.CharacterId);
+                        var resolvedChar = ResolveCharacterId(c.CharacterId, ctx);
                         var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
                         if (character == null)
                         {
@@ -1221,7 +1221,7 @@ namespace RagNextPlayer.Runtime
 
                 case CharacterDisplayDescriptionCommandData c:
                     {
-                        var resolved = ctx.Resolve(c.CharacterId);
+                        var resolved = ResolveCharacterId(c.CharacterId, ctx);
                         var ch = ctx.Game.Characters.Find(charac => string.Equals(charac.Id, resolved, StringComparison.OrdinalIgnoreCase));
                         if (ch != null)
                         {
@@ -1245,7 +1245,7 @@ namespace RagNextPlayer.Runtime
                 case ObjectMoveToCharacterCommandData c:
                     {
                         var resolvedObj = ctx.Resolve(c.ObjectId);
-                        var resolvedChar = ctx.Resolve(c.CharacterId);
+                        var resolvedChar = ResolveCharacterId(c.CharacterId, ctx);
                         RemoveObjectFromEverywhere(resolvedObj, ctx);
                         var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
                         if (character == null)
@@ -1302,7 +1302,7 @@ namespace RagNextPlayer.Runtime
 
                 case SetCharacterAttributeCommandData c:
                     {
-                        var resolvedChar = ctx.Resolve(c.CharacterId);
+                        var resolvedChar = ResolveCharacterId(c.CharacterId, ctx);
                         var resolvedVal = ctx.Resolve(c.Value);
                         var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
                         if (character == null)
@@ -1476,22 +1476,22 @@ namespace RagNextPlayer.Runtime
                     !ctx.Player.Inventory.Exists(i => i.Id == ctx.Resolve(c.ItemId)),
 
                 ItemHeldByCharacterConditionData c =>
-                    ctx.Game.Characters.Find(ch => ch.Id == ctx.Resolve(c.CharacterId))
+                    ctx.Game.Characters.Find(ch => ch.Id == ResolveCharacterId(c.CharacterId, ctx))
                         ?.Inventory.Exists(i => i.Id == ctx.Resolve(c.ItemId)) ?? false,
 
                 PlayerInSameRoomAsConditionData c =>
                     string.Equals(
-                        ctx.GetVariable($"char.{ctx.Resolve(c.CharacterId)}.currentRoomId")?.Value,
+                        ctx.GetVariable($"char.{ResolveCharacterId(c.CharacterId, ctx)}.currentRoomId")?.Value,
                         ctx.CurrentRoom?.Id, StringComparison.OrdinalIgnoreCase),
 
                 CharacterInRoomConditionData c =>
                     string.Equals(
-                        ctx.GetVariable($"char.{ctx.Resolve(c.CharacterId)}.currentRoomId")?.Value,
-                        ctx.Resolve(c.RoomId), StringComparison.OrdinalIgnoreCase),
+                        ctx.GetVariable($"char.{ResolveCharacterId(c.CharacterId, ctx)}.currentRoomId")?.Value,
+                        ResolveRoomId(c.RoomId, ctx), StringComparison.OrdinalIgnoreCase),
 
                 CharacterGenderConditionData c =>
                     string.Equals(
-                        ctx.Game.Characters.Find(ch => ch.Id == ctx.Resolve(c.CharacterId))
+                        ctx.Game.Characters.Find(ch => ch.Id == ResolveCharacterId(c.CharacterId, ctx))
                             ?.Properties.GetValueOrDefault("Gender", "Male"),
                         c.Gender, StringComparison.OrdinalIgnoreCase),
 
@@ -1499,13 +1499,13 @@ namespace RagNextPlayer.Runtime
                     string.Equals(ctx.Player.Gender, c.Gender, StringComparison.OrdinalIgnoreCase),
 
                 IsRoomExitLockedConditionData c =>
-                    (ctx.Game.Rooms.Find(r => r.Id == (string.IsNullOrWhiteSpace(c.RoomId) ? ctx.CurrentRoom?.Id : ctx.Resolve(c.RoomId)))
+                    (ctx.Game.Rooms.Find(r => r.Id == (string.IsNullOrWhiteSpace(c.RoomId) ? ctx.CurrentRoom?.Id : ResolveRoomId(c.RoomId, ctx)))
                         ?.LockedExits.TryGetValue(ctx.Resolve(c.Direction), out var isLocked) ?? false) && isLocked,
 
                 CharacterAttributeCheckConditionData c =>
                     EvaluateAttribute(
-                        ctx.Game.Characters.Find(ch => string.Equals(ch.Id, ctx.Resolve(c.CharacterId), StringComparison.OrdinalIgnoreCase)) ??
-                        ctx.Game.Objects.Find(o => string.Equals(o.Id, ctx.Resolve(c.CharacterId), StringComparison.OrdinalIgnoreCase)) as object,
+                        ctx.Game.Characters.Find(ch => string.Equals(ch.Id, ResolveCharacterId(c.CharacterId, ctx), StringComparison.OrdinalIgnoreCase)) ??
+                        ctx.Game.Objects.Find(o => string.Equals(o.Id, ResolveCharacterId(c.CharacterId, ctx), StringComparison.OrdinalIgnoreCase)) as object,
                         ctx.Resolve(c.AttributeName),
                         ctx.Resolve(c.ExpectedValue)),
 
@@ -1873,6 +1873,28 @@ namespace RagNextPlayer.Runtime
                 };
             }
             return null;
+        }
+
+        private static string ResolveCharacterId(string input, GameExecutionContext ctx)
+        {
+            var resolved = ctx.Resolve(input);
+            if (Guid.TryParse(resolved, out _)) return resolved;
+            if (string.IsNullOrEmpty(resolved)) return resolved;
+            var match = ctx.Game.Characters.Find(c => 
+                string.Equals(c.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
+            return match?.Id ?? resolved;
+        }
+
+        private static string ResolveRoomId(string input, GameExecutionContext ctx)
+        {
+            var resolved = ctx.Resolve(input);
+            if (Guid.TryParse(resolved, out _)) return resolved;
+            if (string.IsNullOrEmpty(resolved)) return resolved;
+            var match = ctx.Game.Rooms.Find(r => 
+                string.Equals(r.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
+            return match?.Id ?? resolved;
         }
     }
 }
