@@ -1,53 +1,40 @@
 # Getting Started with RagNext
 
-Welcome to the **RagNext Game Designer**! This guide will introduce you to the core components of the editor and help you create your very first narrative action step script.
+Welcome to the **RagNext Game Designer** documentation! RagNext is a modern, node-based storytelling and simulation engine designed to build highly interactive text-adventure and simulation RPG games.
 
-![RagNext Designer Splash Screen](/designer-splash.jpg)
-
-## Core Concepts
-
-The RagNext editor organizes your adventure game using five principal structures:
-
-1. **Rooms**: The physical locations within your game (e.g., *Small Bedroom*, *Transit Station*).
-2. **Characters**: Non-player characters (NPCs) that live in your rooms (e.g., *Professor Vance*, *Keith*).
-3. **Objects/Items**: Objects placed in rooms or held in player/NPC inventories (e.g., *Worn T-Shirt*, *Keycard*).
-4. **Variables**: Global variables that store state, numbers, flags, or time offsets (e.g., `HeroAge`, `SampleTime`).
-5. **Timers**: Background ticking entities that trigger action events at specific turn intervals.
-
-![RagNext Editor Database & Properties](/properties-panel.png)
+RagNext consists of two main components:
+1. **RagNext Studio (Designer):** A cross-platform visual scripting desktop tool built on Avalonia UI.
+2. **RagNext Player (Runtime):** A high-performance simulation runner integrated with Unity to compile and render your interactive worlds on Desktop and Web platforms.
 
 ---
 
-## Creating Action Scripts
+## Workspace Tour
 
-Actions define the behavior and gameplay logic of your entities. An Action is built using a **Visual Action Graph** containing:
+When you launch RagNext Studio, the designer interface is divided into three key areas:
 
-* **Start Node**: Defines the trigger event (e.g. *User Clicked*, *Room Entered*, *Turn Tick*).
-* **Command Nodes**: Actions that modify the state, play audio, move entities, or display text.
-* **Condition Nodes**: Branches that check properties (e.g. gender, attributes, variables) and execute a `True` or `False` branch.
+### 1. The Left Navigation Sidebar
+Quick access to all design aspects of your game:
+* **Rooms:** Define the physical spaces, descriptions, exits, and room-specific actions.
+* **Characters:** Create NPCs, define their attributes, and manage dialog triggers.
+* **Game Objects:** Manage items, quest objects, and containers.
+* **Game Variables:** Maintain game state (scores, flags, timers, lists).
+* **Action Library:** Create global templates or actions.
+* **Publisher:** Prepare and build standalone executables.
 
-![Visual Action Graph Canvas Editor](/action-graph.png)
+### 2. The Central Workspace / Canvas
+The primary area where you design layouts, edit room properties, and write visual scripts. The **Visual Script Editor** uses a modern, zoomable node grid where you connect flow sockets (execution paths) and evaluate logic.
+
+### 3. The Live Status Bar
+Located at the top right of the application header, the **Save Status Indicator** keeps track of file state in real-time. RagNext implements **Pure Autosave**, meaning any modification you make on characters, variables, or rooms is instantly committed to your active project JSON file. 
+
+* 🟢 **Saved:** The project is synchronized with your disk.
+* 🔄 **Saving changes...:** A background disk write is currently executing.
 
 ---
 
-## Dynamic Date & Time System
+## Creating Your First Game
 
-RagNext features a robust, type-aware datetime system. 
-
-### Initializing Datetimes
-When you create a Global Variable with the `Date & Time` type hint, it will automatically validate your input format. If left empty, it will default to `DateTime.Now`.
-
-### Offsets & Operations
-You can increment or decrement datetime variables using the **Increment** (`var.inc`) or **Decrement** (`var.dec`) nodes. Specify the offset value using human-readable units:
-* `10 seconds` (or `10s`)
-* `5 minutes` (or `5m`)
-* `2 hours` (or `2h`)
-* `1 day` (or `1d`)
-
-### Autocomplete & Placeholders
-In description boxes and text nodes, you can output formatted date/time strings using double curly braces:
-* `{variables.MyTime}` $\rightarrow$ Defaults to a player-friendly format (e.g., `October 31, 2026 8:00 AM`).
-* `{variables.MyTime:date}` $\rightarrow$ Outputs only the date (`October 31, 2026`).
-* `{variables.MyTime:time}` $\rightarrow$ Outputs only the time (`8:00 AM`).
-* `{variables.MyTime:datetime}` $\rightarrow$ Outputs the raw ISO-8601 string.
-
+1. Open RagNext Studio and select **📂 Launcher** or **📂 Load Existing Save** to create or import a project workspace.
+2. Under **Rooms**, click **➕ Add Room**. Name your starting room (e.g., `Highway 9 - Milestone 42`).
+3. Set your player's start location by choosing the room name in the `Starting Room` dropdown.
+4. Set up exits and navigation routes, then navigate to the **Publisher** page to build your first standalone application.

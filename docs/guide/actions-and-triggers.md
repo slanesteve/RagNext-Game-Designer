@@ -1,43 +1,48 @@
-# Visual Action Scripts & Triggers
+# Actions and Triggers
 
-In RagNext, interactive gameplay, branching dialogues, and game-state mutations are powered by **Action Scripts**. 
-
-Instead of writing complex code, you design these scripts visually using the node-based canvas editor directly integrated into the RagNext Workspace.
+Actions are visual script graphs that drive the narrative logic, state mutations, and player choices in your game. 
 
 ---
 
-## 🎨 The Node Editor Canvas
+## Action Structure
 
-Each action script starts with an event and branches outward through conditional checks and command executions:
+Every Action consists of an **Action Start** node connected to a series of command or condition nodes:
 
-* **Trigger (Start Node)**: The entry point that listens for specific in-game events.
-* **Condition Nodes**: Purple decision boxes that evaluate variables, items, or attributes. They direct the execution path along `True` or `False` outputs.
-* **Command Nodes**: Blue execution blocks that carry out operations like displaying narration, changing portraits, playing sound effects, moving entities, or ending the game.
+### 1. Dialogue Node
+Renders text prompts or story narratives to the player. It can display static text, or evaluate dynamic inline variables wrapped in curly braces (e.g., `Hello, {player.Name}!`).
 
-![Visual Action Graph Canvas Editor](/action-graph.png)
+### 2. Command Node
+Performs state mutations and game actions. Key commands include:
+* **Variable: Set / Increment / Decrement:** Mutate numeric, string, or boolean variables.
+* **Character: Move To Room:** Updates NPC locations.
+* **Room: Lock / Unlock Exit:** Toggle access to direction exits dynamically (e.g., locking "North" until a key is found).
+* **Media: Play Sound Effect / Video:** Play audio clips or videos.
+
+### 3. Condition Node
+Branches the visual flow based on boolean statements.
+* Evaluates variables, gender, inventory holdings, or room locations.
+* Sockets: Has a green **True** branch socket and a red **False** branch socket to route execution flow.
+
+### 4. Switch Node
+Evaluates a target expression and matches it against multiple customizable cases (multi-way branching).
 
 ---
 
-## ⚡ Supported Action Triggers
+## Trigger Events
 
-Every script is bound to a specific trigger. When that event occurs in the engine runtime, the corresponding script fires automatically.
+An Action's execution is initiated by a **Trigger Event**. You define this on the **Action Start** node:
 
-Here is the complete reference of triggers available in the designer:
+| Trigger Event | Description |
+| :--- | :--- |
+| **OnGameStart** | Runs once when a new game session begins (e.g., character select prompts). |
+| **OnPlayerEnter** | Runs immediately when the player enters the host room. |
+| **OnPlayerExit** | Runs when the player leaves the host room. |
+| **UserClicked** | Appears as an interactive action button (e.g., "Talk To", "Examine", "Open Door") in the player UI when the host room or character is active. |
 
-| Trigger Event | Target Context | Description |
-| :--- | :--- | :--- |
-| **UserClicked** | Manual Choice | Fires when the player explicitly selects a custom button or choices prompt. |
-| **OnGameStart** | Engine Initialization | Triggers once when a new adventure session starts. |
-| **OnGameLoad** | Session Load | Triggers immediately when a saved game session is loaded. |
-| **OnTurnTick** | Global Turn | Fires on every turn tick globally across the entire game. |
-| **OnPlayerEnter** | Room Movement | Fires when the player character walks into a room. |
-| **OnPlayerExit** | Room Movement | Fires just before the player character leaves a room. |
-| **OnCharacterEnter** | NPC Movement | Fires when any non-player character enters a room. |
-| **OnCharacterExit** | NPC Movement | Fires when any non-player character exits a room. |
-| **OnRoomTick** | Room Turn | Fires on every turn tick, but only if the player is currently inside that specific room. |
-| **OnInteract** | Entity Interaction | Fires when the player interacts directly with a room, item, or character. |
-| **OnCharacterTick** | NPC Turn | Fires on every turn tick for a specific character (useful for NPC behaviors). |
-| **OnCharacterKilled**| NPC Lifecycle | Fires when an NPC's status changes to defeated or killed. |
-| **OnObjectExamined** | Inventory/Object | Fires when a player inspects a container object or item. |
-| **OnObjectTaken** | Inventory Transaction | Fires when the player picks up an item and adds it to their inventory. |
-| **OnObjectDropped** | Inventory Transaction | Fires when the player drops an item from their inventory into a room. |
+---
+
+## AI-Assisted Scripting
+
+Inside the Visual Script Editor, you can use the **✨ AI Assistant** button.
+1. Click the button and type a natural language prompt (e.g., *"If player has key, unlock the north exit of Milestone 42, else display 'It's locked'"*).
+2. The AI compiles the instructions and automatically connects the corresponding Condition, Display Text, and Unlock Exit nodes on your canvas.
