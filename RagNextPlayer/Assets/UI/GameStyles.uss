@@ -1341,6 +1341,61 @@
 .font-size-large .prompt-input-message { font-size: 18px; }
 .font-size-large .unity-text-field__input { font-size: 18px; }
 
+/* Status Bar Elements */
+.status-bar-element {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    max-width: 180px;
+}
+
+.status-bar-image {
+    width: 20px;
+    height: 20px;
+}
+
+.status-bar-label {
+    font-size: 14px;
+    white-space: normal;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.font-size-small .status-bar-label {
+    font-size: 11px;
+}
+.font-size-small .status-bar-image {
+    width: 14px;
+    height: 14px;
+}
+.font-size-small .status-bar-element {
+    max-width: 150px;
+}
+
+.font-size-normal .status-bar-label {
+    font-size: 15px;
+}
+.font-size-normal .status-bar-image {
+    width: 22px;
+    height: 22px;
+}
+.font-size-normal .status-bar-element {
+    max-width: 200px;
+}
+
+.font-size-large .status-bar-label {
+    font-size: 19px;
+}
+.font-size-large .status-bar-image {
+    width: 28px;
+    height: 28px;
+}
+.font-size-large .status-bar-element {
+    max-width: 250px;
+}
+
 
 
 

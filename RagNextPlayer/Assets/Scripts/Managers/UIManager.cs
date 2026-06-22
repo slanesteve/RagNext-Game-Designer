@@ -1554,12 +1554,7 @@ namespace RagNextPlayer.Managers
                         if (elem == null || !elem.IsVisible) continue;
 
                         var container = new VisualElement();
-                        container.style.flexDirection = FlexDirection.Row;
-                        container.style.alignItems = Align.Center;
-                        container.style.justifyContent = Justify.FlexStart;
-                        container.style.marginRight = 4;
-                        container.style.marginBottom = 4;
-                        container.style.maxWidth = 180;
+                        container.AddToClassList("status-bar-element");
 
                         // Background icon/image
                         if (elem.VisualOption == "ImageOnly" || elem.VisualOption == "ImageAndText")
@@ -1569,9 +1564,11 @@ namespace RagNextPlayer.Managers
                                 var asset = game.MediaAssets.Find(a => a.Id == elem.MediaAssetId);
                                 var path = asset != null ? asset.RelativePath : elem.MediaAssetId;
                                 var imgEl = new VisualElement();
-                                imgEl.style.width = 16;
-                                imgEl.style.height = 16;
-                                imgEl.style.marginRight = (elem.VisualOption == "ImageAndText") ? 4 : 0;
+                                imgEl.AddToClassList("status-bar-image");
+                                if (elem.VisualOption == "ImageAndText")
+                                {
+                                    imgEl.style.marginRight = 6;
+                                }
                                 LoadAndDisplayImageForElement(path, imgEl);
                                 container.Add(imgEl);
                             }
@@ -1581,8 +1578,8 @@ namespace RagNextPlayer.Managers
                         if (elem.VisualOption == "TextOnly" || elem.VisualOption == "ImageAndText")
                         {
                             var lbl = new Label();
+                            lbl.AddToClassList("status-bar-label");
                             lbl.text = TemplateResolver.Resolve(elem.Text, game, room, player);
-                            lbl.style.fontSize = 11;
                             lbl.style.whiteSpace = WhiteSpace.Normal;
                             lbl.style.flexGrow = 1;
                             lbl.style.flexShrink = 1;
