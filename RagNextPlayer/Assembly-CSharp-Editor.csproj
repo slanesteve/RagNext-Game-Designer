@@ -49,6 +49,8 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.6f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Editor\Tests\CommandExecutionTests.cs" />
+    <Compile Include="Assets\Editor\Tests\ConditionBranchingTests.cs" />
     <Compile Include="Assets\Editor\TemplateBuilder.cs" />
   </ItemGroup>
   <ItemGroup>

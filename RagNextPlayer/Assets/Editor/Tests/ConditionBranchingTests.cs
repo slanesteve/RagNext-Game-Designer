@@ -18,8 +18,8 @@ namespace RagNextPlayer.Tests
                 Title = "Test Game",
                 Variables = new List<GameVariableData>(),
                 Rooms = new List<RoomData>(),
-                Characters = new List<CharacterData>(),
-                GameObjects = new List<GameObjectData>(),
+                Characters = new List<GameObjectData>(),
+                Objects = new List<GameObjectData>(),
                 Player = new PlayerData()
             };
 
@@ -59,7 +59,7 @@ namespace RagNextPlayer.Tests
         public void Evaluate_ItemHeldByPlayerCondition_EvaluatesCorrectly()
         {
             // Arrange
-            _game.Player.InventoryObjectIds.Add("key_gold");
+            _game.Player.Inventory.Add(new GameObjectData { Id = "key_gold" });
 
             var condTrue = new ItemHeldByPlayerConditionData { ItemId = "key_gold" };
             var condFalse = new ItemHeldByPlayerConditionData { ItemId = "key_silver" };

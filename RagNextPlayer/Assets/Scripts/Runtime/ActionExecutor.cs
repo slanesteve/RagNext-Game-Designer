@@ -511,7 +511,7 @@ namespace RagNextPlayer.Runtime
 
         // ── Command Dispatch ──────────────────────────────────────────────────
 
-        internal static void ExecuteCommand(CommandData cmd, GameExecutionContext ctx)
+        public static void ExecuteCommand(CommandData cmd, GameExecutionContext ctx)
         {
             Debug.Log($"[ActionExecutor] ExecuteCommand: Type={cmd.GetType().Name}, cmd.Type={cmd.Type}");
             switch (cmd)
@@ -1532,7 +1532,7 @@ namespace RagNextPlayer.Runtime
 
         // ── Condition Dispatch ────────────────────────────────────────────────
 
-        internal static bool EvaluateCondition(ConditionData cond, GameExecutionContext ctx)
+        public static bool EvaluateCondition(ConditionData cond, GameExecutionContext ctx)
         {
             var result = EvaluateConditionInternal(cond, ctx);
             Debug.Log($"[ActionExecutor] EvaluateCondition: Type={cond.GetType().Name}, cond.Type={cond.Type} -> {result}");

@@ -18,8 +18,8 @@ namespace RagNextPlayer.Tests
                 Title = "Test Game",
                 Variables = new List<GameVariableData>(),
                 Rooms = new List<RoomData>(),
-                Characters = new List<CharacterData>(),
-                GameObjects = new List<GameObjectData>(),
+                Characters = new List<GameObjectData>(),
+                Objects = new List<GameObjectData>(),
                 Player = new PlayerData()
             };
 
@@ -31,7 +31,7 @@ namespace RagNextPlayer.Tests
         {
             // Arrange
             _game.Variables.Add(new GameVariableData { Name = "score", Value = "0", Type = "int" });
-            var cmd = new SetVariableCommandData { VariableName = "score", Value = "10" };
+            var cmd = new SetVariableCommandData { Name = "score", Value = "10" };
 
             // Act
             ActionExecutor.ExecuteCommand(cmd, _ctx);
@@ -45,7 +45,7 @@ namespace RagNextPlayer.Tests
         {
             // Arrange
             _game.Variables.Add(new GameVariableData { Name = "counter", Value = "5", Type = "int" });
-            var cmd = new VariableIncrementCommandData { VariableName = "counter", Value = "3" };
+            var cmd = new VariableIncrementCommandData { Name = "counter", Value = "3" };
 
             // Act
             ActionExecutor.ExecuteCommand(cmd, _ctx);
@@ -59,7 +59,7 @@ namespace RagNextPlayer.Tests
         {
             // Arrange
             _game.Variables.Add(new GameVariableData { Name = "counter", Value = "10", Type = "int" });
-            var cmd = new VariableDecrementCommandData { VariableName = "counter", Value = "2" };
+            var cmd = new VariableDecrementCommandData { Name = "counter", Value = "2" };
 
             // Act
             ActionExecutor.ExecuteCommand(cmd, _ctx);
