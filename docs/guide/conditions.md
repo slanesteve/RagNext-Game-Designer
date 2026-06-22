@@ -1,6 +1,10 @@
-﻿# Condition Reference
+# Condition Reference
 
 Below is the complete reference of conditional branch checks supported by the RagNext Game Engine.
+
+> [!NOTE]
+> **For Each Loops** and **Switch Nodes** are structural flow nodes on the visual canvas rather than inner conditional branch parameters. For visual screenshots and usage details, refer to the [Visual Scripts & Triggers](/guide/actions-and-triggers) guide.
+
 
 ## Character
 

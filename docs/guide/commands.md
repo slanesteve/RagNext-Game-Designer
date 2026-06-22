@@ -1,6 +1,10 @@
-﻿# Command Reference
+# Command Reference
 
 Below is the complete reference of script commands supported by the RagNext Game Engine.
+
+> [!NOTE]
+> **Dialogue Nodes** and **Switch Nodes** are structural flow nodes on the visual canvas rather than inner commands. For visual screenshots and usage details, refer to the [Visual Scripts & Triggers](/guide/actions-and-triggers) guide.
+
 
 ## Action
 
