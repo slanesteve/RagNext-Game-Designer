@@ -9,7 +9,9 @@ Actions are visual script graphs that drive the narrative logic, state mutations
 Every Action consists of an **Action Start** node connected to a series of command or condition nodes:
 
 ### 1. Dialogue Node
-Renders text prompts or story narratives to the player. It can display static text, or evaluate dynamic inline variables wrapped in curly braces (e.g., `Hello, {player.Name}!`).
+Renders text prompts or story narratives to the player. It can display static text, or evaluate dynamic inline variables wrapped in curly braces (e.g., `Hello, {player.Name}!`). It also supports interactive branching options (choices) that direct the flow down separate execution lines based on the player's choice.
+
+![Branching Dialogue Node](/branching-dialogue.png)
 
 ### 2. Command Node
 Performs state mutations and game actions. Key commands include:
@@ -19,12 +21,18 @@ Performs state mutations and game actions. Key commands include:
 * **Media: Play Sound Effect / Video:** Play audio clips or videos.
 
 ### 3. Condition Node
-Branches the visual flow based on boolean statements.
+Branches the visual flow based on boolean statements or collections.
 * Evaluates variables, gender, inventory holdings, or room locations.
 * Sockets: Has a green **True** branch socket and a red **False** branch socket to route execution flow.
+* **Loops:** Supports a **For Each Loop** operation to iterate over array variables. It directs execution through a **Loop Body** socket for each item in the collection and triggers a **Completed** socket once the iteration ends.
+
+![For Each Loop Function](/loop-function.png)
 
 ### 4. Switch Node
-Evaluates a target expression and matches it against multiple customizable cases (multi-way branching).
+Evaluates a target expression (like `variables.DoomCountdown`) and matches it against multiple customizable cases (multi-way branching) to route control flow dynamically.
+
+![Switch Control Flow Node](/switch-node.png)
+
 
 ---
 
