@@ -1790,21 +1790,29 @@ namespace RagNext.Designer.Avalonia.Views
 
         private void OnStatusBarListSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            if (StatusBarList.SelectedItem is RagsCore.Models.StatusBarElement element)
+            StatusIconComboBox.SelectionChanged -= OnStatusIconSelectionChanged;
+            try
             {
-                if (element.MediaAssetId.HasValue && App.CurrentGame != null)
+                if (StatusBarList.SelectedItem is RagsCore.Models.StatusBarElement element)
                 {
-                    var asset = App.CurrentGame.MediaAssets.FirstOrDefault(a => a.Id == element.MediaAssetId.Value);
-                    StatusIconComboBox.SelectedItem = asset;
+                    if (element.MediaAssetId.HasValue && App.CurrentGame != null)
+                    {
+                        var asset = App.CurrentGame.MediaAssets.FirstOrDefault(a => a.Id == element.MediaAssetId.Value);
+                        StatusIconComboBox.SelectedItem = asset;
+                    }
+                    else
+                    {
+                        StatusIconComboBox.SelectedItem = null;
+                    }
                 }
                 else
                 {
                     StatusIconComboBox.SelectedItem = null;
                 }
             }
-            else
+            finally
             {
-                StatusIconComboBox.SelectedItem = null;
+                StatusIconComboBox.SelectionChanged += OnStatusIconSelectionChanged;
             }
         }
 
