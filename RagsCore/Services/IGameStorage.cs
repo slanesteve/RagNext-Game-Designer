@@ -9,5 +9,6 @@ namespace RagsCore.Services
         Task<Game?> LoadAsync();                 // most recent
         Task<Game?> LoadAsync(string fileName);  // named save
         Task<string[]> ListSavesAsync();
+        Task DeleteSaveAsync(string fileName);
     }
 }

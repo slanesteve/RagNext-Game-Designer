@@ -770,6 +770,22 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        public void OnInstructionsClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                global::System.Diagnostics.Process.Start(new global::System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://slanesteve.github.io/RagNext-Game-Designer/",
+                    UseShellExecute = true
+                });
+            }
+            catch
+            {
+                // Silently ignore failures if default browser can't be invoked
+            }
+        }
+
         public void OnReportIssueClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
             try
@@ -1212,7 +1228,7 @@ namespace RagNext.Designer.Avalonia.Views
                     }
 
                     // Save immediately and make sure changes write synchronously to disk
-                    await GameStorage.SaveAsync(vm.CurrentGame, vm.CurrentGame.Title, false);
+                    await vm.SaveGameAsync();
                     vm.RunValidation();
                 }
             }

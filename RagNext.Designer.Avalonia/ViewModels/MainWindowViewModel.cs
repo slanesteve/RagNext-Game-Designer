@@ -17,6 +17,22 @@ namespace RagNext.Designer.Avalonia.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
+        public static MainWindowViewModel? Instance { get; private set; }
+
+        private bool _isSaving;
+        public bool IsSaving
+        {
+            get => _isSaving;
+            set => SetProperty(ref _isSaving, value);
+        }
+
+        private string _saveStatusText = "Saved";
+        public string SaveStatusText
+        {
+            get => _saveStatusText;
+            set => SetProperty(ref _saveStatusText, value);
+        }
+
         [System.Runtime.InteropServices.DllImport("winmm.dll")]
         internal static extern long mciSendString(string command, System.Text.StringBuilder? returnValue, int returnLength, IntPtr winHandle);
 
@@ -757,6 +773,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand NewGameCommand { get; }
         public ICommand ShowLoadGameCommand { get; }
         public ICommand LoadSelectedGameCommand { get; }
+        public ICommand DeleteSelectedGameCommand { get; }
         public ICommand SaveGameCommand { get; }
         public ICommand CloseWelcomeCommand { get; }
         public ICommand PublishCommand { get; }
@@ -886,6 +903,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public MainWindowViewModel()
         {
+            Instance = this;
             _storage = new AvaloniaGameStorage();
 
             Rooms = new RoomsViewModel(_storage);
@@ -1175,6 +1193,24 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     ShowSavesOverlay = false;
                     ActiveView = "Dashboard";
                     SaveRecentProject(SelectedSave);
+                }
+            });
+
+            DeleteSelectedGameCommand = new Command<string>(async saveName =>
+            {
+                if (string.IsNullOrEmpty(saveName)) return;
+                
+                bool confirm = true;
+                if (ShowConfirmDialogAsync != null)
+                {
+                    confirm = await ShowConfirmDialogAsync("Delete Project", $"Are you sure you want to permanently delete \"{saveName}\"? This cannot be undone.");
+                }
+
+                if (confirm)
+                {
+                    await _storage.DeleteSaveAsync(saveName);
+                    AvailableSaves.Remove(saveName);
+                    RemoveRecentProject(saveName);
                 }
             });
 
@@ -2004,14 +2040,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public async Task SaveGameAsync()
         {
             if (CurrentGame == null) return;
+            IsSaving = true;
+            SaveStatusText = "Saving changes...";
             await _saveSemaphore.WaitAsync();
             try
             {
-                await _storage.SaveAsync(CurrentGame, CurrentGame.Title, false);
+                var targetName = string.IsNullOrWhiteSpace(CurrentGame.FileName) 
+                    ? (string.IsNullOrWhiteSpace(CurrentGame.Title) ? "game" : CurrentGame.Title)
+                    : CurrentGame.FileName;
+
+                await _storage.SaveAsync(CurrentGame, targetName, false);
                 if (!string.IsNullOrWhiteSpace(CurrentGame.FileName))
                 {
                     SaveRecentProject(CurrentGame.FileName);
                 }
+                SaveStatusText = "Saved";
             }
             catch (IOException)
             {
@@ -2019,20 +2062,28 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 await Task.Delay(200);
                 try
                 {
-                    await _storage.SaveAsync(CurrentGame, CurrentGame.Title, false);
+                    var targetName = string.IsNullOrWhiteSpace(CurrentGame.FileName) 
+                        ? (string.IsNullOrWhiteSpace(CurrentGame.Title) ? "game" : CurrentGame.Title)
+                        : CurrentGame.FileName;
+
+                    await _storage.SaveAsync(CurrentGame, targetName, false);
+                    SaveStatusText = "Saved";
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[MainWindowViewModel] Save retry failed: {ex.Message}");
+                    SaveStatusText = "Save failed";
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[MainWindowViewModel] Save failed: {ex.Message}");
+                SaveStatusText = "Save failed";
             }
             finally
             {
                 _saveSemaphore.Release();
+                IsSaving = false;
             }
         }
 

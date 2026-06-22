@@ -25,5 +25,10 @@ namespace RagNext.Designer.Avalonia.Services
         {
             return GameStorage.ListSavesAsync();
         }
+
+        public Task DeleteSaveAsync(string fileName)
+        {
+            return GameStorage.DeleteAsync(fileName);
+        }
     }
 }
