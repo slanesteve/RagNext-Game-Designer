@@ -34,6 +34,7 @@ namespace RagNext.Designer.Avalonia.Views
         private int _inlineSelectionStart = -1;
         private int _inlineSelectionEnd = -1;
         private TextBox? _lastFocusedTextBox = null;
+        private bool _isSelectingStatusBarElement = false;
 
         public MainWindow()
         {
@@ -1790,48 +1791,67 @@ namespace RagNext.Designer.Avalonia.Views
 
         private void OnStatusBarListSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            StatusIconComboBox.SelectionChanged -= OnStatusIconSelectionChanged;
+            var logPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "RagNext", "saves", "selection_debug.log");
+            System.IO.File.AppendAllText(logPath, $"[OnStatusBarListSelectionChanged] Entered. SelectedItem: {StatusBarList.SelectedItem}\n");
+            _isSelectingStatusBarElement = true;
             try
             {
                 if (StatusBarList.SelectedItem is RagsCore.Models.StatusBarElement element)
                 {
+                    System.IO.File.AppendAllText(logPath, $"[OnStatusBarListSelectionChanged] Element: {element.Name}, MediaAssetId: {element.MediaAssetId}\n");
                     if (element.MediaAssetId.HasValue && App.CurrentGame != null)
                     {
                         var asset = App.CurrentGame.MediaAssets.FirstOrDefault(a => a.Id == element.MediaAssetId.Value);
+                        System.IO.File.AppendAllText(logPath, $"[OnStatusBarListSelectionChanged] Found asset: {(asset != null ? asset.OriginalFileName : "null")}\n");
                         StatusIconComboBox.SelectedItem = asset;
                     }
                     else
                     {
+                        System.IO.File.AppendAllText(logPath, $"[OnStatusBarListSelectionChanged] element.MediaAssetId has no value or CurrentGame is null\n");
                         StatusIconComboBox.SelectedItem = null;
                     }
                 }
                 else
                 {
+                    System.IO.File.AppendAllText(logPath, $"[OnStatusBarListSelectionChanged] SelectedItem is not StatusBarElement\n");
                     StatusIconComboBox.SelectedItem = null;
                 }
             }
             finally
             {
-                StatusIconComboBox.SelectionChanged += OnStatusIconSelectionChanged;
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() => {
+                    System.IO.File.AppendAllText(logPath, $"[OnStatusBarListSelectionChanged] Post-execution flag reset.\n");
+                    _isSelectingStatusBarElement = false;
+                }, global::Avalonia.Threading.DispatcherPriority.Background);
             }
         }
 
+
         private void OnStatusIconSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
+            var logPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "RagNext", "saves", "selection_debug.log");
+            System.IO.File.AppendAllText(logPath, $"[OnStatusIconSelectionChanged] Entered. AddedItems: {e.AddedItems.Count}, SelectedItem: {StatusIconComboBox.SelectedItem}\n");
             if (e.AddedItems.Count == 0)
             {
-                if (StatusBarList.SelectedItem is RagsCore.Models.StatusBarElement element)
-                {
-                    element.MediaAssetId = null;
-                }
+                System.IO.File.AppendAllText(logPath, $"[OnStatusIconSelectionChanged] AddedItems.Count is 0, returning.\n");
                 return;
             }
-            if (e.AddedItems[0] is not RagsCore.Models.MediaAsset asset) return;
+            if (e.AddedItems[0] is not RagsCore.Models.MediaAsset asset)
+            {
+                System.IO.File.AppendAllText(logPath, $"[OnStatusIconSelectionChanged] e.AddedItems[0] is not MediaAsset, it is {e.AddedItems[0]?.GetType().FullName}, returning.\n");
+                return;
+            }
             if (StatusBarList.SelectedItem is RagsCore.Models.StatusBarElement el)
             {
+                System.IO.File.AppendAllText(logPath, $"[OnStatusIconSelectionChanged] Setting el.MediaAssetId to {asset.Id} (Name: {asset.OriginalFileName}) on element {el.Name}\n");
                 el.MediaAssetId = asset.Id;
             }
+            else
+            {
+                System.IO.File.AppendAllText(logPath, $"[OnStatusIconSelectionChanged] StatusBarList.SelectedItem is not StatusBarElement, returning.\n");
+            }
         }
+
 
         // Bug #3 fix: Use code-behind SelectionChanged instead of TwoWay binding so that
         // Avalonia's ComboBox ItemsSource-refresh-induced SelectedItem reset (which sends null
