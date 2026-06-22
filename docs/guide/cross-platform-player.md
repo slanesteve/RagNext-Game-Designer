@@ -18,6 +18,20 @@ By leveraging the power of **Unity**, the RagNext Player compiles your adventure
 
 ---
 
+## 🎬 Immersive Splash Screens
+
+Before players step into your game's world, you can configure rich, immersive splash screens to set the atmosphere.
+
+![Splash Screen Options](/splash-screen-options.jpg)
+
+The RagNext Player supports robust customization options for your game's introduction sequence:
+* **Background Media:** Play high-definition introduction videos or display cinematic static images.
+* **Typography & Text:** Render custom titles, subtitles, developer logos, and loading status messages.
+* **Atmospheric Audio:** Loop background music (BG music) or play intro sound effects immediately on launch.
+* **Interactive Prompts:** Let players press any key or click to start, initiating the game transition smoothly.
+
+---
+
 ## 🖥️ Player Interface
 
 The player features a clean, responsive, and distraction-free user interface designed to keep players focused on the story and gameplay:
@@ -27,4 +41,5 @@ The player features a clean, responsive, and distraction-free user interface des
 * **Interactive Choices**: Clean popup dialogs and choices that branch the script logic in real-time.
 * **Status Bar & Side Panels**: Visible navigation directions, lists of loose objects/items in the room, and active character details.
 
-![RagNext Player UI Screenshot](/player-screenshot.png)
+![The Bridge Room UI Screenshot](/bridge-screenshot.jpg)
+
