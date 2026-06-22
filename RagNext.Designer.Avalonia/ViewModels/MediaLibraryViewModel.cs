@@ -434,7 +434,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 asset.OriginalFileName = name.Trim();
                 try
                 {
-                    await GameStorage.SaveAsync(_game, string.IsNullOrWhiteSpace(_game.Title) ? "game" : _game.Title);
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                 }
                 catch (Exception ex)
                 {
@@ -635,7 +635,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             await _store.SaveAsync(_game, _doc);
             try
             {
-                await GameStorage.SaveAsync(_game, string.IsNullOrWhiteSpace(_game.Title) ? "game" : _game.Title);
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
             }
             catch (Exception ex)
             {

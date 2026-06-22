@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagsCore", "RagsCore\RagsCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagNext.Designer.Avalonia", "RagNext.Designer.Avalonia\RagNext.Designer.Avalonia.csproj", "{4343187F-6C6F-42E7-B6F3-009560575625}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagNext.Tests", "RagNext.Tests\RagNext.Tests.csproj", "{70E3B1C5-4375-491A-9D0B-86688DB73791}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,24 @@ Global
 		{4343187F-6C6F-42E7-B6F3-009560575625}.TestDeploy|x64.Build.0 = Debug|Any CPU
 		{4343187F-6C6F-42E7-B6F3-009560575625}.TestDeploy|x86.ActiveCfg = Debug|Any CPU
 		{4343187F-6C6F-42E7-B6F3-009560575625}.TestDeploy|x86.Build.0 = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Debug|x64.Build.0 = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Debug|x86.Build.0 = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Release|x64.ActiveCfg = Release|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Release|x64.Build.0 = Release|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Release|x86.ActiveCfg = Release|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.Release|x86.Build.0 = Release|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.TestDeploy|Any CPU.ActiveCfg = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.TestDeploy|Any CPU.Build.0 = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.TestDeploy|x64.ActiveCfg = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.TestDeploy|x64.Build.0 = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.TestDeploy|x86.ActiveCfg = Debug|Any CPU
+		{70E3B1C5-4375-491A-9D0B-86688DB73791}.TestDeploy|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

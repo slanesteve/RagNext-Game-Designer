@@ -28,7 +28,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Timers is not null)
                 {
                     App.CurrentGame.Timers.Add(newTimer);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Timers));
                 }
                 else
@@ -43,7 +43,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Timers is not null)
                 {
                     App.CurrentGame.Timers.Remove(t);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Timers));
                 }
             });

@@ -37,6 +37,14 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
+    - name: Retarget RagsCore to Net9.0 (Bypass Mobile Workloads)
+      shell: pwsh
+      run: |
+        (Get-Content RagsCore\RagsCore.csproj) -replace '<TargetFrameworks>.*</TargetFrameworks>', '<TargetFramework>net9.0</TargetFramework>' | Set-Content RagsCore\RagsCore.csproj
+
+    - name: Run Designer Unit Tests
+      run: dotnet test RagNext.Tests/RagNext.Tests.csproj -c Release
+
     - name: Build & Publish Standalone Windows x64
       shell: pwsh
       run: |

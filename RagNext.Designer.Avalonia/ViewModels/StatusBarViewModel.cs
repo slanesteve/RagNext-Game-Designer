@@ -56,7 +56,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     App.CurrentGame.StatusBarElements.Add(newElem);
                     SelectedElement = newElem;
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Elements));
                 }
             });
@@ -71,7 +71,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     {
                         SelectedElement = null;
                     }
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Elements));
                 }
             });
@@ -81,7 +81,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         {
             if (App.CurrentGame != null)
             {
-                await _storage.SaveAsync(App.CurrentGame, "autosave");
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
             }
         }
 

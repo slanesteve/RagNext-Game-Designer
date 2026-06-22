@@ -203,9 +203,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     OnPropertyChanged();
                     
                     // Trigger dynamic auto-save to ensure designer instantly updates file state
-                    if (App.CurrentGame != null)
+                    if (MainWindowViewModel.Instance != null)
                     {
-                        _ = GameStorage.SaveAsync(App.CurrentGame);
+                        _ = MainWindowViewModel.Instance.SaveGameAsync();
                     }
                 }
             }
@@ -244,9 +244,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             await RebuildAsync(newTarget);
                         }
 
-                        if (App.CurrentGame != null)
+                        if (MainWindowViewModel.Instance != null)
                         {
-                            await GameStorage.SaveAsync(App.CurrentGame);
+                            await MainWindowViewModel.Instance.SaveGameAsync();
                         }
                     }
                 });
@@ -555,7 +555,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             _actions.Add(newAction);
             Rebuild(newAction);
-            if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+            if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
         }
 
         private async Task AddConditionAsync()
@@ -575,7 +575,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             else if (Selected?.Model is ActionStep selectedStep && Selected?.Parent?.Model is ObservableCollection<ActionStep> parentCollection) parentCollection.Insert(parentCollection.IndexOf(selectedStep) + 1, step);
             else if (Selected?.Model is ActionStep selectedStepAct && Selected?.Parent?.Model is RagsCore.Models.Action parentAct) parentAct.Nodes.Insert(parentAct.Nodes.IndexOf(selectedStepAct) + 1, step);
             Rebuild();
-            if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+            if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
         }
 
         private async Task DeleteSelectedAsync()
@@ -589,7 +589,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 }
                 _actions.Remove(a);
                 Rebuild();
-                if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                 return;
             }
             if (Selected.Model is ActionStep step)
@@ -597,7 +597,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (Selected.Parent?.Model is ObservableCollection<ActionStep> parentCollection) parentCollection.Remove(step);
                 else if (Selected.Parent?.Model is RagsCore.Models.Action parentAct) parentAct.Nodes.Remove(step);
                 Rebuild();
-                if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                 return;
             }
         }
@@ -635,9 +635,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             targetModel = newTarget;
                         }
                         Rebuild(targetModel);
-                        if (App.CurrentGame != null)
+                        if (MainWindowViewModel.Instance != null)
                         {
-                            await GameStorage.SaveAsync(App.CurrentGame);
+                            await MainWindowViewModel.Instance.SaveGameAsync();
                         }
                     }
                 });
@@ -671,7 +671,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 await InsertStepAsync(pastedStep);
             }
 
-            if (App.CurrentGame != null) await GameStorage.SaveAsync(App.CurrentGame);
+            if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
         }
 
         public bool CanPaste => ActionClipboardService.CanPaste;

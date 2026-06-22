@@ -1,0 +1,21 @@
+{
+    "name": "Tests",
+    "references": [
+        "GUID:2761615125b11a340f5763547497d332",
+        "GUID:0acc52393132b4397bb1e459134a1795"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

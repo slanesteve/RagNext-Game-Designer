@@ -33,7 +33,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Variables is not null)
                 {
                     App.CurrentGame.Variables.Add(newVar);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Variables));
                 }
                 else
@@ -48,7 +48,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Variables is not null)
                 {
                     App.CurrentGame.Variables.Remove(v);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Variables));
                 }
             });
@@ -63,7 +63,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     row.Add(string.Empty);
                 }
-                await _storage.SaveAsync(App.CurrentGame, "autosave");
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
             });
 
             RemoveColumnCommand = new Command<Tuple<GameVariable, string>>(async (t) =>
@@ -79,7 +79,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     {
                         if (idx < row.Count) row.RemoveAt(idx);
                     }
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                 }
             });
 
@@ -92,7 +92,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     newRow.Add(string.Empty);
                 }
                 v.Rows.Add(newRow);
-                await _storage.SaveAsync(App.CurrentGame, "autosave");
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
             });
 
             RemoveRowCommand = new Command<Tuple<GameVariable, ObservableCollection<string>>>(async (t) =>
@@ -101,7 +101,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 var v = t.Item1;
                 var row = t.Item2;
                 v.Rows.Remove(row);
-                await _storage.SaveAsync(App.CurrentGame, "autosave");
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
             });
         }
 

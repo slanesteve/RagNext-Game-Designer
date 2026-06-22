@@ -29,7 +29,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Characters is not null)
                 {
                     App.CurrentGame.Characters.Add(newChar);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Characters));
                 }
                 else
@@ -44,7 +44,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Characters is not null)
                 {
                     App.CurrentGame.Characters.Remove(c);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Characters));
                 }
             });

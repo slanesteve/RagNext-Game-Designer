@@ -28,7 +28,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Functions is not null)
                 {
                     App.CurrentGame.Functions.Add(newFunc);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Functions));
                 }
                 else
@@ -43,7 +43,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Functions is not null)
                 {
                     App.CurrentGame.Functions.Remove(f);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Functions));
                 }
             });

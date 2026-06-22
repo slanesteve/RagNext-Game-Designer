@@ -29,7 +29,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Rooms is not null)
                 {
                     App.CurrentGame.Rooms.Add(newRoom);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                 }
                 else
                 {
@@ -43,7 +43,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Rooms is not null)
                 {
                     App.CurrentGame.Rooms.Remove(room);
-                    await _storage.SaveAsync(App.CurrentGame, "autosave");
+                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Rooms));
                 }
             });

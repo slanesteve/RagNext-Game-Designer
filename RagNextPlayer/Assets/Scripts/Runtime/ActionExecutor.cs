@@ -727,10 +727,10 @@ namespace RagNextPlayer.Runtime
 
                 case LockRoomExitCommandData c:
                     {
-                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var resolvedRoom = string.IsNullOrWhiteSpace(c.RoomId) ? "" : ResolveRoomId(c.RoomId, ctx);
                         var resolvedDir  = ctx.Resolve(c.Direction);
                         var rId = string.IsNullOrWhiteSpace(resolvedRoom) ? ctx.CurrentRoom?.Id : resolvedRoom;
-                        var room = ctx.Game.Rooms.Find(r => r.Id == rId);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, rId, StringComparison.OrdinalIgnoreCase));
                         if (room is not null && !string.IsNullOrWhiteSpace(resolvedDir))
                         {
                             room.LockedExits[resolvedDir] = true;
@@ -740,10 +740,10 @@ namespace RagNextPlayer.Runtime
 
                 case UnlockRoomExitCommandData c:
                     {
-                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var resolvedRoom = string.IsNullOrWhiteSpace(c.RoomId) ? "" : ResolveRoomId(c.RoomId, ctx);
                         var resolvedDir  = ctx.Resolve(c.Direction);
                         var rId = string.IsNullOrWhiteSpace(resolvedRoom) ? ctx.CurrentRoom?.Id : resolvedRoom;
-                        var room = ctx.Game.Rooms.Find(r => r.Id == rId);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, rId, StringComparison.OrdinalIgnoreCase));
                         if (room is not null && !string.IsNullOrWhiteSpace(resolvedDir))
                         {
                             room.LockedExits[resolvedDir] = false;

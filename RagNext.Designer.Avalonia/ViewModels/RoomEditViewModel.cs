@@ -21,10 +21,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
             // default commands - callers/pages can set Room before use
             SaveCommand = new Command(async () =>
             {
-                if (App.CurrentGame is null)
-                    return;
-
-                await GameStorage.SaveAsync(App.CurrentGame, string.IsNullOrWhiteSpace(App.CurrentGame.Title) ? $"save_{System.DateTime.Now:yyyyMMddHHmmss}" : App.CurrentGame.Title);
+                if (MainWindowViewModel.Instance != null)
+                {
+                    await MainWindowViewModel.Instance.SaveGameAsync();
+                }
             });
 
             CancelCommand = new Command(() =>

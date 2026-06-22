@@ -1756,7 +1756,20 @@ namespace RagsCore.Actions
             var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
             var resolvedDir = RagsCore.Services.TemplateResolver.Resolve(Direction, ctx);
 
-            var rId = Guid.TryParse(resolvedRoom, out var g) ? g : ctx.CurrentRoom?.Id;
+            Guid? rId = null;
+            if (Guid.TryParse(resolvedRoom, out var parsedId))
+            {
+                rId = parsedId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedRoom))
+            {
+                var match = ctx.Game.Rooms.FirstOrDefault(r => 
+                    string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r.Name.Replace(" ", ""), resolvedRoom, StringComparison.OrdinalIgnoreCase));
+                if (match != null) rId = match.Id;
+            }
+            if (rId == null) rId = ctx.CurrentRoom?.Id;
+
             if (rId == null || rId == Guid.Empty || string.IsNullOrWhiteSpace(resolvedDir)) return;
 
             var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId.Value);
@@ -1777,7 +1790,20 @@ namespace RagsCore.Actions
             var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
             var resolvedDir = RagsCore.Services.TemplateResolver.Resolve(Direction, ctx);
 
-            var rId = Guid.TryParse(resolvedRoom, out var g) ? g : ctx.CurrentRoom?.Id;
+            Guid? rId = null;
+            if (Guid.TryParse(resolvedRoom, out var parsedId))
+            {
+                rId = parsedId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedRoom))
+            {
+                var match = ctx.Game.Rooms.FirstOrDefault(r => 
+                    string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r.Name.Replace(" ", ""), resolvedRoom, StringComparison.OrdinalIgnoreCase));
+                if (match != null) rId = match.Id;
+            }
+            if (rId == null) rId = ctx.CurrentRoom?.Id;
+
             if (rId == null || rId == Guid.Empty || string.IsNullOrWhiteSpace(resolvedDir)) return;
 
             var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId.Value);
