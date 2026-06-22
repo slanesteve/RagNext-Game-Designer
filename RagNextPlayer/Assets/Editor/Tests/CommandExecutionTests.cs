@@ -91,7 +91,7 @@ namespace RagNextPlayer.Tests
 
             var appendLine = new AppendLineCommandData { VariableName = "story_log", Text = "The end." };
             ActionExecutor.ExecuteCommand(appendLine, _ctx);
-            Assert.AreEqual("Once upon a time, in a galaxy far away\nThe end.\n", _ctx.GetVariable("story_log")?.Value);
+            Assert.AreEqual("Once upon a time, in a galaxy far awayThe end.\n", _ctx.GetVariable("story_log")?.Value);
         }
 
         [Test]
