@@ -793,82 +793,113 @@ namespace RagNextPlayer.Runtime
                     {
                         var charId = ResolveCharacterId(c.CharacterId, ctx);
                         var targetRoomId = ResolveRoomId(c.RoomId, ctx);
+                        MoveCharacterToRoomHelper(charId, targetRoomId, ctx);
+                    }
+                    break;
+
+                case CharacterMoveToRandomAdjacentCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
                         var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
-                        
-                        var oldRoomId = ctx.GetVariable($"char.{charId}.currentRoomId")?.Value;
-                        ctx.SetVariable($"char.{charId}.currentRoomId", targetRoomId);
-                        
-                        var router = RagNextPlayer.Managers.InteractionController.Instance?.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>();
+                        if (character == null) break;
 
-                        // 1. Remove from old room ObjectIds
-                        if (!string.IsNullOrEmpty(oldRoomId))
+                        var currentRoomId = ctx.GetVariable($"char.{charId}.currentRoomId")?.Value;
+                        if (string.IsNullOrEmpty(currentRoomId))
                         {
-                            var oldRoom = ctx.Game.Rooms.Find(r => string.Equals(r.Id, oldRoomId, StringComparison.OrdinalIgnoreCase));
-                            if (oldRoom != null)
+                            currentRoomId = character.StartingRoomId;
+                        }
+
+                        if (string.IsNullOrEmpty(currentRoomId)) break;
+
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, currentRoomId, StringComparison.OrdinalIgnoreCase));
+                        if (room == null) break;
+
+                        var validExits = new List<string>();
+                        foreach (var exit in room.Exits)
+                        {
+                            bool isLocked = false;
+                            if (room.LockedExits != null && room.LockedExits.TryGetValue(exit.Key, out var locked))
                             {
-                                oldRoom.ObjectIds.Remove(charId);
-                                
-                                // Fire OnCharacterExit on old room
-                                if (oldRoom.Actions != null && character != null)
-                                {
-                                    var rCtx = new GameExecutionContext(ctx.Game, oldRoom, character, oldRoom);
-                                    foreach (var action in oldRoom.Actions)
-                                    {
-                                        if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            ActionExecutor.Execute(action, rCtx, router);
-                                        }
-                                    }
-                                }
+                                isLocked = locked;
+                            }
+                            if (!isLocked)
+                            {
+                                validExits.Add(exit.Value);
                             }
                         }
 
-                        // Fire OnCharacterExit on Player (Global)
-                        if (character != null && ctx.Game.Player.Actions != null)
+                        if (validExits.Count == 0) break;
+
+                        int rndIndex = UnityEngine.Random.Range(0, validExits.Count);
+                        var targetRoomId = validExits[rndIndex];
+
+                        MoveCharacterToRoomHelper(charId, targetRoomId, ctx);
+                    }
+                    break;
+
+                case CharacterMoveAlongPatrolPathCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character == null) break;
+
+                        var resolvedPath = ctx.Resolve(c.PatrolPath);
+                        if (string.IsNullOrEmpty(resolvedPath)) break;
+
+                        var rooms = resolvedPath.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
+                        if (rooms.Length == 0) break;
+
+                        if (string.IsNullOrEmpty(c.IndexVariable)) break;
+
+                        var idxStr = ctx.GetVariable(c.IndexVariable)?.Value ?? "0";
+                        if (!int.TryParse(idxStr, out var currentIndex))
                         {
-                            var pCtx = new GameExecutionContext(ctx.Game, ctx.CurrentRoom, character, ctx.Player);
-                            foreach (var action in ctx.Game.Player.Actions)
+                            currentIndex = 0;
+                        }
+
+                        var dirVarName = $"{c.IndexVariable}_dir";
+                        var dirStr = ctx.GetVariable(dirVarName)?.Value ?? "1";
+                        if (!int.TryParse(dirStr, out var direction))
+                        {
+                            direction = 1;
+                        }
+
+                        int nextIndex = currentIndex + direction;
+
+                        if (c.PingPong)
+                        {
+                            if (nextIndex >= rooms.Length)
                             {
-                                if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    ActionExecutor.Execute(action, pCtx, router);
-                                }
+                                direction = -1;
+                                nextIndex = System.Math.Max(0, rooms.Length - 2);
+                            }
+                            else if (nextIndex < 0)
+                            {
+                                direction = 1;
+                                nextIndex = System.Math.Min(rooms.Length - 1, 1);
+                            }
+                            ctx.SetVariable(dirVarName, direction.ToString());
+                        }
+                        else
+                        {
+                            if (nextIndex >= rooms.Length)
+                            {
+                                nextIndex = 0;
+                            }
+                            else if (nextIndex < 0)
+                            {
+                                nextIndex = rooms.Length - 1;
                             }
                         }
 
-                        // 2. Add to target room ObjectIds
-                        var targetRoom = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetRoomId, StringComparison.OrdinalIgnoreCase));
-                        if (targetRoom != null)
+                        if (nextIndex >= 0 && nextIndex < rooms.Length)
                         {
-                            if (!targetRoom.ObjectIds.Contains(charId))
+                            var targetRoomRef = rooms[nextIndex].Trim();
+                            var targetRoomId = ResolveRoomId(targetRoomRef, ctx);
+                            if (!string.IsNullOrEmpty(targetRoomId))
                             {
-                                targetRoom.ObjectIds.Add(charId);
-                            }
-
-                            // Fire OnCharacterEnter on target room
-                            if (targetRoom.Actions != null && character != null)
-                            {
-                                var rCtx = new GameExecutionContext(ctx.Game, targetRoom, character, targetRoom);
-                                foreach (var action in targetRoom.Actions)
-                                {
-                                    if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        ActionExecutor.Execute(action, rCtx, router);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Fire OnCharacterEnter on Player (Global)
-                        if (character != null && ctx.Game.Player.Actions != null)
-                        {
-                            var pCtx = new GameExecutionContext(ctx.Game, targetRoom, character, ctx.Player);
-                            foreach (var action in ctx.Game.Player.Actions)
-                            {
-                                if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    ActionExecutor.Execute(action, pCtx, router);
-                                }
+                                ctx.SetVariable(c.IndexVariable, nextIndex.ToString());
+                                MoveCharacterToRoomHelper(charId, targetRoomId, ctx);
                             }
                         }
                     }
@@ -1923,6 +1954,230 @@ namespace RagNextPlayer.Runtime
                 string.Equals(r.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(r.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
             return match?.Id ?? resolved;
+        }
+
+        private static void MoveCharacterToRoomHelper(string charId, string targetRoomId, GameExecutionContext ctx)
+        {
+            var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+            
+            var oldRoomId = ctx.GetVariable($"char.{charId}.currentRoomId")?.Value;
+            if (string.IsNullOrEmpty(oldRoomId) && character != null)
+            {
+                oldRoomId = character.StartingRoomId;
+            }
+            if (string.IsNullOrEmpty(oldRoomId))
+            {
+                var containingRoom = ctx.Game.Rooms.Find(r => r.ObjectIds.Contains(charId));
+                if (containingRoom != null)
+                {
+                    oldRoomId = containingRoom.Id;
+                }
+            }
+            
+            if (string.Equals(oldRoomId, targetRoomId, StringComparison.OrdinalIgnoreCase))
+            {
+                ctx.SetVariable($"char.{charId}.currentRoomId", targetRoomId);
+                return;
+            }
+            
+            ctx.SetVariable($"char.{charId}.currentRoomId", targetRoomId);
+            
+            var router = RagNextPlayer.Managers.InteractionController.Instance?.GetComponent<RagNextPlayer.Managers.CommandEffectRouter>();
+
+            var playerRoomId = ctx.GetVariable("player.currentRoomId")?.Value;
+            if (string.IsNullOrEmpty(playerRoomId))
+            {
+                playerRoomId = ctx.Game.Player.StartingRoomId ?? (ctx.Game.Rooms.Count > 0 ? ctx.Game.Rooms[0].Id : null);
+            }
+            Debug.Log($"[MoveCharacterToRoomHelper] charId={charId}, characterName={character?.Name}, oldRoomId={oldRoomId}, targetRoomId={targetRoomId}, playerRoomId={playerRoomId}");
+
+            // 1. Remove from old room ObjectIds and fire exit triggers
+            if (!string.IsNullOrEmpty(oldRoomId))
+            {
+                var oldRoom = ctx.Game.Rooms.Find(r => string.Equals(r.Id, oldRoomId, StringComparison.OrdinalIgnoreCase));
+                if (oldRoom != null)
+                {
+                    oldRoom.ObjectIds.Remove(charId);
+                    
+                    // Fire OnCharacterExit triggers only if the player is in the old room
+                    if (string.Equals(oldRoomId, playerRoomId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Fire OnCharacterExit on old room
+                        if (oldRoom.Actions != null && character != null)
+                        {
+                            var rCtx = new GameExecutionContext(ctx.Game, oldRoom, character, oldRoom);
+                            foreach (var action in oldRoom.Actions)
+                            {
+                                if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    ActionExecutor.Execute(action, rCtx, router, isUserInteraction: false);
+                                }
+                            }
+                        }
+
+                        // Fire OnCharacterExit on other game objects in the old room
+                        if (character != null)
+                        {
+                            var itemsInRoom = ctx.Game.Objects.FindAll(o => oldRoom.ObjectIds.Contains(o.Id) && o.Id != charId);
+                            foreach (var item in itemsInRoom)
+                            {
+                                if (item.Actions != null)
+                                {
+                                    var itemCtx = new GameExecutionContext(ctx.Game, oldRoom, item, item);
+                                    foreach (var action in item.Actions)
+                                    {
+                                        if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            ActionExecutor.Execute(action, itemCtx, router, isUserInteraction: false);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Fire OnCharacterExit on other characters in the old room
+                            var charsInRoom = ctx.Game.Characters.FindAll(ch => oldRoom.ObjectIds.Contains(ch.Id) && ch.Id != charId);
+                            foreach (var ch in charsInRoom)
+                            {
+                                if (ch.Actions != null)
+                                {
+                                    var chCtx = new GameExecutionContext(ctx.Game, oldRoom, ch, ch);
+                                    foreach (var action in ch.Actions)
+                                    {
+                                        if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            ActionExecutor.Execute(action, chCtx, router, isUserInteraction: false);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (string.Equals(oldRoomId, playerRoomId, StringComparison.OrdinalIgnoreCase))
+            {
+                // Fire OnCharacterExit on character itself
+                if (character != null && character.Actions != null)
+                {
+                    var oldRoom = string.IsNullOrEmpty(oldRoomId) ? null : ctx.Game.Rooms.Find(r => string.Equals(r.Id, oldRoomId, StringComparison.OrdinalIgnoreCase));
+                    var cCtx = new GameExecutionContext(ctx.Game, oldRoom, character, character);
+                    foreach (var action in character.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, cCtx, router, isUserInteraction: false);
+                        }
+                    }
+                }
+
+                // Fire OnCharacterExit on Player (Global)
+                if (character != null && ctx.Game.Player.Actions != null)
+                {
+                    var oldRoom = string.IsNullOrEmpty(oldRoomId) ? null : ctx.Game.Rooms.Find(r => string.Equals(r.Id, oldRoomId, StringComparison.OrdinalIgnoreCase));
+                    var pCtx = new GameExecutionContext(ctx.Game, oldRoom, character, ctx.Player);
+                    foreach (var action in ctx.Game.Player.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnCharacterExit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, pCtx, router, isUserInteraction: false);
+                        }
+                    }
+                }
+            }
+
+            // 2. Add to target room ObjectIds and fire enter triggers
+            var targetRoom = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetRoomId, StringComparison.OrdinalIgnoreCase));
+            if (targetRoom != null)
+            {
+                if (!targetRoom.ObjectIds.Contains(charId))
+                {
+                    targetRoom.ObjectIds.Add(charId);
+                }
+
+                // Fire OnCharacterEnter triggers only if the player is in the target room
+                if (string.Equals(targetRoomId, playerRoomId, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Fire OnCharacterEnter on target room
+                    if (targetRoom.Actions != null && character != null)
+                    {
+                        var rCtx = new GameExecutionContext(ctx.Game, targetRoom, character, targetRoom);
+                        foreach (var action in targetRoom.Actions)
+                        {
+                            if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
+                            {
+                                ActionExecutor.Execute(action, rCtx, router, isUserInteraction: false);
+                            }
+                        }
+                    }
+
+                    // Fire OnCharacterEnter on other game objects in the target room
+                    if (character != null)
+                    {
+                        var itemsInRoom = ctx.Game.Objects.FindAll(o => targetRoom.ObjectIds.Contains(o.Id) && o.Id != charId);
+                        foreach (var item in itemsInRoom)
+                        {
+                            if (item.Actions != null)
+                            {
+                                var itemCtx = new GameExecutionContext(ctx.Game, targetRoom, item, item);
+                                foreach (var action in item.Actions)
+                                {
+                                    if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        ActionExecutor.Execute(action, itemCtx, router, isUserInteraction: false);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Fire OnCharacterEnter on other characters in the target room
+                        var charsInRoom = ctx.Game.Characters.FindAll(ch => targetRoom.ObjectIds.Contains(ch.Id) && ch.Id != charId);
+                        foreach (var ch in charsInRoom)
+                        {
+                            if (ch.Actions != null)
+                            {
+                                var chCtx = new GameExecutionContext(ctx.Game, targetRoom, ch, ch);
+                                foreach (var action in ch.Actions)
+                                {
+                                    if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        ActionExecutor.Execute(action, chCtx, router, isUserInteraction: false);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (string.Equals(targetRoomId, playerRoomId, StringComparison.OrdinalIgnoreCase))
+            {
+                // Fire OnCharacterEnter on character itself
+                if (character != null && character.Actions != null)
+                {
+                    var cCtx = new GameExecutionContext(ctx.Game, targetRoom, character, character);
+                    foreach (var action in character.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, cCtx, router, isUserInteraction: false);
+                        }
+                    }
+                }
+
+                // Fire OnCharacterEnter on Player (Global)
+                if (character != null && ctx.Game.Player.Actions != null)
+                {
+                    var pCtx = new GameExecutionContext(ctx.Game, targetRoom, character, ctx.Player);
+                    foreach (var action in ctx.Game.Player.Actions)
+                    {
+                        if (string.Equals(action.Trigger, "OnCharacterEnter", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ActionExecutor.Execute(action, pCtx, router, isUserInteraction: false);
+                        }
+                    }
+                }
+            }
         }
     }
 

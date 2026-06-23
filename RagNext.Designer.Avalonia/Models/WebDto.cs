@@ -64,6 +64,8 @@ namespace RagNext.Designer.Avalonia.Views
         // Bug #5: Action names on this entity, for cascading ActionName pickers.
         public List<CatalogActionDto>? Actions { get; set; }
         public int RowCount { get; set; }
+        public string? StartingRoomId { get; set; }
+        public Dictionary<string, string>? Exits { get; set; }
     }
 
     public class CatalogActionDto

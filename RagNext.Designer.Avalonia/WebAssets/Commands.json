@@ -60,6 +60,43 @@
       ]
     },
     {
+      "name": "Character: Move To Random Adjacent Room",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        }
+      ]
+    },
+    {
+      "name": "Character: Move Along Patrol Path",
+      "category": "Character",
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
+          "label": "Patrol Path",
+          "controlType": "TextArea",
+          "dataType": "String"
+        },
+        {
+          "label": "Index Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Ping Pong",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+    {
       "name": "Character: Move Inventory To Player",
       "category": "Character",
       "inputs": [
@@ -734,6 +771,11 @@
       "name": "Variable: Set Numeric Randomly",
       "category": "Variable",
       "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
         {
           "label": "Minimum",
           "controlType": "Number",

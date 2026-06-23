@@ -587,14 +587,16 @@ namespace RagNext.Designer.Avalonia.Views
                         Id = r.Id.ToString(), Name = r.Name,
                         Attributes = r.Attributes.Select(a => a.Name).ToList(),
                         // Bug #5: Include action names so ActionName pickers can be scoped to this room.
-                        Actions = r.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
+                        Actions = r.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList(),
+                        Exits = r.Exits.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString())
                     }).ToList(),
                     Characters = vm.CurrentGame.Characters.Select(c => new CatalogEntityDto
                     {
                         Id = c.Id.ToString(), Name = c.Name,
                         Attributes = c.Attributes.Select(a => a.Name).ToList(),
                         // Bug #5: Include action names for character action pickers.
-                        Actions = c.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
+                        Actions = c.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList(),
+                        StartingRoomId = c.StartingRoom?.Id.ToString()
                     }).ToList(),
                     GameObjects = vm.CurrentGame.Objects.Select(o => new CatalogEntityDto
                     {
@@ -838,6 +840,7 @@ namespace RagNext.Designer.Avalonia.Views
 
         private async void OnWebViewNavigationStarted(object? sender, WebViewNavigationStartingEventArgs e)
         {
+            if (DataContext is not MainWindowViewModel vm) return;
             var url = e.Request?.ToString() ?? "";
             if (url.StartsWith("rags-action://"))
             {
@@ -875,6 +878,22 @@ namespace RagNext.Designer.Avalonia.Views
                         string fieldName = query["fieldName"] ?? "";
                         string currentText = query["currentText"] ?? "";
                         TriggerCompose(nodeId, fieldName, currentText);
+                    }
+                    else if (url.StartsWith("rags-action://update-char-starting-room"))
+                    {
+                        string charIdStr = query["charId"] ?? "";
+                        string roomIdStr = query["roomId"] ?? "";
+                        if (Guid.TryParse(charIdStr, out var charId) && Guid.TryParse(roomIdStr, out var roomId))
+                        {
+                            var character = vm.CurrentGame.Characters.FirstOrDefault(c => c.Id == charId);
+                            var room = vm.CurrentGame.Rooms.FirstOrDefault(r => r.Id == roomId);
+                            if (character != null && room != null)
+                            {
+                                character.StartingRoom = room;
+                                await vm.SaveGameAsync();
+                                LoadGraphData();
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -4311,6 +4330,8 @@ namespace RagNext.Designer.Avalonia.Views
                 case "actionremovecustomchoice": return "general.removeCustomChoice";
                 case "characterdisplaydescription": return "char.displayDescription";
                 case "charactermovetoroom": return "char.moveToRoom";
+                case "charactermovetorandomadjacentroom": return "char.moveToRandomAdjacent";
+                case "charactermovealongpatrolpath": return "char.moveAlongPatrolPath";
                 case "charactermoveinventorytoplayer": return "char.moveInventoryToPlayer";
                 case "charactermovetoobject": return "char.moveToObject";
                 case "charactersetportraitmedia": return "char.setPortraitMedia";

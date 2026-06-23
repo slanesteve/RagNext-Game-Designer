@@ -294,7 +294,7 @@ namespace RagNextPlayer.Managers
                 {
                     if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, playerCtx, sink);
+                        ActionExecutor.Execute(action, playerCtx, sink, isUserInteraction: false);
                     }
                 }
             }
@@ -307,7 +307,7 @@ namespace RagNextPlayer.Managers
                 {
                     if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, roomCtx, sink);
+                        ActionExecutor.Execute(action, roomCtx, sink, isUserInteraction: false);
                     }
                 }
             }
@@ -324,7 +324,7 @@ namespace RagNextPlayer.Managers
                         {
                             if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
                             {
-                                ActionExecutor.Execute(action, chCtx, sink);
+                                ActionExecutor.Execute(action, chCtx, sink, isUserInteraction: false);
                             }
                         }
                     }
@@ -340,7 +340,7 @@ namespace RagNextPlayer.Managers
                         {
                             if (string.Equals(action.Trigger, "OnTurnTick", StringComparison.OrdinalIgnoreCase))
                             {
-                                ActionExecutor.Execute(action, objCtx, sink);
+                                ActionExecutor.Execute(action, objCtx, sink, isUserInteraction: false);
                             }
                         }
                     }
@@ -361,7 +361,7 @@ namespace RagNextPlayer.Managers
                 {
                     if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, charCtx, sink);
+                        ActionExecutor.Execute(action, charCtx, sink, isUserInteraction: false);
                     }
                 }
             }
@@ -378,7 +378,7 @@ namespace RagNextPlayer.Managers
                 {
                     if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, roomCtx, sink);
+                        ActionExecutor.Execute(action, roomCtx, sink, isUserInteraction: false);
                     }
                 }
             }
@@ -395,7 +395,7 @@ namespace RagNextPlayer.Managers
                         {
                             if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
                             {
-                                ActionExecutor.Execute(action, objCtx, sink);
+                                ActionExecutor.Execute(action, objCtx, sink, isUserInteraction: false);
                             }
                         }
                     }
@@ -411,7 +411,7 @@ namespace RagNextPlayer.Managers
                 {
                     if (string.Equals(action.Trigger, "OnCharacterKilled", StringComparison.OrdinalIgnoreCase))
                     {
-                        ActionExecutor.Execute(action, playerCtx, sink);
+                        ActionExecutor.Execute(action, playerCtx, sink, isUserInteraction: false);
                     }
                 }
             }
@@ -492,7 +492,7 @@ namespace RagNextPlayer.Managers
                             {
                                 if (MatchesDirection(action.DirectionFilter, currentDirection))
                                 {
-                                    ActionExecutor.Execute(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                    ActionExecutor.Execute(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                                 }
                             }
                         }
@@ -508,7 +508,7 @@ namespace RagNextPlayer.Managers
                                 {
                                     if (MatchesDirection(action.DirectionFilter, currentDirection))
                                     {
-                                        ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                        ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                                     }
                                 }
                             }
@@ -527,7 +527,7 @@ namespace RagNextPlayer.Managers
                                     {
                                         if (MatchesDirection(action.DirectionFilter, currentDirection))
                                         {
-                                            ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                            ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                                         }
                                     }
                                 }
@@ -579,7 +579,7 @@ namespace RagNextPlayer.Managers
                         {
                             if (MatchesDirection(action.DirectionFilter, currentDirection))
                             {
-                                ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                             }
                         }
                     }
@@ -595,7 +595,7 @@ namespace RagNextPlayer.Managers
                             {
                                 if (MatchesDirection(action.DirectionFilter, currentDirection))
                                 {
-                                    ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                    ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                                 }
                             }
                         }
@@ -614,7 +614,7 @@ namespace RagNextPlayer.Managers
                                 {
                                     if (MatchesDirection(action.DirectionFilter, currentDirection))
                                     {
-                                        ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>());
+                                        ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                                     }
                                 }
                             }

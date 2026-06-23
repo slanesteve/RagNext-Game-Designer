@@ -84,7 +84,7 @@ namespace RagNext.Designer.Avalonia.Services
                 Report("Creating distribution ZIP...");
                 string cleanOutput = outputDirectory.TrimEnd(Path.DirectorySeparatorChar);
                 string parentDir = Path.GetDirectoryName(cleanOutput) ?? cleanOutput;
-                string zipName = Path.GetFileName(cleanOutput) + ".zip";
+                string zipName = cleanTitle + ".zip";
                 string tempZipPath = Path.Combine(parentDir, zipName);
 
                 CreateZipWithUnixPermissions(outputDirectory, tempZipPath);
@@ -348,11 +348,20 @@ namespace RagNext.Designer.Avalonia.Services
             if (!Directory.Exists(outputDir)) return;
 
             // 1. Delete the ZIP file if it exists
-            string zipName = title + ".zip";
-            string zipPath = Path.Combine(outputDir, zipName);
-            if (File.Exists(zipPath))
+            string cleanOutputDir = outputDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string folderZipName = Path.GetFileName(cleanOutputDir) + ".zip";
+            string titleZipName = title + ".zip";
+            
+            string folderZipPath = Path.Combine(outputDir, folderZipName);
+            string titleZipPath = Path.Combine(outputDir, titleZipName);
+            
+            if (File.Exists(folderZipPath))
             {
-                try { File.Delete(zipPath); } catch { }
+                try { File.Delete(folderZipPath); } catch { }
+            }
+            if (File.Exists(titleZipPath) && !string.Equals(folderZipPath, titleZipPath, StringComparison.OrdinalIgnoreCase))
+            {
+                try { File.Delete(titleZipPath); } catch { }
             }
 
             // 2. Clear only the template-specific files and folders from the destination

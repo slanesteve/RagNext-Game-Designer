@@ -87,6 +87,8 @@ const fallbackDiscriminators = {
     "actionclearcustomchoice": "general.clearCustomChoice",
     "characterdisplaydescription": "char.displayDescription",
     "charactermovetoroom": "char.moveToRoom",
+    "charactermovetorandomadjacentroom": "char.moveToRandomAdjacent",
+    "charactermovealongpatrolpath": "char.moveAlongPatrolPath",
     "charactermoveinventorytoplayer": "char.moveInventoryToPlayer",
     "charactermovetoobject": "char.moveToObject",
     "charactersetportraitmedia": "char.setPortraitMedia",
@@ -226,7 +228,10 @@ const propertyMappings = {
     "Start Time": ["StartTime", "startTime"],
     "End Time": ["EndTime", "endTime"],
     // Bug #5: ActionName maps to the C# ActionName property on Set Action Active commands.
-    "Action Name": ["ActionName", "actionName"]
+    "Action Name": ["ActionName", "actionName"],
+    "Patrol Path": ["PatrolPath", "patrolPath"],
+    "Index Variable": ["IndexVariable", "indexVariable"],
+    "Ping Pong": ["PingPong", "pingPong"]
 };
 
 function getPropertyValue(nodeData, label) {
@@ -1758,6 +1763,9 @@ function refreshCommandFields(node) {
     const fieldsContainer = document.getElementById(`${node.id}_fields`);
     if (!fieldsContainer) return;
     fieldsContainer.innerHTML = "";
+    if (node.element) {
+        node.element.style.height = 'auto';
+    }
 
     const type = node.type === 'command' ? node.data.commandType : node.data.conditionType;
     const schema = typeToInputsMap[type];
@@ -1842,7 +1850,188 @@ function refreshCommandFields(node) {
             });
         }
 
-        if (inputSchema.label === 'Custom Options' || inputSchema.label === 'CustomOptions') {
+        if (inputSchema.label === 'Patrol Path' || inputSchema.label === 'PatrolPath') {
+            const listWrapper = document.createElement('div');
+            listWrapper.className = 'patrol-path-wrapper';
+            listWrapper.style.display = 'flex';
+            listWrapper.style.flexDirection = 'column';
+            listWrapper.style.gap = '6px';
+            listWrapper.style.marginTop = '4px';
+
+            const stepsContainer = document.createElement('div');
+            stepsContainer.className = 'patrol-steps-container';
+            stepsContainer.style.display = 'flex';
+            stepsContainer.style.flexDirection = 'column';
+            stepsContainer.style.gap = '6px';
+            listWrapper.appendChild(stepsContainer);
+
+            const updatePatrolUI = () => {
+                stepsContainer.innerHTML = '';
+                const charId = node.data["Character"] || node.data["CharacterId"] || "";
+                if (!charId) {
+                    const errorMsg = document.createElement('div');
+                    errorMsg.innerText = "⚠️ Please select a Character first.";
+                    errorMsg.style.color = '#f38ba8';
+                    errorMsg.style.fontSize = '12px';
+                    stepsContainer.appendChild(errorMsg);
+                    return;
+                }
+
+                const character = (catalogs.Characters || []).find(c => c.Id === charId);
+                const startingRoomId = character ? character.StartingRoomId : "";
+
+                let currentVal = getPropertyValue(node.data, "Patrol Path") || getPropertyValue(node.data, "PatrolPath") || "";
+                let steps = currentVal ? currentVal.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+
+                if (startingRoomId) {
+                    if (steps.length === 0 || steps[0] !== startingRoomId) {
+                        steps = [startingRoomId, ...steps.slice(1)];
+                        const joined = steps.join(',');
+                        node.data["Patrol Path"] = joined;
+                        node.data["PatrolPath"] = joined;
+                        triggerAutoSave();
+                    }
+                }
+
+                steps.forEach((stepRoomId, idx) => {
+                    const row = document.createElement('div');
+                    row.style.display = 'flex';
+                    row.style.alignItems = 'center';
+                    row.style.gap = '6px';
+
+                    const indexLabel = document.createElement('span');
+                    indexLabel.innerText = idx === 0 ? "Start:" : `Step ${idx}:`;
+                    indexLabel.style.fontSize = '11px';
+                    indexLabel.style.color = '#a6adc8';
+                    indexLabel.style.width = '45px';
+                    row.appendChild(indexLabel);
+
+                    const select = document.createElement('select');
+                    select.style.flex = '1';
+                    select.style.fontSize = '12px';
+
+                    if (idx === 0) {
+                        (catalogs.Rooms || []).forEach(r => {
+                            const opt = document.createElement('option');
+                            opt.value = r.Id;
+                            opt.innerText = r.Name;
+                            if (r.Id === stepRoomId) opt.selected = true;
+                            select.appendChild(opt);
+                        });
+
+                        select.addEventListener('change', () => {
+                            const newRoomId = select.value;
+                            if (charId && newRoomId) {
+                                window.location.href = `rags-action://update-char-starting-room?charId=${charId}&roomId=${newRoomId}`;
+                            }
+                            steps[0] = newRoomId;
+                            steps = [newRoomId];
+                            const joined = steps.join(',');
+                            node.data["Patrol Path"] = joined;
+                            node.data["PatrolPath"] = joined;
+                            updatePatrolUI();
+                            triggerAutoSave();
+                        });
+                    } else {
+                        const prevRoomId = steps[idx - 1];
+                        const prevRoom = (catalogs.Rooms || []).find(r => r.Id === prevRoomId);
+                        
+                        const validDestRoomIds = [];
+                        if (prevRoom && prevRoom.Exits) {
+                            Object.keys(prevRoom.Exits).forEach(dir => {
+                                validDestRoomIds.push(prevRoom.Exits[dir]);
+                            });
+                        }
+
+                        (catalogs.Rooms || []).forEach(r => {
+                            if (validDestRoomIds.includes(r.Id)) {
+                                const opt = document.createElement('option');
+                                opt.value = r.Id;
+                                opt.innerText = r.Name;
+                                if (r.Id === stepRoomId) opt.selected = true;
+                                select.appendChild(opt);
+                            }
+                        });
+
+                        if (!validDestRoomIds.includes(stepRoomId)) {
+                            const opt = document.createElement('option');
+                            opt.value = stepRoomId;
+                            const rMatch = (catalogs.Rooms || []).find(r => r.Id === stepRoomId);
+                            opt.innerText = (rMatch ? rMatch.Name : "Unknown Room") + " (Disconnected)";
+                            opt.selected = true;
+                            select.appendChild(opt);
+                        }
+
+                        select.addEventListener('change', () => {
+                            steps[idx] = select.value;
+                            steps = steps.slice(0, idx + 1);
+                            const joined = steps.join(',');
+                            node.data["Patrol Path"] = joined;
+                            node.data["PatrolPath"] = joined;
+                            updatePatrolUI();
+                            triggerAutoSave();
+                        });
+                    }
+
+                    row.appendChild(select);
+
+                    if (idx > 0) {
+                        const delBtn = document.createElement('button');
+                        delBtn.innerHTML = '🗑️';
+                        delBtn.style.background = 'none';
+                        delBtn.style.border = 'none';
+                        delBtn.style.cursor = 'pointer';
+                        delBtn.style.padding = '0 4px';
+                        delBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            steps = steps.slice(0, idx);
+                            const joined = steps.join(',');
+                            node.data["Patrol Path"] = joined;
+                            node.data["PatrolPath"] = joined;
+                            updatePatrolUI();
+                            triggerAutoSave();
+                        });
+                        row.appendChild(delBtn);
+                    }
+
+                    stepsContainer.appendChild(row);
+                });
+
+                const lastRoomId = steps[steps.length - 1];
+                const lastRoom = (catalogs.Rooms || []).find(r => r.Id === lastRoomId);
+                const hasExits = lastRoom && lastRoom.Exits && Object.keys(lastRoom.Exits).length > 0;
+
+                if (hasExits) {
+                    const addBtn = document.createElement('button');
+                    addBtn.innerText = '➕ Add Patrol Step';
+                    addBtn.style.padding = '6px';
+                    addBtn.style.background = '#313244';
+                    addBtn.style.color = '#cdd6f4';
+                    addBtn.style.border = '1px solid #45475a';
+                    addBtn.style.borderRadius = '6px';
+                    addBtn.style.cursor = 'pointer';
+                    addBtn.style.fontSize = '12px';
+                    addBtn.style.marginTop = '4px';
+
+                    addBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const firstExitKey = Object.keys(lastRoom.Exits)[0];
+                        const destRoomId = lastRoom.Exits[firstExitKey];
+                        steps.push(destRoomId);
+                        const joined = steps.join(',');
+                        node.data["Patrol Path"] = joined;
+                        node.data["PatrolPath"] = joined;
+                        updatePatrolUI();
+                        triggerAutoSave();
+                    });
+                    stepsContainer.appendChild(addBtn);
+                }
+            };
+
+            updatePatrolUI();
+            row.appendChild(listWrapper);
+            inputElement = listWrapper;
+        } else if (inputSchema.label === 'Custom Options' || inputSchema.label === 'CustomOptions') {
             // Render interactive option list builder!
             const listWrapper = document.createElement('div');
             listWrapper.className = 'custom-options-wrapper';
@@ -3525,7 +3714,8 @@ function parseAndCreateNode(data, x, y) {
             }
             if (h) {
                 node.height = h;
-                node.element.style.height = `${h}px`;
+                node.element.style.minHeight = `${h}px`;
+                node.element.style.height = 'auto';
             }
         }
         return node;
@@ -3607,7 +3797,8 @@ function parseAndCreateNode(data, x, y) {
                 }
                 if (h) {
                     node.height = h;
-                    node.element.style.height = `${h}px`;
+                    node.element.style.minHeight = `${h}px`;
+                    node.element.style.height = 'auto';
                 }
             }
             return node;
@@ -3646,7 +3837,8 @@ function parseAndCreateNode(data, x, y) {
                 }
                 if (h) {
                     node.height = h;
-                    node.element.style.height = `${h}px`;
+                    node.element.style.minHeight = `${h}px`;
+                    node.element.style.height = 'auto';
                 }
             }
             return node;

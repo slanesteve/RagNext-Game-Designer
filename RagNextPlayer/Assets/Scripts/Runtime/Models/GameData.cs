@@ -187,6 +187,8 @@ namespace RagNextPlayer.Runtime.Models
     public class PlayerSetGenderCommandData          : CommandData { public string Gender { get; set; } = "Male"; }
     public class PlayerSetPortraitMediaCommandData   : CommandData { public string MediaId { get; set; } = string.Empty; }
     public class CharacterMoveToRoomCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; public string RoomId { get; set; } = string.Empty; }
+    public class CharacterMoveToRandomAdjacentCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }
+    public class CharacterMoveAlongPatrolPathCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string PatrolPath { get; set; } = string.Empty; public string IndexVariable { get; set; } = string.Empty; public bool PingPong { get; set; } }
     public class CharacterDisplayPortraitCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string PortraitId { get; set; } = string.Empty; }
     public class CharacterSetPortraitMediaCommandData: CommandData { public string CharacterId { get; set; } = string.Empty; public string MediaId { get; set; } = string.Empty; }
     public class PlaySoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; public double StartTime { get; set; } = 0.0; public double EndTime { get; set; } = 0.0; }

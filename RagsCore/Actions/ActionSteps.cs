@@ -71,6 +71,8 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(CharacterSetGenderCommand), "char.setGender")]
     [JsonDerivedType(typeof(SetNumericRandomlyCommand), "var.setRandom")]
     [JsonDerivedType(typeof(CharacterMoveToRoomCommand), "char.moveToRoom")]
+    [JsonDerivedType(typeof(CharacterMoveToRandomAdjacentCommand), "char.moveToRandomAdjacent")]
+    [JsonDerivedType(typeof(CharacterMoveAlongPatrolPathCommand), "char.moveAlongPatrolPath")]
     [JsonDerivedType(typeof(DisplayMultimediaCommand), "media.displayMultimedia")]
     [JsonDerivedType(typeof(CharacterDisplayPortraitCommand), "char.displayPortrait")]
     [JsonDerivedType(typeof(CharacterSetPortraitMediaCommand), "char.setPortraitMedia")]
@@ -154,7 +156,7 @@ namespace RagsCore.Actions
                 "object.moveInsideObject", "general.displayText", "general.addComment", "general.debugText",
                 "media.playSound", "media.playVideo", "media.stopSound", "player.setName",
                 "player.setDescription", "player.setGender", "char.setGender", "var.setRandom",
-                "char.moveToRoom", "media.displayMultimedia", "char.displayPortrait", "char.setPortraitMedia",
+                "char.moveToRoom", "char.moveToRandomAdjacent", "char.moveAlongPatrolPath", "media.displayMultimedia", "char.displayPortrait", "char.setPortraitMedia",
                 "player.setPortraitMedia", "var.inc", "var.dec", "var.setToVar", "room.setExit",
                 "room.disableExit", "room.lockExit", "room.unlockExit", "char.damage", "char.setState",
                 "general.triggerTurnTick", "general.endGame", "general.promptInput", "general.openContainer",
@@ -982,6 +984,174 @@ namespace RagsCore.Actions
             if (character is not null)
             {
                 ctx.SetVariable($"char.{cId.Value}.currentRoomId", rId.Value.ToString());
+            }
+        }
+    }
+
+    public sealed class CharacterMoveToRandomAdjacentCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public override string TypeName => "Character: Move To Random Adjacent Room";
+
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            Guid? cId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                cId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) cId = match.Id;
+            }
+
+            if (cId == null) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId.Value);
+            if (character == null) return;
+
+            // Find current room of character
+            var currentRoomIdStr = ctx.GetVariable($"char.{cId.Value}.currentRoomId")?.Value;
+            Guid? currentRoomId = null;
+            if (Guid.TryParse(currentRoomIdStr, out var parsedRoomId))
+            {
+                currentRoomId = parsedRoomId;
+            }
+            else
+            {
+                currentRoomId = character.StartingRoom?.Id;
+            }
+
+            if (currentRoomId == null) return;
+
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == currentRoomId.Value);
+            if (room == null) return;
+
+            // Find all unlocked exits
+            var validExits = new List<Guid>();
+            foreach (var exit in room.Exits)
+            {
+                bool isLocked = room.LockedExits.TryGetValue(exit.Key, out var locked) && locked;
+                if (!isLocked)
+                {
+                    validExits.Add(exit.Value);
+                }
+            }
+
+            if (validExits.Count == 0) return;
+
+            var rnd = new Random();
+            var targetRoomId = validExits[rnd.Next(validExits.Count)];
+
+            ctx.SetVariable($"char.{cId.Value}.currentRoomId", targetRoomId.ToString());
+        }
+    }
+
+    public sealed class CharacterMoveAlongPatrolPathCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string PatrolPath { get; set; } = string.Empty;
+        public string IndexVariable { get; set; } = string.Empty;
+        public bool PingPong { get; set; }
+        public override string TypeName => "Character: Move Along Patrol Path";
+
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            Guid? cId = null;
+            if (Guid.TryParse(resolvedChar, out var parsedCharId))
+            {
+                cId = parsedCharId;
+            }
+            else if (!string.IsNullOrEmpty(resolvedChar))
+            {
+                var match = ctx.Game.Characters.FirstOrDefault(c => 
+                    string.Equals(c.Name, resolvedChar, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Name.Replace(" ", ""), resolvedChar, StringComparison.OrdinalIgnoreCase));
+                if (match != null) cId = match.Id;
+            }
+
+            if (cId == null) return;
+
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId.Value);
+            if (character == null) return;
+
+            var resolvedPath = RagsCore.Services.TemplateResolver.Resolve(PatrolPath, ctx);
+            if (string.IsNullOrEmpty(resolvedPath)) return;
+
+            var rooms = resolvedPath.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(r => r.Trim())
+                                    .ToList();
+            if (rooms.Count == 0) return;
+
+            if (string.IsNullOrEmpty(IndexVariable)) return;
+
+            var idxStr = ctx.GetVariable(IndexVariable)?.Value ?? "0";
+            if (!int.TryParse(idxStr, out var currentIndex))
+            {
+                currentIndex = 0;
+            }
+
+            var dirVarName = $"{IndexVariable}_dir";
+            var dirStr = ctx.GetVariable(dirVarName)?.Value ?? "1";
+            if (!int.TryParse(dirStr, out var direction))
+            {
+                direction = 1;
+            }
+
+            int nextIndex = currentIndex + direction;
+
+            if (PingPong)
+            {
+                if (nextIndex >= rooms.Count)
+                {
+                    direction = -1;
+                    nextIndex = Math.Max(0, rooms.Count - 2);
+                }
+                else if (nextIndex < 0)
+                {
+                    direction = 1;
+                    nextIndex = Math.Min(rooms.Count - 1, 1);
+                }
+                ctx.SetVariable(dirVarName, direction.ToString());
+            }
+            else
+            {
+                if (nextIndex >= rooms.Count)
+                {
+                    nextIndex = 0;
+                }
+                else if (nextIndex < 0)
+                {
+                    nextIndex = rooms.Count - 1;
+                }
+            }
+
+            if (nextIndex >= 0 && nextIndex < rooms.Count)
+            {
+                var targetRoomRef = rooms[nextIndex];
+                Guid? rId = null;
+                if (Guid.TryParse(targetRoomRef, out var parsedRoomId))
+                {
+                    rId = parsedRoomId;
+                }
+                else
+                {
+                    var match = ctx.Game.Rooms.FirstOrDefault(r => 
+                        string.Equals(r.Name, targetRoomRef, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r.Name.Replace(" ", ""), targetRoomRef, StringComparison.OrdinalIgnoreCase));
+                    if (match != null) rId = match.Id;
+                }
+
+                if (rId != null)
+                {
+                    ctx.SetVariable(IndexVariable, nextIndex.ToString());
+                    ctx.SetVariable($"char.{cId.Value}.currentRoomId", rId.Value.ToString());
+                }
             }
         }
     }
