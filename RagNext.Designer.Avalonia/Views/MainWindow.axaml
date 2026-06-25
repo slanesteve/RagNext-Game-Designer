@@ -55,6 +55,8 @@
                             <MenuItem Header="Help" Foreground="{DynamicResource TextNormal}">
                                 <MenuItem Header="View Documentation" Click="OnInstructionsClicked"/>
                                 <MenuItem Header="Report an Issue" Click="OnReportIssueClicked"/>
+                                <Separator/>
+                                <MenuItem Header="About RagNext" Click="OnAboutClicked"/>
                             </MenuItem>
                         </Menu>
                     </StackPanel>

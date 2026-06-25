@@ -819,6 +819,20 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        public async void OnAboutClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            var assembly = typeof(MainWindow).Assembly;
+            var name = assembly.GetName().Name ?? "RagNext Designer";
+            
+            // Get Informational Version attribute
+            var infoVersionAttr = (global::System.Reflection.AssemblyInformationalVersionAttribute?)
+                global::System.Attribute.GetCustomAttribute(assembly, typeof(global::System.Reflection.AssemblyInformationalVersionAttribute));
+            var versionString = infoVersionAttr?.InformationalVersion ?? assembly.GetName().Version?.ToString() ?? "1.0.0";
+
+            await AlertDialog.ShowAsync(this, "About RagNext Designer", 
+                $"{name}\nVersion {versionString}\n\nBuilt on .NET 9.0 using Avalonia UI.\n© 2026 RagNext contributors.");
+        }
+
          public async void OnSyncGraphClicked(object sender, RoutedEventArgs e)
         {
             if (DataContext is not MainWindowViewModel vm || vm.CurrentGame == null || vm.ActiveAction == null) return;
