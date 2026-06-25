@@ -524,12 +524,15 @@
                                                         <!-- North -->
                                                         <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="North →" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="North" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -539,12 +542,15 @@
                                                         <!-- South -->
                                                         <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="South ←" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="South" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -554,12 +560,15 @@
                                                         <!-- East -->
                                                         <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="East →" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="EastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="EastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="East" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="EastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -569,12 +578,15 @@
                                                         <!-- West -->
                                                         <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="West ←" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="WestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="WestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="West" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="WestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -584,12 +596,15 @@
                                                         <!-- Northwest -->
                                                         <Grid Grid.Row="2" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Northwest ↖" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="NorthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -599,12 +614,15 @@
                                                         <!-- Northeast -->
                                                         <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Northeast ↗" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="NorthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -614,12 +632,15 @@
                                                         <!-- Southwest -->
                                                         <Grid Grid.Row="3" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Southwest ↙" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="SouthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -629,12 +650,15 @@
                                                         <!-- Southeast -->
                                                         <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Southeast ↘" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="SouthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -644,12 +668,15 @@
                                                         <!-- Up -->
                                                         <Grid Grid.Row="4" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Up ▲" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Up" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="UpOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -659,12 +686,15 @@
                                                         <!-- Down -->
                                                         <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Down ▼" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Down" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="DownOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -674,12 +704,15 @@
                                                         <!-- In -->
                                                         <Grid Grid.Row="5" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="In ↵" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="In" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="InOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
@@ -689,12 +722,15 @@
                                                         <!-- Out -->
                                                         <Grid Grid.Row="5" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Out ↳" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
+                                                                <ToolTip.Tip>
+                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
+                                                                </ToolTip.Tip>
                                                             </ComboBox>
                                                             <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Out" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="OutOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
