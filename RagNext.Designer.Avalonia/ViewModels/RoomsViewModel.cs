@@ -15,6 +15,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public ICommand AddRoomCommand { get; }
         public ICommand DeleteRoomCommand { get; }
+        public ICommand SortCommand { get; }
 
         public RoomsViewModel(IGameStorage storage)
         {
@@ -46,6 +47,19 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Rooms));
                 }
+            });
+
+            SortCommand = new Command(async () =>
+            {
+                if (App.CurrentGame?.Rooms is null) return;
+                var sorted = global::System.Linq.Enumerable.ToList(global::System.Linq.Enumerable.OrderBy(App.CurrentGame.Rooms, r => r.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase));
+                for (int i = 0; i < sorted.Count; i++)
+                {
+                    int oldIndex = App.CurrentGame.Rooms.IndexOf(sorted[i]);
+                    if (oldIndex != i) App.CurrentGame.Rooms.Move(oldIndex, i);
+                }
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                OnPropertyChanged(nameof(Rooms));
             });
         }
 

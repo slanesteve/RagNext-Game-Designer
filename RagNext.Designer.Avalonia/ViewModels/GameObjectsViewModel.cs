@@ -15,6 +15,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public ICommand AddObjectCommand { get; }
         public ICommand DeleteObjectCommand { get; }
+        public ICommand SortCommand { get; }
 
         public GameObjectsViewModel(IGameStorage storage)
         {
@@ -47,6 +48,19 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Objects));
                 }
+            });
+
+            SortCommand = new Command(async () =>
+            {
+                if (App.CurrentGame?.Objects is null) return;
+                var sorted = global::System.Linq.Enumerable.ToList(global::System.Linq.Enumerable.OrderBy(App.CurrentGame.Objects, o => o.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase));
+                for (int i = 0; i < sorted.Count; i++)
+                {
+                    int oldIndex = App.CurrentGame.Objects.IndexOf(sorted[i]);
+                    if (oldIndex != i) App.CurrentGame.Objects.Move(oldIndex, i);
+                }
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                OnPropertyChanged(nameof(Objects));
             });
         }
 

@@ -524,6 +524,21 @@ namespace RagNextPlayer.Runtime
                     ctx.SetVariable(c.Name, ctx.Resolve(c.Value));
                     break;
 
+                case EvaluateFormulaCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.Formula);
+                        try
+                        {
+                            var val = MathEvaluator.Evaluate(resolved);
+                            ctx.SetVariable(c.Name, val.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        }
+                        catch (System.Exception ex)
+                        {
+                            ctx.SetVariable("system.error", $"Formula error: {ex.Message}");
+                        }
+                    }
+                    break;
+
                 case VariableIncrementCommandData c:
                     {
                         var resolvedVal = ctx.Resolve(c.Value);

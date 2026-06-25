@@ -112,6 +112,16 @@ namespace RagNextPlayer.Managers
                     UIManager.Instance?.RefreshPlayerPanel();
                     break;
 
+                case EvaluateFormulaCommandData c:
+                    if (string.Equals(c.Name, "player.currentRoomId", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        var targetId = ctx.GetVariable("player.currentRoomId")?.Value;
+                        if (!string.IsNullOrEmpty(targetId))
+                            GameManager.Instance?.MovePlayerToRoom(targetId);
+                    }
+                    UIManager.Instance?.RefreshPlayerPanel();
+                    break;
+
                 case VariableIncrementCommandData:
                 case VariableDecrementCommandData:
                 case VariableSetToVariableCommandData:

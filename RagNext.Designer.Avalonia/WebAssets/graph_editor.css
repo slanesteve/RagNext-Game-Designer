@@ -135,6 +135,7 @@ body, html {
     gap: 8px;
     flex: 1;
     overflow: visible;
+    min-height: 0;
 }
 
 .node-delete {
@@ -220,7 +221,7 @@ textarea, select, input {
     font-size: 12px;
     outline: none;
     font-family: inherit;
-    resize: vertical;
+    resize: none;
 }
 
 textarea:focus, select:focus, input:focus {
@@ -229,8 +230,8 @@ textarea:focus, select:focus, input:focus {
 
 textarea {
     min-height: 80px;
-    height: auto;
-    flex: 1 1 80px;
+    height: 100%;
+    flex: 1 1 auto;
 }
 
 /* Glassmorphic Formatting toolbar */

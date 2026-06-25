@@ -427,7 +427,7 @@ namespace RagNextPlayer.Runtime
                 string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
             if (baseVar != null)
             {
-                if (DateTime.TryParse(baseVar.Value, out var dt))
+                if (string.Equals(baseVar.Type, "datetime", StringComparison.OrdinalIgnoreCase) && DateTime.TryParse(baseVar.Value, out var dt))
                 {
                     return dt.ToString("MMMM d, yyyy h:mm tt");
                 }

@@ -16,6 +16,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public ICommand AddVariableCommand { get; }
         public ICommand DeleteVariableCommand { get; }
+        public ICommand SortCommand { get; }
         public ICommand AddColumnCommand { get; }
         public ICommand RemoveColumnCommand { get; }
         public ICommand AddRowCommand { get; }
@@ -51,6 +52,19 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
                     OnPropertyChanged(nameof(Variables));
                 }
+            });
+
+            SortCommand = new Command(async () =>
+            {
+                if (App.CurrentGame?.Variables is null) return;
+                var sorted = global::System.Linq.Enumerable.ToList(global::System.Linq.Enumerable.OrderBy(App.CurrentGame.Variables, v => v.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase));
+                for (int i = 0; i < sorted.Count; i++)
+                {
+                    int oldIndex = App.CurrentGame.Variables.IndexOf(sorted[i]);
+                    if (oldIndex != i) App.CurrentGame.Variables.Move(oldIndex, i);
+                }
+                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                OnPropertyChanged(nameof(Variables));
             });
 
             AddColumnCommand = new Command<GameVariable>(async (v) =>

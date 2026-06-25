@@ -1392,7 +1392,10 @@ namespace RagNextPlayer.Managers
             // causing the layout engine to record a 1-line height even when the text
             // visually wraps — which makes the next element overlap this one.
             BuildNarrativeBody(text);
-            ScrollNarrativeToBottom();
+            if (_typewriterEnabled)
+            {
+                ScrollNarrativeToBottom();
+            }
         }
 
         public void RefreshEntityLists()
@@ -1679,6 +1682,7 @@ namespace RagNextPlayer.Managers
 
             if (!_typewriterEnabled)
             {
+                VisualElement firstNewElement = null;
                 foreach (var para in paragraphs)
                 {
                     if (string.IsNullOrWhiteSpace(para))
@@ -1686,13 +1690,18 @@ namespace RagNextPlayer.Managers
                         var spacer = new VisualElement();
                         spacer.AddToClassList("narrative-spacer");
                         _narrativeScroll.Add(spacer);
+                        if (firstNewElement == null) firstNewElement = spacer;
                         continue;
                     }
 
                     var flow = BuildParagraphFlow(para);
                     _narrativeScroll.Add(flow);
+                    if (firstNewElement == null) firstNewElement = flow;
                 }
-                ScrollNarrativeToBottom();
+                if (firstNewElement != null)
+                {
+                    ScrollNarrativeToElement(firstNewElement);
+                }
                 return;
             }
 
@@ -2043,6 +2052,21 @@ namespace RagNextPlayer.Managers
             {
                 _narrativeScroll?.schedule.Execute(() =>
                     _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue));
+            });
+        }
+
+        private void ScrollNarrativeToElement(VisualElement element)
+        {
+            if (element == null || _narrativeScroll == null) return;
+            _narrativeScroll.schedule.Execute(() =>
+            {
+                _narrativeScroll?.schedule.Execute(() =>
+                {
+                    if (element != null && _narrativeScroll != null && _narrativeScroll.Contains(element))
+                    {
+                        _narrativeScroll.ScrollTo(element);
+                    }
+                });
             });
         }
 

@@ -143,6 +143,7 @@ const fallbackDiscriminators = {
     "timersettimertoactiveinactive": "timer.setTimerActive",
     "variabledisplaydata": "var.displayData",
     "variableset": "var.set",
+    "variableevaluateformula": "var.evaluate",
     "variableincrement": "var.inc",
     "variabledecrement": "var.dec",
     "variableforeachloop": "variable.forEachLoop",
@@ -2687,6 +2688,53 @@ function refreshCommandFields(node) {
 
         if (inputSchema.controlType !== 'TextArea' && !inputSchema.label.toLowerCase().includes('text') && !inputSchema.label.toLowerCase().includes('lines') && !inputSchema.label.toLowerCase().includes('description') && !inputSchema.label.toLowerCase().includes('dialogue')) {
             row.appendChild(inputElement);
+        }
+
+        if (inputSchema.label === 'Formula') {
+            const helperLink = document.createElement('a');
+            helperLink.innerText = "ℹ️ View Supported Math Functions";
+            helperLink.style.fontSize = "10px";
+            helperLink.style.color = "#89b4fa";
+            helperLink.style.cursor = "pointer";
+            helperLink.style.marginTop = "2px";
+            helperLink.style.textDecoration = "underline";
+
+            const helperPanel = document.createElement('div');
+            helperPanel.style.display = "none";
+            helperPanel.style.marginTop = "4px";
+            helperPanel.style.padding = "6px";
+            helperPanel.style.background = "#181825";
+            helperPanel.style.border = "1px solid #313244";
+            helperPanel.style.borderRadius = "4px";
+            helperPanel.style.fontSize = "10px";
+            helperPanel.style.color = "#cdd6f4";
+            helperPanel.style.lineHeight = "1.4";
+            helperPanel.innerHTML = `
+                <strong>Operators:</strong> +, -, *, /, %, ^ (power)<br/>
+                <strong>Variables:</strong> use {player.health}, {my_var}, etc.<br/>
+                <strong>Functions:</strong><br/>
+                • <code>random(min, max)</code>: Random integer<br/>
+                • <code>min(a, b, ...)</code> / <code>max(a, b, ...)</code><br/>
+                • <code>abs(x)</code>: Absolute value<br/>
+                • <code>round(x)</code>: Round to nearest whole number<br/>
+                • <code>rand(min, max)</code><br/>
+                <strong>Example:</strong><br/>
+                <code>{weapon_damage} * random(1, 20) - {player_armor}</code>
+            `;
+
+            helperLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (helperPanel.style.display === "none") {
+                    helperPanel.style.display = "block";
+                    helperLink.innerText = "ℹ️ Hide Math Functions";
+                } else {
+                    helperPanel.style.display = "none";
+                    helperLink.innerText = "ℹ️ View Supported Math Functions";
+                }
+            });
+
+            row.appendChild(helperLink);
+            row.appendChild(helperPanel);
         }
 
         fieldsContainer.appendChild(row);

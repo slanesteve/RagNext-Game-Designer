@@ -16,7 +16,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ObservableCollection<string> AvailableSteps { get; } =
             new([
                 "var.equals", "player.inRoom", "room.hasObject", 
-                "var.set", "player.moveTo", "room.addObject", "room.removeObject",
+                "var.set", "var.evaluate", "player.moveTo", "room.addObject", "room.removeObject",
                 "object.displayDescription", "object.moveToCharacter", "object.moveToInventory", "object.moveInsideObject"
             ]);
 
@@ -86,6 +86,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "room.hasObject" => new RoomHasObjectCondition(),
             // Commands
             "var.set" => new SetVariableCommand(),
+            "var.evaluate" => new EvaluateFormulaCommand(),
             "player.moveTo" => new MovePlayerToRoomCommand(),
             "room.addObject" => new AddObjectToRoomCommand(),
             "room.removeObject" => new RemoveObjectFromRoomCommand(),

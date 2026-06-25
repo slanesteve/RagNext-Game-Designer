@@ -240,7 +240,7 @@
                                              </Button>
                                          </StackPanel>
                                          <Grid ColumnDefinitions="*,Auto">
-                                             <TextBox x:Name="PlayerDescriptionTextBox" Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                             <TextBox x:Name="PlayerDescriptionTextBox" Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="160" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
                                              <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
                                                  <Button Classes="toolbar-btn" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" ToolTip.Tip="Open Composer Popup" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                                                      <TextBlock Text="📝" FontFamily="Segoe UI Emoji" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -334,10 +334,22 @@
                                                     <TextBlock Text="=" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                                                     <TextBlock Text="{Binding Value}" Foreground="#A29BFE" VerticalAlignment="Center"/>
                                                 </StackPanel>
-                                                <Button Grid.Column="1" Content="🗑️ Remove" 
-                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                        CommandParameter="{Binding}" 
-                                                        Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                    <Button Content="✏️ Edit" 
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
+                                                            CommandParameter="{Binding}" 
+                                                            Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="✏️ Edit"
+                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
+                                                        <Button Content="🗑️ Remove"
+                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                    </StackPanel>
+                                                </StackPanel>
                                             </Grid>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
@@ -392,7 +404,10 @@
                     <!-- Left Rooms List -->
                     <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
                         <Grid RowDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Row="0" Text="Rooms in World" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                                <TextBlock Grid.Column="0" Text="Rooms in World" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Rooms.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
+                            </Grid>
                             <ListBox Grid.Row="1" ItemsSource="{Binding Rooms.Rooms}" Background="Transparent" SelectedIndex="0" x:Name="RoomsList" SelectionChanged="OnRoomsSelectionChanged">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:Room">
@@ -466,7 +481,7 @@
                                              </Button>
                                             </StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBox x:Name="RoomDescriptionTextBox" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                                <TextBox x:Name="RoomDescriptionTextBox" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="160" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
                                                 <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
                                                     <Button Classes="toolbar-btn" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" ToolTip.Tip="Open Composer Popup" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                                                      <TextBlock Text="📝" FontFamily="Segoe UI Emoji" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -704,10 +719,22 @@
                                                                         <TextBlock Text="=" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                                                                         <TextBlock Text="{Binding Value}" Foreground="#A29BFE" VerticalAlignment="Center"/>
                                                                     </StackPanel>
-                                                                    <Button Grid.Column="1" Content="🗑️ Remove" 
-                                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                            CommandParameter="{Binding}" 
-                                                                            Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                                        <Button Content="✏️ Edit" 
+                                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
+                                                                                CommandParameter="{Binding}" 
+                                                                                Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
+                                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                                            <Button Content="✏️ Edit"
+                                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
+                                                                                    CommandParameter="{Binding}"
+                                                                                    Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
+                                                                            <Button Content="🗑️ Remove"
+                                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                                                    CommandParameter="{Binding}"
+                                                                                    Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                                        </StackPanel>
+                                                                    </StackPanel>
                                                                 </Grid>
                                                             </DataTemplate>
                                                         </ListBox.ItemTemplate>
@@ -776,7 +803,10 @@
                 <Grid IsVisible="{Binding ActiveView, ConverterParameter=Characters, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
                     <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
                         <Grid RowDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Row="0" Text="Characters" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                                <TextBlock Grid.Column="0" Text="Characters" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Characters.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
+                            </Grid>
                             <ListBox Grid.Row="1" ItemsSource="{Binding Characters.Characters}" Background="Transparent" SelectedIndex="0" x:Name="CharsList" SelectionChanged="OnCharsSelectionChanged">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:Character">
@@ -843,7 +873,7 @@
                                              </Button>
                                  </StackPanel>
                                  <Grid ColumnDefinitions="*,Auto">
-                                     <TextBox x:Name="CharacterDescriptionTextBox" Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                     <TextBox x:Name="CharacterDescriptionTextBox" Grid.Column="0" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="160" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
                                      <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
                                          <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Classes="toolbar-btn emoji" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
                                          <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
@@ -929,10 +959,22 @@
                                                             <TextBlock Text="=" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding Value}" Foreground="#A29BFE" VerticalAlignment="Center"/>
                                                         </StackPanel>
-                                                        <Button Grid.Column="1" Content="🗑️ Remove" 
-                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                CommandParameter="{Binding}" 
-                                                                Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                            <Button Content="✏️ Edit" 
+                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
+                                                                    CommandParameter="{Binding}" 
+                                                                    Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                                <Button Content="✏️ Edit"
+                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
+                                                                <Button Content="🗑️ Remove"
+                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
                                                     </Grid>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
@@ -983,7 +1025,10 @@
                 <Grid IsVisible="{Binding ActiveView, ConverterParameter=Objects, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
                     <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
                         <Grid RowDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Row="0" Text="Objects &amp; Items" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                                <TextBlock Grid.Column="0" Text="Objects &amp; Items" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Objects.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
+                            </Grid>
                             <ListBox Grid.Row="1" ItemsSource="{Binding Objects.Objects}" Background="Transparent" SelectedIndex="0" x:Name="ObjectsList" SelectionChanged="OnObjectsSelectionChanged">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:GameObject">
@@ -1065,7 +1110,7 @@
                                              </Button>
                                             </StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBox x:Name="ObjectDescriptionTextBox" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="70" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
+                                                <TextBox x:Name="ObjectDescriptionTextBox" Text="{Binding Description, Mode=TwoWay}" AcceptsReturn="True" Height="160" VerticalContentAlignment="Top" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" TextWrapping="Wrap"/>
                                                 <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
                                                     <Button Content="📝" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenComposeCommand}" CommandParameter="{Binding}" Width="36" Height="32" Classes="toolbar-btn emoji" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Open Composer Popup"/>
                                                     <Button Content="✨" Click="OnCoAuthorDescriptionClicked" Width="36" Height="32" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
@@ -1112,10 +1157,22 @@
                                                                         <TextBlock Text="=" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                                                                         <TextBlock Text="{Binding Value}" Foreground="#A29BFE" VerticalAlignment="Center"/>
                                                                     </StackPanel>
-                                                                    <Button Grid.Column="1" Content="🗑️ Remove" 
-                                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                            CommandParameter="{Binding}" 
-                                                                            Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                                        <Button Content="✏️ Edit" 
+                                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
+                                                                                CommandParameter="{Binding}" 
+                                                                                Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
+                                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                                            <Button Content="✏️ Edit"
+                                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
+                                                                                    CommandParameter="{Binding}"
+                                                                                    Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
+                                                                            <Button Content="🗑️ Remove"
+                                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                                                    CommandParameter="{Binding}"
+                                                                                    Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                                        </StackPanel>
+                                                                    </StackPanel>
                                                                 </Grid>
                                                             </DataTemplate>
                                                         </ListBox.ItemTemplate>
@@ -1189,7 +1246,10 @@
                 <Grid IsVisible="{Binding ActiveView, ConverterParameter=Variables, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
                     <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
                         <Grid RowDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Row="0" Text="Game Variables" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                                <TextBlock Grid.Column="0" Text="Game Variables" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
+                            </Grid>
                             <ListBox Grid.Row="1" ItemsSource="{Binding Variables.Variables}" Background="Transparent" x:Name="VarsList">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:GameVariable">
@@ -1371,7 +1431,10 @@
                 <Grid IsVisible="{Binding ActiveView, ConverterParameter=Timers, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
                     <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
                         <Grid RowDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Row="0" Text="Game Timers" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                                <TextBlock Grid.Column="0" Text="Game Timers" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Timers.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
+                            </Grid>
                             <ListBox Grid.Row="1" ItemsSource="{Binding Timers.Timers}" Background="Transparent" SelectedIndex="0" x:Name="TimersList">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:GameTimer">
@@ -1417,7 +1480,10 @@
                 <Grid IsVisible="{Binding ActiveView, ConverterParameter=Functions, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
                     <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
                         <Grid RowDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Row="0" Text="Global Scripting Functions" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                                <TextBlock Grid.Column="0" Text="Global Scripting Functions" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Functions.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
+                            </Grid>
                             <ListBox Grid.Row="1" ItemsSource="{Binding CurrentGame.Functions}" Background="Transparent" SelectedIndex="0" x:Name="FuncsList">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:GlobalFunction">
@@ -2107,11 +2173,14 @@
 
                                     <!-- Model -->
                                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Model ID" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*,Auto,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding Preferences.AiCoAuthorModel, Mode=TwoWay}" Watermark="Select or type model ID..." Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
-                                        <ComboBox Grid.Column="1" ItemsSource="{Binding Preferences.AvailableModels}" SelectedItem="{Binding Preferences.AiCoAuthorModel, Mode=TwoWay}" Width="150" Margin="8,0,0,0" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" PlaceholderText="Pulled Models"/>
-                                        <Button Grid.Column="2" Content="⟳" Command="{Binding Preferences.FetchModelsCommand}" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Fetch Available Models"/>
-                                    </Grid>
+                                    <StackPanel Grid.Row="3" Grid.Column="1" Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <TextBox Grid.Column="0" Text="{Binding Preferences.AiCoAuthorModel, Mode=TwoWay}" Watermark="Select or type model ID..." Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                            <ComboBox Grid.Column="1" ItemsSource="{Binding Preferences.AvailableModels}" SelectedItem="{Binding Preferences.AiCoAuthorModel, Mode=TwoWay}" Width="150" Margin="8,0,0,0" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" PlaceholderText="Pulled Models"/>
+                                            <Button Grid.Column="2" Content="⟳" Command="{Binding Preferences.FetchModelsCommand}" CommandParameter="CoAuthor" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Fetch Available Models"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Preferences.CoAuthorConnectionStatus}" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    </StackPanel>
 
                                     <!-- Host (Conditional for Local Servers) -->
                                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Host (include scheme)" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowCoAuthorHostPort}"/>
@@ -2182,7 +2251,13 @@
 
                                     <!-- Model -->
                                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Model / Checkpoint Name" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Preferences.AiImageGenModel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    <StackPanel Grid.Row="3" Grid.Column="1" Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBox Grid.Column="0" Text="{Binding Preferences.AiImageGenModel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                            <Button Grid.Column="1" Content="Test" Command="{Binding Preferences.FetchModelsCommand}" CommandParameter="ImageGen" Margin="8,0,0,0" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Test Connection"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Preferences.ImageGenConnectionStatus}" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    </StackPanel>
 
                                     <!-- Host (Conditional for Local Servers) -->
                                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Host (include scheme)" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
@@ -2559,7 +2634,7 @@
 
         <!-- Compose Overlay -->
         <Border Background="#A0000000" IsVisible="{Binding ShowComposeOverlay}" ZIndex="1000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Border Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Width="850" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
+            <Border Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Width="1150" Height="780" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto" Margin="24">
                     <!-- Header -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">

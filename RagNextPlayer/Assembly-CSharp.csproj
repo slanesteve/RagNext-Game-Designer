@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Managers\AudioManager.cs" />
     <Compile Include="Assets\Scripts\Runtime\IGameEventSink.cs" />
+    <Compile Include="Assets\Scripts\Runtime\MathEvaluator.cs" />
     <Compile Include="Assets\Scripts\Managers\GameManager.cs" />
     <Compile Include="Assets\Scripts\Runtime\Models\ActionStepConverter.cs" />
     <Compile Include="Assets\Scripts\Runtime\TemplateResolver.cs" />

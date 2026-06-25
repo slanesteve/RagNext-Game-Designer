@@ -768,6 +768,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
             set => SetProperty(ref _newAttributeValue, value);
         }
 
+        private CustomAttribute? _editingAttribute;
+
         // Commands
         public ICommand NavigateCommand { get; }
         public ICommand NewGameCommand { get; }
@@ -868,6 +870,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand RemoveInventoryItemCommand { get; }
 
         public ICommand TriggerAddAttributeCommand { get; }
+        public ICommand TriggerEditAttributeCommand { get; }
         public ICommand CloseAttributeDialogCommand { get; }
         public ICommand SaveAttributeCommand { get; }
         public ICommand RemoveAttributeCommand { get; }
@@ -1600,9 +1603,51 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 Console.WriteLine($"[DEBUG] TriggerAddAttributeCommand triggered. Target type: {target?.GetType().Name ?? "null"}");
                 if (target == null) return;
                 AttributeTarget = target;
+                _editingAttribute = null;
                 NewAttributeName = string.Empty;
                 NewAttributeValue = string.Empty;
                 ShowAttributeDialogOverlay = true;
+            });
+
+            TriggerEditAttributeCommand = new Command<object>(parameter =>
+            {
+                if (parameter is CustomAttribute attr)
+                {
+                    object? owner = null;
+                    if (CurrentGame != null)
+                    {
+                        if (CurrentGame.Player.Attributes.Contains(attr)) owner = CurrentGame.Player;
+                        else
+                        {
+                            foreach (var r in CurrentGame.Rooms)
+                            {
+                                if (r.Attributes.Contains(attr)) { owner = r; break; }
+                            }
+                            if (owner == null)
+                            {
+                                foreach (var c in CurrentGame.Characters)
+                                {
+                                    if (c.Attributes.Contains(attr)) { owner = c; break; }
+                                }
+                            }
+                            if (owner == null)
+                            {
+                                foreach (var o in CurrentGame.Objects)
+                                {
+                                    if (o.Attributes.Contains(attr)) { owner = o; break; }
+                                }
+                            }
+                        }
+                    }
+                    if (owner != null)
+                    {
+                        AttributeTarget = owner;
+                        _editingAttribute = attr;
+                        NewAttributeName = attr.Name;
+                        NewAttributeValue = attr.Value ?? string.Empty;
+                        ShowAttributeDialogOverlay = true;
+                    }
+                }
             });
 
             CloseAttributeDialogCommand = new Command(() =>
@@ -1610,6 +1655,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 Console.WriteLine("[DEBUG] CloseAttributeDialogCommand triggered");
                 ShowAttributeDialogOverlay = false;
                 AttributeTarget = null;
+                _editingAttribute = null;
             });
 
             SaveAttributeCommand = new Command(async () =>
@@ -1629,8 +1675,28 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
                 if (attrs != null)
                 {
-                    CustomAttribute.SetAttribute(NewAttributeName.Trim(), NewAttributeValue.Trim(), attrs);
-                    Console.WriteLine($"[DEBUG] SaveAttributeCommand: Successfully set attribute '{NewAttributeName}' = '{NewAttributeValue}'");
+                    string cleanName = NewAttributeName.Trim();
+                    string cleanVal = NewAttributeValue.Trim();
+
+                    if (_editingAttribute != null)
+                    {
+                        var existing = attrs.FirstOrDefault(a => string.Equals(a.Name, cleanName, StringComparison.OrdinalIgnoreCase));
+                        if (existing != null && existing != _editingAttribute)
+                        {
+                            existing.Value = cleanVal;
+                            attrs.Remove(_editingAttribute);
+                        }
+                        else
+                        {
+                            _editingAttribute.Name = cleanName;
+                            _editingAttribute.Value = cleanVal;
+                        }
+                    }
+                    else
+                    {
+                        CustomAttribute.SetAttribute(cleanName, cleanVal, attrs);
+                    }
+                    Console.WriteLine($"[DEBUG] SaveAttributeCommand: Successfully set/edited attribute '{cleanName}' = '{cleanVal}'");
                 }
                 else
                 {
@@ -1638,6 +1704,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 }
 
                 ShowAttributeDialogOverlay = false;
+                _editingAttribute = null;
                 await SaveGameAsync();
             });
 

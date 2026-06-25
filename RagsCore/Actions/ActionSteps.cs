@@ -80,6 +80,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(VariableIncrementCommand), "var.inc")]
     [JsonDerivedType(typeof(VariableDecrementCommand), "var.dec")]
     [JsonDerivedType(typeof(VariableSetToVariableCommand), "var.setToVar")]
+    [JsonDerivedType(typeof(EvaluateFormulaCommand), "var.evaluate")]
     [JsonDerivedType(typeof(SetRoomExitCommand), "room.setExit")]
     [JsonDerivedType(typeof(DisableRoomExitCommand), "room.disableExit")]
     [JsonDerivedType(typeof(LockRoomExitCommand), "room.lockExit")]
@@ -167,7 +168,7 @@ namespace RagsCore.Actions
                 "player.setActionActive", "timer.setTimerActive", "variable.forEachLoop", "variable.breakLoop",
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear",
-                "item.remove", "media.setBackgroundMusic", "media.stopBackgroundMusic"
+                "item.remove", "media.setBackgroundMusic", "media.stopBackgroundMusic", "var.evaluate"
             };
 
             // Convert unrecognized/unknown $type values to general.debugText to prevent crashes
@@ -939,6 +940,27 @@ namespace RagsCore.Actions
             if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(SourceName)) return;
             var sourceVal = ctx.GetVariable(SourceName)?.Value;
             ctx.SetVariable(Name, sourceVal);
+        }
+    }
+
+    public sealed class EvaluateFormulaCommand : GameCommand
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Formula { get; set; } = string.Empty;
+        public override string TypeName => "Variable: Evaluate Formula";
+        public override void Execute(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(Name)) return;
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(Formula, ctx);
+            try
+            {
+                var val = RagsCore.Services.MathEvaluator.Evaluate(resolved);
+                ctx.SetVariable(Name, val.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+            catch (Exception ex)
+            {
+                ctx.SetVariable("system.error", $"Formula error: {ex.Message}");
+            }
         }
     }
 

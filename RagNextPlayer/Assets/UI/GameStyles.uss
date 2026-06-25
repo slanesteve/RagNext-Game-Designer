@@ -160,7 +160,7 @@
     flex-basis: 0px;
     min-height: 0px;
     width: 780px;
-    max-height: 240px;
+    max-height: 480px;
     background-color: var(--color-bg-card);
     border-radius: 8px;
     border-left-width: 0;
@@ -639,8 +639,9 @@
     border-width: 0;
     color: #888899;
     font-size: 12px;
-    margin-top: 6px;
+    margin-top: 16px;
     -unity-text-align: upper-center;
+    align-self: center;
 }
 
 .interaction-menu-cancel:hover {
@@ -1295,7 +1296,7 @@
 .font-size-small #compass-toggle-btn { font-size: 11px; }
 .font-size-small .entity-thumbnail { width: 32px; height: 32px; }
 .font-size-small #hud-right-compartment { width: 320px; }
-.font-size-small #narrative-panel { width: 680px; max-height: 200px; }
+.font-size-small #narrative-panel { width: 680px; max-height: 380px; }
 .font-size-small .settings-menu { min-width: 240px; max-width: 320px; }
 .font-size-small .settings-menu-title { font-size: 13px; }
 .font-size-small .prompt-input-message { font-size: 11px; }
@@ -1315,7 +1316,7 @@
 .font-size-normal #compass-toggle-btn { font-size: 13px; }
 .font-size-normal .entity-thumbnail { width: 40px; height: 40px; }
 .font-size-normal #hud-right-compartment { width: 380px; }
-.font-size-normal #narrative-panel { width: 780px; max-height: 240px; }
+.font-size-normal #narrative-panel { width: 780px; max-height: 480px; }
 .font-size-normal .settings-menu { min-width: 280px; max-width: 360px; }
 .font-size-normal .settings-menu-title { font-size: 17px; }
 .font-size-normal .prompt-input-message { font-size: 14px; }
@@ -1335,7 +1336,7 @@
 .font-size-large #compass-toggle-btn { font-size: 17px; }
 .font-size-large .entity-thumbnail { width: 56px; height: 56px; }
 .font-size-large #hud-right-compartment { width: 460px; }
-.font-size-large #narrative-panel { width: 900px; max-height: 300px; }
+.font-size-large #narrative-panel { width: 900px; max-height: 580px; }
 .font-size-large .settings-menu { min-width: 340px; max-width: 440px; }
 .font-size-large .settings-menu-title { font-size: 21px; }
 .font-size-large .prompt-input-message { font-size: 18px; }

@@ -705,6 +705,22 @@
       ]
     },
     {
+      "name": "Variable: Evaluate Formula",
+      "category": "Variable",
+      "inputs": [
+        {
+          "label": "Variable",
+          "controlType": "ComboBox",
+          "dataType": "Variable"
+        },
+        {
+          "label": "Formula",
+          "controlType": "Text",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
       "name": "Variable: Increment",
       "category": "Variable",
       "inputs": [

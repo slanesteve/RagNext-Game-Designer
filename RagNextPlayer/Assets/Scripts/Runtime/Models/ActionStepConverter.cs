@@ -81,6 +81,7 @@ namespace RagNextPlayer.Runtime.Models
                 "general.displayText"    => typeof(DisplayTextCommandData),
                 "general.addComment"     => typeof(AddCommentCommandData),
                 "var.set"                => typeof(SetVariableCommandData),
+                "var.evaluate"           => typeof(EvaluateFormulaCommandData),
                 "var.inc"                => typeof(VariableIncrementCommandData),
                 "var.dec"                => typeof(VariableDecrementCommandData),
                 "var.setToVar"           => typeof(VariableSetToVariableCommandData),

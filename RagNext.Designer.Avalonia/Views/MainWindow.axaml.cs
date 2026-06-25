@@ -142,6 +142,21 @@ namespace RagNext.Designer.Avalonia.Views
                 if (e.Source is TextBox tb)
                 {
                     _lastFocusedTextBox = tb;
+                    if (!string.IsNullOrEmpty(tb.Text))
+                    {
+                        var t = tb.Text.Trim();
+                        if (string.Equals(t, "New Room", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(t, "new character", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(t, "new object", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(t, "New_Variable", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(t, "New Timer", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(t, "NewFunction", StringComparison.OrdinalIgnoreCase))
+                        {
+                            global::Avalonia.Threading.Dispatcher.UIThread.Post(() => {
+                                tb.SelectAll();
+                            });
+                        }
+                    }
                 }
             }, RoutingStrategies.Bubble, true);
 

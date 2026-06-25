@@ -171,6 +171,7 @@ namespace RagNextPlayer.Runtime.Models
     public class DisplayTextCommandData              : CommandData { public string Text { get; set; } = string.Empty; }
     public class AddCommentCommandData               : CommandData { public string CommentText { get; set; } = string.Empty; }
     public class SetVariableCommandData              : CommandData { public string Name { get; set; } = string.Empty; public string? Value { get; set; } }
+    public class EvaluateFormulaCommandData          : CommandData { public string Name { get; set; } = string.Empty; public string Formula { get; set; } = string.Empty; }
     public class VariableIncrementCommandData        : CommandData { public string Name { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class VariableDecrementCommandData        : CommandData { public string Name { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class VariableSetToVariableCommandData    : CommandData { public string Name { get; set; } = string.Empty; public string SourceName { get; set; } = string.Empty; }

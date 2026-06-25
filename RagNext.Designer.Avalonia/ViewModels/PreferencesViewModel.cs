@@ -688,7 +688,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 case "Google Gemini":
                     AiCoAuthorEndpoint = "https://generativelanguage.googleapis.com";
                     AiCoAuthorPort = "0";
-                    AiCoAuthorModel = "gemini-3.5-flash";
+                    AiCoAuthorModel = "gemini-2.5-flash";
                     break;
             }
             OnPropertyChanged(nameof(CoAuthorSetupStepsTitle));
@@ -773,7 +773,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 case "Google Gemini":
                     AiNodeAssistantEndpoint = "https://generativelanguage.googleapis.com";
                     AiNodeAssistantPort = "0";
-                    AiNodeAssistantModel = "gemini-3.5-flash";
+                    AiNodeAssistantModel = "gemini-2.5-flash";
                     break;
             }
         }
@@ -796,6 +796,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             AvailableModels.Clear();
             AvailableModels.Add("Fetching...");
+
+            if (mode == "NodeAssistant") NodeAssistantConnectionStatus = "Testing connection...";
+            else if (mode == "ImageGen") ImageGenConnectionStatus = "Testing connection...";
+            else CoAuthorConnectionStatus = "Testing connection...";
 
             try
             {
@@ -1020,9 +1024,29 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     targetList.Add(m);
                     AvailableModels.Add(m);
                 }
+
+                if (sorted.Count == 0)
+                {
+                    var noModelsMsg = "Failed to fetch models: No models returned or request failed.";
+                    if (mode == "NodeAssistant") NodeAssistantConnectionStatus = noModelsMsg;
+                    else if (mode == "ImageGen") ImageGenConnectionStatus = noModelsMsg;
+                    else CoAuthorConnectionStatus = noModelsMsg;
+                }
+                else
+                {
+                    var statusMsg = $"Connected (Found {sorted.Count} model{(sorted.Count == 1 ? "" : "s")})";
+                    if (mode == "NodeAssistant") NodeAssistantConnectionStatus = statusMsg;
+                    else if (mode == "ImageGen") ImageGenConnectionStatus = statusMsg;
+                    else CoAuthorConnectionStatus = statusMsg;
+                }
             }
             catch (Exception ex)
             {
+                var errorMsg = $"Error: {ex.Message}";
+                if (mode == "NodeAssistant") NodeAssistantConnectionStatus = errorMsg;
+                else if (mode == "ImageGen") ImageGenConnectionStatus = errorMsg;
+                else CoAuthorConnectionStatus = errorMsg;
+
                 targetList.Clear();
                 targetList.Add($"Error: {ex.Message}");
                 AvailableModels.Clear();
@@ -1079,6 +1103,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     if (loaded != null)
                     {
                         _settings = loaded;
+                        // Decrypt keys
+                        _settings.AiCoAuthorKey = DecryptKey(_settings.AiCoAuthorKey);
+                        _settings.AiImageGenKey = DecryptKey(_settings.AiImageGenKey);
+                        _settings.AiNodeAssistantKey = DecryptKey(_settings.AiNodeAssistantKey);
+
                         ApplyTheme(_settings.ThemeName);
                         // Notify all properties
                         OnPropertyChanged(nameof(ThemeName));
@@ -1151,13 +1180,128 @@ namespace RagNext.Designer.Avalonia.ViewModels
         {
             try
             {
-                var json = JsonSerializer.Serialize(_settings, DesignerJsonContext.Default.AppSettings);
+                var clone = new AppSettings
+                {
+                    ThemeName = _settings.ThemeName,
+                    AiCoAuthorProvider = _settings.AiCoAuthorProvider,
+                    AiCoAuthorEndpoint = _settings.AiCoAuthorEndpoint,
+                    AiCoAuthorKey = EncryptKey(_settings.AiCoAuthorKey),
+                    AiCoAuthorModel = _settings.AiCoAuthorModel,
+                    AiCoAuthorHost = _settings.AiCoAuthorHost,
+                    AiCoAuthorPort = _settings.AiCoAuthorPort,
+                    AiCoAuthorTemperature = _settings.AiCoAuthorTemperature,
+                    AiCoAuthorMaxTokens = _settings.AiCoAuthorMaxTokens,
+                    AiCoAuthorEnableHelper = _settings.AiCoAuthorEnableHelper,
+                    AiCoAuthorAssistantPrompt = _settings.AiCoAuthorAssistantPrompt,
+                    AiImageGenProvider = _settings.AiImageGenProvider,
+                    AiImageGenEndpoint = _settings.AiImageGenEndpoint,
+                    AiImageGenKey = EncryptKey(_settings.AiImageGenKey),
+                    AiImageGenModel = _settings.AiImageGenModel,
+                    AiImageGenHost = _settings.AiImageGenHost,
+                    AiImageGenPort = _settings.AiImageGenPort,
+                    AiImageGenEnableHelper = _settings.AiImageGenEnableHelper,
+                    AiNodeAssistantUseCustom = _settings.AiNodeAssistantUseCustom,
+                    AiNodeAssistantProvider = _settings.AiNodeAssistantProvider,
+                    AiNodeAssistantEndpoint = _settings.AiNodeAssistantEndpoint,
+                    AiNodeAssistantKey = EncryptKey(_settings.AiNodeAssistantKey),
+                    AiNodeAssistantModel = _settings.AiNodeAssistantModel,
+                    AiNodeAssistantHost = _settings.AiNodeAssistantHost,
+                    AiNodeAssistantPort = _settings.AiNodeAssistantPort,
+                    AiNodeAssistantTemperature = _settings.AiNodeAssistantTemperature,
+                    AiNodeAssistantMaxTokens = _settings.AiNodeAssistantMaxTokens,
+                    LastPublishDirectory = _settings.LastPublishDirectory
+                };
+                var json = JsonSerializer.Serialize(clone, DesignerJsonContext.Default.AppSettings);
                 var path = SettingsFilePath;
                 var dir = Path.GetDirectoryName(path);
                 if (dir != null) Directory.CreateDirectory(dir);
                 File.WriteAllText(path, json);
             }
             catch { }
+        }
+
+        private string _coAuthorConnectionStatus = "Not Connected";
+        private string _imageGenConnectionStatus = "Not Connected";
+        private string _nodeAssistantConnectionStatus = "Not Connected";
+
+        public string CoAuthorConnectionStatus
+        {
+            get => _coAuthorConnectionStatus;
+            set => SetProperty(ref _coAuthorConnectionStatus, value);
+        }
+
+        public string ImageGenConnectionStatus
+        {
+            get => _imageGenConnectionStatus;
+            set => SetProperty(ref _imageGenConnectionStatus, value);
+        }
+
+        public string NodeAssistantConnectionStatus
+        {
+            get => _nodeAssistantConnectionStatus;
+            set => SetProperty(ref _nodeAssistantConnectionStatus, value);
+        }
+
+        private static string EncryptKey(string plainText)
+        {
+            if (string.IsNullOrEmpty(plainText)) return "";
+            try
+            {
+                using var aes = System.Security.Cryptography.Aes.Create();
+                var key = new byte[32];
+                var iv = new byte[16];
+                var salt = System.Text.Encoding.UTF8.GetBytes("RagNextObfuscationSalt");
+                using var derive = new System.Security.Cryptography.Rfc2898DeriveBytes("RagNextSecureKeyStore", salt, 100, System.Security.Cryptography.HashAlgorithmName.SHA256);
+                key = derive.GetBytes(32);
+                iv = derive.GetBytes(16);
+
+                using var encryptor = aes.CreateEncryptor(key, iv);
+                using var ms = new MemoryStream();
+                using (var cs = new System.Security.Cryptography.CryptoStream(ms, encryptor, System.Security.Cryptography.CryptoStreamMode.Write))
+                {
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+                    cs.Write(bytes, 0, bytes.Length);
+                    cs.FlushFinalBlock();
+                }
+                return "aes:" + Convert.ToBase64String(ms.ToArray());
+            }
+            catch
+            {
+                return plainText;
+            }
+        }
+
+        private static string DecryptKey(string cipherText)
+        {
+            if (string.IsNullOrEmpty(cipherText)) return "";
+            if (!cipherText.StartsWith("aes:")) return cipherText;
+
+            try
+            {
+                var base64 = cipherText.Substring(4);
+                var cipherBytes = Convert.FromBase64String(base64);
+
+                using var aes = System.Security.Cryptography.Aes.Create();
+                var key = new byte[32];
+                var iv = new byte[16];
+                var salt = System.Text.Encoding.UTF8.GetBytes("RagNextObfuscationSalt");
+                using var derive = new System.Security.Cryptography.Rfc2898DeriveBytes("RagNextSecureKeyStore", salt, 100, System.Security.Cryptography.HashAlgorithmName.SHA256);
+                key = derive.GetBytes(32);
+                iv = derive.GetBytes(16);
+
+                using var decryptor = aes.CreateDecryptor(key, iv);
+                using var ms = new MemoryStream();
+                using (var cs = new System.Security.Cryptography.CryptoStream(ms, decryptor, System.Security.Cryptography.CryptoStreamMode.Write))
+                {
+                    cs.Write(cipherBytes, 0, cipherBytes.Length);
+                    cs.FlushFinalBlock();
+                }
+                return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            }
+            catch
+            {
+                return "";
+            }
         }
     }
 }
