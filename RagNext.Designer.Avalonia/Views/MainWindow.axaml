@@ -1875,12 +1875,13 @@
                         <!-- Left sidebar: Treeview directory structure -->
                         <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0" DragDrop.AllowDrop="True" DragDrop.Drop="OnDragDropFile">
                             <Grid RowDefinitions="Auto,*,Auto">
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6" Margin="0,0,0,10">
-                                    <Button Content="+ Folder" Command="{Binding AddFolderCommand}" FontSize="11" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="8,6"/>
-                                    <Button Content="Import..." Command="{Binding ImportFilesCommand}" FontSize="11" Background="#8E2DE2" Foreground="White" Padding="8,6"/>
-                                    <Button Content="Rename" Command="{Binding RenameCommand}" FontSize="11" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="8,6"/>
-                                    <Button Content="Delete" Command="{Binding DeleteCommand}" FontSize="11" Background="#C0392B" Padding="8,6"/>
-                                </StackPanel>
+                                <WrapPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <Button Content="+ Folder" Command="{Binding AddFolderCommand}" FontSize="11" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="8,6" Margin="0,0,6,6"/>
+                                    <Button Content="Import..." Command="{Binding ImportFilesCommand}" FontSize="11" Background="#8E2DE2" Foreground="White" Padding="8,6" Margin="0,0,6,6"/>
+                                    <Button Content="Sort A-Z ⇅" Command="{Binding SortCommand}" FontSize="11" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="8,6" Margin="0,0,6,6"/>
+                                    <Button Content="Rename" Command="{Binding RenameCommand}" FontSize="11" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="8,6" Margin="0,0,6,6"/>
+                                    <Button Content="Delete" Command="{Binding DeleteCommand}" FontSize="11" Background="#C0392B" Padding="8,6" Margin="0,0,6,6"/>
+                                </WrapPanel>
                                 
                                 <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                                     <TreeView ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
@@ -2289,12 +2290,13 @@
                         </Border>
                         <!-- Quick info / Actions -->
                         <StackPanel Grid.Row="1" Spacing="6" Margin="12,8">
-                            <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-                                <Button Content="+ Folder" Command="{Binding AddFolderCommand}" FontSize="10" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="6,4"/>
-                                <Button Content="Import..." Command="{Binding ImportFilesCommand}" FontSize="10" Background="#8E2DE2" Foreground="White" Padding="6,4"/>
-                                <Button Content="Rename" Command="{Binding RenameCommand}" FontSize="10" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="6,4"/>
-                                <Button Content="Delete" Command="{Binding DeleteCommand}" FontSize="10" Background="#C0392B" Padding="6,4"/>
-                            </StackPanel>
+                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Button Content="+ Folder" Command="{Binding AddFolderCommand}" FontSize="10" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="6,4" Margin="0,0,4,4"/>
+                                <Button Content="Import..." Command="{Binding ImportFilesCommand}" FontSize="10" Background="#8E2DE2" Foreground="White" Padding="6,4" Margin="0,0,4,4"/>
+                                <Button Content="Sort A-Z ⇅" Command="{Binding SortCommand}" FontSize="10" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="6,4" Margin="0,0,4,4"/>
+                                <Button Content="Rename" Command="{Binding RenameCommand}" FontSize="10" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" Padding="6,4" Margin="0,0,4,4"/>
+                                <Button Content="Delete" Command="{Binding DeleteCommand}" FontSize="10" Background="#C0392B" Padding="6,4" Margin="0,0,4,4"/>
+                            </WrapPanel>
                             <TextBlock Text="Double-click or drag items into portraits/objects to link assets." FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
                         </StackPanel>
                         <!-- TreeView -->

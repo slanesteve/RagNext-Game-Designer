@@ -25,6 +25,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand ImportFilesCommand { get; }
         public ICommand RenameCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand SortCommand { get; }
         public ICommand SelectNodeCommand { get; }
         public ICommand RemoveAssetCommand { get; }
         public ICommand PlaySelectedCommand { get; }
@@ -143,6 +144,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             ImportFilesCommand = new Command(async () => await ImportFilesAsync());
             RenameCommand = new Command(async () => await RenameAsync());
             DeleteCommand = new Command(async () => await DeleteAsync());
+            SortCommand = new Command(async () => await SortAlphabeticallyAsync());
             SelectNodeCommand = new Command<object?>(o => { if (o is Node n) Selected = n; });
             RemoveAssetCommand = new Command<object?>(async o => { if (o is Node n) await RemoveAssetAsync(n); });
             PlaySelectedCommand = new Command(PlaySelected);
@@ -655,6 +657,82 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 System.Diagnostics.Debug.WriteLine($"Failed to delete file physically: {ex.Message}");
             }
 
+            RebuildNodes();
+        }
+
+        private bool _isSortedAscending = false;
+
+        private async Task SortAlphabeticallyAsync()
+        {
+            if (_game is null) return;
+
+            _isSortedAscending = !_isSortedAscending;
+
+            // Helper to sort assets within a folder by their resolved names
+            List<Guid> SortAssets(MediaFolder folder)
+            {
+                var query = folder.AssetIds
+                    .Select(id => (Id: id, Asset: _game.MediaAssets.FirstOrDefault(a => a.Id == id)))
+                    .Where(x => x.Asset != null);
+
+                if (_isSortedAscending)
+                {
+                    query = query.OrderBy(x => string.IsNullOrWhiteSpace(x.Asset!.OriginalFileName) ? x.Asset.RelativePath : x.Asset.OriginalFileName, StringComparer.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    query = query.OrderByDescending(x => string.IsNullOrWhiteSpace(x.Asset!.OriginalFileName) ? x.Asset.RelativePath : x.Asset.OriginalFileName, StringComparer.OrdinalIgnoreCase);
+                }
+
+                return query.Select(x => x.Id).ToList();
+            }
+
+            void SortFolderRecursively(MediaFolder folder)
+            {
+                // 1. Sort folders (Children) alphabetically by name
+                var sortedSubfolders = _isSortedAscending
+                    ? folder.Children.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase).ToList()
+                    : folder.Children.OrderByDescending(f => f.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+                folder.Children.Clear();
+                foreach (var sf in sortedSubfolders)
+                {
+                    folder.Children.Add(sf);
+                }
+
+                // 2. Sort assets alphabetically
+                var sortedAssets = SortAssets(folder);
+                folder.AssetIds.Clear();
+                foreach (var assetId in sortedAssets)
+                {
+                    folder.AssetIds.Add(assetId);
+                }
+
+                // 3. Recurse down
+                foreach (var sf in folder.Children)
+                {
+                    SortFolderRecursively(sf);
+                }
+            }
+
+            // Sort root folders alphabetically
+            var sortedRoots = _isSortedAscending
+                ? _doc.Roots.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase).ToList()
+                : _doc.Roots.OrderByDescending(f => f.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+            _doc.Roots.Clear();
+            foreach (var root in sortedRoots)
+            {
+                _doc.Roots.Add(root);
+            }
+
+            // Recurse into all folders starting from roots
+            foreach (var root in _doc.Roots)
+            {
+                SortFolderRecursively(root);
+            }
+
+            await _store.SaveAsync(_game, _doc);
             RebuildNodes();
         }
 

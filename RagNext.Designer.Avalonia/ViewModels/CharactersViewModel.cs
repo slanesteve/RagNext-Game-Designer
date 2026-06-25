@@ -10,6 +10,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
     {
         private readonly IGameStorage _storage;
         private readonly ObservableCollection<Character> _empty = new();
+        private bool _isSortedAscending = false;
 
         public ObservableCollection<Character> Characters => App.CurrentGame?.Characters ?? _empty;
 
@@ -53,7 +54,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
             SortCommand = new Command(async () =>
             {
                 if (App.CurrentGame?.Characters is null) return;
-                var sorted = global::System.Linq.Enumerable.ToList(global::System.Linq.Enumerable.OrderBy(App.CurrentGame.Characters, c => c.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase));
+                _isSortedAscending = !_isSortedAscending;
+                var query = global::System.Linq.Enumerable.AsEnumerable(App.CurrentGame.Characters);
+                if (_isSortedAscending)
+                {
+                    query = global::System.Linq.Enumerable.OrderBy(query, c => c.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    query = global::System.Linq.Enumerable.OrderByDescending(query, c => c.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+                }
+                var sorted = global::System.Linq.Enumerable.ToList(query);
                 for (int i = 0; i < sorted.Count; i++)
                 {
                     int oldIndex = App.CurrentGame.Characters.IndexOf(sorted[i]);

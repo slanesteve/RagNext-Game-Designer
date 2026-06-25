@@ -10,6 +10,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
     {
         private readonly IGameStorage _storage;
         private readonly ObservableCollection<GameVariable> _empty = new();
+        private bool _isSortedAscending = false;
 
         public ObservableCollection<GameVariable> Variables => App.CurrentGame?.Variables ?? _empty;
         public ObservableCollection<string> VariableTypes { get; } = new() { "string", "number", "bool", "datetime", "array" };
@@ -57,7 +58,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
             SortCommand = new Command(async () =>
             {
                 if (App.CurrentGame?.Variables is null) return;
-                var sorted = global::System.Linq.Enumerable.ToList(global::System.Linq.Enumerable.OrderBy(App.CurrentGame.Variables, v => v.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase));
+                _isSortedAscending = !_isSortedAscending;
+                var query = global::System.Linq.Enumerable.AsEnumerable(App.CurrentGame.Variables);
+                if (_isSortedAscending)
+                {
+                    query = global::System.Linq.Enumerable.OrderBy(query, v => v.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    query = global::System.Linq.Enumerable.OrderByDescending(query, v => v.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+                }
+                var sorted = global::System.Linq.Enumerable.ToList(query);
                 for (int i = 0; i < sorted.Count; i++)
                 {
                     int oldIndex = App.CurrentGame.Variables.IndexOf(sorted[i]);
