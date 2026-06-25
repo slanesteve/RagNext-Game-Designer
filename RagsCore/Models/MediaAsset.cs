@@ -16,7 +16,12 @@ namespace RagsCore.Models
         [System.Text.Json.Serialization.JsonIgnore]
         public string IdString => Id.ToString();
 
-        public string RelativePath { get; set; } = string.Empty; // under the game's Assets folder
+        private string _relativePath = string.Empty;
+        public string RelativePath 
+        { 
+            get => _relativePath; 
+            set => _relativePath = value?.Replace('\\', '/') ?? string.Empty; 
+        } // under the game's Assets folder
         public string ContentType { get; set; } = "application/octet-stream";
         public MediaKind Kind { get; set; } = MediaKind.Other;
         public string Sha256 { get; set; } = string.Empty; // for de-dupe/integrity

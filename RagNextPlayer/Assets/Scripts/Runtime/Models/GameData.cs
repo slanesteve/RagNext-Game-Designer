@@ -337,7 +337,12 @@ namespace RagNextPlayer.Runtime.Models
     {
         public string Id               { get; set; } = string.Empty;
         public string Name             { get; set; } = string.Empty;
-        public string RelativePath     { get; set; } = string.Empty;
+        private string _relativePath   = string.Empty;
+        public string RelativePath
+        {
+            get => _relativePath;
+            set => _relativePath = value?.Replace('\\', '/') ?? string.Empty;
+        }
         public string MediaType        { get; set; } = string.Empty;
         public string OriginalFileName { get; set; } = string.Empty;
     }
