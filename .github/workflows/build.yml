@@ -53,7 +53,7 @@ jobs:
         
         # 2. Run publish in Single-File ReadyToRun format
         Remove-Item -Recurse -Force Publish\Designer-Windows -ErrorAction SilentlyContinue
-        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -o Publish/Designer-Windows
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.3.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Windows
         
         # 3. Deploy WebAssets and Templates
         New-Item -ItemType Directory -Force Publish\Designer-Windows\WebAssets
@@ -122,7 +122,7 @@ jobs:
         
         # 2. Run publish in Single-File ReadyToRun format for Arm64
         rm -rf Publish/Designer-Mac-Arm64
-        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishAot=true -o Publish/Designer-Mac-Arm64
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.3.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Mac-Arm64
         
         # 3. Create macOS .app Bundle Structure for Arm64
         mkdir -p Publish/RagNext_Arm64.app/Contents/MacOS
@@ -135,13 +135,13 @@ jobs:
           cp -R Templates Publish/RagNext_Arm64.app/Contents/Resources/Templates
         fi
         cp RagNext.icns Publish/RagNext_Arm64.app/Contents/Resources/
-
+ 
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
         # Clean up build artifacts that can trigger macOS bundle layout validation errors
         rm -rf Publish/RagNext_Arm64.app/Contents/MacOS/*.dSYM
         rm -f Publish/RagNext_Arm64.app/Contents/MacOS/*.pdb
-
+ 
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -160,11 +160,11 @@ jobs:
         echo '    <key>CFBundlePackageType</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <string>APPL</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleShortVersionString</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
-        echo '    <string>1.0.0</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>1.0.0-alpha.3.${{ github.run_number }}</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleSignature</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <string>????</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
-        echo '    <string>1.0.0</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>1.0.0.${{ github.run_number }}</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>LSMinimumSystemVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <string>10.13</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>NSHighResolutionCapable</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -173,10 +173,10 @@ jobs:
         echo '    <string>RagNext.icns</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '</dict>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '</plist>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
-
+ 
         # 6. Restore RagsCore back to multi-targeting temporarily (to ensure clean slate or keep it net9.0 for the next build)
         sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
-
+ 
     - name: Build & Publish Standalone macOS Intel x64
       run: |
         # 1. Temporarily target net9.0 only to bypass mobile Mono restores
@@ -184,7 +184,7 @@ jobs:
         
         # 2. Run publish in Single-File ReadyToRun format for Intel x64
         rm -rf Publish/Designer-Mac-Intel
-        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-x64 --self-contained true -p:PublishAot=true -o Publish/Designer-Mac-Intel
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.3.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Mac-Intel
         
         # 3. Create macOS .app Bundle Structure for Intel x64
         mkdir -p Publish/RagNext_Intel.app/Contents/MacOS
@@ -197,13 +197,13 @@ jobs:
           cp -R Templates Publish/RagNext_Intel.app/Contents/Resources/Templates
         fi
         cp RagNext.icns Publish/RagNext_Intel.app/Contents/Resources/
-
+ 
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext
         # Clean up build artifacts that can trigger macOS bundle layout validation errors
         rm -rf Publish/RagNext_Intel.app/Contents/MacOS/*.dSYM
         rm -f Publish/RagNext_Intel.app/Contents/MacOS/*.pdb
- 
+  
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Intel.app/Contents/Info.plist
         echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> Publish/RagNext_Intel.app/Contents/Info.plist
@@ -222,11 +222,11 @@ jobs:
         echo '    <key>CFBundlePackageType</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <string>APPL</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleShortVersionString</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
-        echo '    <string>1.0.0</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>1.0.0-alpha.3.${{ github.run_number }}</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleSignature</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <string>????</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
-        echo '    <string>1.0.0</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>1.0.0.${{ github.run_number }}</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>LSMinimumSystemVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <string>10.13</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>NSHighResolutionCapable</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
