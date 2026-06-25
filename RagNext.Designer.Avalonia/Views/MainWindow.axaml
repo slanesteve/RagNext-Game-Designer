@@ -529,7 +529,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="North" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="North" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -544,7 +544,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="South" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="South" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -559,7 +559,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="East" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="East" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="EastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="EastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -574,7 +574,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="West" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="West" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="WestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="WestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -589,7 +589,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="NorthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="NorthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthWestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -604,7 +604,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="NorthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="NorthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthEastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -619,7 +619,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="SouthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="SouthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthWestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -634,7 +634,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="SouthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="SouthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthEastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -649,7 +649,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Up" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Up" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="UpOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="UpLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -664,7 +664,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Down" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Down" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="DownOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="DownLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -679,7 +679,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="In" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="In" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="InOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="InLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -694,7 +694,7 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Out" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="11" Width="28" HorizontalContentAlignment="Center"/>
+                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Out" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="2" x:Name="OutOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
                                                             <CheckBox Grid.Row="1" Grid.Column="3" x:Name="OutLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
                                                         </Grid>
@@ -1882,7 +1882,7 @@
                                     <Button Content="Delete" Command="{Binding DeleteCommand}" FontSize="11" Background="#C0392B" Padding="8,6"/>
                                 </StackPanel>
                                 
-                                <ScrollViewer Grid.Row="1">
+                                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                                     <TreeView ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
                                         <TreeView.Styles>
                                             <Style Selector="TreeViewItem" x:DataType="vm:MediaLibraryViewModel+Node">
@@ -2298,7 +2298,7 @@
                             <TextBlock Text="Double-click or drag items into portraits/objects to link assets." FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
                         </StackPanel>
                         <!-- TreeView -->
-                        <TreeView Grid.Row="2" ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" Margin="8" DragDrop.AllowDrop="True" DragDrop.Drop="OnDragDropFile">
+                        <TreeView Grid.Row="2" ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" Margin="8" DragDrop.AllowDrop="True" DragDrop.Drop="OnDragDropFile" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <TreeView.Styles>
                                 <Style Selector="TreeViewItem" x:DataType="vm:MediaLibraryViewModel+Node">
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
