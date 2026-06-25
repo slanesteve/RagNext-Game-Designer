@@ -828,6 +828,12 @@ namespace RagNext.Designer.Avalonia.Views
             var infoVersionAttr = (global::System.Reflection.AssemblyInformationalVersionAttribute?)
                 global::System.Attribute.GetCustomAttribute(assembly, typeof(global::System.Reflection.AssemblyInformationalVersionAttribute));
             var versionString = infoVersionAttr?.InformationalVersion ?? assembly.GetName().Version?.ToString() ?? "1.0.0";
+            
+            // Remove source revision / commit hash suffix (e.g. +d635934...) added by .NET SDK automatically
+            if (versionString.Contains('+'))
+            {
+                versionString = versionString.Split('+')[0];
+            }
 
             var tcs = new TaskCompletionSource();
             var dialog = new Window
