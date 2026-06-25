@@ -524,7 +524,7 @@
                                                         <!-- North -->
                                                         <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="North →" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -539,7 +539,7 @@
                                                         <!-- South -->
                                                         <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="South ←" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -554,7 +554,7 @@
                                                         <!-- East -->
                                                         <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="East →" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="EastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="EastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -569,7 +569,7 @@
                                                         <!-- West -->
                                                         <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="West ←" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="WestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="WestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -584,7 +584,7 @@
                                                         <!-- Northwest -->
                                                         <Grid Grid.Row="2" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Northwest ↖" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -599,7 +599,7 @@
                                                         <!-- Northeast -->
                                                         <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Northeast ↗" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -614,7 +614,7 @@
                                                         <!-- Southwest -->
                                                         <Grid Grid.Row="3" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Southwest ↙" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -629,7 +629,7 @@
                                                         <!-- Southeast -->
                                                         <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Southeast ↘" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -644,7 +644,7 @@
                                                         <!-- Up -->
                                                         <Grid Grid.Row="4" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Up ▲" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -659,7 +659,7 @@
                                                         <!-- Down -->
                                                         <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Down ▼" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -674,7 +674,7 @@
                                                         <!-- In -->
                                                         <Grid Grid.Row="5" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="In ↵" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>
@@ -689,7 +689,7 @@
                                                         <!-- Out -->
                                                         <Grid Grid.Row="5" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Out ↳" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
+                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32" x:CompileBindings="False" ToolTip.Tip="{Binding SelectedItem.Name, RelativeSource={RelativeSource Self}}">
                                                                 <ComboBox.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:Room">
                                                                         <TextBlock Text="{Binding Name}"/>

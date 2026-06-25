@@ -1633,6 +1633,7 @@ function addNewCommandNode(x = null, y = null) {
     node.bodyElement.appendChild(select);
 
     const fieldContainer = document.createElement('div');
+    fieldContainer.className = 'fields-container';
     fieldContainer.id = `${id}_fields`;
     node.bodyElement.appendChild(fieldContainer);
 
@@ -1685,6 +1686,7 @@ function addNewConditionNode(x = null, y = null) {
     node.bodyElement.appendChild(select);
 
     const fieldContainer = document.createElement('div');
+    fieldContainer.className = 'fields-container';
     fieldContainer.id = `${id}_fields`;
     node.bodyElement.appendChild(fieldContainer);
 
@@ -1765,7 +1767,11 @@ function refreshCommandFields(node) {
     if (!fieldsContainer) return;
     fieldsContainer.innerHTML = "";
     if (node.element) {
-        node.element.style.height = 'auto';
+        if (node.height) {
+            node.element.style.height = `${node.height}px`;
+        } else {
+            node.element.style.height = 'auto';
+        }
     }
 
     const type = node.type === 'command' ? node.data.commandType : node.data.conditionType;
@@ -2445,6 +2451,7 @@ function refreshCommandFields(node) {
                 triggerAutoSave();
             });
 
+            row.classList.add('textarea-row');
             row.appendChild(createFormattingToolbar(inputElement, null, inputSchema.label, node));
             row.appendChild(inputElement);
         } else if (inputSchema.label === 'Value' || inputSchema.label === 'Expected Value' || inputSchema.label === 'ExpectedValue') {
@@ -3845,8 +3852,7 @@ function parseAndCreateNode(data, x, y) {
                 }
                 if (h) {
                     node.height = h;
-                    node.element.style.minHeight = `${h}px`;
-                    node.element.style.height = 'auto';
+                    node.element.style.height = `${h}px`;
                 }
             }
             return node;
@@ -3885,8 +3891,7 @@ function parseAndCreateNode(data, x, y) {
                 }
                 if (h) {
                     node.height = h;
-                    node.element.style.minHeight = `${h}px`;
-                    node.element.style.height = 'auto';
+                    node.element.style.height = `${h}px`;
                 }
             }
             return node;

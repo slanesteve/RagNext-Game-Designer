@@ -229,9 +229,30 @@ textarea:focus, select:focus, input:focus {
 }
 
 textarea {
-    min-height: 80px;
-    height: 100%;
+    min-height: 120px;
+    height: 120px;
     flex: 1 1 auto;
+}
+
+.fields-container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.field-row.textarea-row {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 140px;
+}
+
+.field-row.textarea-row textarea {
+    flex: 1 1 auto;
+    height: 100% !important;
+    min-height: 100px;
+    resize: vertical;
 }
 
 /* Glassmorphic Formatting toolbar */
