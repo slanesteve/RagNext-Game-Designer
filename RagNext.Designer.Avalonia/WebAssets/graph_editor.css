@@ -221,7 +221,7 @@ textarea, select, input {
     font-size: 12px;
     outline: none;
     font-family: inherit;
-    resize: none;
+    resize: vertical;
 }
 
 textarea:focus, select:focus, input:focus {
