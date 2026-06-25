@@ -819,7 +819,7 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        public async void OnAboutClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        public void OnAboutClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
             var assembly = typeof(MainWindow).Assembly;
             var name = assembly.GetName().Name ?? "RagNext Designer";
@@ -829,8 +829,105 @@ namespace RagNext.Designer.Avalonia.Views
                 global::System.Attribute.GetCustomAttribute(assembly, typeof(global::System.Reflection.AssemblyInformationalVersionAttribute));
             var versionString = infoVersionAttr?.InformationalVersion ?? assembly.GetName().Version?.ToString() ?? "1.0.0";
 
-            await AlertDialog.ShowAsync(this, "About RagNext Designer", 
-                $"{name}\nVersion {versionString}\n\nBuilt on .NET 9.0 using Avalonia UI.\n© 2026 RagNext contributors.");
+            var tcs = new TaskCompletionSource();
+            var dialog = new Window
+            {
+                Title = "About RagNext Designer",
+                Width = 480,
+                SizeToContent = global::Avalonia.Controls.SizeToContent.Height,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Padding = new global::Avalonia.Thickness(20)
+            };
+            dialog.Bind(global::Avalonia.Controls.Window.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("MainBg"));
+            dialog.Bind(global::Avalonia.Controls.Window.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+
+            var mainStack = new StackPanel { Spacing = 16 };
+
+            // Logo and Title Header
+            var headerGrid = new Grid { ColumnDefinitions = new global::Avalonia.Controls.ColumnDefinitions("Auto, *") };
+            
+            // Recreate the RN Brand Logo box
+            var logoBorder = new Border 
+            { 
+                CornerRadius = new global::Avalonia.CornerRadius(4), 
+                Width = 48, 
+                Height = 48,
+                Margin = new global::Avalonia.Thickness(0, 0, 16, 0),
+                Background = new global::Avalonia.Media.LinearGradientBrush
+                {
+                    StartPoint = new global::Avalonia.RelativePoint(0, 0, global::Avalonia.RelativeUnit.Relative),
+                    EndPoint = new global::Avalonia.RelativePoint(1, 1, global::Avalonia.RelativeUnit.Relative),
+                    GradientStops = 
+                    {
+                        new global::Avalonia.Media.GradientStop(global::Avalonia.Media.Color.Parse("#8E2DE2"), 0.0),
+                        new global::Avalonia.Media.GradientStop(global::Avalonia.Media.Color.Parse("#4A00E0"), 1.0)
+                    }
+                }
+            };
+            var logoText = new TextBlock 
+            { 
+                Text = "RN", 
+                FontSize = 24, 
+                FontWeight = global::Avalonia.Media.FontWeight.Bold, 
+                Foreground = global::Avalonia.Media.Brushes.White,
+                HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Center
+            };
+            logoBorder.Child = logoText;
+            headerGrid.Children.Add(logoBorder);
+            global::Avalonia.Controls.Grid.SetColumn(logoBorder, 0);
+
+            var titleInfoStack = new StackPanel { VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Center };
+            var titleBlock = new TextBlock 
+            { 
+                Text = name, 
+                FontSize = 18, 
+                FontWeight = global::Avalonia.Media.FontWeight.SemiBold 
+            };
+            var verBlock = new TextBlock 
+            { 
+                Text = $"Version {versionString}", 
+                FontSize = 12 
+            };
+            verBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
+            titleInfoStack.Children.Add(titleBlock);
+            titleInfoStack.Children.Add(verBlock);
+            headerGrid.Children.Add(titleInfoStack);
+            global::Avalonia.Controls.Grid.SetColumn(titleInfoStack, 1);
+
+            mainStack.Children.Add(headerGrid);
+
+            // Description details
+            var descBlock = new TextBlock 
+            { 
+                Text = "Built on .NET 9.0 using Avalonia UI.\n© 2026 RagNext contributors.",
+                TextWrapping = global::Avalonia.Media.TextWrapping.Wrap 
+            };
+            descBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
+            mainStack.Children.Add(descBlock);
+
+            // Bottom Buttons
+            var buttons = new StackPanel 
+            { 
+                Orientation = global::Avalonia.Layout.Orientation.Horizontal, 
+                HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, 
+                Spacing = 10 
+            };
+            var okBtn = new Button 
+            { 
+                Content = "OK", 
+                Width = 80, 
+                Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), 
+                Foreground = global::Avalonia.Media.Brushes.White, 
+                IsDefault = true,
+                HorizontalContentAlignment = global::Avalonia.Layout.HorizontalAlignment.Center
+            };
+            okBtn.Click += (s, ev) => { tcs.SetResult(); dialog.Close(); };
+            buttons.Children.Add(okBtn);
+            mainStack.Children.Add(buttons);
+
+            dialog.Content = mainStack;
+            dialog.ShowDialog(this);
         }
 
          public async void OnSyncGraphClicked(object sender, RoutedEventArgs e)
