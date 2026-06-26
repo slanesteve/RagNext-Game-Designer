@@ -53,7 +53,7 @@ jobs:
         
         # 2. Run publish in Single-File ReadyToRun format
         Remove-Item -Recurse -Force Publish\Designer-Windows -ErrorAction SilentlyContinue
-        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.3.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Windows
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.4.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Windows
         
         # 3. Deploy WebAssets and Templates
         New-Item -ItemType Directory -Force Publish\Designer-Windows\WebAssets
@@ -122,7 +122,7 @@ jobs:
         
         # 2. Run publish in Single-File ReadyToRun format for Arm64
         rm -rf Publish/Designer-Mac-Arm64
-        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.3.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Mac-Arm64
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.4.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Mac-Arm64
         
         # 3. Create macOS .app Bundle Structure for Arm64
         mkdir -p Publish/RagNext_Arm64.app/Contents/MacOS
@@ -160,7 +160,7 @@ jobs:
         echo '    <key>CFBundlePackageType</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <string>APPL</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleShortVersionString</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
-        echo '    <string>1.0.0-alpha.3.${{ github.run_number }}</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
+        echo '    <string>1.0.0-alpha.4.${{ github.run_number }}</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleSignature</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <string>????</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '    <key>CFBundleVersion</key>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -184,7 +184,7 @@ jobs:
         
         # 2. Run publish in Single-File ReadyToRun format for Intel x64
         rm -rf Publish/Designer-Mac-Intel
-        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.3.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Mac-Intel
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.4.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Mac-Intel
         
         # 3. Create macOS .app Bundle Structure for Intel x64
         mkdir -p Publish/RagNext_Intel.app/Contents/MacOS
@@ -222,7 +222,7 @@ jobs:
         echo '    <key>CFBundlePackageType</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <string>APPL</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleShortVersionString</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
-        echo '    <string>1.0.0-alpha.3.${{ github.run_number }}</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
+        echo '    <string>1.0.0-alpha.4.${{ github.run_number }}</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleSignature</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <string>????</string>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '    <key>CFBundleVersion</key>' >> Publish/RagNext_Intel.app/Contents/Info.plist
