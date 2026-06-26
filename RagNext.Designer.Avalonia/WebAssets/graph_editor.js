@@ -104,7 +104,6 @@ const fallbackDiscriminators = {
     "generalcallfunction": "general.callFunction",
     "debugtext": "general.debugText",
     "displaytext": "general.displayText",
-    "mediadisplaylayeredpicture": "media.displayLayeredPicture",
     "mediadisplaymultimedia": "media.displayMultimedia",
     "mediasetbackgroundmusic": "media.setBackgroundMusic",
     "mediastopbackgroundmusic": "media.stopBackgroundMusic",
@@ -137,11 +136,8 @@ const fallbackDiscriminators = {
     "roomlockexit": "room.lockExit",
     "roomunlockexit": "room.unlockExit",
     "statusbarsetvisibleinvisible": "ui.setStatusBarVisible",
-    "timerexecutetimer": "timer.executeTimer",
-    "timerresettimer": "timer.resetTimer",
     "timersetattribute": "timer.setAttribute",
     "timersettimertoactiveinactive": "timer.setTimerActive",
-    "variabledisplaydata": "var.displayData",
     "variableset": "var.set",
     "variableevaluateformula": "var.evaluate",
     "variableincrement": "var.inc",
@@ -994,6 +990,7 @@ function createBaseNode(id, type, title, x, y) {
     el.className = `node ${type}`;
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
+    el.style.width = '320px';
     el.id = id;
 
     const header = document.createElement('div');
@@ -2225,6 +2222,7 @@ function refreshCommandFields(node) {
             else if (inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') {
                 const attrs = getAttributesForNode(node);
                 optionsList = attrs.map(a => ({ Id: a, Name: a }));
+                optionsList.push({ Id: "_add_new_attribute_", Name: "➕ <add new attribute...>" });
             }
             // Bug #5: ActionName is a dynamic list scoped to the entity selected in this node.
             else if (inputSchema.dataType === 'ActionName') {
@@ -2395,6 +2393,10 @@ function refreshCommandFields(node) {
                     let dt = inputSchema.dataType;
                     if (dt === "Item") dt = "GameObject"; // align with backend types
                     openAddElementModal(dt, node, pickerSelect, inputSchema);
+                    return;
+                }
+                if (pickerSelect.value === "_add_new_attribute_") {
+                    openAddAttributeModal(node, pickerSelect, inputSchema);
                     return;
                 }
                 textInput.value = pickerSelect.value;
@@ -4924,6 +4926,84 @@ window.submitAddElement = function() {
         window.location.href = "rags-action://" + actionUrl;
     }
     currentAddElementFieldCtx = null;
+};
+
+// Attribute Creation Modal Logic
+let currentAddAttributeCtx = null;
+
+window.openAddAttributeModal = function(node, select, inputSchema) {
+    let targetType = "";
+    let targetId = "";
+    const cmdType = node.data.commandType || "";
+
+    if (cmdType.startsWith("char.") || cmdType.startsWith("character.")) {
+        targetType = "Character";
+        targetId = getPropertyValue(node.data, "Character");
+    } else if (cmdType.startsWith("item.")) {
+        targetType = "GameObject";
+        targetId = getPropertyValue(node.data, "Item") || getPropertyValue(node.data, "Object");
+    } else if (cmdType.startsWith("room.")) {
+        targetType = "Room";
+        targetId = getPropertyValue(node.data, "Room");
+    } else if (cmdType.startsWith("player.")) {
+        targetType = "Player";
+        targetId = "Player";
+    }
+
+    if (targetType !== "Player" && !targetId) {
+        alert(`Please select a ${targetType} first.`);
+        const prevVal = node.data[inputSchema.label] || "";
+        select.value = prevVal;
+        return;
+    }
+
+    currentAddAttributeCtx = { node, select, inputSchema, targetType, targetId };
+
+    document.getElementById("new-attribute-name").value = "";
+    document.getElementById("new-attribute-value").value = "";
+    document.getElementById("add-attribute-title").innerText = `➕ Add Attribute to ${targetType}`;
+
+    document.getElementById("add-attribute-modal").classList.remove("hide");
+    document.getElementById("new-attribute-name").focus();
+};
+
+window.closeAddAttributeModal = function() {
+    document.getElementById("add-attribute-modal").classList.add("hide");
+    if (currentAddAttributeCtx && currentAddAttributeCtx.select) {
+        const val = currentAddAttributeCtx.node.data[currentAddAttributeCtx.inputSchema.label] || "";
+        currentAddAttributeCtx.select.value = val;
+    }
+    currentAddAttributeCtx = null;
+};
+
+window.submitAddAttribute = function() {
+    if (!currentAddAttributeCtx) return;
+    const name = document.getElementById("new-attribute-name").value.trim();
+    const val = document.getElementById("new-attribute-value").value.trim();
+    if (!name) {
+        alert("Please enter an attribute name.");
+        return;
+    }
+
+    const targetType = currentAddAttributeCtx.targetType;
+    const targetId = currentAddAttributeCtx.targetId;
+
+    window.lastAddedElementContext = {
+        nodeId: currentAddAttributeCtx.node.id,
+        fieldLabel: currentAddAttributeCtx.inputSchema.label,
+        name: name,
+        dataType: "Attribute"
+    };
+
+    document.getElementById("add-attribute-modal").classList.add("hide");
+
+    const actionUrl = `add-attribute?targetType=${encodeURIComponent(targetType)}&targetId=${encodeURIComponent(targetId)}&name=${encodeURIComponent(name)}&value=${encodeURIComponent(val)}`;
+    if (typeof invokeCSharpAction === 'function') {
+        invokeCSharpAction(actionUrl);
+    } else {
+        window.location.href = "rags-action://" + actionUrl;
+    }
+    currentAddAttributeCtx = null;
 };
 
 

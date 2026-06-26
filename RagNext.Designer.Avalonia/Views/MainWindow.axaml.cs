@@ -1110,6 +1110,81 @@ namespace RagNext.Designer.Avalonia.Views
                         LoadGraphData();
                     }
                 }
+                else if (msg.StartsWith("add-attribute?"))
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("add-attribute?".Length));
+                    string targetType = query["targetType"] ?? "";
+                    string targetIdStr = query["targetId"] ?? "";
+                    string name = query["name"] ?? "";
+                    string value = query["value"] ?? "";
+
+                    if (vm.CurrentGame != null && !string.IsNullOrWhiteSpace(name))
+                    {
+                        if (targetType.Equals("Player", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var player = vm.CurrentGame.Player;
+                            if (player != null)
+                            {
+                                CustomAttribute.SetAttribute(name, value, player.Attributes);
+                            }
+                        }
+                        else if (Guid.TryParse(targetIdStr, out Guid targetId))
+                        {
+                            if (targetType.Equals("Character", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var character = vm.CurrentGame.Characters.FirstOrDefault(c => c.Id == targetId);
+                                if (character != null)
+                                {
+                                    CustomAttribute.SetAttribute(name, value, character.Attributes);
+                                }
+                            }
+                            else if (targetType.Equals("GameObject", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var item = vm.CurrentGame.Objects.FirstOrDefault(o => o.Id == targetId);
+                                if (item == null)
+                                {
+                                    foreach (var ch in vm.CurrentGame.Characters)
+                                    {
+                                        item = ch.Inventory.FirstOrDefault(o => o.Id == targetId);
+                                        if (item != null) break;
+                                    }
+                                }
+                                if (item != null)
+                                {
+                                    CustomAttribute.SetAttribute(name, value, item.Attributes);
+                                }
+                            }
+                            else if (targetType.Equals("Room", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var room = vm.CurrentGame.Rooms.FirstOrDefault(r => r.Id == targetId);
+                                if (room != null)
+                                {
+                                    CustomAttribute.SetAttribute(name, value, room.Attributes);
+                                }
+                            }
+                        }
+
+                        await vm.SaveGameAsync();
+                        if (vm.Rooms != null)
+                        {
+                            vm.Rooms.OnPropertyChanged(nameof(vm.Rooms.Rooms));
+                        }
+                        if (vm.Objects != null)
+                        {
+                            vm.Objects.OnPropertyChanged(nameof(vm.Objects.Objects));
+                        }
+                        if (vm.Characters != null)
+                        {
+                            vm.Characters.OnPropertyChanged(nameof(vm.Characters.Characters));
+                        }
+                        if (vm.Variables != null)
+                        {
+                            vm.Variables.OnPropertyChanged(nameof(vm.Variables.Variables));
+                        }
+
+                        LoadGraphData();
+                    }
+                }
                 else if (msg.StartsWith("graph-ai?"))
                 {
                     var query = System.Web.HttpUtility.ParseQueryString(msg.Substring("graph-ai?".Length));

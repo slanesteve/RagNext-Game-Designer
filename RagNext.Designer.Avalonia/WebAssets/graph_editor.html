@@ -144,6 +144,30 @@
         </div>
     </div>
 
+    <!-- Quick Attribute Creation Modal -->
+    <div id="add-attribute-modal" class="modal-overlay hide">
+        <div class="modal-card" style="width: 380px;">
+            <div class="modal-header">
+                <span class="modal-title" id="add-attribute-title">➕ Add New Attribute</span>
+                <button class="modal-close" onclick="closeAddAttributeModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Attribute Name</label>
+                    <input type="text" id="new-attribute-name" style="width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--node-border); border-radius: 6px; color: #fff; padding: 8px 10px; outline: none; font-size: 13px;" placeholder="e.g. Strength">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Attribute Value</label>
+                    <input type="text" id="new-attribute-value" style="width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--node-border); border-radius: 6px; color: #fff; padding: 8px 10px; outline: none; font-size: 13px;" placeholder="e.g. 10">
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+                <button class="btn" onclick="closeAddAttributeModal()">Cancel</button>
+                <button class="btn primary" onclick="submitAddAttribute()">Add</button>
+            </div>
+        </div>
+    </div>
+
     <script src="graph_editor.js?v=1.0.7"></script>
 </body>
 </html>

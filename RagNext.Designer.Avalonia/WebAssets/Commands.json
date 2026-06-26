@@ -186,6 +186,11 @@
       "category": "Character",
       "inputs": [
         {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
           "label": "Description",
           "controlType": "TextArea",
           "dataType": "String"
@@ -197,6 +202,11 @@
       "category": "Character",
       "inputs": [
         {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
+        {
           "label": "Gender",
           "controlType": "ComboBox",
           "dataType": "String"
@@ -207,6 +217,11 @@
       "name": "Character: Set Display Name",
       "category": "Character",
       "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        },
         {
           "label": "Name",
           "controlType": "Text",
@@ -255,17 +270,6 @@
           "label": "Text",
           "controlType": "TextArea",
           "dataType": "String"
-        }
-      ]
-    },
-    {
-      "name": "Media: Display Layered Picture",
-      "category": "Media",
-      "inputs": [
-        {
-          "label": "Picture File",
-          "controlType": "ComboBox",
-          "dataType": "Media"
         }
       ]
     },
@@ -390,6 +394,11 @@
       "category": "Item",
       "inputs": [
         {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        },
+        {
           "label": "Character",
           "controlType": "ComboBox",
           "dataType": "Character"
@@ -468,12 +477,24 @@
     {
       "name": "Player: Move Inventory To Character",
       "category": "Player",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        }
+      ]
     },
     {
       "name": "Player: Move Inventory To Room",
       "category": "Player",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        }
+      ]
     },
     {
       "name": "Player: Move To Room",
@@ -489,12 +510,24 @@
     {
       "name": "Player: Move To Character",
       "category": "Player",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Character",
+          "controlType": "ComboBox",
+          "dataType": "Character"
+        }
+      ]
     },
     {
       "name": "Player: Move To Object",
       "category": "Player",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Object",
+          "controlType": "ComboBox",
+          "dataType": "GameObject"
+        }
+      ]
     },
     {
       "name": "Player: Set Attribute",
@@ -559,22 +592,45 @@
     {
       "name": "Room: Display Description",
       "category": "Room",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        }
+      ]
     },
     {
       "name": "Room: Display Picture",
       "category": "Room",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        }
+      ]
     },
     {
       "name": "Room: Move Items To Player",
       "category": "Room",
-      "inputs": []
+      "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        }
+      ]
     },
     {
       "name": "Room: Set Description",
       "category": "Room",
       "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        },
         {
           "label": "Description",
           "controlType": "TextArea",
@@ -607,6 +663,11 @@
       "name": "Room: Set Picture",
       "category": "Room",
       "inputs": [
+        {
+          "label": "Room",
+          "controlType": "ComboBox",
+          "dataType": "Room"
+        },
         {
           "label": "Picture",
           "controlType": "ComboBox",
@@ -658,16 +719,6 @@
       ]
     },
     {
-      "name": "Timer: Execute Timer",
-      "category": "Timer",
-      "inputs": []
-    },
-    {
-      "name": "Timer: Reset Timer",
-      "category": "Timer",
-      "inputs": []
-    },
-    {
       "name": "Timer: Set Timer To Active/Inactive",
       "category": "Timer",
       "inputs": [
@@ -682,11 +733,6 @@
           "dataType": "Bool"
         }
       ]
-    },
-    {
-      "name": "Variable: Display Data",
-      "category": "Variable",
-      "inputs": []
     },
     {
       "name": "Variable: Set",
