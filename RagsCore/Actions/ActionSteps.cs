@@ -117,6 +117,11 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SwitchCommand), "general.switch")]
     [JsonDerivedType(typeof(WearItemCommand), "item.wear")]
     [JsonDerivedType(typeof(RemoveItemCommand), "item.remove")]
+    [JsonDerivedType(typeof(PlayerMoveInventoryToCharacterCommand), "player.moveInventoryToChar")]
+    [JsonDerivedType(typeof(PlayerMoveInventoryToRoomCommand), "player.moveInventoryToRoom")]
+    [JsonDerivedType(typeof(PlayerMoveToCharacterCommand), "player.moveToChar")]
+    [JsonDerivedType(typeof(PlayerMoveToObjectCommand), "player.moveToObject")]
+    [JsonDerivedType(typeof(RoomMoveItemsToPlayerCommand), "room.moveItemsToPlayer")]
     public abstract class ActionStep
     {
         public static string NormalizeLegacyDiscriminators(string json)
@@ -168,7 +173,8 @@ namespace RagsCore.Actions
                 "player.setActionActive", "timer.setTimerActive", "variable.forEachLoop", "variable.breakLoop",
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear",
-                "item.remove", "media.setBackgroundMusic", "media.stopBackgroundMusic", "var.evaluate"
+                "item.remove", "media.setBackgroundMusic", "media.stopBackgroundMusic", "var.evaluate",
+                "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer"
             };
 
             // Convert unrecognized/unknown $type values to general.debugText to prevent crashes
@@ -2652,6 +2658,159 @@ namespace RagsCore.Actions
             var resolved = RagsCore.Services.TemplateResolver.Resolve(ElementId, ctx);
             var element = ctx.Game.StatusBarElements.FirstOrDefault(e => e.Id.ToString() == resolved || string.Equals(e.Name, resolved, StringComparison.OrdinalIgnoreCase));
             return element != null && element.IsVisible;
+        }
+    }
+
+    public sealed class PlayerMoveInventoryToCharacterCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public override string TypeName => "Player: Move Inventory To Character";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var cId)) return;
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+            if (character is null) return;
+            
+            var items = ctx.Player.Inventory.ToList();
+            foreach (var item in items)
+            {
+                ctx.Player.Inventory.Remove(item);
+                character.Inventory.Add(item);
+            }
+        }
+    }
+
+    public sealed class PlayerMoveInventoryToRoomCommand : GameCommand
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public override string TypeName => "Player: Move Inventory To Room";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            if (!Guid.TryParse(resolvedRoom, out var rId)) return;
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId);
+            if (room is null) return;
+            
+            var items = ctx.Player.Inventory.ToList();
+            foreach (var item in items)
+            {
+                ctx.Player.Inventory.Remove(item);
+                if (!room.ObjectIds.Contains(item.Id))
+                {
+                    room.ObjectIds.Add(item.Id);
+                }
+            }
+        }
+    }
+
+    public sealed class PlayerMoveToCharacterCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public override string TypeName => "Player: Move To Character";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var cId)) return;
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+            if (character is null) return;
+            
+            var charRoomVar = ctx.GetVariable($"char.{cId}.currentRoomId")?.Value;
+            Guid? targetRoomId = null;
+            if (Guid.TryParse(charRoomVar, out var parsedId))
+            {
+                targetRoomId = parsedId;
+            }
+            else
+            {
+                targetRoomId = character.StartingRoom?.Id;
+            }
+            
+            if (targetRoomId != null)
+            {
+                ctx.SetVariable("player.currentRoomId", targetRoomId.Value.ToString());
+            }
+        }
+    }
+
+    public sealed class PlayerMoveToObjectCommand : GameCommand
+    {
+        public string ObjectId { get; set; } = string.Empty;
+        public override string TypeName => "Player: Move To Object";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (!Guid.TryParse(resolvedObj, out var oId)) return;
+            
+            Guid? currentLocId = oId;
+            const int maxIterations = 20;
+            int iterations = 0;
+            
+            while (currentLocId != null && iterations++ < maxIterations)
+            {
+                var room = ctx.Game.Rooms.FirstOrDefault(r => r.ObjectIds.Contains(currentLocId.Value));
+                if (room != null)
+                {
+                    ctx.SetVariable("player.currentRoomId", room.Id.ToString());
+                    return;
+                }
+                
+                var container = ctx.Game.Objects.FirstOrDefault(o => o.ContainedObjectIds != null && o.ContainedObjectIds.Contains(currentLocId.Value));
+                if (container != null)
+                {
+                    currentLocId = container.Id;
+                    continue;
+                }
+                
+                var character = ctx.Game.Characters.FirstOrDefault(c => c.Inventory.Any(i => i.Id == currentLocId.Value));
+                if (character != null)
+                {
+                    var charRoomVar = ctx.GetVariable($"char.{character.Id}.currentRoomId")?.Value;
+                    Guid? charRoomId = null;
+                    if (Guid.TryParse(charRoomVar, out var parsedId)) charRoomId = parsedId;
+                    else charRoomId = character.StartingRoom?.Id;
+                    
+                    if (charRoomId != null)
+                    {
+                         ctx.SetVariable("player.currentRoomId", charRoomId.Value.ToString());
+                    }
+                    return;
+                }
+                
+                if (ctx.Player.Inventory.Any(i => i.Id == currentLocId.Value))
+                {
+                    return;
+                }
+                
+                break;
+            }
+        }
+    }
+
+    public sealed class RoomMoveItemsToPlayerCommand : GameCommand
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public override string TypeName => "Room: Move Items To Player";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            if (!Guid.TryParse(resolvedRoom, out var rId)) return;
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId);
+            if (room is null) return;
+            
+            var objectGuids = room.ObjectIds.ToList();
+            foreach (var oId in objectGuids)
+            {
+                var obj = ctx.Game.Objects.FirstOrDefault(o => o.Id == oId);
+                if (obj != null && obj.IsCollectible)
+                {
+                    room.ObjectIds.Remove(oId);
+                    if (!ctx.Player.Inventory.Contains(obj))
+                    {
+                        ctx.Player.Inventory.Add(obj);
+                    }
+                }
+            }
         }
     }
 }
