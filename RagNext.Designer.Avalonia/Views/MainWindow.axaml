@@ -935,13 +935,17 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Health & Hostile -->
-                                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto" Margin="0,8,0,0">
+                                <!-- Health & Hostile & Gender -->
+                                <Grid ColumnDefinitions="*, *, Auto" RowDefinitions="Auto, Auto" Margin="0,8,0,0">
                                     <StackPanel Grid.Column="0" Spacing="6" Margin="0,0,16,0">
                                         <TextBlock Text="Health" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                                         <TextBox Text="{Binding Health, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="1" Spacing="6" Margin="0,0,16,0">
+                                        <TextBlock Text="Gender" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
+                                        <ComboBox ItemsSource="{Binding Genders}" SelectedItem="{Binding Gender, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
                                         <TextBlock Text="Hostile" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                                         <CheckBox IsChecked="{Binding IsHostile, Mode=TwoWay}" Foreground="White" Margin="0,4,0,0"/>
                                     </StackPanel>
