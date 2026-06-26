@@ -157,6 +157,21 @@ namespace RagNextPlayer.Runtime.Models
                 "object.moveToCharacter"    => typeof(ObjectMoveToCharacterCommandData),
                 "object.moveToInventory"    => typeof(ObjectMoveToInventoryCommandData),
                 "object.moveInsideObject"   => typeof(ObjectMoveInsideObjectCommandData),
+                
+                "char.moveInventoryToPlayer" => typeof(CharacterMoveInventoryToPlayerCommandData),
+                "char.moveToObject"         => typeof(CharacterMoveToObjectCommandData),
+                "char.setDescription"       => typeof(CharacterSetDescriptionCommandData),
+                "char.setDisplayName"       => typeof(CharacterSetDisplayNameCommandData),
+                "room.displayPicture"       => typeof(RoomDisplayPictureCommandData),
+                "room.setDescription"       => typeof(RoomSetDescriptionCommandData),
+                "room.setPicture"           => typeof(RoomSetPictureCommandData),
+                "ui.setStatusBarVisible"    => typeof(SetStatusBarVisibleCommandData),
+                "char.setGender"            => typeof(CharacterSetGenderCommandData),
+                "player.moveInventoryToChar" => typeof(PlayerMoveInventoryToCharacterCommandData),
+                "player.moveInventoryToRoom" => typeof(PlayerMoveInventoryToRoomCommandData),
+                "player.moveToChar"         => typeof(PlayerMoveToCharacterCommandData),
+                "player.moveToObject"       => typeof(PlayerMoveToObjectCommandData),
+                "room.moveItemsToPlayer"    => typeof(RoomMoveItemsToPlayerCommandData),
 
                 _ => throw new JsonSerializationException($"Unknown ActionStep $type: '{typeName}'")
             };

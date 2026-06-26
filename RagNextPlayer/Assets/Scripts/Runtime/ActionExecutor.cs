@@ -1570,6 +1570,270 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case CharacterMoveInventoryToPlayerCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character != null)
+                        {
+                            var items = new System.Collections.Generic.List<GameObjectData>(character.Inventory);
+                            foreach (var item in items)
+                            {
+                                if (item.IsCollectible)
+                                {
+                                    character.Inventory.Remove(item);
+                                    if (!ctx.Game.Player.Inventory.Contains(item))
+                                    {
+                                        ctx.Game.Player.Inventory.Add(item);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case CharacterMoveToObjectCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character == null) break;
+
+                        var resolvedObj = ctx.Resolve(c.ObjectId);
+                        string currentLocId = resolvedObj;
+                        const int maxIterations = 20;
+                        int iterations = 0;
+
+                        while (!string.IsNullOrEmpty(currentLocId) && iterations++ < maxIterations)
+                        {
+                            var room = ctx.Game.Rooms.Find(r => r.ObjectIds.Contains(currentLocId));
+                            if (room != null)
+                            {
+                                MoveCharacterToRoomHelper(charId, room.Id, ctx);
+                                return;
+                            }
+
+                            var container = ctx.Game.Objects.Find(o => o.ContainedObjectIds != null && o.ContainedObjectIds.Contains(currentLocId));
+                            if (container != null)
+                            {
+                                currentLocId = container.Id;
+                                continue;
+                            }
+
+                            var otherCharacter = ctx.Game.Characters.Find(ch => ch.Inventory.Exists(i => string.Equals(i.Id, currentLocId, StringComparison.OrdinalIgnoreCase)));
+                            if (otherCharacter != null)
+                            {
+                                var charRoomVar = ctx.GetVariable($"char.{otherCharacter.Id}.currentRoomId")?.Value;
+                                var charRoomId = !string.IsNullOrEmpty(charRoomVar) ? charRoomVar : otherCharacter.StartingRoomId;
+                                if (!string.IsNullOrEmpty(charRoomId))
+                                {
+                                    MoveCharacterToRoomHelper(charId, charRoomId, ctx);
+                                }
+                                return;
+                            }
+
+                            if (ctx.Game.Player.Inventory.Exists(i => string.Equals(i.Id, currentLocId, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                var playerRoomVar = ctx.GetVariable("player.currentRoomId")?.Value;
+                                var playerRoomId = !string.IsNullOrEmpty(playerRoomVar) ? playerRoomVar : ctx.Game.Player.StartingRoomId;
+                                if (!string.IsNullOrEmpty(playerRoomId))
+                                {
+                                    MoveCharacterToRoomHelper(charId, playerRoomId, ctx);
+                                }
+                                return;
+                            }
+
+                            break;
+                        }
+                    }
+                    break;
+
+                case CharacterSetDescriptionCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character != null)
+                        {
+                            character.Description = ctx.Resolve(c.Description);
+                        }
+                    }
+                    break;
+
+                case CharacterSetDisplayNameCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character != null)
+                        {
+                            character.Name = ctx.Resolve(c.Name);
+                        }
+                    }
+                    break;
+
+                case RoomDisplayPictureCommandData c:
+                    break;
+
+                case RoomSetDescriptionCommandData c:
+                    {
+                        var roomId = ResolveRoomId(c.RoomId, ctx);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, roomId, StringComparison.OrdinalIgnoreCase));
+                        if (room != null)
+                        {
+                            room.Description = ctx.Resolve(c.Description);
+                        }
+                    }
+                    break;
+
+                case RoomSetPictureCommandData c:
+                    {
+                        var roomId = ResolveRoomId(c.RoomId, ctx);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, roomId, StringComparison.OrdinalIgnoreCase));
+                        if (room != null)
+                        {
+                            var resolvedMedia = ctx.Resolve(c.Picture);
+                            var asset = ctx.Game.MediaAssets.Find(m => m.Id == resolvedMedia);
+                            room.PortraitImagePath = asset?.RelativePath ?? resolvedMedia;
+                        }
+                    }
+                    break;
+
+                case SetStatusBarVisibleCommandData c:
+                    {
+                        ctx.SetVariable("ui.statusBarVisible", c.Visible.ToString().ToLower());
+                    }
+                    break;
+
+                case CharacterSetGenderCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character != null)
+                        {
+                            character.Properties["Gender"] = ctx.Resolve(c.Gender);
+                        }
+                    }
+                    break;
+
+                case PlayerMoveInventoryToCharacterCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character != null)
+                        {
+                            var items = new System.Collections.Generic.List<GameObjectData>(ctx.Game.Player.Inventory);
+                            foreach (var item in items)
+                            {
+                                ctx.Game.Player.Inventory.Remove(item);
+                                if (!character.Inventory.Contains(item))
+                                {
+                                    character.Inventory.Add(item);
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case PlayerMoveInventoryToRoomCommandData c:
+                    {
+                        var roomId = ResolveRoomId(c.RoomId, ctx);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, roomId, StringComparison.OrdinalIgnoreCase));
+                        if (room != null)
+                        {
+                            var items = new System.Collections.Generic.List<GameObjectData>(ctx.Game.Player.Inventory);
+                            foreach (var item in items)
+                            {
+                                ctx.Game.Player.Inventory.Remove(item);
+                                if (!room.ObjectIds.Contains(item.Id))
+                                {
+                                    room.ObjectIds.Add(item.Id);
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case PlayerMoveToCharacterCommandData c:
+                    {
+                        var charId = ResolveCharacterId(c.CharacterId, ctx);
+                        var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
+                        if (character != null)
+                        {
+                            var charRoomVar = ctx.GetVariable($"char.{charId}.currentRoomId")?.Value;
+                            var charRoomId = !string.IsNullOrEmpty(charRoomVar) ? charRoomVar : character.StartingRoomId;
+                            if (!string.IsNullOrEmpty(charRoomId))
+                            {
+                                ctx.SetVariable("player.currentRoomId", charRoomId);
+                            }
+                        }
+                    }
+                    break;
+
+                case PlayerMoveToObjectCommandData c:
+                    {
+                        var resolvedObj = ctx.Resolve(c.ObjectId);
+                        string currentLocId = resolvedObj;
+                        const int maxIterations = 20;
+                        int iterations = 0;
+
+                        while (!string.IsNullOrEmpty(currentLocId) && iterations++ < maxIterations)
+                        {
+                            var room = ctx.Game.Rooms.Find(r => r.ObjectIds.Contains(currentLocId));
+                            if (room != null)
+                            {
+                                ctx.SetVariable("player.currentRoomId", room.Id);
+                                return;
+                            }
+
+                            var container = ctx.Game.Objects.Find(o => o.ContainedObjectIds != null && o.ContainedObjectIds.Contains(currentLocId));
+                            if (container != null)
+                            {
+                                currentLocId = container.Id;
+                                continue;
+                            }
+
+                            var character = ctx.Game.Characters.Find(ch => ch.Inventory.Exists(i => string.Equals(i.Id, currentLocId, StringComparison.OrdinalIgnoreCase)));
+                            if (character != null)
+                            {
+                                var charRoomVar = ctx.GetVariable($"char.{character.Id}.currentRoomId")?.Value;
+                                var charRoomId = !string.IsNullOrEmpty(charRoomVar) ? charRoomVar : character.StartingRoomId;
+                                if (!string.IsNullOrEmpty(charRoomId))
+                                {
+                                    ctx.SetVariable("player.currentRoomId", charRoomId);
+                                }
+                                return;
+                            }
+
+                            if (ctx.Game.Player.Inventory.Exists(i => string.Equals(i.Id, currentLocId, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                return;
+                            }
+
+                            break;
+                        }
+                    }
+                    break;
+
+                case RoomMoveItemsToPlayerCommandData c:
+                    {
+                        var roomId = ResolveRoomId(c.RoomId, ctx);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, roomId, StringComparison.OrdinalIgnoreCase));
+                        if (room != null)
+                        {
+                            var itemsInRoom = ctx.Game.Objects.FindAll(o => room.ObjectIds.Contains(o.Id));
+                            foreach (var item in itemsInRoom)
+                            {
+                                if (item.IsCollectible)
+                                {
+                                    room.ObjectIds.Remove(item.Id);
+                                    if (!ctx.Game.Player.Inventory.Exists(i => i.Id == item.Id))
+                                    {
+                                        ctx.Game.Player.Inventory.Add(item);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
                 default:
                     Debug.LogWarning($"[ActionExecutor] Unhandled command type: {cmd.Type}");
                     break;

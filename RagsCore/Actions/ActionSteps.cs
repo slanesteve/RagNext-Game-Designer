@@ -122,6 +122,16 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(PlayerMoveToCharacterCommand), "player.moveToChar")]
     [JsonDerivedType(typeof(PlayerMoveToObjectCommand), "player.moveToObject")]
     [JsonDerivedType(typeof(RoomMoveItemsToPlayerCommand), "room.moveItemsToPlayer")]
+    [JsonDerivedType(typeof(CharacterMoveInventoryToPlayerCommand), "char.moveInventoryToPlayer")]
+    [JsonDerivedType(typeof(CharacterMoveToObjectCommand), "char.moveToObject")]
+    [JsonDerivedType(typeof(CharacterSetDescriptionCommand), "char.setDescription")]
+    [JsonDerivedType(typeof(CharacterSetDisplayNameCommand), "char.setDisplayName")]
+    [JsonDerivedType(typeof(RoomDisplayPictureCommand), "room.displayPicture")]
+    [JsonDerivedType(typeof(RoomSetDescriptionCommand), "room.setDescription")]
+    [JsonDerivedType(typeof(RoomSetPictureCommand), "room.setPicture")]
+    [JsonDerivedType(typeof(SetStatusBarVisibleCommand), "ui.setStatusBarVisible")]
+    [JsonDerivedType(typeof(SetBackgroundMusicCommand), "media.setBackgroundMusic")]
+    [JsonDerivedType(typeof(StopBackgroundMusicCommand), "media.stopBackgroundMusic")]
     public abstract class ActionStep
     {
         public static string NormalizeLegacyDiscriminators(string json)
@@ -173,8 +183,8 @@ namespace RagsCore.Actions
                 "player.setActionActive", "timer.setTimerActive", "variable.forEachLoop", "variable.breakLoop",
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear",
-                "item.remove", "media.setBackgroundMusic", "media.stopBackgroundMusic", "var.evaluate",
-                "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer"
+                "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
+                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic"
             };
 
             // Convert unrecognized/unknown $type values to general.debugText to prevent crashes
@@ -2811,6 +2821,209 @@ namespace RagsCore.Actions
                     }
                 }
             }
+        }
+    }
+
+    public sealed class CharacterMoveInventoryToPlayerCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public override string TypeName => "Character: Move Inventory To Player";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var cId)) return;
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+            if (character is null) return;
+            
+            var items = character.Inventory.ToList();
+            foreach (var item in items)
+            {
+                if (item.IsCollectible)
+                {
+                    character.Inventory.Remove(item);
+                    if (!ctx.Player.Inventory.Contains(item))
+                    {
+                        ctx.Player.Inventory.Add(item);
+                    }
+                }
+            }
+        }
+    }
+
+    public sealed class CharacterMoveToObjectCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string ObjectId { get; set; } = string.Empty;
+        public override string TypeName => "Character: Move To Object";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var cId)) return;
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+            if (character is null) return;
+
+            var resolvedObj = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (!Guid.TryParse(resolvedObj, out var oId)) return;
+            
+            Guid? currentLocId = oId;
+            const int maxIterations = 20;
+            int iterations = 0;
+            
+            while (currentLocId != null && iterations++ < maxIterations)
+            {
+                var room = ctx.Game.Rooms.FirstOrDefault(r => r.ObjectIds.Contains(currentLocId.Value));
+                if (room != null)
+                {
+                    ctx.SetVariable($"char.{character.Id}.currentRoomId", room.Id.ToString());
+                    return;
+                }
+                
+                var container = ctx.Game.Objects.FirstOrDefault(o => o.ContainedObjectIds != null && o.ContainedObjectIds.Contains(currentLocId.Value));
+                if (container != null)
+                {
+                    currentLocId = container.Id;
+                    continue;
+                }
+                
+                var otherCharacter = ctx.Game.Characters.FirstOrDefault(c => c.Inventory.Any(i => i.Id == currentLocId.Value));
+                if (otherCharacter != null)
+                {
+                    var charRoomVar = ctx.GetVariable($"char.{otherCharacter.Id}.currentRoomId")?.Value;
+                    Guid? charRoomId = null;
+                    if (Guid.TryParse(charRoomVar, out var parsedId)) charRoomId = parsedId;
+                    else charRoomId = otherCharacter.StartingRoom?.Id;
+                    
+                    if (charRoomId != null)
+                    {
+                         ctx.SetVariable($"char.{character.Id}.currentRoomId", charRoomId.Value.ToString());
+                    }
+                    return;
+                }
+                
+                if (ctx.Player.Inventory.Any(i => i.Id == currentLocId.Value))
+                {
+                    var playerRoomVar = ctx.GetVariable("player.currentRoomId")?.Value;
+                    if (playerRoomVar != null)
+                    {
+                        ctx.SetVariable($"char.{character.Id}.currentRoomId", playerRoomVar);
+                    }
+                    return;
+                }
+                
+                break;
+            }
+        }
+    }
+
+    public sealed class CharacterSetDescriptionCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public override string TypeName => "Character: Set Description";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var cId)) return;
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+            if (character is null) return;
+            
+            character.Description = Description;
+        }
+    }
+
+    public sealed class CharacterSetDisplayNameCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public override string TypeName => "Character: Set Display Name";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedChar = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedChar, out var cId)) return;
+            var character = ctx.Game.Characters.FirstOrDefault(c => c.Id == cId);
+            if (character is null) return;
+            
+            character.Name = Name;
+        }
+    }
+
+    public sealed class RoomDisplayPictureCommand : GameCommand
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public override string TypeName => "Room: Display Picture";
+        public override void Execute(ActionContext ctx)
+        {
+        }
+    }
+
+    public sealed class RoomSetDescriptionCommand : GameCommand
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public override string TypeName => "Room: Set Description";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            if (!Guid.TryParse(resolvedRoom, out var rId)) return;
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId);
+            if (room is null) return;
+            
+            room.Description = Description;
+        }
+    }
+
+    public sealed class RoomSetPictureCommand : GameCommand
+    {
+        public string RoomId { get; set; } = string.Empty;
+        public string Picture { get; set; } = string.Empty;
+        public override string TypeName => "Room: Set Picture";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolvedRoom = RagsCore.Services.TemplateResolver.Resolve(RoomId, ctx);
+            if (!Guid.TryParse(resolvedRoom, out var rId)) return;
+            var room = ctx.Game.Rooms.FirstOrDefault(r => r.Id == rId);
+            if (room is null) return;
+            
+            var resolvedMedia = RagsCore.Services.TemplateResolver.Resolve(Picture, ctx);
+            if (Guid.TryParse(resolvedMedia, out var mediaId))
+            {
+                var media = ctx.Game.MediaAssets.FirstOrDefault(m => m.Id == mediaId);
+                if (media != null)
+                {
+                    room.PortraitImagePath = media.RelativePath;
+                }
+            }
+            else
+            {
+                room.PortraitImagePath = resolvedMedia;
+            }
+        }
+    }
+
+    public sealed class SetStatusBarVisibleCommand : GameCommand
+    {
+        public bool Visible { get; set; }
+        public override string TypeName => "StatusBar: Set Visible/Invisible";
+        public override void Execute(ActionContext ctx)
+        {
+            ctx.SetVariable("ui.statusBarVisible", Visible.ToString().ToLower());
+        }
+    }
+
+    public sealed class SetBackgroundMusicCommand : GameCommand
+    {
+        public string MusicFile { get; set; } = string.Empty;
+        public override string TypeName => "Media: Set Background Music";
+        public override void Execute(ActionContext ctx)
+        {
+        }
+    }
+
+    public sealed class StopBackgroundMusicCommand : GameCommand
+    {
+        public override string TypeName => "Media: Stop Background Music";
+        public override void Execute(ActionContext ctx)
+        {
         }
     }
 }

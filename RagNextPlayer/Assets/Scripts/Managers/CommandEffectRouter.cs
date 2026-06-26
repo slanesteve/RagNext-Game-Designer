@@ -61,11 +61,13 @@ namespace RagNextPlayer.Managers
 
 
                 case MovePlayerToRoomCommandData c:
-                    // State was already written to player.currentRoomId by ActionExecutor.
-                    // Now trigger the animated room transition.
-                    var roomId = ctx.GetVariable("player.currentRoomId")?.Value;
-                    if (!string.IsNullOrEmpty(roomId))
-                        GameManager.Instance?.MovePlayerToRoom(roomId);
+                    {
+                        // State was already written to player.currentRoomId by ActionExecutor.
+                        // Now trigger the animated room transition.
+                        var roomId = ctx.GetVariable("player.currentRoomId")?.Value;
+                        if (!string.IsNullOrEmpty(roomId))
+                            GameManager.Instance?.MovePlayerToRoom(roomId);
+                    }
                     break;
 
                 case AddObjectToRoomCommandData:
@@ -248,7 +250,87 @@ namespace RagNextPlayer.Managers
                 case ClearCustomChoiceCommandData:
                 case RemoveCustomChoiceCommandData:
                     break;
+                case RoomDisplayPictureCommandData cDispPicture:
+                    {
+                        var displayRoomId = ResolveRoomId(cDispPicture.RoomId, ctx);
+                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, displayRoomId, System.StringComparison.OrdinalIgnoreCase));
+                        if (room != null && !string.IsNullOrEmpty(room.PortraitImagePath))
+                        {
+                            UIManager.Instance?.DisplaySceneImage(room.PortraitImagePath);
+                        }
+                    }
+                    break;
+
+                case PlayerMoveToCharacterCommandData:
+                case PlayerMoveToObjectCommandData:
+                    {
+                        var targetId = ctx.GetVariable("player.currentRoomId")?.Value;
+                        if (!string.IsNullOrEmpty(targetId))
+                            GameManager.Instance?.MovePlayerToRoom(targetId);
+                    }
+                    break;
+
+                case CharacterMoveInventoryToPlayerCommandData:
+                case PlayerMoveInventoryToCharacterCommandData:
+                case PlayerMoveInventoryToRoomCommandData:
+                case RoomMoveItemsToPlayerCommandData:
+                    UIManager.Instance?.RefreshEntityLists();
+                    UIManager.Instance?.RefreshPlayerPanel();
+                    break;
+
+                case CharacterMoveToObjectCommandData:
+                case CharacterSetDescriptionCommandData:
+                case CharacterSetDisplayNameCommandData:
+                case CharacterSetGenderCommandData:
+                    UIManager.Instance?.RefreshEntityLists();
+                    break;
+
+                case RoomSetDescriptionCommandData cDesc:
+                    {
+                        var targetRoomId = ResolveRoomId(cDesc.RoomId, ctx);
+                        var playerRoomId = ctx.GetVariable("player.currentRoomId")?.Value;
+                        if (string.Equals(targetRoomId, playerRoomId, System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetRoomId, System.StringComparison.OrdinalIgnoreCase));
+                            if (room != null)
+                            {
+                                UIManager.Instance?.RenderRoom(room);
+                            }
+                        }
+                    }
+                    break;
+
+                case RoomSetPictureCommandData cPic:
+                    {
+                        var targetPicRoomId = ResolveRoomId(cPic.RoomId, ctx);
+                        var playerRoomId = ctx.GetVariable("player.currentRoomId")?.Value;
+                        if (string.Equals(targetPicRoomId, playerRoomId, System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetPicRoomId, System.StringComparison.OrdinalIgnoreCase));
+                            if (room != null)
+                            {
+                                UIManager.Instance?.RenderRoom(room);
+                            }
+                        }
+                    }
+                    break;
+
+                case SetStatusBarVisibleCommandData:
+                    UIManager.Instance?.RefreshPlayerPanel();
+                    break;
+
             }
+        }
+
+        private string ResolveRoomId(string input, GameExecutionContext ctx)
+        {
+            var resolved = ctx.Resolve(input);
+            if (System.Guid.TryParse(resolved, out _)) return resolved;
+            if (string.IsNullOrEmpty(resolved)) return resolved;
+            var match = ctx.Game.Rooms.Find(r => 
+                string.Equals(r.Name, resolved, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.Name.Replace(" ", ""), resolved, System.StringComparison.OrdinalIgnoreCase));
+            return match?.Id ?? resolved;
         }
 
         private string ResolveCharacterId(string input, GameExecutionContext ctx)

@@ -1541,6 +1541,7 @@ namespace RagNextPlayer.Managers
                 _playerNameLabel.text = game is not null
                     ? TemplateResolver.Resolve(player.Name, game, room, player)
                     : player.Name;
+
             }
             if (_playerGenderLabel is not null) _playerGenderLabel.text = player.Gender;
             RefreshPlayerPortrait();
@@ -1548,6 +1549,14 @@ namespace RagNextPlayer.Managers
             // Render status bar elements
             if (_playerHudContainer != null && game != null)
             {
+                var isVisible = true;
+                var visVar = game.Variables.Find(v => string.Equals(v.Name, "ui.statusBarVisible", StringComparison.OrdinalIgnoreCase))?.Value;
+                if (!string.IsNullOrEmpty(visVar) && string.Equals(visVar, "false", StringComparison.OrdinalIgnoreCase))
+                {
+                    isVisible = false;
+                }
+                _playerHudContainer.style.display = isVisible ? UnityEngine.UIElements.DisplayStyle.Flex : UnityEngine.UIElements.DisplayStyle.None;
+
                 _playerHudContainer.Clear();
                 var room = GameManager.Instance?.CurrentRoom;
                 if (game.StatusBarElements != null)

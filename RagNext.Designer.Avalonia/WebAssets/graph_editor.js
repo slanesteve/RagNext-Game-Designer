@@ -1553,6 +1553,194 @@ function addSwitchCaseRow(node, container, initialText, caseId) {
     node.cases.push(caseObj);
 }
 
+
+function setupSearchableDropdown(select, items) {
+    select.style.display = 'none';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'searchable-dropdown';
+    select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+    const header = document.createElement('button');
+    header.className = 'searchable-dropdown-header';
+    header.type = 'button';
+    
+    const getActiveLabel = (val) => {
+        const item = items.find(i => i.type === val);
+        if (!item) return val || 'Select...';
+        let label = item.label;
+        if (item.category && label.startsWith(item.category + ":")) {
+            label = label.substring(item.category.length + 1).trim();
+        }
+        return (item.category ? `[${item.category}] ` : "") + label;
+    };
+    
+    header.innerText = getActiveLabel(select.value);
+    wrapper.appendChild(header);
+
+    const popup = document.createElement('div');
+    popup.className = 'searchable-dropdown-popup';
+    wrapper.appendChild(popup);
+
+    const searchWrapper = document.createElement('div');
+    searchWrapper.className = 'searchable-dropdown-search-wrapper';
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search...';
+    searchWrapper.appendChild(searchInput);
+    popup.appendChild(searchWrapper);
+
+    const listContainer = document.createElement('div');
+    listContainer.className = 'searchable-dropdown-list';
+    popup.appendChild(listContainer);
+
+    let currentValueList = items;
+
+    const renderList = (filterText = '') => {
+        listContainer.innerHTML = '';
+        const groups = {};
+        currentValueList.forEach(item => {
+            const cat = item.category || 'General';
+            let label = item.label;
+            if (item.category && label.startsWith(item.category + ":")) {
+                label = label.substring(item.category.length + 1).trim();
+            }
+            
+            const matchFilter = !filterText || 
+                label.toLowerCase().includes(filterText.toLowerCase()) || 
+                cat.toLowerCase().includes(filterText.toLowerCase());
+
+            if (matchFilter) {
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push({ item, cleanLabel: label });
+            }
+        });
+
+        const sortedCategories = Object.keys(groups).sort((a, b) => {
+            if (a === 'General') return -1;
+            if (b === 'General') return 1;
+            return a.localeCompare(b);
+        });
+
+        sortedCategories.forEach(cat => {
+            const catHeader = document.createElement('div');
+            catHeader.className = 'searchable-dropdown-category';
+            catHeader.innerText = cat;
+            
+            const isSearching = !filterText;
+            const expandedKey = `dropdown_cat_${cat}_expanded`;
+            let isExpanded = !isSearching || (wrapper.dataset[expandedKey] === 'true');
+            
+            if (isExpanded) {
+                catHeader.classList.add('expanded');
+            }
+
+            catHeader.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!isSearching) return;
+                isExpanded = !isExpanded;
+                wrapper.dataset[expandedKey] = isExpanded;
+                catHeader.classList.toggle('expanded', isExpanded);
+            });
+
+            listContainer.appendChild(catHeader);
+
+            const itemsContainer = document.createElement('div');
+            itemsContainer.className = 'searchable-dropdown-category-items';
+            
+            const sortedGroupItems = groups[cat].sort((a, b) => a.cleanLabel.localeCompare(b.cleanLabel));
+            sortedGroupItems.forEach(({ item, cleanLabel }) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'searchable-dropdown-item';
+                if (item.type === select.value) {
+                    itemDiv.classList.add('selected');
+                }
+                itemDiv.innerText = cleanLabel;
+
+                itemDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    select.value = item.type;
+                    header.innerText = getActiveLabel(item.type);
+                    select.dispatchEvent(new Event('change'));
+                    closeDropdown();
+                });
+
+                itemsContainer.appendChild(itemDiv);
+            });
+
+            listContainer.appendChild(itemsContainer);
+        });
+        
+        if (sortedCategories.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.style.padding = '8px';
+            noResults.style.color = 'var(--text-muted)';
+            noResults.style.textAlign = 'center';
+            noResults.innerText = 'No matches found';
+            listContainer.appendChild(noResults);
+        }
+    };
+
+    const openDropdown = () => {
+        document.querySelectorAll('.searchable-dropdown.open').forEach(d => {
+            if (d !== wrapper) d.classList.remove('open');
+        });
+        wrapper.classList.add('open');
+        searchInput.value = '';
+        renderList('');
+        setTimeout(() => searchInput.focus(), 50);
+    };
+
+    const closeDropdown = () => {
+        wrapper.classList.remove('open');
+    };
+
+    header.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (wrapper.classList.contains('open')) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    });
+
+    searchInput.addEventListener('input', () => {
+        renderList(searchInput.value);
+    });
+
+    searchInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    popup.addEventListener('wheel', (e) => {
+        e.stopPropagation();
+    });
+
+    const clickOutsideHandler = (e) => {
+        if (!wrapper.contains(e.target)) {
+            closeDropdown();
+        }
+    };
+    document.addEventListener('click', clickOutsideHandler);
+
+    // Intercept select value assignment
+    const originalValueProp = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    Object.defineProperty(select, 'value', {
+        get() {
+            return originalValueProp.get.call(this);
+        },
+        set(val) {
+            originalValueProp.set.call(this, val);
+            header.innerText = getActiveLabel(val);
+        }
+    });
+
+    select.refreshCustomDropdown = (newItems) => {
+        currentValueList = newItems;
+        header.innerText = getActiveLabel(select.value);
+    };
+}
+
 function populateSelectWithOptions(select, items) {
     select.innerHTML = "";
     
@@ -1601,6 +1789,15 @@ function populateSelectWithOptions(select, items) {
     });
 }
 
+const originalPopulate = populateSelectWithOptions;
+populateSelectWithOptions = function(select, items) {
+    originalPopulate(select, items);
+    if (select.refreshCustomDropdown) {
+        select.refreshCustomDropdown(items);
+    }
+};
+
+
 // Custom Command Nodes
 function addNewCommandNode(x = null, y = null) {
     if (x === null || y === null) {
@@ -1628,6 +1825,7 @@ function addNewCommandNode(x = null, y = null) {
         triggerAutoSave();
     });
     node.bodyElement.appendChild(select);
+    setupSearchableDropdown(select, AVAILABLE_COMMANDS);
 
     const fieldContainer = document.createElement('div');
     fieldContainer.className = 'fields-container';
@@ -1681,6 +1879,7 @@ function addNewConditionNode(x = null, y = null) {
         triggerAutoSave();
     });
     node.bodyElement.appendChild(select);
+    setupSearchableDropdown(select, AVAILABLE_CONDITIONS);
 
     const fieldContainer = document.createElement('div');
     fieldContainer.className = 'fields-container';
@@ -2222,7 +2421,6 @@ function refreshCommandFields(node) {
             else if (inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') {
                 const attrs = getAttributesForNode(node);
                 optionsList = attrs.map(a => ({ Id: a, Name: a }));
-                optionsList.push({ Id: "_add_new_attribute_", Name: "➕ <add new attribute...>" });
             }
             // Bug #5: ActionName is a dynamic list scoped to the entity selected in this node.
             else if (inputSchema.dataType === 'ActionName') {
@@ -2315,11 +2513,12 @@ function refreshCommandFields(node) {
                 }
             }
 
-            // Add "+ Add New..." option if elements catalog type is supported
+            // Add "+ Add New..." option if elements catalog type or attribute name is supported
             const supportQuickAdd = ['Room', 'Character', 'GameObject', 'Item', 'Variable', 'Timer', 'Function'].includes(inputSchema.dataType);
-            if (supportQuickAdd) {
+            const isAttributeField = (inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName');
+            if (supportQuickAdd || isAttributeField) {
                 const addOpt = document.createElement('option');
-                addOpt.value = "_add_new_";
+                addOpt.value = isAttributeField ? "_add_new_attribute_" : "_add_new_";
                 addOpt.innerText = "+ Add New...";
                 addOpt.style.color = "#a855f7";
                 addOpt.style.fontWeight = "bold";
@@ -4874,7 +5073,7 @@ window.openAddElementModal = function(dataType, node, select, inputSchema) {
     currentAddElementFieldCtx = { dataType, node, select, inputSchema };
     
     document.getElementById("new-element-name").value = "";
-    document.getElementById("add-element-title").innerText = "➕ Add New " + dataType;
+    document.getElementById("add-element-title").innerHTML = `<span style="color: #a855f7; font-weight: bold; margin-right: 4px;">+</span> Add New ${dataType}`;
     
     const varTypeWrapper = document.getElementById("new-variable-type-wrapper");
     if (dataType === "Variable") {
@@ -4961,7 +5160,7 @@ window.openAddAttributeModal = function(node, select, inputSchema) {
 
     document.getElementById("new-attribute-name").value = "";
     document.getElementById("new-attribute-value").value = "";
-    document.getElementById("add-attribute-title").innerText = `➕ Add Attribute to ${targetType}`;
+    document.getElementById("add-attribute-title").innerHTML = `<span style="color: #a855f7; font-weight: bold; margin-right: 4px;">+</span> Add Attribute to ${targetType}`;
 
     document.getElementById("add-attribute-modal").classList.remove("hide");
     document.getElementById("new-attribute-name").focus();

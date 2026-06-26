@@ -263,6 +263,21 @@ namespace RagNextPlayer.Runtime.Models
     public class SetItemAttributeCommandData         : CommandData { public string ItemId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class SetRoomAttributeCommandData         : CommandData { public string RoomId { get; set; } = string.Empty; public string AttributeName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     
+    public class CharacterMoveInventoryToPlayerCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }
+    public class CharacterMoveToObjectCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string ObjectId { get; set; } = string.Empty; }
+    public class CharacterSetDescriptionCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string Description { get; set; } = string.Empty; }
+    public class CharacterSetDisplayNameCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string Name { get; set; } = string.Empty; }
+    public class RoomDisplayPictureCommandData : CommandData { public string RoomId { get; set; } = string.Empty; }
+    public class RoomSetDescriptionCommandData : CommandData { public string RoomId { get; set; } = string.Empty; public string Description { get; set; } = string.Empty; }
+    public class RoomSetPictureCommandData : CommandData { public string RoomId { get; set; } = string.Empty; public string Picture { get; set; } = string.Empty; }
+    public class SetStatusBarVisibleCommandData : CommandData { public bool Visible { get; set; } }
+    public class CharacterSetGenderCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string Gender { get; set; } = "Male"; }
+    public class PlayerMoveInventoryToCharacterCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }
+    public class PlayerMoveInventoryToRoomCommandData : CommandData { public string RoomId { get; set; } = string.Empty; }
+    public class PlayerMoveToCharacterCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }
+    public class PlayerMoveToObjectCommandData : CommandData { public string ObjectId { get; set; } = string.Empty; }
+    public class RoomMoveItemsToPlayerCommandData : CommandData { public string RoomId { get; set; } = string.Empty; }
+    
     // Multi-Dimensional Array (MDA) Command and Condition Data structures
     public class ForEachLoopCommandData : ConditionData { public string ArrayVariableName { get; set; } = string.Empty; }
     public class BreakLoopCommandData : CommandData { }
