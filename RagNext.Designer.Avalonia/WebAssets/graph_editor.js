@@ -2387,7 +2387,7 @@ function refreshCommandFields(node) {
             }
             else if (inputSchema.dataType === 'Media') {
                 optionsList = catalogs.Media || [];
-                const isSoundCommand = (type === 'media.playSound' || type === 'media.setBackgroundMusic');
+                const isSoundCommand = (type === 'media.playSound' || type === 'media.setBackgroundMusic' || type === 'media.stopSound');
                 const isVideoCommand = (type === 'media.playVideo');
                 if (isSoundCommand) {
                     optionsList = optionsList.filter(m => {
