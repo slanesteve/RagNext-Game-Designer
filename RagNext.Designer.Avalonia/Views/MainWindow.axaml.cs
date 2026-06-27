@@ -5037,9 +5037,23 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private TextBox? FindHexTextBox(Visual visual)
+        {
+            if (visual is TextBox tb && (tb.Name == "PART_HexTextBox" || (tb.Name != null && tb.Name.Contains("Hex", StringComparison.OrdinalIgnoreCase))))
+            {
+                return tb;
+            }
+            foreach (var child in visual.GetVisualChildren())
+            {
+                var result = FindHexTextBox(child);
+                if (result != null) return result;
+            }
+            return null;
+        }
+
         private void ConfigureColorViewHexParsing(ColorView cv)
         {
-            var tb = cv.FindDescendantOfType<TextBox>();
+            var tb = FindHexTextBox(cv);
             if (tb != null)
             {
                 tb.LostFocus += (sender, args) =>
