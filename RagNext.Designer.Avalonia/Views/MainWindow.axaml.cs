@@ -5033,15 +5033,24 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is ColorView cv)
             {
-                cv.PropertyChanged += (s, args) =>
+                cv.TemplateApplied += (s, ev) =>
                 {
-                    if (args.Property == ColorView.ColorProperty)
+                    HookHexTextBox(cv);
+                };
+                HookHexTextBox(cv);
+            }
+        }
+
+        private void HookHexTextBox(ColorView cv)
+        {
+            var tb = FindHexTextBox(cv);
+            if (tb != null)
+            {
+                tb.PropertyChanged += (sender, args) =>
+                {
+                    if (args.Property.Name == "Text")
                     {
-                        var tb = FindHexTextBox(cv);
-                        if (tb != null && tb.IsFocused)
-                        {
-                            NormalizeHexInput(cv, tb, false);
-                        }
+                        NormalizeHexInputDirect(cv, tb);
                     }
                 };
             }
@@ -5062,47 +5071,34 @@ namespace RagNext.Designer.Avalonia.Views
         }
 
         private bool _isNormalizingHex = false;
-        private void NormalizeHexInput(ColorView cv, TextBox tb, bool force)
+        private void NormalizeHexInputDirect(ColorView cv, TextBox tb)
         {
             if (_isNormalizingHex) return;
-            if (!force && (tb == null || !tb.IsFocused)) return;
+            if (tb == null || !tb.IsFocused) return;
 
             var text = tb.Text?.Trim();
             if (string.IsNullOrEmpty(text)) return;
 
-            if (text.StartsWith("#")) text = text.Substring(1);
+            var hasHash = text.StartsWith("#");
+            var cleanText = hasHash ? text.Substring(1) : text;
 
-            if (text.Length == 8)
+            if (cleanText.Length == 8)
             {
-                if (uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var hexVal))
+                if (uint.TryParse(cleanText, System.Globalization.NumberStyles.HexNumber, null, out var hexVal))
                 {
-                    // Parse as RGBA (standard for ColorView)
-                    var r_rgba = (byte)((hexVal >> 24) & 0xFF);
-                    var g_rgba = (byte)((hexVal >> 16) & 0xFF);
-                    var b_rgba = (byte)((hexVal >> 8) & 0xFF);
-                    var a_rgba = (byte)(hexVal & 0xFF);
-                    var rgbaColor = Color.FromArgb(a_rgba, r_rgba, g_rgba, b_rgba);
-
                     // Parse as ARGB (what user pasted from rich text tags)
-                    var a_argb = (byte)((hexVal >> 24) & 0xFF);
-                    var r_argb = (byte)((hexVal >> 16) & 0xFF);
-                    var g_argb = (byte)((hexVal >> 8) & 0xFF);
-                    var b_argb = (byte)(hexVal & 0xFF);
-                    var argbColor = Color.FromArgb(a_argb, r_argb, g_argb, b_argb);
+                    var a = (byte)((hexVal >> 24) & 0xFF);
+                    var r = (byte)((hexVal >> 16) & 0xFF);
+                    var g = (byte)((hexVal >> 8) & 0xFF);
+                    var b = (byte)(hexVal & 0xFF);
+                    var argbColor = Color.FromArgb(a, r, g, b);
 
-                    // If it matches the current color as RGBA, it's already in sync
-                    if (cv.Color == rgbaColor)
-                    {
-                        return;
-                    }
-
-                    // Otherwise, if we parse it as ARGB and it's different from current, update it!
                     if (cv.Color != argbColor)
                     {
                         _isNormalizingHex = true;
                         cv.Color = argbColor;
-                        var prefix = text.StartsWith("#") ? "#" : "";
-                        tb.Text = $"{prefix}{r_argb:X2}{g_argb:X2}{b_argb:X2}{a_argb:X2}";
+                        var prefix = hasHash ? "#" : "";
+                        tb.Text = $"{prefix}{r:X2}{g:X2}{b:X2}{a:X2}";
                         _isNormalizingHex = false;
                     }
                 }
