@@ -2709,8 +2709,8 @@
                                     </StackPanel>
                                     <Button.Flyout>
                                         <Flyout>
-                                            <StackPanel Spacing="8" Width="300">
-                                                <ColorView x:Name="ComposeColorPicker" Color="#FFFFFF" Margin="0" IsAlphaEnabled="True" Height="320"/>
+                                            <StackPanel Spacing="8" Width="350">
+                                                <ColorView x:Name="ComposeColorPicker" Color="#FFFFFF" Margin="0" IsAlphaEnabled="True" Height="320" Width="330"/>
                                                 <TextBlock Text="Recent Colors:" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,2"/>
                                                 <ItemsControl ItemsSource="{Binding $parent[views:MainWindow].RecentColors}">
                                                     <ItemsControl.ItemsPanel>
@@ -2742,8 +2742,8 @@
                                     </StackPanel>
                                     <Button.Flyout>
                                         <Flyout>
-                                            <StackPanel Spacing="8" Width="300">
-                                                <ColorView x:Name="ComposeHighlightPicker" Color="#EF4444" Margin="0" IsAlphaEnabled="True" Height="320"/>
+                                            <StackPanel Spacing="8" Width="350">
+                                                <ColorView x:Name="ComposeHighlightPicker" Color="#EF4444" Margin="0" IsAlphaEnabled="True" Height="320" Width="330"/>
                                                 <TextBlock Text="Recent Colors:" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,2"/>
                                                 <ItemsControl ItemsSource="{Binding $parent[views:MainWindow].RecentColors}">
                                                     <ItemsControl.ItemsPanel>
