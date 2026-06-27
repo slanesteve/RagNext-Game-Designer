@@ -5029,6 +5029,79 @@ namespace RagNext.Designer.Avalonia.Views
             WrapComposeSelection("<u>", "</u>");
         }
 
+        private void OnColorViewLoaded(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is ColorView cv)
+            {
+                ConfigureColorViewHexParsing(cv);
+            }
+        }
+
+        private void ConfigureColorViewHexParsing(ColorView cv)
+        {
+            var tb = cv.FindDescendantOfType<TextBox>();
+            if (tb != null)
+            {
+                tb.LostFocus += (sender, args) =>
+                {
+                    NormalizeHexInput(cv, tb);
+                };
+                tb.PropertyChanged += (sender, args) =>
+                {
+                    if (args.Property.Name == "Text")
+                    {
+                        NormalizeHexInput(cv, tb);
+                    }
+                };
+            }
+        }
+
+        private bool _isNormalizingHex = false;
+        private void NormalizeHexInput(ColorView cv, TextBox tb)
+        {
+            if (_isNormalizingHex) return;
+            if (tb == null || !tb.IsFocused) return;
+
+            var text = tb.Text?.Trim();
+            if (string.IsNullOrEmpty(text)) return;
+
+            if (text.StartsWith("#")) text = text.Substring(1);
+
+            if (text.Length == 8)
+            {
+                if (uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var hexVal))
+                {
+                    // Parse as RGBA (standard for ColorView)
+                    var r_rgba = (byte)((hexVal >> 24) & 0xFF);
+                    var g_rgba = (byte)((hexVal >> 16) & 0xFF);
+                    var b_rgba = (byte)((hexVal >> 8) & 0xFF);
+                    var a_rgba = (byte)(hexVal & 0xFF);
+                    var rgbaColor = Color.FromArgb(a_rgba, r_rgba, g_rgba, b_rgba);
+
+                    // Parse as ARGB (what user pasted from rich text tags)
+                    var a_argb = (byte)((hexVal >> 24) & 0xFF);
+                    var r_argb = (byte)((hexVal >> 16) & 0xFF);
+                    var g_argb = (byte)((hexVal >> 8) & 0xFF);
+                    var b_argb = (byte)(hexVal & 0xFF);
+                    var argbColor = Color.FromArgb(a_argb, r_argb, g_argb, b_argb);
+
+                    // If it matches the current color as RGBA, it's already in sync
+                    if (cv.Color == rgbaColor)
+                    {
+                        return;
+                    }
+
+                    // Otherwise, if we parse it as ARGB and it's different from current, update it!
+                    if (cv.Color != argbColor)
+                    {
+                        _isNormalizingHex = true;
+                        cv.Color = argbColor;
+                        _isNormalizingHex = false;
+                    }
+                }
+            }
+        }
+
         private void OnComposeColorPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
             var picker = this.FindControl<ColorView>("ComposeColorPicker");

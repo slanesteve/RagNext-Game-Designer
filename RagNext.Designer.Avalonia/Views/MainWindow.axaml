@@ -2710,7 +2710,7 @@
                                     <Button.Flyout>
                                         <Flyout>
                                             <StackPanel Spacing="8" Width="350">
-                                                <ColorView x:Name="ComposeColorPicker" Color="#FFFFFF" Margin="0" IsAlphaEnabled="True" Height="320" Width="330"/>
+                                                <ColorView x:Name="ComposeColorPicker" Loaded="OnColorViewLoaded" Color="#FFFFFF" Margin="0" IsAlphaEnabled="True" Height="320" Width="330"/>
                                                 <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,2">
                                                     <TextBlock Grid.Column="0" Text="Recent Colors:" FontSize="11" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
@@ -2749,7 +2749,7 @@
                                     <Button.Flyout>
                                         <Flyout>
                                             <StackPanel Spacing="8" Width="350">
-                                                <ColorView x:Name="ComposeHighlightPicker" Color="#EF4444" Margin="0" IsAlphaEnabled="True" Height="320" Width="330"/>
+                                                <ColorView x:Name="ComposeHighlightPicker" Loaded="OnColorViewLoaded" Color="#EF4444" Margin="0" IsAlphaEnabled="True" Height="320" Width="330"/>
                                                 <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,2">
                                                     <TextBlock Grid.Column="0" Text="Recent Colors:" FontSize="11" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
