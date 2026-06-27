@@ -5040,10 +5040,12 @@ namespace RagNext.Designer.Avalonia.Views
                         if (_isNormalizingHex) return;
 
                         var tb = FindHexTextBox(cv);
-                        if (tb != null && tb.IsFocused)
+                        if (tb != null)
                         {
                             var text = tb.Text?.Trim();
                             if (string.IsNullOrEmpty(text)) return;
+
+                            if (text == _lastNormalizedHex) return;
 
                             var hasHash = text.StartsWith("#");
                             var cleanText = hasHash ? text.Substring(1) : text;
@@ -5064,7 +5066,9 @@ namespace RagNext.Designer.Avalonia.Views
                                         _isNormalizingHex = true;
                                         cv.Color = argbColor;
                                         var prefix = hasHash ? "#" : "";
-                                        tb.Text = $"{prefix}{r:X2}{g:X2}{b:X2}{a:X2}";
+                                        var normalized = $"{prefix}{r:X2}{g:X2}{b:X2}{a:X2}";
+                                        _lastNormalizedHex = normalized;
+                                        tb.Text = normalized;
                                         _isNormalizingHex = false;
                                     }
                                 }
@@ -5073,6 +5077,10 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                 };
             }
+        }
+
+        private void HookHexTextBox(ColorView cv)
+        {
         }
 
         private TextBox? FindHexTextBox(Visual visual)
@@ -5090,6 +5098,33 @@ namespace RagNext.Designer.Avalonia.Views
         }
 
         private bool _isNormalizingHex = false;
+        private string? _lastNormalizedHex = null;
+
+        private void LogTextBoxes(ColorView cv)
+        {
+            try
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("=== Listing TextBoxes inside ColorView ===");
+                void Traverse(Visual visual, int depth)
+                {
+                    if (visual is TextBox tb)
+                    {
+                        sb.AppendLine($"{new string(' ', depth * 2)}- TextBox Name: '{tb.Name}', Text: '{tb.Text}', IsFocused: {tb.IsFocused}");
+                    }
+                    foreach (var child in visual.GetVisualChildren())
+                    {
+                        Traverse(child, depth + 1);
+                    }
+                }
+                Traverse(cv, 0);
+                File.WriteAllText(@"C:\Users\steve\.gemini\antigravity\brain\e208b4c8-1a51-4659-846c-c16f3c4c04e6\scratch\colorview_debug.log", sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                File.WriteAllText(@"C:\Users\steve\.gemini\antigravity\brain\e208b4c8-1a51-4659-846c-c16f3c4c04e6\scratch\colorview_error.log", ex.ToString());
+            }
+        }
 
         private void OnComposeColorPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
