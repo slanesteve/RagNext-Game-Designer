@@ -5062,23 +5062,23 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 tb.LostFocus += (sender, args) =>
                 {
-                    NormalizeHexInput(cv, tb);
+                    NormalizeHexInput(cv, tb, true);
                 };
                 tb.PropertyChanged += (sender, args) =>
                 {
-                    if (args.Property == TextBox.TextProperty)
+                    if (args.Property.Name == "Text")
                     {
-                        NormalizeHexInput(cv, tb);
+                        NormalizeHexInput(cv, tb, false);
                     }
                 };
             }
         }
 
         private bool _isNormalizingHex = false;
-        private void NormalizeHexInput(ColorView cv, TextBox tb)
+        private void NormalizeHexInput(ColorView cv, TextBox tb, bool force)
         {
             if (_isNormalizingHex) return;
-            if (tb == null || !tb.IsFocused) return;
+            if (!force && (tb == null || !tb.IsFocused)) return;
 
             var text = tb.Text?.Trim();
             if (string.IsNullOrEmpty(text)) return;
