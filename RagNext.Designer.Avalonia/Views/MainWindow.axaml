@@ -2715,7 +2715,7 @@
                                                     <TextBlock Grid.Column="0" Text="Recent Colors:" FontSize="11" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                         <TextBlock Text="Preview:" FontSize="11" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
-                                                        <Border Width="20" Height="20" CornerRadius="10" Background="{Binding #ComposeColorPicker.Color}" BorderBrush="White" BorderThickness="1" VerticalAlignment="Center"/>
+                                                        <Border Width="20" Height="20" CornerRadius="10" x:CompileBindings="False" Background="{Binding #ComposeColorPicker.Color, Converter={x:Static views:ColorToBrushConverter.Instance}}" BorderBrush="White" BorderThickness="1" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Grid>
                                                 <ItemsControl ItemsSource="{Binding $parent[views:MainWindow].RecentColors}">
@@ -2754,7 +2754,7 @@
                                                     <TextBlock Grid.Column="0" Text="Recent Colors:" FontSize="11" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                         <TextBlock Text="Preview:" FontSize="11" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
-                                                        <Border Width="20" Height="20" CornerRadius="10" Background="{Binding #ComposeHighlightPicker.Color}" BorderBrush="White" BorderThickness="1" VerticalAlignment="Center"/>
+                                                        <Border Width="20" Height="20" CornerRadius="10" x:CompileBindings="False" Background="{Binding #ComposeHighlightPicker.Color, Converter={x:Static views:ColorToBrushConverter.Instance}}" BorderBrush="White" BorderThickness="1" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Grid>
                                                 <ItemsControl ItemsSource="{Binding $parent[views:MainWindow].RecentColors}">

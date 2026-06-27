@@ -5831,6 +5831,29 @@ namespace RagNext.Designer.Avalonia.Views
         }
     }
 
+    public class ColorToBrushConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly ColorToBrushConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is global::Avalonia.Media.Color color)
+            {
+                return new global::Avalonia.Media.SolidColorBrush(color);
+            }
+            return global::Avalonia.Media.Brushes.White;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is global::Avalonia.Media.SolidColorBrush brush)
+            {
+                return brush.Color;
+            }
+            return global::Avalonia.Media.Colors.White;
+        }
+    }
+
     public class DesignerTemplateResolverConverter : global::Avalonia.Data.Converters.IValueConverter
     {
         public static readonly DesignerTemplateResolverConverter Instance = new();
