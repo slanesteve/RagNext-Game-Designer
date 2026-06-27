@@ -5114,6 +5114,8 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         _isNormalizingHex = true;
                         cv.Color = argbColor;
+                        var prefix = text.StartsWith("#") ? "#" : "";
+                        tb.Text = $"{prefix}{r_argb:X2}{g_argb:X2}{b_argb:X2}{a_argb:X2}";
                         _isNormalizingHex = false;
                     }
                 }
