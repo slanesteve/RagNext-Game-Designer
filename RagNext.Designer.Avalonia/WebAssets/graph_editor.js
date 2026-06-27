@@ -315,6 +315,9 @@ function initGraph() {
     });
 
     container.addEventListener('wheel', (e) => {
+        if (e.target.tagName === 'TEXTAREA' || e.target.closest('textarea')) {
+            return; // Let the textarea scroll naturally
+        }
         e.preventDefault();
         const rect = container.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
