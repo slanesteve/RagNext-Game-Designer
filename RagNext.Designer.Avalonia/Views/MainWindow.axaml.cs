@@ -5033,24 +5033,43 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is ColorView cv)
             {
-                cv.TemplateApplied += (s, ev) =>
+                cv.PropertyChanged += (s, args) =>
                 {
-                    HookHexTextBox(cv);
-                };
-                HookHexTextBox(cv);
-            }
-        }
-
-        private void HookHexTextBox(ColorView cv)
-        {
-            var tb = FindHexTextBox(cv);
-            if (tb != null)
-            {
-                tb.PropertyChanged += (sender, args) =>
-                {
-                    if (args.Property.Name == "Text")
+                    if (args.Property == ColorView.ColorProperty)
                     {
-                        NormalizeHexInputDirect(cv, tb);
+                        if (_isNormalizingHex) return;
+
+                        var tb = FindHexTextBox(cv);
+                        if (tb != null && tb.IsFocused)
+                        {
+                            var text = tb.Text?.Trim();
+                            if (string.IsNullOrEmpty(text)) return;
+
+                            var hasHash = text.StartsWith("#");
+                            var cleanText = hasHash ? text.Substring(1) : text;
+
+                            if (cleanText.Length == 8)
+                            {
+                                if (uint.TryParse(cleanText, System.Globalization.NumberStyles.HexNumber, null, out var hexVal))
+                                {
+                                    // Parse as ARGB (what user pasted from rich text tags)
+                                    var a = (byte)((hexVal >> 24) & 0xFF);
+                                    var r = (byte)((hexVal >> 16) & 0xFF);
+                                    var g = (byte)((hexVal >> 8) & 0xFF);
+                                    var b = (byte)(hexVal & 0xFF);
+                                    var argbColor = Color.FromArgb(a, r, g, b);
+
+                                    if (cv.Color != argbColor)
+                                    {
+                                        _isNormalizingHex = true;
+                                        cv.Color = argbColor;
+                                        var prefix = hasHash ? "#" : "";
+                                        tb.Text = $"{prefix}{r:X2}{g:X2}{b:X2}{a:X2}";
+                                        _isNormalizingHex = false;
+                                    }
+                                }
+                            }
+                        }
                     }
                 };
             }
@@ -5071,39 +5090,6 @@ namespace RagNext.Designer.Avalonia.Views
         }
 
         private bool _isNormalizingHex = false;
-        private void NormalizeHexInputDirect(ColorView cv, TextBox tb)
-        {
-            if (_isNormalizingHex) return;
-            if (tb == null || !tb.IsFocused) return;
-
-            var text = tb.Text?.Trim();
-            if (string.IsNullOrEmpty(text)) return;
-
-            var hasHash = text.StartsWith("#");
-            var cleanText = hasHash ? text.Substring(1) : text;
-
-            if (cleanText.Length == 8)
-            {
-                if (uint.TryParse(cleanText, System.Globalization.NumberStyles.HexNumber, null, out var hexVal))
-                {
-                    // Parse as ARGB (what user pasted from rich text tags)
-                    var a = (byte)((hexVal >> 24) & 0xFF);
-                    var r = (byte)((hexVal >> 16) & 0xFF);
-                    var g = (byte)((hexVal >> 8) & 0xFF);
-                    var b = (byte)(hexVal & 0xFF);
-                    var argbColor = Color.FromArgb(a, r, g, b);
-
-                    if (cv.Color != argbColor)
-                    {
-                        _isNormalizingHex = true;
-                        cv.Color = argbColor;
-                        var prefix = hasHash ? "#" : "";
-                        tb.Text = $"{prefix}{r:X2}{g:X2}{b:X2}{a:X2}";
-                        _isNormalizingHex = false;
-                    }
-                }
-            }
-        }
 
         private void OnComposeColorPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
