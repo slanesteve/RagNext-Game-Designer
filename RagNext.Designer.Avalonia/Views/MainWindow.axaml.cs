@@ -5033,6 +5033,10 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is ColorView cv)
             {
+                cv.TemplateApplied += (s, ev) =>
+                {
+                    ConfigureColorViewHexParsing(cv);
+                };
                 ConfigureColorViewHexParsing(cv);
             }
         }
@@ -5062,7 +5066,7 @@ namespace RagNext.Designer.Avalonia.Views
                 };
                 tb.PropertyChanged += (sender, args) =>
                 {
-                    if (args.Property.Name == "Text")
+                    if (args.Property == TextBox.TextProperty)
                     {
                         NormalizeHexInput(cv, tb);
                     }
