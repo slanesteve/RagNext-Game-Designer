@@ -5033,11 +5033,17 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is ColorView cv)
             {
-                cv.TemplateApplied += (s, ev) =>
+                cv.PropertyChanged += (s, args) =>
                 {
-                    ConfigureColorViewHexParsing(cv);
+                    if (args.Property == ColorView.ColorProperty)
+                    {
+                        var tb = FindHexTextBox(cv);
+                        if (tb != null && tb.IsFocused)
+                        {
+                            NormalizeHexInput(cv, tb, false);
+                        }
+                    }
                 };
-                ConfigureColorViewHexParsing(cv);
             }
         }
 
@@ -5053,25 +5059,6 @@ namespace RagNext.Designer.Avalonia.Views
                 if (result != null) return result;
             }
             return null;
-        }
-
-        private void ConfigureColorViewHexParsing(ColorView cv)
-        {
-            var tb = FindHexTextBox(cv);
-            if (tb != null)
-            {
-                tb.LostFocus += (sender, args) =>
-                {
-                    NormalizeHexInput(cv, tb, true);
-                };
-                tb.PropertyChanged += (sender, args) =>
-                {
-                    if (args.Property.Name == "Text")
-                    {
-                        NormalizeHexInput(cv, tb, false);
-                    }
-                };
-            }
         }
 
         private bool _isNormalizingHex = false;
