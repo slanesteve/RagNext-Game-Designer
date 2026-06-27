@@ -36,6 +36,62 @@ namespace RagNext.Designer.Avalonia.Views
         private TextBox? _lastFocusedTextBox = null;
         private bool _isSelectingStatusBarElement = false;
 
+        public ObservableCollection<string> RecentColors { get; } = new()
+        {
+            "#FFFFFF", "#EF4444", "#3B82F6", "#10B981", "#F59E0B"
+        };
+
+        private void AddToRecentColors(string hex)
+        {
+            if (string.IsNullOrWhiteSpace(hex)) return;
+            if (!hex.StartsWith("#")) hex = "#" + hex;
+            RecentColors.Remove(hex);
+            RecentColors.Insert(0, hex);
+            while (RecentColors.Count > 5)
+            {
+                RecentColors.RemoveAt(RecentColors.Count - 1);
+            }
+        }
+
+        private void OnRecentColorClicked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Background is ISolidColorBrush brush)
+            {
+                var color = brush.Color;
+                var parent = btn.GetVisualParent();
+                while (parent != null)
+                {
+                    var cv = parent.FindDescendantOfType<ColorView>();
+                    if (cv != null)
+                    {
+                        cv.Color = color;
+                        return;
+                    }
+                    var cp = parent.FindDescendantOfType<ColorPicker>();
+                    if (cp != null)
+                    {
+                        cp.Color = color;
+                        return;
+                    }
+                    parent = parent.GetVisualParent();
+                }
+            }
+        }
+
+        private string? GetHexFromVisualParent(Visual visual)
+        {
+            var parent = visual.GetVisualParent();
+            while (parent != null)
+            {
+                var cv = parent.FindDescendantOfType<ColorView>();
+                if (cv != null) return cv.Color.ToString();
+                var cp = parent.FindDescendantOfType<ColorPicker>();
+                if (cp != null) return cp.Color.ToString();
+                parent = parent.GetVisualParent();
+            }
+            return null;
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -403,6 +459,21 @@ namespace RagNext.Designer.Avalonia.Views
                             {
                                 await Task.Delay(250);
                                 UpdateComposePreview(vm.ComposeText);
+                                var composeTextBox = this.FindControl<TextBox>("ComposeTextBox");
+                                if (composeTextBox != null && composeTextBox.IsVisible)
+                                {
+                                    _lastFocusedTextBox = composeTextBox;
+                                    composeTextBox.Focus();
+                                }
+                                else
+                                {
+                                    var composeTextBoxStatus = this.FindControl<TextBox>("ComposeTextBox_Status");
+                                    if (composeTextBoxStatus != null && composeTextBoxStatus.IsVisible)
+                                    {
+                                        _lastFocusedTextBox = composeTextBoxStatus;
+                                        composeTextBoxStatus.Focus();
+                                    }
+                                }
                             });
                         }
                     }
@@ -4960,66 +5031,52 @@ namespace RagNext.Designer.Avalonia.Views
 
         private void OnComposeColorPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
-            var picker = this.FindControl<ColorPicker>("ComposeColorPicker");
+            var picker = this.FindControl<ColorView>("ComposeColorPicker");
             if (picker != null)
             {
                 var hex = picker.Color.ToString();
                 WrapComposeSelection($"<color={hex}>", "</color>");
+                AddToRecentColors(hex);
             }
             CloseParentFlyout(sender);
         }
 
         private void OnComposeHighlightPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
-            var picker = this.FindControl<ColorPicker>("ComposeHighlightPicker");
+            var picker = this.FindControl<ColorView>("ComposeHighlightPicker");
             if (picker != null)
             {
                 var hex = picker.Color.ToString();
                 WrapComposeSelection($"<mark={hex}>", "</mark>");
+                AddToRecentColors(hex);
             }
             CloseParentFlyout(sender);
         }
 
         private void OnInlineColorPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
-            ColorPicker? picker = null;
             if (sender is Visual visual)
             {
-                var parent = visual.GetVisualParent();
-                while (parent != null)
+                var hex = GetHexFromVisualParent(visual);
+                if (hex != null)
                 {
-                    picker = parent.FindDescendantOfType<ColorPicker>();
-                    if (picker != null) break;
-                    parent = parent.GetVisualParent();
+                    WrapComposeSelection($"<color={hex}>", "</color>");
+                    AddToRecentColors(hex);
                 }
-            }
-
-            if (picker != null)
-            {
-                var hex = picker.Color.ToString();
-                WrapComposeSelection($"<color={hex}>", "</color>");
             }
             CloseParentFlyout(sender);
         }
 
         private void OnInlineHighlightPickerApply(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
-            ColorPicker? picker = null;
             if (sender is Visual visual)
             {
-                var parent = visual.GetVisualParent();
-                while (parent != null)
+                var hex = GetHexFromVisualParent(visual);
+                if (hex != null)
                 {
-                    picker = parent.FindDescendantOfType<ColorPicker>();
-                    if (picker != null) break;
-                    parent = parent.GetVisualParent();
+                    WrapComposeSelection($"<mark={hex}>", "</mark>");
+                    AddToRecentColors(hex);
                 }
-            }
-
-            if (picker != null)
-            {
-                var hex = picker.Color.ToString();
-                WrapComposeSelection($"<mark={hex}>", "</mark>");
             }
             CloseParentFlyout(sender);
         }

@@ -2709,9 +2709,28 @@
                                     </StackPanel>
                                     <Button.Flyout>
                                         <Flyout>
-                                            <StackPanel Spacing="6" Width="200">
-                                                <ColorPicker x:Name="ComposeColorPicker" Color="#FFFFFF" Margin="0" HorizontalAlignment="Center"/>
-                                                <Button Content="Apply" Click="OnComposeColorPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                            <StackPanel Spacing="8" Width="300">
+                                                <ColorView x:Name="ComposeColorPicker" Color="#FFFFFF" Margin="0" IsAlphaEnabled="True" Height="320"/>
+                                                <TextBlock Text="Recent Colors:" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,2"/>
+                                                <ItemsControl ItemsSource="{Binding $parent[views:MainWindow].RecentColors}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="x:String">
+                                                            <Button Width="24" Height="24" CornerRadius="12" Background="{Binding}" Click="OnRecentColorClicked" ToolTip.Tip="{Binding}" BorderBrush="Transparent" BorderThickness="1">
+                                                                <Button.Styles>
+                                                                    <Style Selector="Button:hover">
+                                                                        <Setter Property="BorderBrush" Value="White"/>
+                                                                    </Style>
+                                                                </Button.Styles>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Button Content="Apply" Click="OnComposeColorPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold" Margin="0,4,0,0"/>
                                             </StackPanel>
                                         </Flyout>
                                     </Button.Flyout>
@@ -2723,9 +2742,28 @@
                                     </StackPanel>
                                     <Button.Flyout>
                                         <Flyout>
-                                            <StackPanel Spacing="6" Width="200">
-                                                <ColorPicker x:Name="ComposeHighlightPicker" Color="#EF4444" Margin="0" HorizontalAlignment="Center"/>
-                                                <Button Content="Apply" Click="OnComposeHighlightPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold"/>
+                                            <StackPanel Spacing="8" Width="300">
+                                                <ColorView x:Name="ComposeHighlightPicker" Color="#EF4444" Margin="0" IsAlphaEnabled="True" Height="320"/>
+                                                <TextBlock Text="Recent Colors:" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,2"/>
+                                                <ItemsControl ItemsSource="{Binding $parent[views:MainWindow].RecentColors}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="x:String">
+                                                            <Button Width="24" Height="24" CornerRadius="12" Background="{Binding}" Click="OnRecentColorClicked" ToolTip.Tip="{Binding}" BorderBrush="Transparent" BorderThickness="1">
+                                                                <Button.Styles>
+                                                                    <Style Selector="Button:hover">
+                                                                        <Setter Property="BorderBrush" Value="White"/>
+                                                                    </Style>
+                                                                </Button.Styles>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Button Content="Apply" Click="OnComposeHighlightPickerApply" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#8E2DE2" Foreground="White" FontWeight="Bold" Margin="0,4,0,0"/>
                                             </StackPanel>
                                         </Flyout>
                                     </Button.Flyout>
