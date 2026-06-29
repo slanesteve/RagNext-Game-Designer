@@ -186,6 +186,13 @@ namespace RagNextPlayer.Managers
             _roomActionsContainer   = _root.Q<VisualElement>("room-actions-container");
             _gameInfoLabel          = _root.Q<Label>("game-info");
             _narrativeScroll        = _root.Q<ScrollView>("narrative-scroll");
+            if (_narrativeScroll != null && _narrativeScroll.verticalScroller != null)
+            {
+                _narrativeScroll.verticalScroller.RegisterValueChangedCallback(evt =>
+                {
+                    UnityEngine.Debug.Log($"[UIManager] verticalScroller value changed from {evt.previousValue} to {evt.newValue}. StackTrace:\n{System.Environment.StackTrace}");
+                });
+            }
             
             // Bind static compass buttons
             _compassButtons.Clear();
@@ -2061,6 +2068,7 @@ namespace RagNextPlayer.Managers
         private void ScrollNarrativeToBottom()
         {
             if (_narrativeScroll == null) return;
+            UnityEngine.Debug.Log($"[UIManager] ScrollNarrativeToBottom called. StackTrace:\n{System.Environment.StackTrace}");
             StartCoroutine(ScrollNarrativeToBottomCoroutine());
         }
 
@@ -2069,13 +2077,17 @@ namespace RagNextPlayer.Managers
             yield return new WaitForEndOfFrame();
             if (_narrativeScroll != null && _narrativeScroll.verticalScroller != null)
             {
-                _narrativeScroll.verticalScroller.value = _narrativeScroll.verticalScroller.highValue;
+                float oldVal = _narrativeScroll.verticalScroller.value;
+                float highVal = _narrativeScroll.verticalScroller.highValue;
+                _narrativeScroll.verticalScroller.value = highVal;
+                UnityEngine.Debug.Log($"[UIManager] ScrollNarrativeToBottomCoroutine executed. Old Val: {oldVal}, New Val (High): {highVal}, Current Val: {_narrativeScroll.verticalScroller.value}");
             }
         }
 
         private void ScrollNarrativeToElement(VisualElement element)
         {
             if (element == null || _narrativeScroll == null) return;
+            UnityEngine.Debug.Log($"[UIManager] ScrollNarrativeToElement called for {element}. StackTrace:\n{System.Environment.StackTrace}");
             StartCoroutine(ScrollNarrativeToElementCoroutine(element));
         }
 
@@ -2084,6 +2096,7 @@ namespace RagNextPlayer.Managers
             yield return new WaitForEndOfFrame();
             if (element != null && _narrativeScroll != null && _narrativeScroll.Contains(element))
             {
+                UnityEngine.Debug.Log($"[UIManager] ScrollNarrativeToElementCoroutine executed for {element}");
                 _narrativeScroll.ScrollTo(element);
             }
         }
