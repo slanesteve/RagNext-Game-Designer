@@ -188,10 +188,10 @@ namespace RagNextPlayer.Managers
             _narrativeScroll        = _root.Q<ScrollView>("narrative-scroll");
             if (_narrativeScroll != null && _narrativeScroll.verticalScroller != null)
             {
-                _narrativeScroll.verticalScroller.RegisterValueChangedCallback(evt =>
+                _narrativeScroll.verticalScroller.valueChanged += (val) =>
                 {
-                    UnityEngine.Debug.Log($"[UIManager] verticalScroller value changed from {evt.previousValue} to {evt.newValue}. StackTrace:\n{System.Environment.StackTrace}");
-                });
+                    UnityEngine.Debug.Log($"[UIManager] verticalScroller value changed to {val}. StackTrace:\n{System.Environment.StackTrace}");
+                };
             }
             
             // Bind static compass buttons
