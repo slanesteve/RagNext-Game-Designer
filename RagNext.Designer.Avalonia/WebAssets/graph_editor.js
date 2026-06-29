@@ -4650,7 +4650,6 @@ function getAutocompleteSuggestions(triggerChar) {
                             list.push({ token: `variables.${v.Name}.${col}.<row_index>`, typeName: "Array Template (Col-First)", desc: `Access column '${col}' for any row index.` });
                             list.push({ token: `variables.${v.Name}.<row_index>.${col}`, typeName: "Array Template (Row-First)", desc: `Access column '${col}' for any row index.` });
                         });
-                    }
 
                         const rowCount = v.RowCount || v.rowCount || 0;
                         if (rowCount > 0 && rowCount <= 10) {
