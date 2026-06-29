@@ -2061,33 +2061,31 @@ namespace RagNextPlayer.Managers
         private void ScrollNarrativeToBottom()
         {
             if (_narrativeScroll == null) return;
-            
-            EventCallback<GeometryChangedEvent> callback = null;
-            callback = (evt) =>
+            StartCoroutine(ScrollNarrativeToBottomCoroutine());
+        }
+
+        private IEnumerator ScrollNarrativeToBottomCoroutine()
+        {
+            yield return new WaitForEndOfFrame();
+            if (_narrativeScroll != null)
             {
-                if (_narrativeScroll != null)
-                {
-                    _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue);
-                    _narrativeScroll.contentContainer.UnregisterCallback(callback);
-                }
-            };
-            _narrativeScroll.contentContainer.RegisterCallback(callback);
+                _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue);
+            }
         }
 
         private void ScrollNarrativeToElement(VisualElement element)
         {
             if (element == null || _narrativeScroll == null) return;
-            
-            EventCallback<GeometryChangedEvent> callback = null;
-            callback = (evt) =>
+            StartCoroutine(ScrollNarrativeToElementCoroutine(element));
+        }
+
+        private IEnumerator ScrollNarrativeToElementCoroutine(VisualElement element)
+        {
+            yield return new WaitForEndOfFrame();
+            if (element != null && _narrativeScroll != null && _narrativeScroll.Contains(element))
             {
-                if (element != null && _narrativeScroll != null && _narrativeScroll.Contains(element))
-                {
-                    _narrativeScroll.ScrollTo(element);
-                    _narrativeScroll.contentContainer.UnregisterCallback(callback);
-                }
-            };
-            _narrativeScroll.contentContainer.RegisterCallback(callback);
+                _narrativeScroll.ScrollTo(element);
+            }
         }
 
         private RenderTexture _videoTexture;
