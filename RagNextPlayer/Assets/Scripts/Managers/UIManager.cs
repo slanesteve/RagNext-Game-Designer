@@ -2067,9 +2067,9 @@ namespace RagNextPlayer.Managers
         private IEnumerator ScrollNarrativeToBottomCoroutine()
         {
             yield return new WaitForEndOfFrame();
-            if (_narrativeScroll != null)
+            if (_narrativeScroll != null && _narrativeScroll.verticalScroller != null)
             {
-                _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue);
+                _narrativeScroll.verticalScroller.value = _narrativeScroll.verticalScroller.highValue;
             }
         }
 
@@ -2584,10 +2584,10 @@ namespace RagNextPlayer.Managers
 
         private IEnumerator ScrollHistoryLogToBottomCoroutine()
         {
-            yield return null;
-            if (_historyLogScroll != null)
+            yield return new WaitForEndOfFrame();
+            if (_historyLogScroll != null && _historyLogScroll.verticalScroller != null)
             {
-                _historyLogScroll.scrollOffset = new Vector2(0f, _historyLogScroll.layout.height * 10f);
+                _historyLogScroll.verticalScroller.value = _historyLogScroll.verticalScroller.highValue;
             }
         }
 
