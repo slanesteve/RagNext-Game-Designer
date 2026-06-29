@@ -2139,7 +2139,9 @@ function addNewConditionNode(x = null, y = null) {
     node.bodyElement.appendChild(fieldContainer);
 
     if (AVAILABLE_CONDITIONS.length > 0) {
-        node.data.conditionType = AVAILABLE_CONDITIONS[0].type;
+        const defaultCond = AVAILABLE_CONDITIONS.find(c => c.type === 'variable.forEachLoop') || AVAILABLE_CONDITIONS[0];
+        node.data.conditionType = defaultCond.type;
+        select.value = defaultCond.type;
         updateOutputLabels(node.data.conditionType);
         refreshCommandFields(node);
     }
