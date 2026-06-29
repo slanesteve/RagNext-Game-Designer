@@ -100,6 +100,22 @@ Below is the complete reference of conditional branch checks supported by the Ra
 | Item | `Item` | ComboBox |
 | Object | `GameObject` | ComboBox |
 
+### Item: Is Item Worn
+
+*Checks if the player is currently wearing a specific item.*
+
+| Parameter | Type | UI Input |
+| :--- | :--- | :--- |
+| Item | `Item` | ComboBox |
+
+### Item: Can Item Be Worn
+
+*Checks if an item can be worn (i.e. is wearable and has no slot conflicts with currently worn items).*
+
+| Parameter | Type | UI Input |
+| :--- | :--- | :--- |
+| Item | `Item` | ComboBox |
+
 ## Player
 
 ### Player: Attribute Check

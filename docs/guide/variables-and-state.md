@@ -32,3 +32,14 @@ Variables can be dynamically read and printed inside dialogue, descriptions, or 
 * `{player.currentRoomId}`: Returns the active room GUID.
 * `{MyScore}`: Prints the value of the global variable `MyScore`.
 * `{char.CharacterGuid.displayedPortraitId}`: Returns the active portrait asset GUID.
+
+### 4. Wear Slot Resolvers
+If items are configured with wear slots (e.g. `Feet`, `Torso`), you can resolve who is wearing what:
+* `{this.WearSlot}`: Returns the slot name assigned to the focus item.
+* `{player.wornIn.SlotName}` / `{player.wornSlot.SlotName}`: Returns the **Name** of the item currently worn in that slot (e.g. `{player.wornIn.Feet}` -> `"Kitten Heels"`), or empty if none is worn.
+* **Recursive templates**: e.g., `{player.wornIn.{this.WearSlot}}`.
+
+### 5. Loop Scope Variables
+Inside the body of a **For Each Loop** block, you can resolve the current row's properties:
+* `{loop.Name}`: Returns the name of the current loop item.
+* `{loop.attributes.AttributeName}`: Returns the custom attribute value (e.g., `{loop.attributes.Girliness}`). If the item does not have that attribute, it resolves cleanly to an empty string (`""`).

@@ -54,3 +54,19 @@ An Action's execution is initiated by a **Trigger Event**. You define this on th
 Inside the Visual Script Editor, you can use the **✨ AI Assistant** button.
 1. Click the button and type a natural language prompt (e.g., *"If player has key, unlock the north exit of Milestone 42, else display 'It's locked'"*).
 2. The AI compiles the instructions and automatically connects the corresponding Condition, Display Text, and Unlock Exit nodes on your canvas.
+
+---
+
+## 🎨 Graph Canvas Controls
+
+The visual graph canvas supports standard productivity features to manage large node configurations easily:
+
+### 1. Multi-Selection & Moving Groups
+* **How to Select**: Hold `Ctrl` (or `Cmd` on Mac) and drag a selection box over the nodes you want to capture. Selected nodes will highlight with a border.
+* **How to Move**: Click and drag any selected node. The entire group of selected nodes will move together, preserving their links and relative layout.
+
+### 2. Copy & Paste
+* You can duplicate nodes or move sections across actions:
+  * Select the target nodes and press `Ctrl+C` to copy.
+  * Move your mouse to a target area on the canvas and press `Ctrl+V` to paste.
+* pasted actions automatically generate clean, unique names (e.g. copying `"Wear"` generates `"Wear - Copy"`, then `"Wear - Copy (2)"`) to prevent name clashes.
