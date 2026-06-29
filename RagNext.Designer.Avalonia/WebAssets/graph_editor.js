@@ -1186,7 +1186,13 @@ function createFormattingToolbar(textarea, previewElement, fieldName, node) {
     btnCompose.onclick = (e) => {
         e.preventDefault();
         const currentText = textarea.value;
-        const composeUrl = "compose?nodeId=" + node.id + "&fieldName=" + fieldName + "&currentText=" + encodeURIComponent(currentText);
+        let composeUrl = "compose?nodeId=" + node.id + "&fieldName=" + fieldName + "&currentText=" + encodeURIComponent(currentText);
+        
+        const loopContext = getLoopContextInfo(node.id);
+        if (loopContext) {
+            composeUrl += "&loopSource=" + encodeURIComponent(loopContext.source) + "&loopArrayVar=" + encodeURIComponent(loopContext.arrayVar);
+        }
+
         if (typeof invokeCSharpAction === 'function') {
             invokeCSharpAction(composeUrl);
         } else {
@@ -4475,6 +4481,39 @@ let activeAutocomplete = {
     activeIndex: 0
 };
 
+function findUpstreamLoopNode(nodeId, visited = new Set()) {
+    if (!nodeId || visited.has(nodeId)) return null;
+    visited.add(nodeId);
+
+    const conn = connections.find(c => c.toPinId === `${nodeId}_in`);
+    if (!conn) return null;
+
+    const fromPin = conn.fromPinId;
+    const upstreamNodeId = getNodeIdFromPinId(fromPin);
+    if (!upstreamNodeId) return null;
+
+    const upstreamNode = nodes.find(n => n.id === upstreamNodeId);
+    if (!upstreamNode) return null;
+
+    if (upstreamNode.type === 'condition' && upstreamNode.data.conditionType === 'variable.forEachLoop') {
+        if (fromPin === `${upstreamNodeId}_true`) {
+            return upstreamNode;
+        }
+        return null;
+    }
+
+    return findUpstreamLoopNode(upstreamNodeId, visited);
+}
+
+function getLoopContextInfo(nodeId) {
+    const loopNode = findUpstreamLoopNode(nodeId);
+    if (!loopNode) return null;
+
+    const source = getPropertyValue(loopNode.data, "Loop Source") || getPropertyValue(loopNode.data, "LoopSource") || "Variable";
+    const arrayVar = getPropertyValue(loopNode.data, "Array Variable") || getPropertyValue(loopNode.data, "ArrayVariable") || "";
+    return { source, arrayVar };
+}
+
 function getAutocompleteSuggestions(triggerChar) {
     const list = [];
     if (triggerChar === '{') {
@@ -4549,18 +4588,29 @@ function getAutocompleteSuggestions(triggerChar) {
             list.push({ token: `room.attributes.${a}`, typeName: "Current Room Attribute", desc: `Current room custom attribute '${a}'.` });
         });
 
-        // General For Each Loop tokens
-        list.push({ token: "loop.Id", typeName: "Loop Property", desc: "Unique ID of the current loop iteration item." });
-        list.push({ token: "loop.Name", typeName: "Loop Property", desc: "Name of the current loop iteration item." });
-        list.push({ token: "loop.Description", typeName: "Loop Property", desc: "Description of the current loop iteration item." });
-        list.push({ token: "loop.IsWorn", typeName: "Loop Property (Item)", desc: "Whether the current loop item is worn." });
-        list.push({ token: "loop.IsContainer", typeName: "Loop Property (Item)", desc: "Whether the current loop item is a container." });
-        list.push({ token: "loop.IsCollectible", typeName: "Loop Property (Item)", desc: "Whether the current loop item is collectible." });
+        // General For Each Loop tokens (only if inside a For Each Loop block)
+        const nodeEl = activeAutocomplete.targetInput ? activeAutocomplete.targetInput.closest('.node') : null;
+        const nodeId = nodeEl ? nodeEl.id : null;
+        const loopContext = getLoopContextInfo(nodeId);
 
-        uniqueAttrNames.forEach(a => {
-            list.push({ token: `loop.attributes.${a}`, typeName: "Loop Custom Attribute", desc: `Custom attribute '${a}' of the current loop iteration item.` });
-            list.push({ token: `loop.${a}`, typeName: "Loop Custom Attribute (Direct)", desc: `Direct access to custom attribute '${a}' of the current loop iteration item.` });
-        });
+        if (loopContext) {
+            if (loopContext.source === "Items" || loopContext.source === "Characters") {
+                list.push({ token: "loop.Id", typeName: "Loop Property", desc: "Unique ID of the current loop iteration item." });
+                list.push({ token: "loop.Name", typeName: "Loop Property", desc: "Name of the current loop iteration item." });
+                list.push({ token: "loop.Description", typeName: "Loop Property", desc: "Description of the current loop iteration item." });
+                
+                if (loopContext.source === "Items") {
+                    list.push({ token: "loop.IsWorn", typeName: "Loop Property (Item)", desc: "Whether the current loop item is worn." });
+                    list.push({ token: "loop.IsContainer", typeName: "Loop Property (Item)", desc: "Whether the current loop item is a container." });
+                    list.push({ token: "loop.IsCollectible", typeName: "Loop Property (Item)", desc: "Whether the current loop item is collectible." });
+                }
+
+                uniqueAttrNames.forEach(a => {
+                    list.push({ token: `loop.attributes.${a}`, typeName: "Loop Custom Attribute", desc: `Custom attribute '${a}' of the current loop iteration item.` });
+                    list.push({ token: `loop.${a}`, typeName: "Loop Custom Attribute (Direct)", desc: `Direct access to custom attribute '${a}' of the current loop iteration item.` });
+                });
+            }
+        }
 
         // Player
         list.push({ token: "player.Name", typeName: "Player Property", desc: "Name of the protagonist." });
@@ -4591,11 +4641,16 @@ function getAutocompleteSuggestions(triggerChar) {
                     list.push({ token: `variables.${v.Name}`, typeName: "Array Variable", desc: "Multi-Dimensional Array variable." });
                     const cols = v.Columns || v.columns;
                     if (cols) {
+                        if (loopContext && loopContext.source === "Variable" && String(loopContext.arrayVar).toLowerCase() === String(v.Name).toLowerCase()) {
+                            getArray(cols).forEach(col => {
+                                list.push({ token: `loop.${col}`, typeName: `Loop Variable (${v.Name})`, desc: `Value of column '${col}' for current iteration of '${v.Name}'.` });
+                            });
+                        }
                         getArray(cols).forEach(col => {
-                            list.push({ token: `Loop.${col}`, typeName: `Loop Variable (${v.Name})`, desc: `Value of column '${col}' for current iteration of '${v.Name}'.` });
                             list.push({ token: `variables.${v.Name}.${col}.<row_index>`, typeName: "Array Template (Col-First)", desc: `Access column '${col}' for any row index.` });
                             list.push({ token: `variables.${v.Name}.<row_index>.${col}`, typeName: "Array Template (Row-First)", desc: `Access column '${col}' for any row index.` });
                         });
+                    }
 
                         const rowCount = v.RowCount || v.rowCount || 0;
                         if (rowCount > 0 && rowCount <= 10) {

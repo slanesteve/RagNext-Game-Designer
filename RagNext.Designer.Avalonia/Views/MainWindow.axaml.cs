@@ -1080,7 +1080,7 @@ namespace RagNext.Designer.Avalonia.Views
                         string nodeId = query["nodeId"] ?? "";
                         string fieldName = query["fieldName"] ?? "";
                         string currentText = query["currentText"] ?? "";
-                        TriggerCompose(nodeId, fieldName, currentText);
+                        TriggerCompose(nodeId, fieldName, currentText, "", "");
                     }
                     else if (url.StartsWith("rags-action://update-char-starting-room"))
                     {
@@ -1285,7 +1285,9 @@ namespace RagNext.Designer.Avalonia.Views
                     string nodeId = query["nodeId"] ?? "";
                     string fieldName = query["fieldName"] ?? "";
                     string currentText = query["currentText"] ?? "";
-                    TriggerCompose(nodeId, fieldName, currentText);
+                    string loopSource = query["loopSource"] ?? "";
+                    string loopArrayVar = query["loopArrayVar"] ?? "";
+                    TriggerCompose(nodeId, fieldName, currentText, loopSource, loopArrayVar);
                 }
                 else if (msg.StartsWith("preview-sound?"))
                 {
@@ -3898,6 +3900,9 @@ namespace RagNext.Designer.Avalonia.Views
 
             var list = new System.Collections.Generic.List<AutocompleteItem>();
             var game = App.CurrentGame;
+            var vm = DataContext as MainWindowViewModel;
+            string composeLoopSource = vm?.ComposeLoopSource ?? "";
+            string composeLoopArrayVar = vm?.ComposeLoopArrayVar ?? "";
             
             if (game != null)
             {
@@ -4062,15 +4067,21 @@ namespace RagNext.Designer.Avalonia.Views
                                 });
                                 if (v.Columns != null)
                                 {
+                                    if (!string.IsNullOrEmpty(composeLoopSource) && string.Equals(composeLoopSource, "Variable", StringComparison.OrdinalIgnoreCase) && string.Equals(composeLoopArrayVar, v.Name, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        foreach (var col in v.Columns)
+                                        {
+                                            list.Add(new AutocompleteItem { 
+                                                Token = $"loop.{col}", 
+                                                DisplayToken = $"{{loop.{col}}}", 
+                                                TypeName = $"Loop Variable ({v.Name})", 
+                                                Description = $"Value of column '{col}' for current iteration of '{v.Name}'." 
+                                            });
+                                        }
+                                    }
+
                                     foreach (var col in v.Columns)
                                     {
-                                        list.Add(new AutocompleteItem { 
-                                            Token = $"Loop.{col}", 
-                                            DisplayToken = $"{{Loop.{col}}}", 
-                                            TypeName = $"Loop Variable ({v.Name})", 
-                                            Description = $"Value of column '{col}' for current iteration of '{v.Name}'." 
-                                        });
-
                                         // Placeholder templates
                                         list.Add(new AutocompleteItem { 
                                             Token = $"variables.{v.Name}.{col}.<row_index>", 
@@ -4139,6 +4150,31 @@ namespace RagNext.Designer.Avalonia.Views
                             string nameClean = o.Name.Replace(" ", "");
                             list.Add(new AutocompleteItem { Token = $"objects.{nameClean}.Name", DisplayToken = $"{{objects.{nameClean}.Name}}", TypeName = "Object Property", Description = $"Name of object '{o.Name}'." });
                             list.Add(new AutocompleteItem { Token = $"objects.{nameClean}.Description", DisplayToken = $"{{objects.{nameClean}.Description}}", TypeName = "Object Property", Description = $"Description of object '{o.Name}'." });
+                        }
+                    }
+
+                    // Add general For Each Loop properties to autocomplete in Compose window (only if inside an Item/Character loop)
+                    if (!string.IsNullOrEmpty(composeLoopSource))
+                    {
+                        if (string.Equals(composeLoopSource, "Items", StringComparison.OrdinalIgnoreCase) || 
+                            string.Equals(composeLoopSource, "Characters", StringComparison.OrdinalIgnoreCase))
+                        {
+                            list.Add(new AutocompleteItem { Token = "loop.Id", DisplayToken = "{loop.Id}", TypeName = "Loop Property", Description = "Unique ID of the current loop iteration item." });
+                            list.Add(new AutocompleteItem { Token = "loop.Name", DisplayToken = "{loop.Name}", TypeName = "Loop Property", Description = "Name of the current loop iteration item." });
+                            list.Add(new AutocompleteItem { Token = "loop.Description", DisplayToken = "{loop.Description}", TypeName = "Loop Property", Description = "Description of the current loop iteration item." });
+                            
+                            if (string.Equals(composeLoopSource, "Items", StringComparison.OrdinalIgnoreCase))
+                            {
+                                list.Add(new AutocompleteItem { Token = "loop.IsWorn", DisplayToken = "{loop.IsWorn}", TypeName = "Loop Property (Item)", Description = "Whether the current loop item is worn." });
+                                list.Add(new AutocompleteItem { Token = "loop.IsContainer", DisplayToken = "{loop.IsContainer}", TypeName = "Loop Property (Item)", Description = "Whether the current loop item is a container." });
+                                list.Add(new AutocompleteItem { Token = "loop.IsCollectible", DisplayToken = "{loop.IsCollectible}", TypeName = "Loop Property (Item)", Description = "Whether the current loop item is collectible." });
+                            }
+
+                            foreach (var a in uniqueAttrNames)
+                            {
+                                list.Add(new AutocompleteItem { Token = $"loop.attributes.{a}", DisplayToken = $"{{loop.attributes.{a}}}", TypeName = "Loop Custom Attribute", Description = $"Custom attribute '{a}' of the current loop iteration item." });
+                                list.Add(new AutocompleteItem { Token = $"loop.{a}", DisplayToken = $"{{loop.{a}}}", TypeName = "Loop Custom Attribute (Direct)", Description = $"Direct access to custom attribute '{a}' of the current loop iteration item." });
+                            }
                         }
                     }
                 }
@@ -4330,7 +4366,7 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        private void TriggerCompose(string nodeId, string fieldName, string currentText)
+        private void TriggerCompose(string nodeId, string fieldName, string currentText, string loopSource, string loopArrayVar)
         {
             _composeSelectionStart = -1;
             _composeSelectionEnd = -1;
@@ -4338,6 +4374,8 @@ namespace RagNext.Designer.Avalonia.Views
             vm.ComposeNodeId = nodeId;
             vm.ComposeFieldName = fieldName;
             vm.ComposeText = currentText;
+            vm.ComposeLoopSource = loopSource;
+            vm.ComposeLoopArrayVar = loopArrayVar;
             vm.ComposeTitle = $"Compose {fieldName} - Node {nodeId}";
             vm.ComposeTarget = null;
             vm.ShowComposeOverlay = true;

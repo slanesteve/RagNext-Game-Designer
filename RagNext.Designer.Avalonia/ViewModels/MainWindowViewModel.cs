@@ -745,6 +745,20 @@ namespace RagNext.Designer.Avalonia.ViewModels
             set => SetProperty(ref _composeFieldName, value);
         }
 
+        private string? _composeLoopSource;
+        public string? ComposeLoopSource
+        {
+            get => _composeLoopSource;
+            set => SetProperty(ref _composeLoopSource, value);
+        }
+
+        private string? _composeLoopArrayVar;
+        public string? ComposeLoopArrayVar
+        {
+            get => _composeLoopArrayVar;
+            set => SetProperty(ref _composeLoopArrayVar, value);
+        }
+
         public event Func<string, string, string, Task>? ComposeApplied;
 
         private object? _attributeTarget; // Can be Player, Room, Character, or GameObject
