@@ -2060,32 +2060,34 @@ namespace RagNextPlayer.Managers
 
         private void ScrollNarrativeToBottom()
         {
-            // Schedule two frames out to let Unity UI Toolkit complete layout before scrolling
-            _narrativeScroll?.schedule.Execute(() =>
+            if (_narrativeScroll == null) return;
+            
+            EventCallback<GeometryChangedEvent> callback = null;
+            callback = (evt) =>
             {
-                _narrativeScroll?.schedule.Execute(() =>
+                if (_narrativeScroll != null)
                 {
-                    if (_narrativeScroll != null)
-                    {
-                        _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue);
-                    }
-                }).Until(() => true);
-            }).Until(() => true);
+                    _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue);
+                    _narrativeScroll.contentContainer.UnregisterCallback(callback);
+                }
+            };
+            _narrativeScroll.contentContainer.RegisterCallback(callback);
         }
 
         private void ScrollNarrativeToElement(VisualElement element)
         {
             if (element == null || _narrativeScroll == null) return;
-            _narrativeScroll.schedule.Execute(() =>
+            
+            EventCallback<GeometryChangedEvent> callback = null;
+            callback = (evt) =>
             {
-                _narrativeScroll?.schedule.Execute(() =>
+                if (element != null && _narrativeScroll != null && _narrativeScroll.Contains(element))
                 {
-                    if (element != null && _narrativeScroll != null && _narrativeScroll.Contains(element))
-                    {
-                        _narrativeScroll.ScrollTo(element);
-                    }
-                }).Until(() => true);
-            }).Until(() => true);
+                    _narrativeScroll.ScrollTo(element);
+                    _narrativeScroll.contentContainer.UnregisterCallback(callback);
+                }
+            };
+            _narrativeScroll.contentContainer.RegisterCallback(callback);
         }
 
         private RenderTexture _videoTexture;
