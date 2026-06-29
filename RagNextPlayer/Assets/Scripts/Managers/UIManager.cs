@@ -2064,8 +2064,13 @@ namespace RagNextPlayer.Managers
             _narrativeScroll?.schedule.Execute(() =>
             {
                 _narrativeScroll?.schedule.Execute(() =>
-                    _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue));
-            });
+                {
+                    if (_narrativeScroll != null)
+                    {
+                        _narrativeScroll.scrollOffset = new Vector2(0, float.MaxValue);
+                    }
+                }).Until(() => true);
+            }).Until(() => true);
         }
 
         private void ScrollNarrativeToElement(VisualElement element)
@@ -2079,8 +2084,8 @@ namespace RagNextPlayer.Managers
                     {
                         _narrativeScroll.ScrollTo(element);
                     }
-                });
-            });
+                }).Until(() => true);
+            }).Until(() => true);
         }
 
         private RenderTexture _videoTexture;
