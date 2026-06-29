@@ -60,6 +60,7 @@
     <Compile Include="Assets\Scripts\Runtime\Models\GameData.cs" />
     <Compile Include="Assets\Scripts\Managers\InteractionController.cs" />
     <Compile Include="Assets\Scripts\Managers\CommandEffectRouter.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Models\SaveStateData.cs" />
     <Compile Include="Assets\Scripts\Runtime\ActionExecutor.cs" />
   </ItemGroup>
   <ItemGroup>

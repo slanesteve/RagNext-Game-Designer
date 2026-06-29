@@ -387,6 +387,19 @@
       <ui:Button name="prompt-submit-btn" class="settings-toggle-btn" style="margin-top: 12px; width: auto;" text="✔ Submit" />
     </ui:VisualElement>
 
+    <!-- ══ GAME OVER POPUP (hidden by default) ═══════════════════════════ -->
+    <ui:VisualElement name="game-over-menu" class="settings-menu" style="display: none;">
+      <ui:Label name="game-over-title" class="settings-menu-title" text="Game Over" style="color: #ff5252;" />
+      <ui:Label name="game-over-message" class="game-over-message" text="The game has ended." />
+      
+      <!-- Buttons container -->
+      <ui:VisualElement style="margin-top: 12px; flex-direction: column;">
+        <ui:Button name="game-over-restart-btn" class="settings-toggle-btn" style="margin-top: 4px; width: 100%;" text="↺ Restart" />
+        <ui:Button name="game-over-load-btn" class="settings-toggle-btn" style="margin-top: 4px; width: 100%;" text="📂 Load Game" />
+        <ui:Button name="game-over-exit-btn" class="settings-toggle-btn" style="margin-top: 4px; width: 100%;" text="⏻ Exit" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+
     <!-- ══ SPLASH SCREEN OVERLAY ═════════════════════════════════════════════ -->
     <ui:VisualElement name="splash-screen" class="splash-screen">
       <ui:VisualElement class="splash-badge">

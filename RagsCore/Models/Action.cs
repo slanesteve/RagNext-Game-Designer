@@ -60,6 +60,9 @@ namespace RagsCore.Models
         private bool _applyToStaticObjects;
         public bool ApplyToStaticObjects { get => _applyToStaticObjects; set => SetProperty(ref _applyToStaticObjects, value); }
 
+        private bool _applyToContainerObjects;
+        public bool ApplyToContainerObjects { get => _applyToContainerObjects; set => SetProperty(ref _applyToContainerObjects, value); }
+
         private bool _applyToTimers;
         public bool ApplyToTimers { get => _applyToTimers; set => SetProperty(ref _applyToTimers, value); }
 

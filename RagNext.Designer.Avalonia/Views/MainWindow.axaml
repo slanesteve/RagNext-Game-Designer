@@ -149,6 +149,24 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Wear Slots Management Card -->
+                        <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+                            <StackPanel Spacing="16">
+                                <TextBlock Text="👕 Wear Slots Settings" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2" Margin="0,0,0,4"/>
+                                <TextBlock Text="Define the slots where wearable items can be worn. Only one item can occupy a slot at any time." Foreground="{DynamicResource TextMuted}" FontSize="12"/>
+                                
+                                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto" Margin="0,4,0,0" RowSpacing="12" ColumnSpacing="8">
+                                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding CurrentGame.WearSlots}" x:Name="WearSlotsListBox" Height="120" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4"/>
+                                    
+                                    <TextBox Grid.Row="1" Grid.Column="0" x:Name="NewWearSlotTextBox" PlaceholderText="New Slot Name (e.g. Head, Hands)" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                        <Button Content="+ Add" Click="OnAddWearSlotClicked" Background="#8E2DE2" Foreground="White"/>
+                                        <Button Content="Delete" Click="OnDeleteWearSlotClicked" Background="#C0392B" Foreground="White"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Project Statistics -->
                         <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
                             <StackPanel Spacing="12">
@@ -1109,6 +1127,11 @@
                                                 <CheckBox IsChecked="{Binding IsWorn, Mode=TwoWay}" IsEnabled="{Binding IsWearable}" Content="Initially Worn" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
                                             </StackPanel>
 
+                                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0" IsVisible="{Binding IsWearable}">
+                                                <TextBlock Text="Wear Slot:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
+                                                <ComboBox ItemsSource="{Binding $parent[Window].DataContext.CurrentGame.WearSlots}" SelectedItem="{Binding WearSlot, Mode=TwoWay}" Width="150" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                            </StackPanel>
+
                                             <!-- Description -->
                                             <TextBlock Text="Description" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,0"/>
                                             <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
@@ -2007,9 +2030,11 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                             
-                            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
-                                <Button Content="+ Action" Command="{Binding AddGlobalActionCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" FontSize="11" Padding="10,6" CornerRadius="4"/>
-                                <Button Content="Delete" Command="{Binding DeleteGlobalActionCommand}" CommandParameter="{Binding #GlobalActionsList.SelectedItem}" Background="#C0392B" Foreground="White" FontSize="11" Padding="10,6" CornerRadius="4"/>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="4" Margin="0,8,0,0">
+                                <Button Content="+ Action" Command="{Binding AddGlobalActionCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" FontSize="11" Padding="8,6" CornerRadius="4"/>
+                                <Button Content="Delete" Command="{Binding DeleteGlobalActionCommand}" CommandParameter="{Binding #GlobalActionsList.SelectedItem}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,6" CornerRadius="4"/>
+                                <Button Content="Copy" Command="{Binding CopyActionCommand}" CommandParameter="{Binding #GlobalActionsList.SelectedItem}" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="11" Padding="8,6" CornerRadius="4"/>
+                                <Button Content="Paste" Command="{Binding PasteGlobalActionCommand}" IsEnabled="{Binding CanPasteAction}" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="11" Padding="8,6" CornerRadius="4"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -2041,6 +2066,7 @@
                                     <CheckBox IsChecked="{Binding ApplyToCharacters, Mode=TwoWay}" Content="Characters" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToGrabableObjects, Mode=TwoWay}" Content="Grabable Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToWearableObjects, Mode=TwoWay}" Content="Wearable Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
+                                    <CheckBox IsChecked="{Binding ApplyToContainerObjects, Mode=TwoWay}" Content="Container Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToStaticObjects, Mode=TwoWay}" Content="Static Objects" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToTimers, Mode=TwoWay}" Content="Timers" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>
                                     <CheckBox IsChecked="{Binding ApplyToFunctions, Mode=TwoWay}" Content="Functions" Margin="0,0,16,8" FontSize="12" Foreground="{DynamicResource TextNormal}"/>

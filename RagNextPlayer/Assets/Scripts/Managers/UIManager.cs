@@ -343,6 +343,7 @@ namespace RagNextPlayer.Managers
             // Query Game Over menu elements
             _gameOverMenu        = _root.Q<VisualElement>("game-over-menu");
             _gameOverMessage     = _root.Q<Label>("game-over-message");
+            if (_gameOverMessage is not null) _gameOverMessage.enableRichText = true;
             _gameOverRestartBtn  = _root.Q<Button>("game-over-restart-btn");
             _gameOverLoadBtn     = _root.Q<Button>("game-over-load-btn");
             _gameOverExitBtn     = _root.Q<Button>("game-over-exit-btn");
@@ -1664,7 +1665,10 @@ namespace RagNextPlayer.Managers
             }
 
             // Clear narrative scroll to show current action/room text only
-            _narrativeScroll.Clear();
+            if (!_hasClearedForCurrentAction)
+            {
+                _narrativeScroll.Clear();
+            }
 
             // Room name header
             var header = new Label(roomName);
@@ -2699,6 +2703,7 @@ namespace RagNextPlayer.Managers
         private void OnCompassExitClicked(string targetRoomId)
         {
             // Trigger room movement
+            PrepareForNewAction();
             GameManager.Instance?.MovePlayerToRoom(targetRoomId);
         }
 
@@ -2859,8 +2864,18 @@ namespace RagNextPlayer.Managers
 
         public void ShowGameOverScreen(string finalMessage)
         {
+            UnityEngine.Debug.Log($"[UIManager] ShowGameOverScreen called. finalMessage: '{finalMessage}', _gameOverMessage is {(_gameOverMessage != null ? "NOT null" : "null")}");
+
+            if (string.IsNullOrWhiteSpace(finalMessage))
+            {
+                finalMessage = "The game has ended.";
+            }
+
             if (_gameOverMessage is not null)
+            {
+                _gameOverMessage.enableRichText = true;
                 _gameOverMessage.text = finalMessage;
+            }
 
             if (_gameOverMenu is not null)
             {

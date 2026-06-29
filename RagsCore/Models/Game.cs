@@ -53,6 +53,9 @@ namespace RagsCore.Models
         public ObservableCollection<GameTimer> Timers { get; set; } = new();
         public ObservableCollection<StatusBarElement> StatusBarElements { get; set; } = new();
 
+        private ObservableCollection<string> _wearSlots = new() { "Head", "Torso", "Legs", "Feet", "Hands", "Neck", "Back" };
+        public ObservableCollection<string> WearSlots { get => _wearSlots; set => SetProperty(ref _wearSlots, value); }
+
         public SplashScreenSettings SplashScreen { get; set; } = new();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

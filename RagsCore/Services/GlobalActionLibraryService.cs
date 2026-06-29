@@ -95,7 +95,25 @@ namespace RagsCore.Services
             wear.Nodes.Add(new SetItemAttributeCommand { ItemId = "{this.Id}", AttributeName = "Worn", Value = "True" });
             wear.Nodes.Add(new DisplayTextCommand { Text = "You put on the {this.Name}." });
 
-            return new List<RagsCore.Models.Action> { examine, take, drop, wear };
+            var open = new RagsCore.Models.Action
+            {
+                Name = "Open",
+                Trigger = ActionTrigger.UserClicked,
+                ApplyToContainerObjects = true
+            };
+            open.Nodes.Add(new OpenContainerCommand { ObjectId = "{this.Id}" });
+            open.Nodes.Add(new DisplayTextCommand { Text = "You open the {this.Name}." });
+
+            var close = new RagsCore.Models.Action
+            {
+                Name = "Close",
+                Trigger = ActionTrigger.UserClicked,
+                ApplyToContainerObjects = true
+            };
+            close.Nodes.Add(new CloseContainerCommand { ObjectId = "{this.Id}" });
+            close.Nodes.Add(new DisplayTextCommand { Text = "You close the {this.Name}." });
+
+            return new List<RagsCore.Models.Action> { examine, take, drop, wear, open, close };
         }
     }
 }

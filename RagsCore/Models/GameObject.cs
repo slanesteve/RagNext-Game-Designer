@@ -41,6 +41,9 @@ namespace RagsCore.Models
         private bool _isWorn;
         public bool IsWorn { get => _isWorn; set => SetProperty(ref _isWorn, value); }
 
+        private string _wearSlot = string.Empty;
+        public string WearSlot { get => _wearSlot; set => SetProperty(ref _wearSlot, value); }
+
         private string? _portraitImagePath;
         public string? PortraitImagePath
         {

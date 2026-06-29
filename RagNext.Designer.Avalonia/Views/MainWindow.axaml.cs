@@ -4691,6 +4691,7 @@ namespace RagNext.Designer.Avalonia.Views
                 case "itemnotheldbyplayer": return "item.notHeldByPlayer";
                 case "itemnotinobject": return "item.notInObject";
                 case "itemisitemworn": return "item.isWorn";
+                case "itemcanitembeworn": return "item.canWear";
                 case "isroomexitlocked": return "room.isExitLocked";
                 case "charactergender": return "char.gender";
                 case "characterinroom": return "char.inRoom";
@@ -5383,6 +5384,30 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private void OnAddWearSlotClicked(object? sender, RoutedEventArgs e)
+        {
+            if (App.CurrentGame == null) return;
+            var textBox = this.FindControl<TextBox>("NewWearSlotTextBox");
+            if (textBox != null)
+            {
+                var newSlot = textBox.Text?.Trim();
+                if (!string.IsNullOrEmpty(newSlot) && !App.CurrentGame.WearSlots.Contains(newSlot))
+                {
+                    App.CurrentGame.WearSlots.Add(newSlot);
+                    textBox.Text = string.Empty;
+                }
+            }
+        }
+
+        private void OnDeleteWearSlotClicked(object? sender, RoutedEventArgs e)
+        {
+            if (App.CurrentGame == null) return;
+            var listBox = this.FindControl<ListBox>("WearSlotsListBox");
+            if (listBox != null && listBox.SelectedItem is string selectedSlot)
+            {
+                App.CurrentGame.WearSlots.Remove(selectedSlot);
+            }
+        }
     }
 
     public class AutocompleteItem

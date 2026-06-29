@@ -55,6 +55,7 @@ namespace RagNextPlayer.Runtime.Models
                 "item.inObject"     => typeof(ItemInObjectConditionData),
                 "item.notInObject"  => typeof(ItemNotInObjectConditionData),
                 "item.isWorn"       => typeof(ItemWornConditionData),
+                "item.canWear"      => typeof(ItemCanWearConditionData),
                 "player.sameRoom"   => typeof(PlayerInSameRoomAsConditionData),
                 "char.inRoom"       => typeof(CharacterInRoomConditionData),
                 "char.gender"       => typeof(CharacterGenderConditionData),

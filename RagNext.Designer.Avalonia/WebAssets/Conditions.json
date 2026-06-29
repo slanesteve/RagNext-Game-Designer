@@ -172,6 +172,17 @@
       ]
     },
     {
+      "name": "Item: Can Item Be Worn",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Item",
+          "controlType": "ComboBox",
+          "dataType": "Item"
+        }
+      ]
+    },
+    {
       "name": "Player: Attribute Check",
       "category": "Player",
       "inputs": [
@@ -438,13 +449,23 @@
       ]
     },
     {
-      "name": "Variable: For Each Loop",
-      "category": "Variable",
+      "name": "For Each Loop",
+      "category": "General",
       "inputs": [
+        {
+          "label": "Loop Source",
+          "controlType": "ComboBox",
+          "dataType": "String"
+        },
         {
           "label": "Array Variable",
           "controlType": "ComboBox",
           "dataType": "Variable"
+        },
+        {
+          "label": "Filter Type",
+          "controlType": "ComboBox",
+          "dataType": "String"
         }
       ]
     },

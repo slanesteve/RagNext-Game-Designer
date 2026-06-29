@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RagNextPlayer.Runtime.Models;
 using UnityEngine;
 
@@ -158,14 +159,16 @@ namespace RagNextPlayer.Runtime
         private readonly ForEachLoopCommandData _loopNode;
         private readonly GameExecutionContext _ctx;
         private readonly List<List<string>> _rows;
+        private readonly List<string> _columns;
         private int _currentRowIndex = -1;
         private IEnumerator<ActionStepData>? _currentBodyEnumerator;
 
-        public LoopScopeTracker(ForEachLoopCommandData loopNode, GameExecutionContext ctx, List<List<string>> rows)
+        public LoopScopeTracker(ForEachLoopCommandData loopNode, GameExecutionContext ctx, List<List<string>> rows, List<string> columns = null)
         {
             _loopNode = loopNode;
             _ctx = ctx;
             _rows = rows;
+            _columns = columns;
         }
 
         public ForEachLoopCommandData LoopNode => _loopNode;
@@ -205,15 +208,40 @@ namespace RagNextPlayer.Runtime
 
         private void SetupRowVariables()
         {
-            var varObj = _ctx.Game.Variables.Find(v => string.Equals(v.Name, _loopNode.ArrayVariableName, StringComparison.OrdinalIgnoreCase));
-            if (varObj != null)
+            // Clear any old Loop variables first to prevent contamination
+            var oldLoopVars = _ctx.Game.Variables.Where(v => v.Name.StartsWith("Loop.", StringComparison.OrdinalIgnoreCase)).ToList();
+            foreach (var oldVar in oldLoopVars)
             {
-                var rowData = _rows[_currentRowIndex];
-                for (int i = 0; i < varObj.Columns.Count; i++)
+                _ctx.Game.Variables.Remove(oldVar);
+            }
+
+            var rowData = _rows[_currentRowIndex];
+
+            if (_columns != null && _columns.Count > 0)
+            {
+                for (int i = 0; i < _columns.Count; i++)
                 {
-                    string colName = varObj.Columns[i];
+                    string colName = _columns[i];
                     string value = i < rowData.Count ? rowData[i] : string.Empty;
                     _ctx.SetVariable($"Loop.{colName}", value);
+                    // Expose dynamic custom attributes under loop.attributes.Name as well
+                    if (i >= 3)
+                    {
+                        _ctx.SetVariable($"Loop.attributes.{colName}", value);
+                    }
+                }
+            }
+            else
+            {
+                var varObj = _ctx.Game.Variables.Find(v => string.Equals(v.Name, _loopNode.ArrayVariableName, StringComparison.OrdinalIgnoreCase));
+                if (varObj != null)
+                {
+                    for (int i = 0; i < varObj.Columns.Count; i++)
+                    {
+                        string colName = varObj.Columns[i];
+                        string value = i < rowData.Count ? rowData[i] : string.Empty;
+                        _ctx.SetVariable($"Loop.{colName}", value);
+                    }
                 }
             }
         }
@@ -378,11 +406,137 @@ namespace RagNextPlayer.Runtime
                             }
                             else if (cond is ForEachLoopCommandData loopNode)
                             {
-                                var varName = loopNode.ArrayVariableName;
-                                var arrayVar = _ctx.Game.Variables.Find(v => string.Equals(v.Name, varName, StringComparison.OrdinalIgnoreCase));
-                                if (arrayVar != null && arrayVar.Rows != null && arrayVar.Rows.Count > 0)
+                                List<List<string>> rows = new List<List<string>>();
+                                List<string> columns = new List<string>();
+
+                                var loopSource = loopNode.LoopSource ?? "Variable";
+                                var filterType = loopNode.FilterType ?? "All";
+
+                                if (string.Equals(loopSource, "Variable", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    var loopTracker = new LoopScopeTracker(loopNode, _ctx, arrayVar.Rows);
+                                    var varName = loopNode.ArrayVariableName;
+                                    var arrayVar = _ctx.Game.Variables.Find(v => string.Equals(v.Name, varName, StringComparison.OrdinalIgnoreCase));
+                                    if (arrayVar != null && arrayVar.Rows != null)
+                                    {
+                                        columns = arrayVar.Columns;
+                                        rows = arrayVar.Rows;
+                                    }
+                                }
+                                else if (string.Equals(loopSource, "Items", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    columns = new List<string> { "Id", "Name", "Description", "IsWorn", "IsContainer", "IsCollectible" };
+                                    IEnumerable<GameObjectData> items = _ctx.Game.Objects.Where(o => !o.IsCharacter);
+                                    if (string.Equals(filterType, "Inventory", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        items = _ctx.Player.Inventory;
+                                    }
+                                    else if (string.Equals(filterType, "Worn", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        items = _ctx.Player.Inventory.Where(i => i.IsWearable && (i.IsWorn || (i.Attributes.TryGetValue("Worn", out var wVal) && string.Equals(wVal, "True", StringComparison.OrdinalIgnoreCase))));
+                                    }
+                                    else if (string.Equals(filterType, "Room", StringComparison.OrdinalIgnoreCase) || string.Equals(filterType, "In Current Room", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        var currentRoomId = _ctx.GetVariable("player.currentRoomId")?.Value;
+                                        var currentRoom = _ctx.Game.Rooms.FirstOrDefault(r => string.Equals(r.Id, currentRoomId, StringComparison.OrdinalIgnoreCase));
+                                        if (currentRoom != null)
+                                        {
+                                            items = _ctx.Game.Objects.Where(o => currentRoom.ObjectIds.Contains(o.Id));
+                                        }
+                                    }
+
+                                    var itemsList = items.ToList();
+                                    foreach (var item in itemsList)
+                                    {
+                                        var row = new List<string> { item.Id, item.Name, item.Description, (item.IsWorn || (item.Attributes.TryGetValue("Worn", out var wVal) && string.Equals(wVal, "True", StringComparison.OrdinalIgnoreCase))).ToString(), item.IsContainer.ToString(), item.IsCollectible.ToString() };
+                                        rows.Add(row);
+                                    }
+
+                                    var allAttrKeys = itemsList.SelectMany(i => i.Attributes.Keys).Distinct().ToList();
+                                    foreach (var attrKey in allAttrKeys)
+                                    {
+                                        columns.Add(attrKey);
+                                    }
+
+                                    for (int i = 0; i < itemsList.Count; i++)
+                                    {
+                                        var item = itemsList[i];
+                                        var row = rows[i];
+                                        foreach (var attrKey in allAttrKeys)
+                                        {
+                                            item.Attributes.TryGetValue(attrKey, out var attrVal);
+                                            row.Add(attrVal ?? string.Empty);
+                                        }
+                                    }
+                                }
+                                else if (string.Equals(loopSource, "Characters", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    columns = new List<string> { "Id", "Name", "Description" };
+                                    IEnumerable<GameObjectData> chars = _ctx.Game.Characters;
+                                    if (string.Equals(filterType, "Room", StringComparison.OrdinalIgnoreCase) || string.Equals(filterType, "In Current Room", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        var currentRoomId = _ctx.GetVariable("player.currentRoomId")?.Value;
+                                        chars = _ctx.Game.Characters.Where(c => {
+                                            var charRoomId = _ctx.GetVariable($"char.{c.Id}.currentRoomId")?.Value ?? c.StartingRoomId;
+                                            return string.Equals(charRoomId, currentRoomId, StringComparison.OrdinalIgnoreCase);
+                                        });
+                                    }
+
+                                    var charsList = chars.ToList();
+                                    foreach (var ch in charsList)
+                                    {
+                                        var row = new List<string> { ch.Id, ch.Name, ch.Description };
+                                        rows.Add(row);
+                                    }
+
+                                    var allAttrKeys = charsList.SelectMany(c => c.Attributes.Keys).Distinct().ToList();
+                                    foreach (var attrKey in allAttrKeys)
+                                    {
+                                        columns.Add(attrKey);
+                                    }
+
+                                    for (int i = 0; i < charsList.Count; i++)
+                                    {
+                                        var ch = charsList[i];
+                                        var row = rows[i];
+                                        foreach (var attrKey in allAttrKeys)
+                                        {
+                                            ch.Attributes.TryGetValue(attrKey, out var attrVal);
+                                            row.Add(attrVal ?? string.Empty);
+                                        }
+                                    }
+                                }
+                                else if (string.Equals(loopSource, "Rooms", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    columns = new List<string> { "Id", "Name", "Description" };
+                                    var rooms = _ctx.Game.Rooms;
+
+                                    foreach (var rm in rooms)
+                                    {
+                                        var row = new List<string> { rm.Id, rm.Name, rm.Description };
+                                        rows.Add(row);
+                                    }
+
+                                    var allAttrKeys = rooms.SelectMany(r => r.Attributes.Keys).Distinct().ToList();
+                                    foreach (var attrKey in allAttrKeys)
+                                    {
+                                        columns.Add(attrKey);
+                                    }
+
+                                    for (int i = 0; i < rooms.Count; i++)
+                                    {
+                                        var rm = rooms[i];
+                                        var row = rows[i];
+                                        foreach (var attrKey in allAttrKeys)
+                                        {
+                                            rm.Attributes.TryGetValue(attrKey, out var attrVal);
+                                            row.Add(attrVal ?? string.Empty);
+                                        }
+                                    }
+                                }
+
+                                if (rows.Count > 0)
+                                {
+                                    var loopTracker = new LoopScopeTracker(loopNode, _ctx, rows, columns);
                                     _scopes.Push(loopTracker);
                                 }
                                 else
@@ -1513,6 +1667,21 @@ namespace RagNextPlayer.Runtime
                 case WearItemCommandData c:
                     {
                         var resolvedItem = ctx.Resolve(c.ItemId);
+                        var targetItem = ctx.Game.Player.Inventory.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolvedItem, StringComparison.OrdinalIgnoreCase)) ?? 
+                                         ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolvedItem, StringComparison.OrdinalIgnoreCase));
+                                         
+                        if (targetItem != null && !string.IsNullOrEmpty(targetItem.WearSlot))
+                        {
+                            var conflict = ctx.Game.Player.Inventory.Find(i => i.IsWorn && string.Equals(i.WearSlot, targetItem.WearSlot, StringComparison.OrdinalIgnoreCase));
+                            if (conflict != null && !string.Equals(conflict.Id, targetItem.Id, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var msg = $"\n(You must take off the {conflict.Name} first.)";
+                                ctx.SetVariable("system.lastDisplayedText", msg);
+                                RagNextPlayer.Managers.UIManager.Instance?.AppendNarrativeText(msg);
+                                break;
+                            }
+                        }
+
                         SetItemWornState(resolvedItem, true, ctx);
                     }
                     break;
@@ -1954,6 +2123,9 @@ namespace RagNextPlayer.Runtime
                 ItemWornConditionData c =>
                     FindGameObject(ctx.Resolve(c.ItemId), ctx.Game)?.IsWorn ?? false,
 
+                ItemCanWearConditionData c =>
+                    EvaluateItemCanWear(c, ctx),
+
                 StatusElementVisibleConditionData c =>
                     ctx.Game.StatusBarElements.Find(e => e.Id == ctx.Resolve(c.ElementId) || string.Equals(e.Name, ctx.Resolve(c.ElementId), StringComparison.OrdinalIgnoreCase))
                         ?.IsVisible ?? false,
@@ -2200,6 +2372,18 @@ namespace RagNextPlayer.Runtime
                     Debug.Log($"[ActionExecutor] SetItemWornState: character '{ch.Name}' inventory item '{chItem.Name}' worn set to {worn}");
                 }
             }
+        }
+
+        private static bool EvaluateItemCanWear(ItemCanWearConditionData c, GameExecutionContext ctx)
+        {
+            var resolved = ctx.Resolve(c.ItemId);
+            var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolved, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolved, StringComparison.OrdinalIgnoreCase));
+            if (obj == null) return false;
+            if (!obj.IsWearable) return false;
+            if (string.IsNullOrEmpty(obj.WearSlot)) return true;
+            
+            var conflict = ctx.Game.Player.Inventory.Find(i => i.IsWorn && string.Equals(i.WearSlot, obj.WearSlot, StringComparison.OrdinalIgnoreCase));
+            return conflict == null || string.Equals(conflict.Id, obj.Id, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool HasLockedExit(IsRoomExitLockedConditionData c, GameExecutionContext ctx)

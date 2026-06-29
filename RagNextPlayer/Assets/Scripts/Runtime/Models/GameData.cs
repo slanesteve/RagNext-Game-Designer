@@ -22,6 +22,7 @@ namespace RagNextPlayer.Runtime.Models
         public List<GameTimerData>        Timers      { get; set; } = new List<GameTimerData>();
         public SplashScreenSettingsData   SplashScreen{ get; set; } = new SplashScreenSettingsData();
         public List<StatusBarElementData> StatusBarElements { get; set; } = new List<StatusBarElementData>();
+        public List<string>               WearSlots           { get; set; } = new List<string>();
 
         [JsonIgnore]
         public List<RuntimeCustomChoice> CustomChoices { get; } = new List<RuntimeCustomChoice>();
@@ -99,6 +100,7 @@ namespace RagNextPlayer.Runtime.Models
         public string?                     StartingRoomId     { get; set; }
         public bool                        IsWearable         { get; set; }
         public bool                        IsWorn             { get; set; }
+        public string                      WearSlot           { get; set; } = string.Empty;
         [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
     }
@@ -204,6 +206,7 @@ namespace RagNextPlayer.Runtime.Models
     public class WearItemCommandData                 : CommandData { public string ItemId { get; set; } = string.Empty; }
     public class RemoveItemCommandData               : CommandData { public string ItemId { get; set; } = string.Empty; }
     public class ItemWornConditionData               : ConditionData { public string ItemId { get; set; } = string.Empty; }
+    public class ItemCanWearConditionData            : ConditionData { public string ItemId { get; set; } = string.Empty; }
     public class CloseContainerCommandData           : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class CallFunctionCommandData            : CommandData { public string FunctionId { get; set; } = string.Empty; }
     public class DamageCharacterCommandData         : CommandData { public string CharacterId { get; set; } = string.Empty; public int Amount { get; set; } }
@@ -279,7 +282,7 @@ namespace RagNextPlayer.Runtime.Models
     public class RoomMoveItemsToPlayerCommandData : CommandData { public string RoomId { get; set; } = string.Empty; }
     
     // Multi-Dimensional Array (MDA) Command and Condition Data structures
-    public class ForEachLoopCommandData : ConditionData { public string ArrayVariableName { get; set; } = string.Empty; }
+    public class ForEachLoopCommandData : ConditionData { public string ArrayVariableName { get; set; } = string.Empty; public string LoopSource { get; set; } = "Variable"; public string FilterType { get; set; } = "All"; }
     public class BreakLoopCommandData : CommandData { }
     public class SetArrayElementCommandData : CommandData { public string ArrayVariableName { get; set; } = string.Empty; public string RowIndex { get; set; } = "0"; public string ColumnName { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class AddArrayRowCommandData : CommandData { public string ArrayVariableName { get; set; } = string.Empty; public string ValuesCommaSeparated { get; set; } = string.Empty; }

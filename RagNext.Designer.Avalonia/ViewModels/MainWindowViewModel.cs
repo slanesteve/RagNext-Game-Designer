@@ -888,6 +888,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public ICommand AddGlobalActionCommand { get; }
         public ICommand DeleteGlobalActionCommand { get; }
+        public ICommand PasteGlobalActionCommand { get; }
         public ICommand SelectActionTemplateCommand { get; }
         public ICommand CloseActionSelectorCommand { get; }
 
@@ -1319,6 +1320,33 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 RagsCore.Services.GlobalActionLibraryService.SaveLibrary(GlobalActions.ToList());
             });
 
+            PasteGlobalActionCommand = new Command(() =>
+            {
+                var pasted = RagNext.Designer.Avalonia.Services.ActionClipboardService.Paste() as RagsCore.Models.Action;
+                if (pasted == null) return;
+
+                string baseName = pasted.Name;
+                string candidate = baseName;
+                int counter = 1;
+                while (System.Linq.Enumerable.Any(GlobalActions, a => string.Equals(a.Name, candidate, StringComparison.OrdinalIgnoreCase)))
+                {
+                    if (counter == 1)
+                    {
+                        candidate = $"{baseName} - Copy";
+                    }
+                    else
+                    {
+                        candidate = $"{baseName} - Copy ({counter})";
+                    }
+                    counter++;
+                }
+
+                pasted.Name = candidate;
+                pasted.PropertyChanged += OnGlobalActionPropertyChanged;
+                GlobalActions.Add(pasted);
+                RagsCore.Services.GlobalActionLibraryService.SaveLibrary(GlobalActions.ToList());
+            });
+
             SelectActionTemplateCommand = new Command<RagsCore.Models.Action>(async template =>
             {
                 Console.WriteLine($"[DEBUG] SelectActionTemplateCommand triggered. Template: {template?.Name ?? "null"}");
@@ -1399,9 +1427,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     else if (parameter is Character) isMatch = act.ApplyToCharacters;
                     else if (parameter is GameObject obj)
                     {
-                        if (obj.IsWearable) isMatch = act.ApplyToWearableObjects;
-                        else if (obj.IsCollectible) isMatch = act.ApplyToGrabableObjects;
-                        else isMatch = act.ApplyToStaticObjects;
+                        if (obj.IsContainer && act.ApplyToContainerObjects) isMatch = true;
+                        if (obj.IsWearable && act.ApplyToWearableObjects) isMatch = true;
+                        if (obj.IsCollectible && act.ApplyToGrabableObjects) isMatch = true;
+                        if (!obj.IsContainer && !obj.IsWearable && !obj.IsCollectible && act.ApplyToStaticObjects) isMatch = true;
                     }
 
                     if (isMatch)

@@ -61,8 +61,10 @@ namespace RagsCore.Services
                     // Support {Loop.colName} by checking exact loop variable name
                     if (parts.Length > 1)
                     {
-                        var loopVar = ctx.GetVariable($"Loop.{parts[1]}");
+                        var suffix = string.Join(".", parts.Skip(1));
+                        var loopVar = ctx.GetVariable($"Loop.{suffix}");
                         if (loopVar != null) return loopVar.Value;
+                        return string.Empty;
                     }
                     return null;
 
@@ -193,6 +195,11 @@ namespace RagsCore.Services
                     if (parts.Length < 3) return null;
                     var attrName = parts[2];
                     return CustomAttribute.GetAttribute(attrName, ctx.Player.Attributes);
+                case "wornin":
+                case "wornslot":
+                    if (parts.Length < 3 || ctx.Player == null) return null;
+                    var slotItem = ctx.Player.Inventory.FirstOrDefault(i => i.IsWorn && string.Equals(i.WearSlot, parts[2], StringComparison.OrdinalIgnoreCase));
+                    return slotItem?.Name ?? string.Empty;
                 default:
                     return null;
             }
@@ -328,6 +335,8 @@ namespace RagsCore.Services
                 case "portraitimagepath":
                 case "portraitimage":
                     return portraitImagePath;
+                case "wearslot":
+                    return (focus as GameObject)?.WearSlot;
                 case "attributes":
                 case "attribute":
                     if (parts.Length < 3 || attributes == null) return null;

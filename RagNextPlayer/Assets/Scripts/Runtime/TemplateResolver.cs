@@ -19,7 +19,7 @@ namespace RagNextPlayer.Runtime
     public static class TemplateResolver
     {
         private static readonly Regex _tokenRegex =
-            new Regex(@"\{([^}]+)\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            new Regex(@"\{([^{}]+)\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         // ── Overloads ──────────────────────────────────────────────────────────
 
@@ -104,6 +104,11 @@ namespace RagNextPlayer.Runtime
                             if (parts.Length < 3 || game.Player?.Attributes == null) return null;
                             game.Player.Attributes.TryGetValue(parts[2], out var attrVal);
                             return attrVal;
+                        case "wornin":
+                        case "wornslot":
+                            if (parts.Length < 3 || game.Player == null) return null;
+                            var slotItem = game.Player.Inventory.Find(i => i.IsWorn && string.Equals(i.WearSlot, parts[2], StringComparison.OrdinalIgnoreCase));
+                            return slotItem?.Name ?? string.Empty;
                         default:            return null;
                     }
 
@@ -111,7 +116,8 @@ namespace RagNextPlayer.Runtime
                 case "loop":
                     if (parts.Length > 1)
                     {
-                        return FindVariable(game, $"Loop.{parts[1]}");
+                        var suffix = string.Join(".", parts, 1, parts.Length - 1);
+                        return FindVariable(game, $"Loop.{suffix}") ?? string.Empty;
                     }
                     return null;
 
@@ -302,6 +308,7 @@ namespace RagNextPlayer.Runtime
                         case "id":          return id ?? entity.GetType().GetProperty("Id")?.GetValue(entity)?.ToString();
                         case "name":        return name;
                         case "description": return description;
+                        case "wearslot":    return (entity as GameObjectData)?.WearSlot;
                         case "portrait":
                         case "characterportrait":
                         case "portraitimagepath":

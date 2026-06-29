@@ -25,6 +25,7 @@ namespace RagNext.Designer.Avalonia.Services
         public List<ExportTimerDto>? Timers { get; set; }
         public ExportSplashScreenDto? SplashScreen { get; set; }
         public List<ExportStatusBarElementDto>? StatusBarElements { get; set; }
+        public List<string>? WearSlots { get; set; }
     }
 
     public class ExportStatusBarElementDto
@@ -81,6 +82,7 @@ namespace RagNext.Designer.Avalonia.Services
         public Dictionary<string, string>? Properties { get; set; }
         public bool IsWearable { get; set; }
         public bool IsWorn { get; set; }
+        public string? WearSlot { get; set; }
         public Dictionary<string, string>? Attributes { get; set; }
     }
 
@@ -178,6 +180,7 @@ namespace RagNext.Designer.Avalonia.Services
             Rooms      = game.Rooms.Select(r => BuildRoomDto(r)).ToList(),
             Objects    = game.Objects.Select(o => BuildObjectDto(o)).ToList(),
             Characters = game.Characters.Select(c => BuildObjectDto(c)).ToList(),
+            WearSlots  = game.WearSlots.ToList(),
             Variables  = game.Variables.Select(v => new ExportVariableDto 
             { 
                 Name = v.Name, 
@@ -294,6 +297,7 @@ namespace RagNext.Designer.Avalonia.Services
             Properties        = o.Properties,
             IsWearable        = o.IsWearable,
             IsWorn            = o.IsWorn,
+            WearSlot          = o.WearSlot,
             Attributes        = o.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
         };
 

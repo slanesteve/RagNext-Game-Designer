@@ -28,6 +28,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(ItemNotHeldByPlayerCondition), "item.notHeldByPlayer")]
     [JsonDerivedType(typeof(ItemNotInObjectCondition), "item.notInObject")]
     [JsonDerivedType(typeof(ItemWornCondition), "item.isWorn")]
+    [JsonDerivedType(typeof(ItemCanWearCondition), "item.canWear")]
     [JsonDerivedType(typeof(VariableComparisonToVariableCondition), "var.compareVar")]
     [JsonDerivedType(typeof(IsRoomExitLockedCondition), "room.isExitLocked")]
     [JsonDerivedType(typeof(CharacterAttributeCheckCondition), "char.attributeCheck")]
@@ -162,18 +163,19 @@ namespace RagsCore.Actions
             {
                 "var.equals", "player.inRoom", "room.hasObject", "player.sameRoom", "item.heldByPlayer",
                 "var.compare", "char.gender", "char.inRoom", "item.inRoom", "player.gender",
-                "item.heldByChar", "item.inObject", "item.notHeldByPlayer", "item.notInObject", "item.isWorn",
+                "item.heldByChar", "item.inObject", "item.notHeldByPlayer", "item.notInObject", "item.isWorn", "item.canWear",
                 "var.compareVar", "room.isExitLocked", "char.attributeCheck", "item.attributeCheck",
                 "player.attributeCheck", "room.attributeCheck", "timer.isActive", "date.partCompare",
                 "date.isPast", "date.isFuture", "date.compareVars", "date.diffCompare", "date.compareConst",
-                "date.isValid", "var.set", "player.moveTo", "room.addObject", "room.removeObject",
+                "date.isValid", "status.isVisible", "var.set", "player.moveTo", "room.addObject", "room.removeObject",
+                "status.show", "status.hide", "status.setText", "status.setImage",
                 "object.displayDescription", "player.displayDescription", "char.displayDescription",
                 "room.displayDescription", "object.moveToCharacter", "object.moveToInventory",
                 "object.moveInsideObject", "general.displayText", "general.addComment", "general.debugText",
                 "media.playSound", "media.playVideo", "media.stopSound", "player.setName",
                 "player.setDescription", "player.setGender", "char.setGender", "var.setRandom",
                 "char.moveToRoom", "char.moveToRandomAdjacent", "char.moveAlongPatrolPath", "media.displayMultimedia", "char.displayPortrait", "char.setPortraitMedia",
-                "player.setPortraitMedia", "var.inc", "var.dec", "var.setToVar", "room.setExit",
+                "player.setPortraitMedia", "var.inc", "var.dec", "var.setToVar", "var.evaluate", "room.setExit",
                 "room.disableExit", "room.lockExit", "room.unlockExit", "char.damage", "char.setState",
                 "general.triggerTurnTick", "general.endGame", "general.promptInput", "general.openContainer",
                 "general.closeContainer", "general.callFunction", "general.startDialogue",
@@ -182,7 +184,7 @@ namespace RagsCore.Actions
                 "item.setAttribute", "char.setActionActive", "item.setActionActive", "room.setActionActive",
                 "player.setActionActive", "timer.setTimerActive", "variable.forEachLoop", "variable.breakLoop",
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
-                "variable.appendText", "variable.appendLine", "general.switch", "item.wear",
+                "variable.appendText", "variable.appendLine", "general.switch", "item.wear", "item.remove",
                 "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
                 "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic"
             };
@@ -2419,7 +2421,9 @@ namespace RagsCore.Actions
     public sealed class ForEachLoopCommand : Condition
     {
         public string ArrayVariableName { get; set; } = string.Empty;
-        public override string TypeName => "Variable: For Each Loop";
+        public string LoopSource { get; set; } = "Variable";
+        public string FilterType { get; set; } = "All";
+        public override string TypeName => "For Each Loop";
         public override bool Evaluate(ActionContext ctx)
         {
             // For Each Loop inherits from Condition so it has TrueBranch (the loop body).
@@ -2592,6 +2596,23 @@ namespace RagsCore.Actions
             var resolved = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
             var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolved, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolved, StringComparison.OrdinalIgnoreCase));
             return obj != null && obj.IsWorn;
+        }
+    }
+
+    public sealed class ItemCanWearCondition : Condition
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Can Item Be Worn";
+        public override bool Evaluate(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ItemId, ctx);
+            var obj = ctx.Game.Objects.FirstOrDefault(o => string.Equals(o.Id.ToString(), resolved, StringComparison.OrdinalIgnoreCase) || string.Equals(o.Name, resolved, StringComparison.OrdinalIgnoreCase));
+            if (obj == null) return false;
+            if (!obj.IsWearable) return false;
+            if (string.IsNullOrEmpty(obj.WearSlot)) return true;
+            
+            var conflict = ctx.Player.Inventory.FirstOrDefault(i => i.IsWorn && string.Equals(i.WearSlot, obj.WearSlot, StringComparison.OrdinalIgnoreCase));
+            return conflict == null || string.Equals(conflict.Id.ToString(), obj.Id.ToString(), StringComparison.OrdinalIgnoreCase);
         }
     }
 

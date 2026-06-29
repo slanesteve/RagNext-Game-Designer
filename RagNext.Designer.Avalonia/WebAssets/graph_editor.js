@@ -143,6 +143,7 @@ const fallbackDiscriminators = {
     "variableincrement": "var.inc",
     "variabledecrement": "var.dec",
     "variableforeachloop": "variable.forEachLoop",
+    "foreachloop": "variable.forEachLoop",
     "variablebreakloop": "variable.breakLoop",
     "variablesetarrayelement": "variable.setArrayElement",
     "variableaddarrayrow": "variable.addArrayRow",
@@ -167,6 +168,7 @@ const fallbackDiscriminators = {
     "itemnotheldbyplayer": "item.notHeldByPlayer",
     "itemnotinobject": "item.notInObject",
     "itemisitemworn": "item.isWorn",
+    "itemcanitembeworn": "item.canWear",
     "playerattributecheck": "player.attributeCheck",
     "playergender": "player.gender",
     "playerinroom": "player.inRoom",
@@ -200,6 +202,7 @@ const propertyMappings = {
     "Variable A": ["VariableNameA", "NameA", "nameA", "VariableA", "variableA", "variableNameA"],
     "Variable B": ["VariableNameB", "NameB", "nameB", "VariableB", "variableB", "variableNameB"],
     "Text": ["Text", "text"],
+    "Final Message": ["FinalMessage", "finalMessage"],
     "Amount": ["Amount", "amount"],
     "Direction": ["Direction", "direction"],
     "Prompt Text": ["PromptText", "promptText"],
@@ -228,7 +231,9 @@ const propertyMappings = {
     "Action Name": ["ActionName", "actionName"],
     "Patrol Path": ["PatrolPath", "patrolPath"],
     "Index Variable": ["IndexVariable", "indexVariable"],
-    "Ping Pong": ["PingPong", "pingPong"]
+    "Ping Pong": ["PingPong", "pingPong"],
+    "Loop Source": ["LoopSource", "loopSource"],
+    "Filter Type": ["FilterType", "filterType"]
 };
 
 function getPropertyValue(nodeData, label) {
@@ -346,30 +351,265 @@ function getViewportCenterCoordinates() {
     return { x, y };
 }
 
+function getDescendantNodeIds(node, visited = new Set()) {
+    if (!node || visited.has(node.id)) return [];
+    visited.add(node.id);
+
+    let descendants = [];
+
+    if (node.type === 'dialogue') {
+        node.choices.forEach(c => {
+            const destPin = connections.find(conn => conn.fromPinId === `${c.rowId}_out`);
+            const destNode = destPin ? nodes.find(n => n.id === getNodeIdFromPinId(destPin.toPinId)) : null;
+            if (destNode) {
+                descendants.push(destNode.id);
+                descendants = descendants.concat(getDescendantNodeIds(destNode, visited));
+            }
+        });
+    } else if (node.type === 'switch') {
+        node.cases.forEach(c => {
+            const destPin = connections.find(conn => conn.fromPinId === `${c.rowId}_out`);
+            const destNode = destPin ? nodes.find(n => n.id === getNodeIdFromPinId(destPin.toPinId)) : null;
+            if (destNode) {
+                descendants.push(destNode.id);
+                descendants = descendants.concat(getDescendantNodeIds(destNode, visited));
+            }
+        });
+        const defaultPin = connections.find(c => c.fromPinId === `${node.id}_default`);
+        const defaultNode = defaultPin ? nodes.find(n => n.id === getNodeIdFromPinId(defaultPin.toPinId)) : null;
+        if (defaultNode) {
+            descendants.push(defaultNode.id);
+            descendants = descendants.concat(getDescendantNodeIds(defaultNode, visited));
+        }
+    } else if (node.type === 'condition') {
+        const truePin = connections.find(c => c.fromPinId === `${node.id}_true`);
+        const falsePin = connections.find(c => c.fromPinId === `${node.id}_false`);
+        const trueNode = truePin ? nodes.find(n => n.id === getNodeIdFromPinId(truePin.toPinId)) : null;
+        const falseNode = falsePin ? nodes.find(n => n.id === getNodeIdFromPinId(falsePin.toPinId)) : null;
+        if (trueNode) {
+            descendants.push(trueNode.id);
+            descendants = descendants.concat(getDescendantNodeIds(trueNode, visited));
+        }
+        if (falseNode) {
+            descendants.push(falseNode.id);
+            descendants = descendants.concat(getDescendantNodeIds(falseNode, visited));
+        }
+    } else if (node.type === 'command') {
+        const nextPin = connections.find(c => c.fromPinId === `${node.id}_out`);
+        const nextNode = nextPin ? nodes.find(n => n.id === getNodeIdFromPinId(nextPin.toPinId)) : null;
+        if (nextNode) {
+            descendants.push(nextNode.id);
+            descendants = descendants.concat(getDescendantNodeIds(nextNode, visited));
+        }
+    }
+
+    return descendants;
+}
+
+function getNestedDescendantNodeIds(nodesList) {
+    const nestedIds = new Set();
+    nodesList.forEach(node => {
+        if (node.type === 'dialogue' || node.type === 'switch' || node.type === 'condition') {
+            const descendants = getDescendantNodeIds(node);
+            descendants.forEach(id => nestedIds.add(id));
+        }
+    });
+    return nestedIds;
+}
+
 function copyNodeAtCursor() {
-    if (selectedNode) {
+    if (selectedNodes && selectedNodes.length > 0) {
+        // Filter out nodes that are already nested/handled recursively under selected Dialogue, Switch, or Condition parent nodes
+        const nestedIds = getNestedDescendantNodeIds(selectedNodes);
+        const rootSelectedNodes = selectedNodes.filter(n => !nestedIds.has(n.id));
+
+        const nodesData = rootSelectedNodes.map(node => {
+            return {
+                id: node.id,
+                type: node.type,
+                x: node.x,
+                y: node.y,
+                json: buildNodeJsonWithoutNext(node)
+            };
+        });
+
+        const selectedNodeIds = selectedNodes.map(n => n.id);
+        // Only copy exec connections (dialogue/switch/condition branch connections are handled recursively by layout parser)
+        const copiedConns = connections.filter(conn => {
+            if (conn.type !== 'exec') return false;
+            const fromNodeId = getNodeIdFromPinId(conn.fromPinId);
+            const toNodeId = getNodeIdFromPinId(conn.toPinId);
+            return selectedNodeIds.includes(fromNodeId) && selectedNodeIds.includes(toNodeId);
+        });
+
+        jsActionClipboard = {
+            type: "multi-nodes",
+            nodes: nodesData,
+            connections: copiedConns
+        };
+    } else if (selectedNode) {
         const nodeJson = buildNodeJsonWithoutNext(selectedNode);
         jsActionClipboard = JSON.parse(JSON.stringify(nodeJson));
     }
     hideContextMenu();
 }
 
+function shiftJsonCoordinates(json, offsetX, offsetY) {
+    if (!json) return;
+
+    if (json.x !== undefined && json.x !== null) json.x += offsetX;
+    if (json.X !== undefined && json.X !== null) json.X += offsetX;
+    if (json.y !== undefined && json.y !== null) json.y += offsetY;
+    if (json.Y !== undefined && json.Y !== null) json.Y += offsetY;
+
+    if (json.trueBranch) {
+        json.trueBranch.forEach(child => shiftJsonCoordinates(child, offsetX, offsetY));
+    }
+    if (json.TrueBranch) {
+        json.TrueBranch.forEach(child => shiftJsonCoordinates(child, offsetX, offsetY));
+    }
+    if (json.falseBranch) {
+        json.falseBranch.forEach(child => shiftJsonCoordinates(child, offsetX, offsetY));
+    }
+    if (json.FalseBranch) {
+        json.FalseBranch.forEach(child => shiftJsonCoordinates(child, offsetX, offsetY));
+    }
+    if (json.defaultBranch) {
+        json.defaultBranch.forEach(child => shiftJsonCoordinates(child, offsetX, offsetY));
+    }
+    if (json.DefaultBranch) {
+        json.DefaultBranch.forEach(child => shiftJsonCoordinates(child, offsetX, offsetY));
+    }
+    if (json.cases) {
+        Object.keys(json.cases).forEach(k => {
+            const list = json.cases[k];
+            if (Array.isArray(list)) {
+                list.forEach(child => shiftJsonCoordinates(child, offsetX, offsetY));
+            }
+        });
+    }
+    if (json.choices) {
+        json.choices.forEach(c => {
+            const list = c.commands || c.Commands;
+            if (Array.isArray(list)) {
+                list.forEach(child => shiftJsonCoordinates(child, offsetX, offsetY));
+            }
+        });
+    }
+}
+
 function pasteNodeAtCursor() {
     if (!jsActionClipboard) return;
-    const data = JSON.parse(JSON.stringify(jsActionClipboard));
-    
-    // Position pasted element at right-clicked cursor coordinate
-    data.X = contextCursorX;
-    data.Y = contextCursorY;
-    
-    // Assign clean unique IDs recursively so pasting doesn't share instance mappings
-    if (data["dialogueId"]) {
-        data.dialogueId = 'dialogue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+    deselectAllNodes();
+
+    if (jsActionClipboard.type === "multi-nodes") {
+        const clipboardData = JSON.parse(JSON.stringify(jsActionClipboard));
+        const copiedNodes = clipboardData.nodes;
+        const copiedConns = clipboardData.connections;
+
+        if (copiedNodes.length === 0) return;
+
+        let minX = Infinity;
+        let minY = Infinity;
+        copiedNodes.forEach(n => {
+            if (n.x < minX) minX = n.x;
+            if (n.y < minY) minY = n.y;
+        });
+
+        const offsetX = contextCursorX - minX;
+        const offsetY = contextCursorY - minY;
+
+        const newlyCreatedNodes = [];
+
+        copiedNodes.forEach(copiedNode => {
+            const pasteX = copiedNode.x + offsetX;
+            const pasteY = copiedNode.y + offsetY;
+
+            // Shift nested coordinates recursively in the copied JSON
+            shiftJsonCoordinates(copiedNode.json, offsetX, offsetY);
+
+            if (copiedNode.json["dialogueId"]) {
+                copiedNode.json.dialogueId = 'dialogue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            }
+
+            const newNode = parseAndCreateNode(copiedNode.json, pasteX, pasteY);
+            if (newNode) {
+                newlyCreatedNodes.push(newNode);
+            }
+        });
+
+        // Scan all nodes and map old original ID to new ID
+        const idMap = {};
+        nodes.forEach(n => {
+            if (n.data && n.data._originalId) {
+                idMap[n.data._originalId] = n.id;
+            }
+        });
+
+        // Restore connections (e.g. exec lines) between pasted/nested node elements
+        copiedConns.forEach(conn => {
+            const oldFromNodeId = getNodeIdFromPinId(conn.fromPinId);
+            const oldToNodeId = getNodeIdFromPinId(conn.toPinId);
+            const newFromNodeId = idMap[oldFromNodeId];
+            const newToNodeId = idMap[oldToNodeId];
+
+            if (newFromNodeId && newToNodeId) {
+                const newFromPinId = conn.fromPinId.replace(oldFromNodeId, newFromNodeId);
+                const newToPinId = conn.toPinId.replace(oldToNodeId, newToNodeId);
+
+                connections.push({
+                    fromPinId: newFromPinId,
+                    toPinId: newToPinId,
+                    type: conn.type
+                });
+            }
+        });
+
+        // Select all newly created nodes for convenience
+        newlyCreatedNodes.forEach(newNode => {
+            newNode.element.classList.add('selected');
+            selectedNodes.push(newNode);
+        });
+
+        // Cleanup temporary original ID field
+        nodes.forEach(n => {
+            if (n.data) {
+                delete n.data._originalId;
+                delete n.data.OriginalId;
+                delete n.data._originalid;
+            }
+        });
+
+        if (newlyCreatedNodes.length > 0) {
+            selectedNode = newlyCreatedNodes[newlyCreatedNodes.length - 1];
+        }
+
+        redrawConnections();
+        triggerAutoSave();
+    } else {
+        const data = JSON.parse(JSON.stringify(jsActionClipboard));
+        data.X = contextCursorX;
+        data.Y = contextCursorY;
+        if (data["dialogueId"]) {
+            data.dialogueId = 'dialogue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        }
+        const newNode = parseAndCreateNode(data, contextCursorX, contextCursorY);
+        if (newNode) {
+            newNode.element.classList.add('selected');
+            selectedNodes.push(newNode);
+            selectedNode = newNode;
+        }
+        // Cleanup original id if present
+        if (newNode && newNode.data) {
+            delete newNode.data._originalId;
+            delete newNode.data.OriginalId;
+            delete newNode.data._originalid;
+        }
+        redrawConnections();
+        triggerAutoSave();
     }
-    
-    parseAndCreateNode(data, contextCursorX, contextCursorY);
-    redrawConnections();
-    triggerAutoSave();
+
     hideContextMenu();
 }
 
@@ -384,9 +624,12 @@ window.addEventListener('contextmenu', (e) => {
     if (clickedNodeEl) {
         const clickedNode = nodes.find(n => n.element === clickedNodeEl);
         if (clickedNode && clickedNode.type !== 'start') {
-            deselectAllNodes();
-            clickedNode.element.classList.add('selected');
-            selectedNode = clickedNode;
+            if (!selectedNodes.includes(clickedNode)) {
+                deselectAllNodes();
+                clickedNode.element.classList.add('selected');
+                selectedNode = clickedNode;
+                selectedNodes.push(clickedNode);
+            }
         }
         
         document.getElementById('menu-add-dialogue').style.display = 'none';
@@ -2008,6 +2251,14 @@ function refreshCommandFields(node) {
             return;
         }
 
+        const currentLoopSource = getPropertyValue(node.data, "Loop Source") || getPropertyValue(node.data, "LoopSource") || "Variable";
+        if ((inputSchema.label === "Array Variable" || inputSchema.label === "ArrayVariable") && currentLoopSource !== "Variable") {
+            return;
+        }
+        if ((inputSchema.label === "Filter Type" || inputSchema.label === "FilterType") && (currentLoopSource !== "Items" && currentLoopSource !== "Characters")) {
+            return;
+        }
+
         const row = document.createElement('div');
         row.className = 'field-row';
         row.style.marginBottom = '6px';
@@ -2484,6 +2735,28 @@ function refreshCommandFields(node) {
                     { Id: "month", Name: "Month" },
                     { Id: "year", Name: "Year" }
                 ];
+            } else if (inputSchema.label === 'Loop Source' || inputSchema.label === 'LoopSource') {
+                optionsList = [
+                    { Id: "Variable", Name: "Variable" },
+                    { Id: "Items", Name: "Items" },
+                    { Id: "Characters", Name: "Characters" },
+                    { Id: "Rooms", Name: "Rooms" }
+                ];
+            } else if (inputSchema.label === 'Filter Type' || inputSchema.label === 'FilterType') {
+                const currentLoopSource = getPropertyValue(node.data, "Loop Source") || getPropertyValue(node.data, "LoopSource") || "Variable";
+                if (currentLoopSource === "Characters") {
+                    optionsList = [
+                        { Id: "All", Name: "All" },
+                        { Id: "In Current Room", Name: "In Current Room" }
+                    ];
+                } else {
+                    optionsList = [
+                        { Id: "All", Name: "All" },
+                        { Id: "Inventory", Name: "Inventory" },
+                        { Id: "Worn", Name: "Worn" },
+                        { Id: "In Current Room", Name: "In Current Room" }
+                    ];
+                }
             } else if (inputSchema.label === 'Direction') {
                 optionsList = [
                     { Id: "North", Name: "North" },
@@ -2614,7 +2887,7 @@ function refreshCommandFields(node) {
                     node.data["End Time"] = "";
                     node.data["EndTime"] = "";
                 }
-                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'ActionName') {
+                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.label === 'Loop Source' || inputSchema.label === 'LoopSource' || inputSchema.label === 'Filter Type' || inputSchema.label === 'FilterType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'ActionName') {
                     refreshCommandFields(node);
                 }
                 triggerAutoSave();
@@ -3549,6 +3822,14 @@ function buildFlatSequence(startNode) {
 }
 
 function buildNodeJsonWithoutNext(node) {
+    const res = buildNodeJsonWithoutNextRaw(node);
+    if (res) {
+        res._originalId = node.id;
+    }
+    return res;
+}
+
+function buildNodeJsonWithoutNextRaw(node) {
     if (!node) return null;
 
     if (node.type === 'dialogue') {
@@ -4266,6 +4547,19 @@ function getAutocompleteSuggestions(triggerChar) {
         }
         uniqueAttrNames.forEach(a => {
             list.push({ token: `room.attributes.${a}`, typeName: "Current Room Attribute", desc: `Current room custom attribute '${a}'.` });
+        });
+
+        // General For Each Loop tokens
+        list.push({ token: "loop.Id", typeName: "Loop Property", desc: "Unique ID of the current loop iteration item." });
+        list.push({ token: "loop.Name", typeName: "Loop Property", desc: "Name of the current loop iteration item." });
+        list.push({ token: "loop.Description", typeName: "Loop Property", desc: "Description of the current loop iteration item." });
+        list.push({ token: "loop.IsWorn", typeName: "Loop Property (Item)", desc: "Whether the current loop item is worn." });
+        list.push({ token: "loop.IsContainer", typeName: "Loop Property (Item)", desc: "Whether the current loop item is a container." });
+        list.push({ token: "loop.IsCollectible", typeName: "Loop Property (Item)", desc: "Whether the current loop item is collectible." });
+
+        uniqueAttrNames.forEach(a => {
+            list.push({ token: `loop.attributes.${a}`, typeName: "Loop Custom Attribute", desc: `Custom attribute '${a}' of the current loop iteration item.` });
+            list.push({ token: `loop.${a}`, typeName: "Loop Custom Attribute (Direct)", desc: `Direct access to custom attribute '${a}' of the current loop iteration item.` });
         });
 
         // Player
@@ -5207,5 +5501,36 @@ window.submitAddAttribute = function() {
     }
     currentAddAttributeCtx = null;
 };
+
+// Global Keyboard Shortcuts (Copy, Paste, Delete)
+document.addEventListener('keydown', (e) => {
+    // Ignore keyboard shortcuts when typing inside form inputs
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+    }
+
+    const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+    if (isCmdOrCtrl && (e.key === 'c' || e.key === 'C')) {
+        e.preventDefault();
+        copyNodeAtCursor();
+    } else if (isCmdOrCtrl && (e.key === 'v' || e.key === 'V')) {
+        e.preventDefault();
+        const center = getViewportCenterCoordinates();
+        contextCursorX = center.x;
+        contextCursorY = center.y;
+        pasteNodeAtCursor();
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        if (selectedNodes && selectedNodes.length > 0) {
+            selectedNodes.forEach(node => deleteNode(node.id));
+            selectedNodes = [];
+            selectedNode = null;
+        } else if (selectedNode) {
+            deleteNode(selectedNode.id);
+            selectedNode = null;
+        }
+    }
+});
 
 

@@ -144,6 +144,11 @@ namespace RagNextPlayer.Managers
             AudioManager.Instance?.StopAllSounds();
             _ = LoadGameAsync();
         }
+        
+        public void EndGame()
+        {
+            CurrentState = GameState.GameOver;
+        }
 
         // ── Loading ───────────────────────────────────────────────────────────
         private async Task LoadGameAsync()
@@ -850,9 +855,201 @@ namespace RagNextPlayer.Managers
                     SetSystemVariable("system.playingMusic", musicId);
                 }
 
+                var saveState = new SaveStateData
+                {
+                    Version = "1.0.0",
+                    PlayerCurrentRoomId = CurrentRoom?.Id ?? string.Empty
+                };
+
+                // 1. Variables
+                foreach (var v in ActiveGame.Variables)
+                {
+                    saveState.Variables.Add(new VariableSaveData
+                    {
+                        Name = v.Name,
+                        Value = v.Value,
+                        Type = v.Type,
+                        Rows = v.Rows
+                    });
+                }
+
+                // 1b. Player State
+                if (ActiveGame.Player != null)
+                {
+                    saveState.PlayerState.Name = ActiveGame.Player.Name;
+                    saveState.PlayerState.Description = ActiveGame.Player.Description;
+                    saveState.PlayerState.Gender = ActiveGame.Player.Gender;
+                    saveState.PlayerState.PortraitImagePath = ActiveGame.Player.PortraitImagePath ?? string.Empty;
+                    if (ActiveGame.Player.Attributes != null)
+                    {
+                        foreach (var kvp in ActiveGame.Player.Attributes)
+                        {
+                            saveState.PlayerState.Attributes[kvp.Key] = kvp.Value;
+                        }
+                    }
+                }
+
+                // 2. Objects/Items Locations & Attributes
+                foreach (var item in ActiveGame.Objects)
+                {
+                    var itemSave = new ItemStateSaveData
+                    {
+                        Id = item.Id,
+                        IsWorn = item.IsWorn,
+                        ContainerOpen = item.ContainerOpen
+                    };
+                    if (item.Attributes != null)
+                    {
+                        foreach (var kvp in item.Attributes)
+                        {
+                            itemSave.Attributes[kvp.Key] = kvp.Value;
+                        }
+                    }
+
+                    if (ActiveGame.Player != null && ActiveGame.Player.Inventory.Find(i => i.Id == item.Id) != null)
+                    {
+                        itemSave.LocationType = "PlayerInventory";
+                    }
+                    else
+                    {
+                        bool found = false;
+                        foreach (var room in ActiveGame.Rooms)
+                        {
+                            if (room.ObjectIds != null && room.ObjectIds.Contains(item.Id))
+                            {
+                                itemSave.LocationType = "Room";
+                                itemSave.LocationId = room.Id;
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found)
+                        {
+                            foreach (var ch in ActiveGame.Characters)
+                            {
+                                if (ch.Inventory != null && ch.Inventory.Find(i => i.Id == item.Id) != null)
+                                {
+                                    itemSave.LocationType = "CharacterInventory";
+                                    itemSave.LocationId = ch.Id;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!found)
+                        {
+                            foreach (var parent in ActiveGame.Objects)
+                            {
+                                if (parent.ContainedObjectIds != null && parent.ContainedObjectIds.Contains(item.Id))
+                                {
+                                    itemSave.LocationType = "Container";
+                                    itemSave.LocationId = parent.Id;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    saveState.ItemStates.Add(itemSave);
+                }
+
+                // 3. Characters Attributes and Visuals
+                foreach (var ch in ActiveGame.Characters)
+                {
+                    var chSave = new CharacterStateSaveData
+                    {
+                        Id = ch.Id,
+                        PortraitImagePath = ch.PortraitImagePath ?? string.Empty
+                    };
+                    if (ch.Attributes != null)
+                    {
+                        foreach (var kvp in ch.Attributes)
+                        {
+                            chSave.Attributes[kvp.Key] = kvp.Value;
+                        }
+                    }
+                    saveState.CharacterStates.Add(chSave);
+                }
+
+                // 3b. Rooms (LockedExits & Attributes status)
+                foreach (var r in ActiveGame.Rooms)
+                {
+                    var rSave = new RoomStateSaveData { Id = r.Id };
+                    if (r.LockedExits != null)
+                    {
+                        foreach (var kvp in r.LockedExits)
+                        {
+                            rSave.LockedExits[kvp.Key] = kvp.Value;
+                        }
+                    }
+                    if (r.Attributes != null)
+                    {
+                        foreach (var kvp in r.Attributes)
+                        {
+                            rSave.Attributes[kvp.Key] = kvp.Value;
+                        }
+                    }
+                    saveState.RoomStates.Add(rSave);
+                }
+
+                // 4. Action active states
+                if (ActiveGame.Player != null && ActiveGame.Player.Actions != null)
+                {
+                    foreach (var a in ActiveGame.Player.Actions)
+                    {
+                        saveState.ActionActiveStates.Add(new ActionActiveStateSaveData { OwnerType = "Player", ActionName = a.Name, IsActive = a.InitallyActive });
+                    }
+                }
+                foreach (var r in ActiveGame.Rooms)
+                {
+                    if (r.Actions != null)
+                    {
+                        foreach (var a in r.Actions)
+                        {
+                            saveState.ActionActiveStates.Add(new ActionActiveStateSaveData { OwnerType = "Room", OwnerId = r.Id, ActionName = a.Name, IsActive = a.InitallyActive });
+                        }
+                    }
+                }
+                foreach (var c in ActiveGame.Characters)
+                {
+                    if (c.Actions != null)
+                    {
+                        foreach (var a in c.Actions)
+                        {
+                            saveState.ActionActiveStates.Add(new ActionActiveStateSaveData { OwnerType = "Character", OwnerId = c.Id, ActionName = a.Name, IsActive = a.InitallyActive });
+                        }
+                    }
+                }
+                foreach (var o in ActiveGame.Objects)
+                {
+                    if (o.Actions != null)
+                    {
+                        foreach (var a in o.Actions)
+                        {
+                            saveState.ActionActiveStates.Add(new ActionActiveStateSaveData { OwnerType = "Item", OwnerId = o.Id, ActionName = a.Name, IsActive = a.InitallyActive });
+                        }
+                    }
+                }
+
+                // 5. Timers
+                if (ActiveGame.Timers != null)
+                {
+                    foreach (var t in ActiveGame.Timers)
+                    {
+                        saveState.TimerStates.Add(new TimerStateSaveData
+                        {
+                            Id = t.Id,
+                            IsActive = t.IsActive,
+                            ElapsedSeconds = t.ElapsedSeconds
+                        });
+                    }
+                }
+
                 var path = GetSaveFilePath(slot);
                 var settings = GetSaveLoadSettings();
-                var json = Newtonsoft.Json.JsonConvert.SerializeObject(ActiveGame, settings);
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(saveState, settings);
                 System.IO.File.WriteAllText(path, json);
 
                 // Save companion screenshot
@@ -876,13 +1073,226 @@ namespace RagNextPlayer.Managers
                 var path = GetSaveFilePath(slot);
                 var json = System.IO.File.ReadAllText(path);
                 var settings = GetSaveLoadSettings();
-                var loadedGame = Newtonsoft.Json.JsonConvert.DeserializeObject<GameData>(json, settings);
-
-                if (loadedGame is not null)
+                
+                // Fallback attempt: if it's an old full-game save, it won't deserialize into SaveStateData cleanly.
+                SaveStateData saveState = null;
+                try
                 {
-                    ActiveGame = loadedGame;
-                    CurrentState = GameState.Playing;
+                    saveState = Newtonsoft.Json.JsonConvert.DeserializeObject<SaveStateData>(json, settings);
+                }
+                catch
+                {
+                    // If parsing as SaveStateData failed, print warning
+                    Debug.LogWarning("[GameManager] Old save file detected. Migrating to new state delta loader is not possible; loading full structure legacy style.");
+                }
 
+                if (saveState != null && !string.IsNullOrEmpty(saveState.PlayerCurrentRoomId))
+                {
+                    var freshGame = await GameLoader.LoadFromStreamingAssetsAsync(_gameFileName);
+                    if (freshGame == null)
+                    {
+                        Debug.LogError("[GameManager] Failed to load fresh game data for state overlay.");
+                        return;
+                    }
+
+                    // 1. Restore Variables
+                    foreach (var varState in saveState.Variables)
+                    {
+                        var targetVar = freshGame.Variables.Find(v => string.Equals(v.Name, varState.Name, StringComparison.OrdinalIgnoreCase));
+                        if (targetVar != null)
+                        {
+                            targetVar.Value = varState.Value;
+                            targetVar.Rows = varState.Rows;
+                        }
+                        else
+                        {
+                            freshGame.Variables.Add(new GameVariableData { Name = varState.Name, Value = varState.Value, Type = varState.Type, Rows = varState.Rows });
+                        }
+                    }
+
+                    // 1b. Restore Player State
+                    if (saveState.PlayerState != null && freshGame.Player != null)
+                    {
+                        freshGame.Player.Name = saveState.PlayerState.Name;
+                        freshGame.Player.Description = saveState.PlayerState.Description;
+                        freshGame.Player.Gender = saveState.PlayerState.Gender;
+                        if (!string.IsNullOrEmpty(saveState.PlayerState.PortraitImagePath))
+                        {
+                            freshGame.Player.PortraitImagePath = saveState.PlayerState.PortraitImagePath;
+                        }
+                        if (saveState.PlayerState.Attributes != null)
+                        {
+                            foreach (var kvp in saveState.PlayerState.Attributes)
+                            {
+                                freshGame.Player.Attributes[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
+
+                    // 2. Restore Item placements, container status & attributes
+                    freshGame.Player.Inventory.Clear();
+                    foreach (var r in freshGame.Rooms) r.ObjectIds.Clear();
+                    foreach (var c in freshGame.Characters) c.Inventory.Clear();
+                    foreach (var o in freshGame.Objects) o.ContainedObjectIds.Clear();
+
+                    foreach (var itemState in saveState.ItemStates)
+                    {
+                        var item = freshGame.Objects.Find(o => o.Id == itemState.Id);
+                        if (item == null) continue;
+
+                        item.IsWorn = itemState.IsWorn;
+                        item.ContainerOpen = itemState.ContainerOpen;
+                        item.Properties.Remove("ParentContainerId");
+
+                        if (itemState.Attributes != null)
+                        {
+                            foreach (var kvp in itemState.Attributes)
+                            {
+                                item.Attributes[kvp.Key] = kvp.Value;
+                            }
+                        }
+
+                        if (itemState.LocationType == "PlayerInventory")
+                        {
+                            freshGame.Player.Inventory.Add(item);
+                        }
+                        else if (itemState.LocationType == "Room" && !string.IsNullOrEmpty(itemState.LocationId))
+                        {
+                            var room = freshGame.Rooms.Find(r => r.Id == itemState.LocationId);
+                            if (room != null) room.ObjectIds.Add(item.Id);
+                        }
+                        else if (itemState.LocationType == "CharacterInventory" && !string.IsNullOrEmpty(itemState.LocationId))
+                        {
+                            var character = freshGame.Characters.Find(c => c.Id == itemState.LocationId);
+                            if (character != null) character.Inventory.Add(item);
+                        }
+                        else if (itemState.LocationType == "Container" && !string.IsNullOrEmpty(itemState.LocationId))
+                        {
+                            var parent = freshGame.Objects.Find(o => o.Id == itemState.LocationId);
+                            if (parent != null)
+                            {
+                                parent.ContainedObjectIds.Add(item.Id);
+                                item.Properties["ParentContainerId"] = parent.Id;
+                            }
+                        }
+                    }
+
+                    // 3. Restore Characters details (visual changes & custom attributes)
+                    if (saveState.CharacterStates != null)
+                    {
+                        foreach (var chState in saveState.CharacterStates)
+                        {
+                            var character = freshGame.Characters.Find(c => c.Id == chState.Id);
+                            if (character != null)
+                            {
+                                if (!string.IsNullOrEmpty(chState.PortraitImagePath))
+                                {
+                                    character.PortraitImagePath = chState.PortraitImagePath;
+                                }
+                                if (chState.Attributes != null)
+                                {
+                                    foreach (var kvp in chState.Attributes)
+                                    {
+                                        character.Attributes[kvp.Key] = kvp.Value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 3b. Restore Room exit locks & attributes
+                    if (saveState.RoomStates != null)
+                    {
+                        foreach (var rState in saveState.RoomStates)
+                        {
+                            var room = freshGame.Rooms.Find(r => r.Id == rState.Id);
+                            if (room != null)
+                            {
+                                if (rState.LockedExits != null)
+                                {
+                                    foreach (var kvp in rState.LockedExits)
+                                    {
+                                        room.LockedExits[kvp.Key] = kvp.Value;
+                                    }
+                                }
+                                if (rState.Attributes != null)
+                                {
+                                    foreach (var kvp in rState.Attributes)
+                                    {
+                                        room.Attributes[kvp.Key] = kvp.Value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 4. Restore Action Active flags
+                    foreach (var actState in saveState.ActionActiveStates)
+                    {
+                        if (actState.OwnerType == "Player" && freshGame.Player != null && freshGame.Player.Actions != null)
+                        {
+                            var action = freshGame.Player.Actions.Find(a => string.Equals(a.Name, actState.ActionName, StringComparison.OrdinalIgnoreCase));
+                            if (action != null) action.InitallyActive = actState.IsActive;
+                        }
+                        else if (actState.OwnerType == "Room")
+                        {
+                            var room = freshGame.Rooms.Find(r => r.Id == actState.OwnerId);
+                            if (room != null && room.Actions != null)
+                            {
+                                var action = room.Actions.Find(a => string.Equals(a.Name, actState.ActionName, StringComparison.OrdinalIgnoreCase));
+                                if (action != null) action.InitallyActive = actState.IsActive;
+                            }
+                        }
+                        else if (actState.OwnerType == "Character")
+                        {
+                            var character = freshGame.Characters.Find(c => c.Id == actState.OwnerId);
+                            if (character != null && character.Actions != null)
+                            {
+                                var action = character.Actions.Find(a => string.Equals(a.Name, actState.ActionName, StringComparison.OrdinalIgnoreCase));
+                                if (action != null) action.InitallyActive = actState.IsActive;
+                            }
+                        }
+                        else if (actState.OwnerType == "Item")
+                        {
+                            var item = freshGame.Objects.Find(o => o.Id == actState.OwnerId);
+                            if (item != null && item.Actions != null)
+                            {
+                                var action = item.Actions.Find(a => string.Equals(a.Name, actState.ActionName, StringComparison.OrdinalIgnoreCase));
+                                if (action != null) action.InitallyActive = actState.IsActive;
+                            }
+                        }
+                    }
+
+                    // 5. Restore Timers
+                    foreach (var timerState in saveState.TimerStates)
+                    {
+                        if (freshGame.Timers != null)
+                        {
+                            var timer = freshGame.Timers.Find(t => t.Id == timerState.Id || string.Equals(t.Name, timerState.Id, StringComparison.OrdinalIgnoreCase));
+                            if (timer != null)
+                            {
+                                timer.IsActive = timerState.IsActive;
+                                timer.ElapsedSeconds = timerState.ElapsedSeconds;
+                            }
+                        }
+                    }
+
+                    ActiveGame = freshGame;
+                    CurrentState = GameState.Playing;
+                }
+                else
+                {
+                    // Fallback to old full loaded game logic
+                    var loadedGame = Newtonsoft.Json.JsonConvert.DeserializeObject<GameData>(json, settings);
+                    if (loadedGame is not null)
+                    {
+                        ActiveGame = loadedGame;
+                        CurrentState = GameState.Playing;
+                    }
+                }
+
+                if (ActiveGame is not null)
+                {
                     // Restore audio state
                     if (AudioManager.Instance is not null)
                     {
@@ -911,7 +1321,6 @@ namespace RagNextPlayer.Managers
                     var roomIdVar = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
                     if (roomIdVar is null)
                     {
-                        // Fallback for old save files created before the fix
                         roomIdVar = ActiveGame.Player.StartingRoomId ?? (ActiveGame.Rooms.Count > 0 ? ActiveGame.Rooms[0].Id : null);
                     }
                     if (roomIdVar is not null)

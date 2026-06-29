@@ -137,10 +137,8 @@ namespace RagNextPlayer.Managers
                     break;
 
                 case PlayerSetNameCommandData:
-                    UIManager.Instance?.RefreshPlayerPanel();
-                    break;
-
                 case PlayerSetGenderCommandData:
+                case SetPlayerAttributeCommandData:
                     UIManager.Instance?.RefreshPlayerPanel();
                     break;
 
@@ -222,6 +220,7 @@ namespace RagNextPlayer.Managers
                     break;
 
                 case EndGameCommandData c:
+                    GameManager.Instance?.EndGame();
                     UIManager.Instance?.ShowGameOverScreen(ctx.Resolve(c.FinalMessage));
                     break;
 
