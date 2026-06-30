@@ -882,6 +882,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand CloseInventorySelectorCommand { get; }
         public ICommand SelectInventoryItemCommand { get; }
         public ICommand RemoveInventoryItemCommand { get; }
+        public ICommand ClearPortraitCommand { get; }
 
         public ICommand TriggerAddAttributeCommand { get; }
         public ICommand TriggerEditAttributeCommand { get; }
@@ -1584,6 +1585,23 @@ namespace RagNext.Designer.Avalonia.ViewModels
             {
                 ShowInventorySelectorOverlay = false;
                 InventoryTarget = null;
+            });
+
+            ClearPortraitCommand = new Command<object>(target =>
+            {
+                if (target == null) return;
+                if (target is Player p)
+                {
+                    p.PortraitImagePath = null;
+                }
+                else if (target is Room r)
+                {
+                    r.PortraitImagePath = null;
+                }
+                else if (target is GameObject go)
+                {
+                    go.PortraitImagePath = null;
+                }
             });
 
             SelectInventoryItemCommand = new Command<GameObject>(async item =>

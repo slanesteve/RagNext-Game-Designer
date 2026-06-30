@@ -294,7 +294,7 @@
                                         <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No Portrait Image set'}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Media.RemoveAssetCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
+                                                <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
                                                 <Button Content="✨ Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Player" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
                                             </StackPanel>
                                         </StackPanel>
@@ -526,7 +526,7 @@
                                                     <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Media.RemoveAssetCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
+                                                            <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
                                                             <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Room" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
                                                         </StackPanel>
                                                     </StackPanel>
@@ -946,7 +946,7 @@
                                         <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Media.RemoveAssetCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
+                                                <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
                                                 <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Character" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
                                             </StackPanel>
                                         </StackPanel>
@@ -1198,7 +1198,7 @@
                                                     <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Media.RemoveAssetCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
+                                                            <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
                                                             <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Object" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
                                                         </StackPanel>
                                                     </StackPanel>

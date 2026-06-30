@@ -62,15 +62,15 @@
         </ui:VisualElement>
 
         <!-- Right Compartment: Interactive lists and collapsible compass -->
-        <ui:VisualElement name="hud-right-compartment" style="flex-shrink: 0; padding: 24px 24px 24px 0; pointer-events: none; flex-direction: column; justify-content: space-between; align-items: stretch;">
+        <ui:VisualElement name="hud-right-compartment" style="flex-shrink: 1; min-height: 0; padding: 24px 24px 24px 0; pointer-events: none; flex-direction: column; justify-content: space-between; align-items: stretch;">
           
           <!-- Transparent Sidebar (Items and Inventory tabs) -->
-          <ui:VisualElement name="right-sidebar-container" class="right-column glass-card" style="pointer-events: auto; flex-grow: 1; flex-shrink: 1; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-bottom: 20px;">
-            <ui:VisualElement name="room-legend" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; margin-bottom: 0; flex-direction: column;">
+          <ui:VisualElement name="right-sidebar-container" class="right-column glass-card" style="pointer-events: auto; flex-grow: 1; flex-shrink: 1; min-height: 0; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-bottom: 20px;">
+            <ui:VisualElement name="room-legend" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; flex-shrink: 1; min-height: 0; margin-bottom: 0; flex-direction: column;">
               
               <!-- Room Items Section -->
               <ui:Label text="Room Items" class="section-header" style="margin-bottom: 6px; color: #00bcd4; -unity-font-style: bold;" />
-              <ui:ScrollView name="room-items-scroll" style="flex-grow: 1; flex-basis: 0; margin-bottom: 12px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
+              <ui:ScrollView name="room-items-scroll" style="flex-grow: 1; flex-basis: 0; flex-shrink: 1; min-height: 0; margin-bottom: 12px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
                 <ui:VisualElement name="characters-section">
                   <ui:VisualElement name="characters-list" class="entity-list" />
                 </ui:VisualElement>
@@ -83,7 +83,7 @@
 
               <!-- Inventory Section -->
               <ui:Label text="Inventory" class="section-header" style="margin-bottom: 6px; color: #00bcd4; -unity-font-style: bold;" />
-              <ui:ScrollView name="inventory-scroll" style="flex-grow: 1; flex-basis: 0;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
+              <ui:ScrollView name="inventory-scroll" style="flex-grow: 1; flex-basis: 0; flex-shrink: 1; min-height: 0;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
                 <ui:VisualElement name="inventory-section">
                   <ui:VisualElement name="inventory-list" class="entity-list" />
                 </ui:VisualElement>

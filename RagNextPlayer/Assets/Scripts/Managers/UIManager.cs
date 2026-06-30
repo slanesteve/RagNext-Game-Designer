@@ -1233,6 +1233,8 @@ namespace RagNextPlayer.Managers
         {
             if (room is null) return;
 
+            PrepareForNewAction();
+
             // Room title
             if (_roomTitleLabel is not null)
             {
@@ -1400,10 +1402,7 @@ namespace RagNextPlayer.Managers
             // causing the layout engine to record a 1-line height even when the text
             // visually wraps — which makes the next element overlap this one.
             BuildNarrativeBody(text);
-            if (_typewriterEnabled)
-            {
-                ScrollNarrativeToBottom();
-            }
+            ScrollNarrativeToBottom();
         }
 
         public void RefreshEntityLists()
@@ -1688,7 +1687,10 @@ namespace RagNextPlayer.Managers
             // Body — built as inline spans with [hotlink] support
             BuildNarrativeBody(resolved);
 
-            ScrollNarrativeToBottom();
+            if (_typewriterEnabled)
+            {
+                ScrollNarrativeToBottom();
+            }
         }
 
         private void BuildNarrativeBody(string text)
@@ -1702,7 +1704,6 @@ namespace RagNextPlayer.Managers
 
             if (!_typewriterEnabled)
             {
-                VisualElement firstNewElement = null;
                 foreach (var para in paragraphs)
                 {
                     if (string.IsNullOrWhiteSpace(para))
@@ -1710,17 +1711,11 @@ namespace RagNextPlayer.Managers
                         var spacer = new VisualElement();
                         spacer.AddToClassList("narrative-spacer");
                         _narrativeScroll.Add(spacer);
-                        if (firstNewElement == null) firstNewElement = spacer;
                         continue;
                     }
 
                     var flow = BuildParagraphFlow(para);
                     _narrativeScroll.Add(flow);
-                    if (firstNewElement == null) firstNewElement = flow;
-                }
-                if (firstNewElement != null)
-                {
-                    ScrollNarrativeToElement(firstNewElement);
                 }
                 return;
             }
@@ -1759,6 +1754,7 @@ namespace RagNextPlayer.Managers
                 var entityName = match.Groups[1].Value;
                 var link       = new Button(() => HandleInlineEntityClicked(entityName));
                 link.text      = entityName;
+                link.focusable = false;
                 link.AddToClassList("narrative-hotlink");
                 flow.Add(link);
 
@@ -1813,7 +1809,10 @@ namespace RagNextPlayer.Managers
                 }
             }
 
-            ScrollNarrativeToBottom();
+            if (_typewriterEnabled)
+            {
+                ScrollNarrativeToBottom();
+            }
         }
 
         private IEnumerator RunTypewriterQueue()
@@ -2065,39 +2064,41 @@ namespace RagNextPlayer.Managers
             InteractionController.Instance?.HandleInlineClick(name);
         }
 
+        private bool _scrollNarrativeToBottomPending;
+        private Coroutine _coalescedScrollCoroutine;
+
         private void ScrollNarrativeToBottom()
         {
             if (_narrativeScroll == null) return;
-            UnityEngine.Debug.Log($"[UIManager] ScrollNarrativeToBottom called. StackTrace:\n{System.Environment.StackTrace}");
-            StartCoroutine(ScrollNarrativeToBottomCoroutine());
-        }
-
-        private IEnumerator ScrollNarrativeToBottomCoroutine()
-        {
-            yield return new WaitForEndOfFrame();
-            if (_narrativeScroll != null && _narrativeScroll.verticalScroller != null)
+            
+            // Clear focus to prevent Unity's auto-scroll-to-focus system from locking the scroll view
+            _root?.focusController?.focusedElement?.Blur();
+            
+            _scrollNarrativeToBottomPending = true;
+            if (_coalescedScrollCoroutine == null)
             {
-                float oldVal = _narrativeScroll.verticalScroller.value;
-                float highVal = _narrativeScroll.verticalScroller.highValue;
-                _narrativeScroll.verticalScroller.value = highVal;
-                UnityEngine.Debug.Log($"[UIManager] ScrollNarrativeToBottomCoroutine executed. Old Val: {oldVal}, New Val (High): {highVal}, Current Val: {_narrativeScroll.verticalScroller.value}");
+                _coalescedScrollCoroutine = StartCoroutine(CoalescedScrollCoroutine());
             }
         }
 
-        private void ScrollNarrativeToElement(VisualElement element)
-        {
-            if (element == null || _narrativeScroll == null) return;
-            UnityEngine.Debug.Log($"[UIManager] ScrollNarrativeToElement called for {element}. StackTrace:\n{System.Environment.StackTrace}");
-            StartCoroutine(ScrollNarrativeToElementCoroutine(element));
-        }
-
-        private IEnumerator ScrollNarrativeToElementCoroutine(VisualElement element)
+        private IEnumerator CoalescedScrollCoroutine()
         {
             yield return new WaitForEndOfFrame();
-            if (element != null && _narrativeScroll != null && _narrativeScroll.Contains(element))
+            yield return null; // Frame 1: Wait for layout engine to run
+            yield return null; // Frame 2: Ensure layout has fully calculated and settled
+            
+            _coalescedScrollCoroutine = null;
+            bool toBottom = _scrollNarrativeToBottomPending;
+            _scrollNarrativeToBottomPending = false;
+            
+            if (_narrativeScroll == null) yield break;
+
+            if (toBottom && _narrativeScroll.verticalScroller != null)
             {
-                UnityEngine.Debug.Log($"[UIManager] ScrollNarrativeToElementCoroutine executed for {element}");
-                _narrativeScroll.ScrollTo(element);
+                float oldVal = _narrativeScroll.verticalScroller.value;
+                float highVal = UnityEngine.Mathf.Max(0f, _narrativeScroll.verticalScroller.highValue);
+                _narrativeScroll.verticalScroller.value = highVal;
+                UnityEngine.Debug.Log($"[UIManager] CoalescedScrollCoroutine scrolled to bottom. Old Val: {oldVal}, New Val (High Clamped): {highVal}, Current Val: {_narrativeScroll.verticalScroller.value}");
             }
         }
 
@@ -2600,7 +2601,7 @@ namespace RagNextPlayer.Managers
             yield return new WaitForEndOfFrame();
             if (_historyLogScroll != null && _historyLogScroll.verticalScroller != null)
             {
-                _historyLogScroll.verticalScroller.value = _historyLogScroll.verticalScroller.highValue;
+                _historyLogScroll.verticalScroller.value = UnityEngine.Mathf.Max(0f, _historyLogScroll.verticalScroller.highValue);
             }
         }
 
