@@ -2079,6 +2079,20 @@ function addNewCommandNode(x = null, y = null) {
     node.bodyElement.appendChild(select);
     setupSearchableDropdown(select, AVAILABLE_COMMANDS);
 
+    // Inline node Help button
+    const helpBtn = document.createElement('span');
+    helpBtn.className = 'node-help-link';
+    helpBtn.textContent = '?';
+    helpBtn.title = 'View documentation';
+    helpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showNodeHelp(select.value);
+    });
+    const wrapper = select.nextSibling;
+    if (wrapper) {
+        wrapper.parentNode.insertBefore(helpBtn, wrapper.nextSibling);
+    }
+
     const fieldContainer = document.createElement('div');
     fieldContainer.className = 'fields-container';
     fieldContainer.id = `${id}_fields`;
@@ -2132,6 +2146,20 @@ function addNewConditionNode(x = null, y = null) {
     });
     node.bodyElement.appendChild(select);
     setupSearchableDropdown(select, AVAILABLE_CONDITIONS);
+
+    // Inline node Help button
+    const helpBtn = document.createElement('span');
+    helpBtn.className = 'node-help-link';
+    helpBtn.textContent = '?';
+    helpBtn.title = 'View documentation';
+    helpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showNodeHelp(select.value);
+    });
+    const wrapper = select.nextSibling;
+    if (wrapper) {
+        wrapper.parentNode.insertBefore(helpBtn, wrapper.nextSibling);
+    }
 
     const fieldContainer = document.createElement('div');
     fieldContainer.className = 'fields-container';
@@ -4042,7 +4070,7 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
                     type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
                 }
                 if (type) {
-                    AVAILABLE_COMMANDS.push({ type: type, label: cmd.name, category: cmd.category });
+                    AVAILABLE_COMMANDS.push({ type: type, label: cmd.name, category: cmd.category, inputs: cmd.inputs || [] });
                 }
             });
         }
@@ -4057,7 +4085,7 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
                     type = nameToTypeMap[combined] || nameToTypeMap[normalize(combined)] || fallbackDiscriminators[normalize(combined)];
                 }
                 if (type) {
-                    AVAILABLE_CONDITIONS.push({ type: type, label: cond.name, category: cond.category });
+                    AVAILABLE_CONDITIONS.push({ type: type, label: cond.name, category: cond.category, inputs: cond.inputs || [] });
                 }
             });
         }
@@ -5588,5 +5616,281 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+// Collapsible Help Sidebar Controllers
+function toggleHelpSidebar() {
+    const sidebar = document.getElementById('help-sidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('hide');
+    if (!sidebar.classList.contains('hide')) {
+        renderHelpNodesList();
+    }
+}
+
+function switchHelpTab(tabName) {
+    const tabSyntax = document.getElementById('tab-pane-syntax');
+    const tabNodes = document.getElementById('tab-pane-nodes');
+    const btnSyntax = document.getElementById('tab-btn-syntax');
+    const btnNodes = document.getElementById('tab-btn-nodes');
+    
+    if (tabName === 'syntax') {
+        tabSyntax.classList.remove('hide');
+        tabNodes.classList.add('hide');
+        btnSyntax.classList.add('active');
+        btnNodes.classList.remove('active');
+    } else {
+        tabSyntax.classList.add('hide');
+        tabNodes.classList.remove('hide');
+        btnSyntax.classList.remove('active');
+        btnNodes.classList.add('active');
+        renderHelpNodesList();
+    }
+}
+
+function renderHelpNodesList() {
+    const listContainer = document.getElementById('help-nodes-list');
+    if (!listContainer) return;
+    if (listContainer.children.length > 0) return; // Render once
+
+    const all = [];
+    
+    // Add structural Dialogue & Switch nodes
+    all.push({
+        type: "dialogue",
+        label: "Dialogue Node",
+        category: "Structure",
+        isCondition: false,
+        inputs: []
+    });
+    all.push({
+        type: "switch",
+        label: "Switch Node",
+        category: "Structure",
+        isCondition: false,
+        inputs: []
+    });
+
+    AVAILABLE_COMMANDS.forEach(c => {
+        if (c && c.type) {
+            all.push({ ...c, isCondition: false });
+        }
+    });
+    
+    AVAILABLE_CONDITIONS.forEach(c => {
+        if (c && c.type) {
+            all.push({ ...c, isCondition: true });
+        }
+    });
+    
+    all.sort((a, b) => (a.label || "").localeCompare(b.label || ""));
+
+    all.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'help-node-card';
+        const typeStr = item.type || "";
+        card.id = `help-node-${typeStr.replace(/\./g, '-')}`;
+        card.setAttribute('data-type', typeStr);
+        card.setAttribute('data-label', (item.label || "").toLowerCase());
+        card.setAttribute('data-category', (item.category || "General").toLowerCase());
+        
+        const title = document.createElement('div');
+        title.className = 'help-node-title';
+        title.textContent = item.label || "Unnamed Node";
+        card.appendChild(title);
+        
+        const cat = document.createElement('div');
+        cat.className = 'help-node-category';
+        cat.textContent = (item.isCondition ? 'Condition | ' : 'Command | ') + (item.category || "General");
+        card.appendChild(cat);
+        
+        const desc = document.createElement('div');
+        desc.className = 'help-node-desc';
+        
+        const theoryText = nodeDescriptions[item.type] || "Executes a scripting action command or conditional check.";
+        let htmlContent = `<p style="margin-bottom: 6px; color: var(--text-color); font-size: 11.5px; line-height: 1.4; opacity: 0.95;">${theoryText}</p>`;
+        
+        if (item.inputs && item.inputs.length > 0) {
+            const inputsStr = item.inputs.map(inp => `${inp.label} (${inp.dataType || 'String'})`).join(', ');
+            htmlContent += `<div style="margin-top: 6px; font-size: 11px; color: var(--text-muted);"><strong>Inputs:</strong> ${inputsStr}</div>`;
+        } else if (item.type !== 'dialogue' && item.type !== 'switch') {
+            htmlContent += `<div style="margin-top: 6px; font-size: 11px; color: var(--text-muted);"><em>No inputs required.</em></div>`;
+        }
+        desc.innerHTML = htmlContent;
+        card.appendChild(desc);
+        
+        listContainer.appendChild(card);
+    });
+}
+
+function filterHelpNodes() {
+    const q = document.getElementById('help-search').value.toLowerCase();
+    const cards = document.querySelectorAll('.help-node-card');
+    cards.forEach(card => {
+        const label = card.getAttribute('data-label') || '';
+        const category = card.getAttribute('data-category') || '';
+        const type = (card.getAttribute('data-type') || '').toLowerCase();
+        if (label.includes(q) || category.includes(q) || type.includes(q)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function showNodeHelp(type) {
+    if (!type) return;
+    const sidebar = document.getElementById('help-sidebar');
+    if (sidebar) {
+        sidebar.classList.remove('hide');
+    }
+    
+    switchHelpTab('nodes');
+    
+    const searchInput = document.getElementById('help-search');
+    if (searchInput) {
+        searchInput.value = '';
+        filterHelpNodes();
+    }
+    
+    document.querySelectorAll('.help-node-card').forEach(c => c.classList.remove('highlighted'));
+    
+    const cardId = `help-node-${type.replace(/\./g, '-')}`;
+    const card = document.getElementById(cardId);
+    if (card) {
+        card.classList.add('highlighted');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Theory explanations for each polymorphic Rags command, condition, and structure type
+const nodeDescriptions = {
+    // Variable Commands
+    "var.set": "Sets the value of a game variable to a specific string, number, or expression.",
+    "var.evaluate": "Evaluates a mathematical or logical formula and stores the result in a variable.",
+    "var.inc": "Increments the value of a numeric variable by a specified amount.",
+    "var.dec": "Decrements the value of a numeric variable by a specified amount.",
+    "var.setRandom": "Sets a variable to a random integer within a specified range.",
+    "variable.forEachLoop": "Iterates over a collection (like character inventory) and executes the loop body for each item.",
+    "variable.breakLoop": "Terminates the current loop execution immediately.",
+    "variable.setArrayElement": "Sets the value of a specific column and row inside a 2D array variable.",
+    "variable.addArrayRow": "Appends a new empty row to a 2D array variable.",
+    "variable.removeArrayRow": "Deletes a specific row index from a 2D array variable.",
+    "variable.appendText": "Appends a text string to the end of a variable's existing text value.",
+    "variable.appendLine": "Appends a text string followed by a new line to a variable.",
+
+    // General Commands
+    "general.addCustomChoice": "Dynamically adds a custom selection button to the player's choice list.",
+    "general.clearCustomChoice": "Clears a custom choice from the player's choice list.",
+    "general.addComment": "Inserts a designer note or documentation comment in the script flow.",
+    "general.callFunction": "Invokes a reusable global function script.",
+    "general.debugText": "Prints a message to the designer's output console for testing.",
+    "general.displayText": "Displays a story block or narrative text to the player's screen.",
+    "general.promptInput": "Prompts the player with a text box input and stores their response in a variable.",
+    "general.endGame": "Ends the game and returns the player to the main menu.",
+    "general.openContainer": "Allows an object container to receive items.",
+    "general.closeContainer": "Closes an object container to prevent item interactions.",
+
+    // Media Commands
+    "media.displayMultimedia": "Displays an image or background picture on the screen.",
+    "media.setBackgroundMusic": "Plays a looping audio track as the background music.",
+    "media.stopBackgroundMusic": "Stops the currently playing background music.",
+    "media.playSound": "Plays a one-shot sound effect.",
+    "media.stopSound": "Stops a currently playing sound effect.",
+    "media.playVideo": "Plays a video file full-screen or in a media frame.",
+
+    // Character Commands
+    "char.displayDescription": "Outputs the current description of a character to the player's screen.",
+    "char.moveToRoom": "Moves a character to a specific room.",
+    "char.moveToRandomAdjacent": "Moves a character to a random connected room.",
+    "char.moveAlongPatrolPath": "Moves a character to their next patrol room.",
+    "char.moveInventoryToPlayer": "Transfers all items from a character's inventory to the player.",
+    "char.moveToObject": "Places a character inside a container object.",
+    "char.setPortraitMedia": "Changes the current portrait image of a character.",
+    "char.setActionActive": "Enables or disables a custom action command on a character.",
+    "char.setAttribute": "Sets a custom attribute or skill value on a character.",
+    "char.setDescription": "Updates a character's narrative description text.",
+    "char.setGender": "Changes a character's gender classification.",
+    "char.setDisplayName": "Changes the displayed name of a character.",
+
+    // Object/Item Commands
+    "object.displayDescription": "Displays the narrative description of an item to the player.",
+    "object.moveToCharacter": "Places an item into a character's inventory.",
+    "object.moveToInventory": "Places an item directly into the player's inventory.",
+    "object.moveInsideObject": "Places an item inside another container item.",
+    "room.addObject": "Drops an item into a specific room.",
+    "item.setAttribute": "Sets a custom attribute value on an item.",
+    "item.wear": "Forces the player or a character to wear an item.",
+    "item.remove": "Forces the player or a character to un-wear an item.",
+
+    // Player Commands
+    "player.displayDescription": "Displays the protagonist's description text.",
+    "player.moveInventoryToChar": "Transfers an item from the player's inventory to a character.",
+    "player.moveInventoryToRoom": "Drops an item from the player's inventory into the room.",
+    "player.moveTo": "Moves the player to a specific room.",
+    "player.moveToChar": "Moves the player to the room where a specific character is located.",
+    "player.moveToObject": "Places the player inside a container object.",
+    "player.setActionActive": "Enables or disables a custom action command on the player.",
+    "player.setAttribute": "Sets a custom attribute or skill value on the protagonist.",
+    "player.setDescription": "Updates the protagonist's description text.",
+    "player.setName": "Sets the protagonist's name.",
+    "player.setGender": "Sets the protagonist's gender.",
+    "player.setPortraitMedia": "Sets the protagonist's portrait image.",
+
+    // Room Commands
+    "room.displayDescription": "Outputs a room's description text.",
+    "room.displayPicture": "Displays the room's main image.",
+    "room.moveItemsToPlayer": "Transfers all objects lying in a room to the player's inventory.",
+    "room.setDescription": "Updates a room's description text.",
+    "room.setPicture": "Changes a room's main background image.",
+    "room.setAttribute": "Sets a custom attribute value on a room.",
+    "room.lockExit": "Locks a specific direction exit in a room.",
+    "room.unlockExit": "Unlocks a locked direction exit in a room.",
+    "room.setActionActive": "Enables or disables a custom action command on a room.",
+
+    // UI & Status Elements
+    "ui.setStatusBarVisible": "Shows or hides the status bar display.",
+    "status.show": "Displays a status bar element.",
+    "status.hide": "Hides a status bar element.",
+    "status.setText": "Updates the display text of a status bar element.",
+    "status.setImage": "Updates the icon image of a status bar element.",
+
+    // Timer Commands
+    "timer.setAttribute": "Sets a custom attribute value on a timer.",
+    "timer.setTimerActive": "Enables or disables a timer's execution.",
+
+    // Conditions
+    "char.attributeCheck": "Checks if a character's attribute meets a comparison value.",
+    "char.gender": "Checks if a character is Male, Female, or other.",
+    "char.inRoom": "Checks if a character is currently in a specific room.",
+    "item.attributeCheck": "Checks if an item's attribute meets a comparison value.",
+    "item.heldByChar": "Checks if a specific character is holding an item.",
+    "item.heldByPlayer": "Checks if the player is holding an item.",
+    "item.inObject": "Checks if an item is inside a specific container object.",
+    "item.inRoom": "Checks if an item is in a specific room.",
+    "item.notHeldByPlayer": "Checks if the player is NOT holding an item.",
+    "item.notInObject": "Checks if an item is NOT inside a specific container object.",
+    "item.isWorn": "Checks if an item is currently worn by the player/character.",
+    "item.canWear": "Checks if an item is configured to be wearable.",
+    "player.attributeCheck": "Checks if the player's attribute meets a comparison value.",
+    "player.gender": "Checks if the protagonist is Male or Female.",
+    "player.inRoom": "Checks if the player is currently in a specific room.",
+    "player.sameRoom": "Checks if the player is in the same room as a specific character.",
+    "room.attributeCheck": "Checks if a room's attribute meets a comparison value.",
+    "room.isExitLocked": "Checks if a specific exit direction is locked in a room.",
+    "timer.isActive": "Checks if a timer is currently active.",
+    "var.compare": "Compares a variable's value against a static string or number.",
+    "var.compareVar": "Compares a variable's value against another variable's value.",
+    "date.partCompare": "Compares a specific part (e.g. Hour, Day) of a DateTime variable.",
+    "date.isPast": "Checks if a DateTime variable is in the past.",
+    "date.isFuture": "Checks if a DateTime variable is in the future.",
+    "date.compareVars": "Compares two DateTime variables.",
+    "date.diffCompare": "Compares the time difference between two DateTime variables.",
+    "date.compareConst": "Compares a DateTime variable against a constant date value.",
+    "date.isValid": "Checks if a string is a valid DateTime value.",
+
+    // Core Nodes
+    "dialogue": "A Dialogue Node displays text conversations and choice paths. It is the core narrative building block of an action.",
+    "switch": "A Switch Node evaluates multiple branches of conditional logic sequentially and splits execution."
+};
 
 
