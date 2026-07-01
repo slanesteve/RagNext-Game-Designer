@@ -1626,6 +1626,10 @@ namespace RagNextPlayer.Managers
             LoadAndDisplayImage(path, "scene-image");
         }
 
+        private double _targetStartTime;
+        private double _targetEndTime;
+        private float _targetVolume;
+
         public void PlaySceneVideo(string path, float volume, bool loop, float startTime, float endTime)
         {
             if (string.IsNullOrWhiteSpace(path)) return;
@@ -1667,12 +1671,6 @@ namespace RagNextPlayer.Managers
             }
 
             _videoPlayer.audioOutputMode = UnityEngine.Video.VideoAudioOutputMode.Direct;
-            
-            // Set volume on track(s)
-            for (ushort i = 0; i < _videoPlayer.controlledAudioTrackCount; i++)
-            {
-                _videoPlayer.SetDirectAudioVolume(i, volume);
-            }
 
             var elem = _root?.Q<VisualElement>("scene-image");
             if (elem is not null)
@@ -1685,23 +1683,47 @@ namespace RagNextPlayer.Managers
                 }
             }
 
-            _videoPlayer.time = startTime;
-            _videoPlayer.Play();
+            _targetStartTime = startTime;
+            _targetEndTime = endTime;
+            _targetVolume = volume;
 
-            if (endTime > startTime)
-            {
-                _videoMonitorCoroutine = StartCoroutine(MonitorVideoPlaybackCoroutine(endTime));
-            }
+            _videoPlayer.prepareCompleted -= OnVideoPrepared;
+            _videoPlayer.prepareCompleted += OnVideoPrepared;
 
-            Debug.Log($"[PlaySceneVideo] Playing video ID/Path: {path}, Volume: {volume}, Loop: {loop}, Start: {startTime}, End: {endTime}");
+            _videoPlayer.Prepare();
+
+            Debug.Log($"[PlaySceneVideo] Preparing video ID/Path: {path}, Target Volume: {volume}, Loop: {loop}, Target Start: {startTime}, Target End: {endTime}");
         }
 
-        private System.Collections.IEnumerator MonitorVideoPlaybackCoroutine(float endTime)
+        private void OnVideoPrepared(UnityEngine.Video.VideoPlayer vp)
         {
+            // Direct audio settings and time positioning are only valid once prepared.
+            for (ushort i = 0; i < vp.controlledAudioTrackCount; i++)
+            {
+                vp.SetDirectAudioVolume(i, _targetVolume);
+            }
+
+            vp.time = _targetStartTime;
+            vp.Play();
+
+            if (_targetEndTime > _targetStartTime)
+            {
+                _videoMonitorCoroutine = StartCoroutine(MonitorVideoPlaybackCoroutine(_targetEndTime));
+            }
+            
+            Debug.Log($"[OnVideoPrepared] Video prepared. Playback started at time: {vp.time}");
+        }
+
+        private System.Collections.IEnumerator MonitorVideoPlaybackCoroutine(double endTime)
+        {
+            // Give the player a frame to spin up
+            yield return new UnityEngine.WaitForEndOfFrame();
+
             while (_videoPlayer != null && _videoPlayer.isPlaying)
             {
                 if (_videoPlayer.time >= endTime)
                 {
+                    Debug.Log($"[MonitorVideoPlaybackCoroutine] Video reached target end time ({endTime}s). Stopping playback.");
                     _videoPlayer.Stop();
                     yield break;
                 }
