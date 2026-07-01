@@ -1626,10 +1626,87 @@ namespace RagNextPlayer.Managers
             LoadAndDisplayImage(path, "scene-image");
         }
 
-        public void PlaySceneVideo(string videoId, float volume, bool loop, float startTime, float endTime)
+        public void PlaySceneVideo(string path, float volume, bool loop, float startTime, float endTime)
         {
-            // Optional Unity player video execution
-            Debug.Log($"[PlaySceneVideo] Playing video ID: {videoId}, Volume: {volume}, Loop: {loop}, Start: {startTime}, End: {endTime}");
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            if (_videoMonitorCoroutine != null)
+            {
+                StopCoroutine(_videoMonitorCoroutine);
+                _videoMonitorCoroutine = null;
+            }
+
+            if (_videoTexture == null)
+            {
+                _videoTexture = new RenderTexture(1280, 720, 16, RenderTextureFormat.ARGB32);
+                _videoTexture.Create();
+            }
+
+            if (_videoPlayer == null)
+            {
+                _videoPlayer = gameObject.GetComponent<UnityEngine.Video.VideoPlayer>();
+                if (_videoPlayer == null)
+                {
+                    _videoPlayer = gameObject.AddComponent<UnityEngine.Video.VideoPlayer>();
+                }
+            }
+
+            _videoPlayer.playOnAwake = false;
+            _videoPlayer.isLooping = loop;
+            _videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.RenderTexture;
+            _videoPlayer.targetTexture = _videoTexture;
+
+            string url = FormatLocalPathForWeb(path);
+            if (url.StartsWith("file://"))
+            {
+                _videoPlayer.url = new Uri(url).LocalPath;
+            }
+            else
+            {
+                _videoPlayer.url = url;
+            }
+
+            _videoPlayer.audioOutputMode = UnityEngine.Video.VideoAudioOutputMode.Direct;
+            
+            // Set volume on track(s)
+            for (ushort i = 0; i < _videoPlayer.controlledAudioTrackCount; i++)
+            {
+                _videoPlayer.SetDirectAudioVolume(i, volume);
+            }
+
+            var elem = _root?.Q<VisualElement>("scene-image");
+            if (elem is not null)
+            {
+                elem.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
+                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                if (_scenePlaceholder is not null)
+                {
+                    _scenePlaceholder.style.display = DisplayStyle.None;
+                }
+            }
+
+            _videoPlayer.time = startTime;
+            _videoPlayer.Play();
+
+            if (endTime > startTime)
+            {
+                _videoMonitorCoroutine = StartCoroutine(MonitorVideoPlaybackCoroutine(endTime));
+            }
+
+            Debug.Log($"[PlaySceneVideo] Playing video ID/Path: {path}, Volume: {volume}, Loop: {loop}, Start: {startTime}, End: {endTime}");
+        }
+
+        private System.Collections.IEnumerator MonitorVideoPlaybackCoroutine(float endTime)
+        {
+            while (_videoPlayer != null && _videoPlayer.isPlaying)
+            {
+                if (_videoPlayer.time >= endTime)
+                {
+                    _videoPlayer.Stop();
+                    yield break;
+                }
+                yield return null;
+            }
         }
 
         // ── Narrative Fade (called by GameManager) ────────────────────────────
@@ -2104,6 +2181,7 @@ namespace RagNextPlayer.Managers
 
         private RenderTexture _videoTexture;
         private UnityEngine.Video.VideoPlayer _videoPlayer;
+        private Coroutine _videoMonitorCoroutine;
 
         private void PlayVideo(string path)
         {

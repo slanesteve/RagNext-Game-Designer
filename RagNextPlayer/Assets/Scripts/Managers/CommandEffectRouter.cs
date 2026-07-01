@@ -189,8 +189,10 @@ namespace RagNextPlayer.Managers
                 case PlayVideoCommandData c:
                     {
                         var videoId = ctx.Resolve(c.VideoId);
-                        // Route play video event to UIManager if it has video player controls
-                        UIManager.Instance?.PlaySceneVideo(videoId, (float)(c.Volume / 100.0), c.Loop, (float)c.StartTime, (float)c.EndTime);
+                        var path = videoId;
+                        var asset = ctx.Game.MediaAssets.Find(a => a.Id == videoId);
+                        if (asset != null) path = asset.RelativePath;
+                        UIManager.Instance?.PlaySceneVideo(path, (float)(c.Volume / 100.0), c.Loop, (float)c.StartTime, (float)c.EndTime);
                     }
                     break;
 
