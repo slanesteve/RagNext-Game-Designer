@@ -6,7 +6,7 @@
 	<dict>
 		<key>Resources/Data/Managed/Assembly-CSharp.dll</key>
 		<data>
-		QBKLkzkMkUKxGLPcfTun4TKttLA=
+		OyswdeF2vKGIaOs/f6yJgheg2LA=
 		</data>
 		<key>Resources/Data/Managed/Mono.Security.dll</key>
 		<data>
@@ -606,11 +606,11 @@
 		</data>
 		<key>Resources/Data/boot.config</key>
 		<data>
-		Em0t9iSW7vpJ3Cuz7GZS0xBpoj4=
+		Bz4LDTcqCdMGCFIHRGIX2sLW5AM=
 		</data>
 		<key>Resources/Data/globalgamemanagers</key>
 		<data>
-		Hiaf/OLu6JnbdPbxoHSztNNQfFA=
+		D+dDNkpbeCPIVzIMzdBX0krRcmk=
 		</data>
 		<key>Resources/Data/globalgamemanagers.assets</key>
 		<data>
@@ -626,7 +626,7 @@
 		</data>
 		<key>Resources/Data/resources.assets</key>
 		<data>
-		3aCwvgVMXWzhq2M4ZuErAoD3iko=
+		cA8thzZeZt6lW3Z8P/rrHCjvg4U=
 		</data>
 		<key>Resources/Data/resources.assets.resS</key>
 		<data>
@@ -825,16 +825,16 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			ydv7966g2hI1lPVIAq/sWWe84YE=
+			EkoLQILpcsZGwz6sXYsQhsuql2c=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"c9dbfbf7aea0da123594f54802afec5967bce181" or cdhash H"17abf92935a5233238750ca87824cf19a874527f"</string>
+			<string>cdhash H"124a0b4082e972c646c33eac5d8b1086cbaa9767" or cdhash H"2356db2a1d09736f28e2038e8af29a01a50bb5d0"</string>
 		</dict>
 		<key>Resources/Data/Managed/Assembly-CSharp.dll</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			M6jpkorjh+b5WTvU82xtvlG+k21lEnP7dQT40w1prdQ=
+			F1ldX+t3SR7rgWH0/xi/wwK0ORwJKo+vZI3SP9QT11k=
 			</data>
 		</dict>
 		<key>Resources/Data/Managed/Mono.Security.dll</key>
@@ -1884,14 +1884,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			BgU56Cr8ewVr6+8vygIHrs8Khep4F2ZVLWNYcv07+k8=
+			ZZ4QNPwWOt+sHWChsGnyndWSUpyjiKfzX0uJLkmshd4=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			lTtDttp8xC8UCJcccY7L770krdpcr8dNmne4LOSnyw0=
+			Ka/2O6v4ol9lwwh3270KAq8/8xN/tLEBRX/T7q7DxAA=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers.assets</key>
@@ -1919,7 +1919,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			qjI2FzQ09oWkjcffFssduGl7XNt8Bikwr4Tgl3O4h/Y=
+			pShxxYoKR4QwbLvTNQlK82NP/jzgryiILbF6GlUCxog=
 			</data>
 		</dict>
 		<key>Resources/Data/resources.assets.resS</key>
