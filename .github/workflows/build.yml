@@ -296,6 +296,11 @@ jobs:
       run: |
         sed -i 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
 
+    - name: Install Native AOT Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang zlib1g-dev
+
     - name: Run Designer Unit Tests
       run: dotnet test RagNext.Tests/RagNext.Tests.csproj -c Release
 
@@ -317,7 +322,7 @@ jobs:
         fi
 
         # Ensure core executable has +x execution rights
-        chmod +x Publish/Designer-Linux/RagNext.Designer.Avalonia
+        chmod +x Publish/Designer-Linux/RagNext
 
         # 4. Restore RagsCore back to multi-targeting
         sed -i 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
