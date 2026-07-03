@@ -1,8 +1,8 @@
-name: Build RagNext Designer (Windows & macOS)
+name: Build RagNext Designer (Windows, macOS & Linux)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
     inputs:
       buildWindows:
@@ -13,6 +13,11 @@ on:
         description: 'Build macOS Distribution'
         type: boolean
         default: true
+      buildLinux:
+        description: 'Build Linux Distribution'
+        type: boolean
+        default: true
+
 
 jobs:
   build-windows:
@@ -264,3 +269,68 @@ jobs:
         name: RagNext_Designer_Mac_Intel_x64
         path: Publish/RagNext_Designer_Mac_Intel_x64.zip
         retention-days: 14
+
+  build-linux:
+    name: Build Linux x64 Distribution
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.buildLinux }}
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Configure NuGet Cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Retarget RagsCore to Net9.0 (Bypass Mobile Workloads)
+      run: |
+        sed -i 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
+
+    - name: Run Designer Unit Tests
+      run: dotnet test RagNext.Tests/RagNext.Tests.csproj -c Release
+
+    - name: Build & Publish Standalone Linux x64
+      run: |
+        # 1. Ensure RagsCore is targeted to net9.0 only
+        sed -i 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
+        
+        # 2. Run publish in Single-File ReadyToRun format
+        rm -rf Publish/Designer-Linux
+        dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r linux-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.5.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Linux
+        
+        # 3. Deploy WebAssets and Templates
+        mkdir -p Publish/Designer-Linux/WebAssets
+        cp -R RagNext.Designer.Avalonia/WebAssets/* Publish/Designer-Linux/WebAssets/
+        if [ -d "Templates" ]; then
+          mkdir -p Publish/Designer-Linux/Templates
+          cp -R Templates/* Publish/Designer-Linux/Templates/
+        fi
+
+        # Ensure core executable has +x execution rights
+        chmod +x Publish/Designer-Linux/RagNext.Designer.Avalonia
+
+        # 4. Restore RagsCore back to multi-targeting
+        sed -i 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
+
+    - name: Compress Linux Distribution
+      run: |
+        cd Publish/Designer-Linux
+        tar -czf ../RagNext_Designer_Linux_x64.tar.gz .
+
+    - name: Upload Linux Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RagNext_Designer_Linux_x64
+        path: Publish/RagNext_Designer_Linux_x64.tar.gz
+        retention-days: 14
+
