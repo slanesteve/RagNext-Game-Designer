@@ -1779,7 +1779,10 @@
                                          </Border>
                                      </Panel>
                                     
-                                    <Button Content="Preview Transition Sequence" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewTransitionCommand}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="12,8" FontSize="13"/>
+                                    <Button Content="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewButtonText}" 
+                                            IsEnabled="{Binding !$parent[Window].((vm:MainWindowViewModel)DataContext).IsPlayingSplashPreview}"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PreviewTransitionCommand}" 
+                                            Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="12,8" FontSize="13"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>

@@ -478,6 +478,20 @@ namespace RagNext.Designer.Avalonia.ViewModels
         }
 
         private bool _isPlayingSplashPreview = false;
+        public bool IsPlayingSplashPreview
+        {
+            get => _isPlayingSplashPreview;
+            set
+            {
+                if (SetProperty(ref _isPlayingSplashPreview, value))
+                {
+                    OnPropertyChanged(nameof(PreviewButtonText));
+                }
+            }
+        }
+
+        public string PreviewButtonText => IsPlayingSplashPreview ? "Previewing..." : "Preview Transition Sequence";
+
         public ICommand PreviewTransitionCommand { get; }
 
         // Visual Graph Scripting Overlay State
@@ -962,8 +976,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             PreviewTransitionCommand = new Command(async () =>
             {
-                if (_isPlayingSplashPreview || CurrentGame?.SplashScreen == null) return;
-                _isPlayingSplashPreview = true;
+                if (IsPlayingSplashPreview || CurrentGame?.SplashScreen == null) return;
+                IsPlayingSplashPreview = true;
 
                 var splash = CurrentGame.SplashScreen;
                 double fadeIn = Math.Max(0.1, splash.FadeInDuration);
@@ -977,7 +991,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     // Wait for the duration of the transition to complete
                     await Task.Delay((int)((fadeIn + hold + fadeOut) * 1000));
                     StopSplashVideoPreview?.Invoke();
-                    _isPlayingSplashPreview = false;
+                    IsPlayingSplashPreview = false;
                     return;
                 }
 
@@ -1187,7 +1201,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     SplashPreviewTextTopOffset = 0.0;
                     SplashPreviewImageScale = 1.0;
                     SplashPreviewTextScale = 1.0;
-                    _isPlayingSplashPreview = false;
+                    IsPlayingSplashPreview = false;
                 }
             });
 
