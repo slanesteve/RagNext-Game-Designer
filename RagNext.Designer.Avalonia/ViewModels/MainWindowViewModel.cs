@@ -1080,8 +1080,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         else if (style.Equals("Cinematic", StringComparison.OrdinalIgnoreCase))
                         {
                             // Slow zoom-in on both background and text
-                            SplashPreviewImageScale = 1.0 + 0.02 * progress;
-                            SplashPreviewTextScale = 1.0 + 0.02 * progress;
+                            SplashPreviewImageScale = 1.0 + 0.08 * progress;
+                            SplashPreviewTextScale = 1.0 + 0.08 * progress;
                         }
 
                         SplashPreviewImageOpacity = imgOpacity;
@@ -1119,8 +1119,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         else if (style.Equals("Cinematic", StringComparison.OrdinalIgnoreCase))
                         {
                             // Continue zooming in both
-                            SplashPreviewImageScale = 1.02 + 0.03 * progress;
-                            SplashPreviewTextScale = 1.02 + 0.03 * progress;
+                            SplashPreviewImageScale = 1.08 + 0.12 * progress;
+                            SplashPreviewTextScale = 1.08 + 0.12 * progress;
                         }
                         await Task.Delay(stepDelayHold);
                     }
@@ -1155,9 +1155,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         }
                         else if (style.Equals("Cinematic", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Finish zoom-in to 1.07
-                            SplashPreviewImageScale = 1.05 + 0.02 * (1.0 - progress);
-                            SplashPreviewTextScale = 1.05 + 0.02 * (1.0 - progress);
+                            // Finish zoom-in to 1.25
+                            SplashPreviewImageScale = 1.20 + 0.05 * (1.0 - progress);
+                            SplashPreviewTextScale = 1.20 + 0.05 * (1.0 - progress);
                         }
 
                         SplashPreviewImageOpacity = imgOpacity;

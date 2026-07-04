@@ -3348,7 +3348,7 @@ namespace RagNext.Designer.Avalonia.Views
                   var curScale = 1.5 - 0.5 * progress;
                   overlay.style.transform = 'scale(' + curScale + ')';
               }} else if (style === 'Cinematic') {{
-                  var curScale = 1.0 + 0.02 * progress;
+                  var curScale = 1.0 + 0.08 * progress;
                   container.style.transform = 'scale(' + curScale + ')';
               }} else if (style === 'Glitch') {{
                   if (Math.random() < 0.15) {{
@@ -3371,7 +3371,7 @@ namespace RagNext.Designer.Avalonia.Views
               var holdProgress = (elapsed - fadeIn * 1000) / (hold * 1000);
 
               if (style === 'Cinematic') {{
-                  var curScale = 1.02 + 0.03 * holdProgress;
+                  var curScale = 1.08 + 0.12 * holdProgress;
                   container.style.transform = 'scale(' + curScale + ')';
               }} else if (style === 'Glitch') {{
                   if (Math.random() < 0.08) {{
@@ -3394,7 +3394,7 @@ namespace RagNext.Designer.Avalonia.Views
               overlay.style.opacity = (1 - outProgress);
 
               if (style === 'Cinematic') {{
-                  var curScale = 1.05 + 0.02 * outProgress;
+                  var curScale = 1.20 + 0.05 * outProgress;
                   container.style.transform = 'scale(' + curScale + ')';
               }}
           }} else {{
