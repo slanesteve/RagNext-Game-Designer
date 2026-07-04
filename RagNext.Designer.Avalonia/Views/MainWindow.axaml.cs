@@ -2081,6 +2081,7 @@ namespace RagNext.Designer.Avalonia.Views
             if (roomsList?.SelectedItem is Room room)
             {
                 LoadExits(room);
+                RefreshRoomObjectCheckBoxes(room);
             }
             if (RoomDetailsScrollViewer != null)
             {
@@ -2423,17 +2424,46 @@ namespace RagNext.Designer.Avalonia.Views
             if (vm != null) _ = vm.SaveGameAsync();
         }
 
+        private readonly System.Collections.Generic.HashSet<CheckBox> _roomObjectCheckBoxes = new();
         private bool _isSyncingRoomObjects = false;
 
         public void OnRoomObjectCheckBoxLoaded(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
             if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
+            _roomObjectCheckBoxes.Add(cb);
             if (RoomsList.SelectedItem is not Room room) return;
 
             _isSyncingRoomObjects = true;
             try
             {
                 cb.IsChecked = room.ObjectIds.Contains(item.Id);
+            }
+            finally
+            {
+                _isSyncingRoomObjects = false;
+            }
+        }
+
+        public void OnRoomObjectCheckBoxUnloaded(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is CheckBox cb)
+            {
+                _roomObjectCheckBoxes.Remove(cb);
+            }
+        }
+
+        private void RefreshRoomObjectCheckBoxes(Room room)
+        {
+            _isSyncingRoomObjects = true;
+            try
+            {
+                foreach (var cb in _roomObjectCheckBoxes)
+                {
+                    if (cb.DataContext is GameObject item)
+                    {
+                        cb.IsChecked = room.ObjectIds.Contains(item.Id);
+                    }
+                }
             }
             finally
             {
@@ -2583,7 +2613,9 @@ namespace RagNext.Designer.Avalonia.Views
 
         private Point? _dragStartPoint;
         private PointerPressedEventArgs? _dragPressedEventArgs;
-        private MediaLibraryViewModel.Node? _draggedNode;
+        private System.Collections.Generic.List<MediaLibraryViewModel.Node>? _draggedNodes;
+        private bool _selectionPreservedOnPressed;
+        private MediaLibraryViewModel.Node? _pressedNode;
 
         private void OnMediaItemPointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -2592,6 +2624,20 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 _dragStartPoint = e.GetPosition(this);
                 _dragPressedEventArgs = e;
+                _selectionPreservedOnPressed = false;
+                _pressedNode = null;
+
+                if (sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node node)
+                {
+                    _pressedNode = node;
+                    var selectedNodes = MediaTreeView.SelectedItems.Cast<MediaLibraryViewModel.Node>().ToList();
+                    var hasModifiers = e.KeyModifiers.HasFlag(KeyModifiers.Shift) || e.KeyModifiers.HasFlag(KeyModifiers.Control);
+                    if (selectedNodes.Contains(node) && !hasModifiers)
+                    {
+                        _selectionPreservedOnPressed = true;
+                        e.Handled = true;
+                    }
+                }
             }
         }
 
@@ -2606,17 +2652,31 @@ namespace RagNext.Designer.Avalonia.Views
                     var dragPressedArgs = _dragPressedEventArgs;
                     _dragStartPoint = null; 
                     _dragPressedEventArgs = null; // Clear to prevent multiple starts
+                    _selectionPreservedOnPressed = false;
 
                     if (sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node node)
                     {
-                        _draggedNode = node;
+                        var selectedNodes = MediaTreeView.SelectedItems.Cast<MediaLibraryViewModel.Node>().ToList();
+                        if (selectedNodes.Contains(node))
+                        {
+                            _draggedNodes = selectedNodes;
+                        }
+                        else
+                        {
+                            _draggedNodes = new System.Collections.Generic.List<MediaLibraryViewModel.Node> { node };
+                        }
+
                         var game = App.CurrentGame;
                         var data = new DataTransfer();
 
-                        if (node.Asset != null && game != null)
+                        var paths = _draggedNodes
+                            .Where(n => !n.IsFolder && n.Asset != null && game != null)
+                            .Select(n => new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, n.Asset!))
+                            .ToList();
+
+                        if (paths.Any())
                         {
-                            var localPath = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, node.Asset);
-                            var item = DataTransferItem.Create(DataFormat.Text, localPath);
+                            var item = DataTransferItem.Create(DataFormat.Text, string.Join(";", paths));
                             data.Add(item);
                         }
                         else
@@ -2633,15 +2693,23 @@ namespace RagNext.Designer.Avalonia.Views
 
         private void OnMediaItemPointerReleased(object? sender, PointerReleasedEventArgs e)
         {
+            if (_selectionPreservedOnPressed && _pressedNode != null)
+            {
+                MediaTreeView.SelectedItems.Clear();
+                MediaTreeView.SelectedItems.Add(_pressedNode);
+            }
+
             _dragStartPoint = null;
             _dragPressedEventArgs = null;
+            _selectionPreservedOnPressed = false;
+            _pressedNode = null;
         }
 
         private void OnMediaItemDragOver(object? sender, global::Avalonia.Input.DragEventArgs e)
         {
-            if (_draggedNode != null && sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node targetNode)
+            if (_draggedNodes != null && _draggedNodes.Any() && sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node targetNode)
             {
-                if (_draggedNode != targetNode)
+                if (!_draggedNodes.Contains(targetNode))
                 {
                     e.DragEffects = DragDropEffects.Move;
                     e.Handled = true;
@@ -2656,17 +2724,17 @@ namespace RagNext.Designer.Avalonia.Views
 
         private async void OnMediaItemDrop(object? sender, global::Avalonia.Input.DragEventArgs e)
         {
-            if (_draggedNode != null && sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node targetNode)
+            if (_draggedNodes != null && _draggedNodes.Any() && sender is StackPanel panel && panel.DataContext is MediaLibraryViewModel.Node targetNode)
             {
-                if (DataContext is MainWindowViewModel vm && _draggedNode != targetNode)
+                if (DataContext is MainWindowViewModel vm)
                 {
                     var targetFolder = targetNode.IsFolder ? targetNode.Folder : targetNode.ParentFolder;
                     if (targetFolder != null)
                     {
-                        var source = _draggedNode;
-                        _draggedNode = null;
+                        var sources = _draggedNodes.ToList();
+                        _draggedNodes = null;
                         e.Handled = true;
-                        await vm.Media.MoveNodeAsync(source, targetFolder);
+                        await vm.Media.MoveNodesAsync(sources, targetFolder);
                     }
                 }
             }

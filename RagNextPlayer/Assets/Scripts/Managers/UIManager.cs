@@ -1214,6 +1214,7 @@ namespace RagNextPlayer.Managers
 
             // Clear narrative history on game load to restore pristine log state
             _narrativeScroll?.Clear();
+            _firstRoomRendered = false;
 
             RefreshPlayerPanel();
             RefreshPlayerPortrait();
@@ -1222,8 +1223,8 @@ namespace RagNextPlayer.Managers
 
         private void OnRoomEntered(RoomData room)
         {
-            _firstRoomRendered = true;
             RenderRoom(room);
+            _firstRoomRendered = true;
         }
 
 
@@ -1233,7 +1234,10 @@ namespace RagNextPlayer.Managers
         {
             if (room is null) return;
 
-            PrepareForNewAction();
+            if (_firstRoomRendered)
+            {
+                PrepareForNewAction();
+            }
 
             // Room title
             if (_roomTitleLabel is not null)
@@ -1861,7 +1865,14 @@ namespace RagNextPlayer.Managers
             }
 
             if (lastIdx < para.Length)
-                flow.Add(MakePlainLabel(para.Substring(lastIdx)));
+            {
+                var label = MakePlainLabel(para.Substring(lastIdx));
+                if (matches.Count == 0)
+                {
+                    label.style.flexGrow = 1f;
+                }
+                flow.Add(label);
+            }
 
             return flow;
         }
@@ -1947,6 +1958,7 @@ namespace RagNextPlayer.Managers
 
             var plain = new Label();
             plain.AddToClassList("narrative-text");
+            plain.style.flexGrow = 1f;
             container.Add(plain);
 
             _narrativeScroll.Add(container);

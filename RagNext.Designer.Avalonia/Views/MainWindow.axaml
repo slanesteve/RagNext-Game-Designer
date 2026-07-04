@@ -805,7 +805,7 @@
                                                     <ListBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Objects.Objects}" Height="150" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                                         <ListBox.ItemTemplate>
                                                             <DataTemplate x:DataType="models:GameObject">
-                                                                <CheckBox Content="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontSize="12" IsCheckedChanged="OnRoomObjectCheckedChanged" Loaded="OnRoomObjectCheckBoxLoaded"/>
+                                                                <CheckBox Content="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontSize="12" IsCheckedChanged="OnRoomObjectCheckedChanged" Loaded="OnRoomObjectCheckBoxLoaded" Unloaded="OnRoomObjectCheckBoxUnloaded"/>
                                                             </DataTemplate>
                                                         </ListBox.ItemTemplate>
                                                     </ListBox>
@@ -2368,7 +2368,7 @@
                             <TextBlock Text="Double-click or drag items into portraits/objects to link assets." FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
                         </StackPanel>
                         <!-- TreeView -->
-                        <TreeView Grid.Row="2" ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" Margin="8" DragDrop.AllowDrop="True" DragDrop.Drop="OnDragDropFile" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <TreeView Grid.Row="2" x:Name="MediaTreeView" SelectionMode="Multiple" ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" Margin="8" DragDrop.AllowDrop="True" DragDrop.Drop="OnDragDropFile" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <TreeView.Styles>
                                 <Style Selector="TreeViewItem" x:DataType="vm:MediaLibraryViewModel+Node">
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
@@ -2376,7 +2376,7 @@
                             </TreeView.Styles>
                             <TreeView.ItemTemplate>
                                 <TreeDataTemplate DataType="{x:Type vm:MediaLibraryViewModel+Node}" ItemsSource="{Binding Children}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnMediaItemDragOver" DragDrop.Drop="OnMediaItemDrop">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnMediaItemDragOver" DragDrop.Drop="OnMediaItemDrop">
                                         <TextBlock Text="{Binding Icon}"/>
                                         <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
                                     </StackPanel>

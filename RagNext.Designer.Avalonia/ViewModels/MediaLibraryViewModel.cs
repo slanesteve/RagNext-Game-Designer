@@ -480,59 +480,73 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
-        public async Task MoveNodeAsync(Node sourceNode, MediaFolder targetFolder)
+        public Task MoveNodeAsync(Node sourceNode, MediaFolder targetFolder)
         {
-            if (_game is null || sourceNode is null || targetFolder is null) return;
+            return MoveNodesAsync(new[] { sourceNode }, targetFolder);
+        }
 
-            if (sourceNode.IsFolder)
+        public async Task MoveNodesAsync(IEnumerable<Node> sourceNodes, MediaFolder targetFolder)
+        {
+            if (_game is null || sourceNodes is null || targetFolder is null) return;
+
+            bool changed = false;
+            foreach (var sourceNode in sourceNodes)
             {
-                var folderToMove = sourceNode.Folder;
-                if (folderToMove == null || folderToMove == targetFolder) return;
-
-                // Cyclic check
-                bool IsDescendant(MediaFolder parent, MediaFolder child)
+                if (sourceNode.IsFolder)
                 {
-                    if (parent.Children.Contains(child)) return true;
-                    foreach (var sub in parent.Children)
-                        if (IsDescendant(sub, child)) return true;
-                    return false;
+                    var folderToMove = sourceNode.Folder;
+                    if (folderToMove == null || folderToMove == targetFolder) continue;
+
+                    // Cyclic check
+                    bool IsDescendant(MediaFolder parent, MediaFolder child)
+                    {
+                        if (parent.Children.Contains(child)) return true;
+                        foreach (var sub in parent.Children)
+                            if (IsDescendant(sub, child)) return true;
+                        return false;
+                    }
+                    if (IsDescendant(folderToMove, targetFolder)) continue;
+
+                    // Remove from old parent
+                    bool RemoveFolderFromTree(ObservableCollection<MediaFolder> list, MediaFolder f)
+                    {
+                        var idx = list.IndexOf(f);
+                        if (idx >= 0) { list.RemoveAt(idx); return true; }
+                        foreach (var x in list)
+                            if (RemoveFolderFromTree(x.Children, f)) return true;
+                        return false;
+                    }
+
+                    if (RemoveFolderFromTree(_doc.Roots, folderToMove))
+                    {
+                        targetFolder.Children.Add(folderToMove);
+                        changed = true;
+                    }
                 }
-                if (IsDescendant(folderToMove, targetFolder)) return;
-
-                // Remove from old parent
-                bool RemoveFolderFromTree(ObservableCollection<MediaFolder> list, MediaFolder f)
+                else if (sourceNode.Asset != null)
                 {
-                    var idx = list.IndexOf(f);
-                    if (idx >= 0) { list.RemoveAt(idx); return true; }
-                    foreach (var x in list)
-                        if (RemoveFolderFromTree(x.Children, f)) return true;
-                    return false;
-                }
+                    var assetToMove = sourceNode.Asset;
+                    var oldFolder = sourceNode.ParentFolder;
+                    if (oldFolder == targetFolder) continue;
 
-                if (RemoveFolderFromTree(_doc.Roots, folderToMove))
-                {
-                    targetFolder.Children.Add(folderToMove);
+                    if (oldFolder != null)
+                    {
+                        oldFolder.AssetIds.Remove(assetToMove.Id);
+                    }
+
+                    if (!targetFolder.AssetIds.Contains(assetToMove.Id))
+                    {
+                        targetFolder.AssetIds.Add(assetToMove.Id);
+                    }
+                    changed = true;
                 }
             }
-            else if (sourceNode.Asset != null)
+
+            if (changed)
             {
-                var assetToMove = sourceNode.Asset;
-                var oldFolder = sourceNode.ParentFolder;
-                if (oldFolder == targetFolder) return;
-
-                if (oldFolder != null)
-                {
-                    oldFolder.AssetIds.Remove(assetToMove.Id);
-                }
-
-                if (!targetFolder.AssetIds.Contains(assetToMove.Id))
-                {
-                    targetFolder.AssetIds.Add(assetToMove.Id);
-                }
+                await _store.SaveAsync(_game, _doc);
+                RebuildNodes();
             }
-
-            await _store.SaveAsync(_game, _doc);
-            RebuildNodes();
         }
 
         private List<(string EntityType, string EntityName, global::System.Action ClearAction)> GetPortraitReferences(string localPath)
