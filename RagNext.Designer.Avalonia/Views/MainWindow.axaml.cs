@@ -3273,7 +3273,14 @@ namespace RagNext.Designer.Avalonia.Views
     overflow: hidden;
     position: relative;
     user-select: none;
+  }}
+  .splash-container {{
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
     transition: transform 0.05s ease-out;
+    transform-origin: center center;
   }}
   video {{
     width: 100%;
@@ -3304,18 +3311,18 @@ namespace RagNext.Designer.Avalonia.Views
 </style>
 <script>
   function playTransition(style, fadeIn, hold, fadeOut) {{
-      var body = document.body;
+      var container = document.querySelector('.splash-container');
       var overlay = document.querySelector('.text-overlay');
       var video = document.querySelector('video');
 
-      if (!overlay || !body) return;
+      if (!overlay || !container) return;
 
       // Reset states
-      body.style.opacity = '0';
+      container.style.opacity = '0';
       overlay.style.opacity = '0';
       overlay.style.marginLeft = '0px';
       overlay.style.marginTop = '0px';
-      body.style.transform = 'scale(1)';
+      container.style.transform = 'scale(1)';
       
       if (video) {{
           video.currentTime = 0;
@@ -3338,9 +3345,11 @@ namespace RagNext.Designer.Avalonia.Views
                   overlay.style.marginTop = (60 * (1 - progress)) + 'px';
               }} else if (style === 'Exposure') {{
                   imgOpacity = Math.pow(progress, 0.4);
+                  var curScale = 1.5 - 0.5 * progress;
+                  overlay.style.transform = 'scale(' + curScale + ')';
               }} else if (style === 'Cinematic') {{
                   var curScale = 1.0 + 0.02 * progress;
-                  body.style.transform = 'scale(' + curScale + ')';
+                  container.style.transform = 'scale(' + curScale + ')';
               }} else if (style === 'Glitch') {{
                   if (Math.random() < 0.15) {{
                       txtOpacity = Math.random() * 0.5 + 0.2;
@@ -3352,18 +3361,18 @@ namespace RagNext.Designer.Avalonia.Views
                   }}
               }}
 
-              body.style.opacity = imgOpacity;
+              container.style.opacity = imgOpacity;
               overlay.style.opacity = txtOpacity;
           }} else if (elapsed < (fadeIn + hold) * 1000) {{
               // Hold State
-              body.style.opacity = '1';
+              container.style.opacity = '1';
               overlay.style.opacity = '1';
 
               var holdProgress = (elapsed - fadeIn * 1000) / (hold * 1000);
 
               if (style === 'Cinematic') {{
                   var curScale = 1.02 + 0.03 * holdProgress;
-                  body.style.transform = 'scale(' + curScale + ')';
+                  container.style.transform = 'scale(' + curScale + ')';
               }} else if (style === 'Glitch') {{
                   if (Math.random() < 0.08) {{
                       overlay.style.opacity = Math.random() * 0.6 + 0.3;
@@ -3376,22 +3385,24 @@ namespace RagNext.Designer.Avalonia.Views
               }} else {{
                   overlay.style.marginLeft = '0px';
                   overlay.style.marginTop = '0px';
+                  overlay.style.transform = 'scale(1)';
               }}
           }} else if (elapsed < duration) {{
               // Fade Out Sequence
               var outProgress = (elapsed - (fadeIn + hold) * 1000) / (fadeOut * 1000);
-              body.style.opacity = (1 - outProgress);
+              container.style.opacity = (1 - outProgress);
               overlay.style.opacity = (1 - outProgress);
 
               if (style === 'Cinematic') {{
                   var curScale = 1.05 + 0.02 * outProgress;
-                  body.style.transform = 'scale(' + curScale + ')';
+                  container.style.transform = 'scale(' + curScale + ')';
               }}
           }} else {{
               // End State
-              body.style.opacity = '1';
+              container.style.opacity = '1';
               overlay.style.opacity = '1';
-              body.style.transform = 'scale(1)';
+              container.style.transform = 'scale(1)';
+              overlay.style.transform = 'scale(1)';
               overlay.style.marginLeft = '0px';
               overlay.style.marginTop = '0px';
               return;
@@ -3405,8 +3416,10 @@ namespace RagNext.Designer.Avalonia.Views
 </script>
 </head>
 <body>
-  <video src=""{fileUri}"" autoplay loop playsinline></video>
-  <div class=""text-overlay"">{text}</div>
+  <div class=""splash-container"">
+    <video src=""{fileUri}"" autoplay loop playsinline></video>
+    <div class=""text-overlay"">{text}</div>
+  </div>
 </body>
 </html>";
 

@@ -1739,7 +1739,13 @@
                                                  <Image Width="1920" Height="1080" 
                                                         Source="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashBackgroundPath, Converter={x:Static views:ImagePathToBitmapConverter.Instance}}" 
                                                         Stretch="UniformToFill" 
-                                                        Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewImageOpacity}"/>
+                                                        Opacity="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewImageOpacity}"
+                                                        RenderTransformOrigin="50%,50%">
+                                                     <Image.RenderTransform>
+                                                         <ScaleTransform ScaleX="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewImageScale}"
+                                                                         ScaleY="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewImageScale}"/>
+                                                     </Image.RenderTransform>
+                                                 </Image>
                                                  
                                                  <!-- Image Mode Text Overlay: Only visible when NOT video mode -->
                                                  <TextBlock Text="{Binding Text}" 
@@ -1753,7 +1759,13 @@
                                                             Width="2000"
                                                             Height="200"
                                                             Margin="-1000,-100,0,0"
-                                                            TextAlignment="Center"/>
+                                                            TextAlignment="Center"
+                                                            RenderTransformOrigin="50%,50%">
+                                                     <TextBlock.RenderTransform>
+                                                         <ScaleTransform ScaleX="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextScale}"
+                                                                         ScaleY="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SplashPreviewTextScale}"/>
+                                                     </TextBlock.RenderTransform>
+                                                 </TextBlock>
                                              </Canvas>
                                          </Border>
                                      </Viewbox>

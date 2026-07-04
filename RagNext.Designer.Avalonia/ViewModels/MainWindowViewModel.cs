@@ -463,6 +463,20 @@ namespace RagNext.Designer.Avalonia.ViewModels
             set => SetProperty(ref _splashPreviewTextOpacity, value);
         }
 
+        private double _splashPreviewImageScale = 1.0;
+        public double SplashPreviewImageScale
+        {
+            get => _splashPreviewImageScale;
+            set => SetProperty(ref _splashPreviewImageScale, value);
+        }
+
+        private double _splashPreviewTextScale = 1.0;
+        public double SplashPreviewTextScale
+        {
+            get => _splashPreviewTextScale;
+            set => SetProperty(ref _splashPreviewTextScale, value);
+        }
+
         private bool _isPlayingSplashPreview = false;
         public ICommand PreviewTransitionCommand { get; }
 
@@ -1004,6 +1018,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     SplashPreviewTextOpacity = 0.0;
                     SplashPreviewTextLeftOffset = 0.0;
                     SplashPreviewTextTopOffset = 0.0;
+                    SplashPreviewImageScale = 1.0;
+                    SplashPreviewTextScale = 1.0;
                     await Task.Delay(200);
 
                     // 2. Fade In Sequence (frequent updates for 1:1 smooth rendering matching Unity)
@@ -1043,11 +1059,15 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             double expT = Math.Pow(progress, 0.4);
                             imgOpacity = expT;
                             txtOpacity = progress;
+                            
+                            // Pop text scale from 1.5 down to 1.0
+                            SplashPreviewTextScale = 1.5 - 0.5 * progress;
                         }
                         else if (style.Equals("Cinematic", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Slide text in horizontally slightly to simulate slow pan
-                            SplashPreviewTextLeftOffset = -30.0 * (1.0 - progress);
+                            // Slow zoom-in on both background and text
+                            SplashPreviewImageScale = 1.0 + 0.02 * progress;
+                            SplashPreviewTextScale = 1.0 + 0.02 * progress;
                         }
 
                         SplashPreviewImageOpacity = imgOpacity;
@@ -1066,6 +1086,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     int stepDelayHold = (int)((hold * 1000) / stepsHold);
                     for (int i = 0; i < stepsHold; i++)
                     {
+                        double progress = (double)i / stepsHold;
                         if (style.Equals("Glitch", StringComparison.OrdinalIgnoreCase))
                         {
                             if (rnd.NextDouble() < 0.08)
@@ -1080,6 +1101,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
                                 SplashPreviewTextLeftOffset = 0.0;
                                 SplashPreviewTextTopOffset = 0.0;
                             }
+                        }
+                        else if (style.Equals("Cinematic", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Continue zooming in both
+                            SplashPreviewImageScale = 1.02 + 0.03 * progress;
+                            SplashPreviewTextScale = 1.02 + 0.03 * progress;
                         }
                         await Task.Delay(stepDelayHold);
                     }
@@ -1112,6 +1139,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
                                 SplashPreviewTextTopOffset = 0.0;
                             }
                         }
+                        else if (style.Equals("Cinematic", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Finish zoom-in to 1.07
+                            SplashPreviewImageScale = 1.05 + 0.02 * (1.0 - progress);
+                            SplashPreviewTextScale = 1.05 + 0.02 * (1.0 - progress);
+                        }
 
                         SplashPreviewImageOpacity = imgOpacity;
                         SplashPreviewTextOpacity = txtOpacity;
@@ -1123,6 +1156,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     SplashPreviewTextOpacity = 0.0;
                     SplashPreviewTextLeftOffset = 0.0;
                     SplashPreviewTextTopOffset = 0.0;
+                    SplashPreviewImageScale = 1.0;
+                    SplashPreviewTextScale = 1.0;
                     await Task.Delay(300);
                 }
                 catch
@@ -1150,6 +1185,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     SplashPreviewTextOpacity = 1.0;
                     SplashPreviewTextLeftOffset = 0.0;
                     SplashPreviewTextTopOffset = 0.0;
+                    SplashPreviewImageScale = 1.0;
+                    SplashPreviewTextScale = 1.0;
                     _isPlayingSplashPreview = false;
                 }
             });
