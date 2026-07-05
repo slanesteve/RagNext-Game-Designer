@@ -1083,6 +1083,31 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             SplashPreviewImageScale = 1.0 + 0.08 * progress;
                             SplashPreviewTextScale = 1.0 + 0.08 * progress;
                         }
+                        else if (style.Equals("CRT", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (rnd.NextDouble() < 0.1)
+                            {
+                                SplashPreviewTextTopOffset = rnd.NextDouble() * 8.0 - 4.0;
+                            }
+                            else
+                            {
+                                SplashPreviewTextTopOffset = 0.0;
+                            }
+                        }
+                        else if (style.Equals("RGBSplit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            SplashPreviewTextLeftOffset = 4.0 * Math.Sin(progress * Math.PI * 4);
+                        }
+                        else if (style.Equals("ParticleSmoke", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleSand", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleEmbers", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleRain", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleSnow", StringComparison.OrdinalIgnoreCase))
+                        {
+                            SplashPreviewTextScale = 0.8 + 0.2 * progress;
+                        }
+                        else if (style.Equals("SoundReactive", StringComparison.OrdinalIgnoreCase))
+                        {
+                            double pulse = 1.0 + 0.05 * Math.Sin(progress * Math.PI * 6);
+                            SplashPreviewImageScale = pulse;
+                            SplashPreviewTextScale = pulse;
+                        }
 
                         SplashPreviewImageOpacity = imgOpacity;
                         SplashPreviewTextOpacity = txtOpacity;
@@ -1122,6 +1147,33 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             SplashPreviewImageScale = 1.08 + 0.12 * progress;
                             SplashPreviewTextScale = 1.08 + 0.12 * progress;
                         }
+                        else if (style.Equals("CRT", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (rnd.NextDouble() < 0.08)
+                            {
+                                SplashPreviewTextTopOffset = rnd.NextDouble() * 6.0 - 3.0;
+                                SplashPreviewTextOpacity = rnd.NextDouble() * 0.4 + 0.6;
+                            }
+                            else
+                            {
+                                SplashPreviewTextTopOffset = 0.0;
+                                SplashPreviewTextOpacity = 1.0;
+                            }
+                        }
+                        else if (style.Equals("RGBSplit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            SplashPreviewTextLeftOffset = 3.0 * Math.Sin(progress * Math.PI * 10);
+                        }
+                        else if (style.Equals("ParticleSmoke", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleSand", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleEmbers", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleRain", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleSnow", StringComparison.OrdinalIgnoreCase))
+                        {
+                            SplashPreviewTextScale = 1.0 + 0.02 * Math.Sin(progress * Math.PI * 2);
+                        }
+                        else if (style.Equals("SoundReactive", StringComparison.OrdinalIgnoreCase))
+                        {
+                            double pulse = 1.0 + 0.04 * Math.Abs(Math.Sin(progress * Math.PI * 8));
+                            SplashPreviewImageScale = pulse;
+                            SplashPreviewTextScale = pulse;
+                        }
                         await Task.Delay(stepDelayHold);
                     }
 
@@ -1158,6 +1210,27 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             // Finish zoom-in to 1.25
                             SplashPreviewImageScale = 1.20 + 0.05 * (1.0 - progress);
                             SplashPreviewTextScale = 1.20 + 0.05 * (1.0 - progress);
+                        }
+                        else if (style.Equals("CRT", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (rnd.NextDouble() < 0.1)
+                            {
+                                SplashPreviewTextTopOffset = rnd.NextDouble() * 8.0 - 4.0;
+                            }
+                        }
+                        else if (style.Equals("RGBSplit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            SplashPreviewTextLeftOffset = 5.0 * Math.Sin(progress * Math.PI * 4);
+                        }
+                        else if (style.Equals("ParticleSmoke", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleSand", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleEmbers", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleRain", StringComparison.OrdinalIgnoreCase) || style.Equals("ParticleSnow", StringComparison.OrdinalIgnoreCase))
+                        {
+                            SplashPreviewTextScale = 1.0 - 0.2 * (1.0 - progress);
+                        }
+                        else if (style.Equals("SoundReactive", StringComparison.OrdinalIgnoreCase))
+                        {
+                            double pulse = 1.0 + 0.05 * Math.Sin(progress * Math.PI * 4);
+                            SplashPreviewImageScale = pulse * progress;
+                            SplashPreviewTextScale = pulse * progress;
                         }
 
                         SplashPreviewImageOpacity = imgOpacity;
@@ -1955,6 +2028,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             try
             {
+                string cleanTitle = PublishEngine.SanitizeName(title);
+                if (PublishEngine.IsTargetInUse(destination, cleanTitle, SelectedPublishTarget))
+                {
+                    if (ShowAlertDialogAsync != null)
+                    {
+                        await ShowAlertDialogAsync(
+                            "Export Destination Locked",
+                            "The game or one of its components (e.g. UnityCrashHandler64.exe) is currently running and using the target files. Please close the running game and try publishing again.");
+                    }
+                    PublishLogs += "❌ Publishing failed: Target files are in use. Please close the running game.\n";
+                    PublishStatus = "Failed: Target in use";
+                    IsPublishing = false;
+                    return;
+                }
+
                 // We'll perform standard validation first
                 var errors = ValidationEngine.Validate(CurrentGame);
                 if (errors.Any(e => e.StartsWith("Error:")))
@@ -1991,7 +2079,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         PublishLogs += "Clearing old game assets from destination folder...\n";
                         try
                         {
-                            string cleanTitle = PublishEngine.SanitizeName(title);
+                            cleanTitle = PublishEngine.SanitizeName(title);
                             string templateDir = PublishEngine.GetTemplateDir(SelectedPublishTarget);
                             PublishEngine.SafeClearDestination(templateDir, destination, cleanTitle, SelectedPublishTarget);
                             PublishLogs += "✔️ Old game assets cleared successfully.\n";

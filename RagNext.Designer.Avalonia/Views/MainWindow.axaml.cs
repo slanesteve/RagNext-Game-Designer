@@ -3259,12 +3259,12 @@ namespace RagNext.Designer.Avalonia.Views
                     string fontName = splash?.FontName ?? "Outfit";
 
                     // Optimized HTML template with built-in transition physics mirroring Unity exactly
-                    string htmlContent = $@"<!DOCTYPE html>
+                    string htmlContent = @"<!DOCTYPE html>
 <html>
 <head>
 <meta charset=""utf-8"">
 <style>
-  body {{
+  body {
     background-color: #000000;
     margin: 0;
     padding: 0;
@@ -3273,22 +3273,43 @@ namespace RagNext.Designer.Avalonia.Views
     overflow: hidden;
     position: relative;
     user-select: none;
-  }}
-  .splash-container {{
+  }
+  .splash-container {
     width: 100%;
     height: 100%;
     position: relative;
     overflow: hidden;
     transition: transform 0.05s ease-out;
     transform-origin: center center;
-  }}
-  video {{
+  }
+  video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-  }}
-  .text-overlay {{
+  }
+  canvas.particle-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .crt-scanlines {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+    background-size: 100% 4px, 6px 100%;
+    z-index: 20;
+    pointer-events: none;
+    display: none;
+  }
+  .text-overlay {
     position: absolute;
     left: {textX}%;
     top: {textY}%;
@@ -3307,13 +3328,18 @@ namespace RagNext.Designer.Avalonia.Views
     text-shadow: 0 2px 10px rgba(0,0,0,0.8);
     transition: margin 0.05s ease-out;
     white-space: nowrap;
-  }}
+  }
 </style>
 <script>
-  function playTransition(style, fadeIn, hold, fadeOut) {{
+  function playTransition(style, fadeIn, hold, fadeOut) {
       var container = document.querySelector('.splash-container');
       var overlay = document.querySelector('.text-overlay');
       var video = document.querySelector('video');
+      var canvas = document.querySelector('.particle-canvas');
+      var crtScanlines = document.querySelector('.crt-scanlines');
+      var ctx = canvas ? canvas.getContext('2d') : null;
+      var particles = [];
+      var particlesInitialized = false;
 
       if (!overlay || !container) return;
 
@@ -3323,105 +3349,277 @@ namespace RagNext.Designer.Avalonia.Views
       overlay.style.marginLeft = '0px';
       overlay.style.marginTop = '0px';
       container.style.transform = 'scale(1)';
+      overlay.style.transform = 'translate(-50%, -50%) scale(1)';
+      overlay.style.textShadow = '0 2px 10px rgba(0,0,0,0.8)';
+      overlay.style.visibility = 'visible';
       
-      if (video) {{
+      if (crtScanlines) crtScanlines.style.display = (style === 'CRT') ? 'block' : 'none';
+      if (canvas && ctx) {
+          canvas.width = window.innerWidth > 100 ? window.innerWidth : 1280;
+          canvas.height = window.innerHeight > 100 ? window.innerHeight : 720;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          if (style === 'ParticleSmoke' || style === 'ParticleSand' || style === 'ParticleEmbers' || style === 'ParticleRain' || style === 'ParticleSnow') {
+              initParticles();
+          }
+      }
+
+      function initParticles() {
+          var tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          var tempCtx = tempCanvas.getContext('2d');
+          
+          var fontSizePx = {fontSize};
+          tempCtx.font = 'bold ' + fontSizePx + 'px ' + ""'{fontName}', 'Outfit', sans-serif"";
+          tempCtx.fillStyle = '{fontColor}';
+          tempCtx.textAlign = 'center';
+          tempCtx.textBaseline = 'middle';
+          
+          var tx = canvas.width * ({textX} / 100);
+          var ty = canvas.height * ({textY} / 100);
+          tempCtx.fillText('{text}', tx, ty);
+          
+          var imgData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+          var data = imgData.data;
+          
+          var step = (style === 'ParticleSmoke') ? 5 : 3;
+          for (var y = 0; y < canvas.height; y += step) {
+              for (var x = 0; x < canvas.width; x += step) {
+                  var idx = (y * canvas.width + x) * 4;
+                  if (data[idx + 3] > 128) {
+                      var targetX = x;
+                      var targetY = y;
+                      var scatterRadius = 300;
+                      var angle = Math.random() * Math.PI * 2;
+                      var dist = Math.random() * scatterRadius + 50;
+                      var startX = targetX + Math.cos(angle) * dist;
+                      var startY = targetY + Math.sin(angle) * dist + 100;
+                      
+                      particles.push({
+                          x: startX,
+                          y: startY,
+                          tx: targetX,
+                          ty: targetY,
+                          color: '{fontColor}',
+                          size: (style === 'ParticleSmoke') ? Math.random() * 4 + 2 : Math.random() * 2 + 1,
+                          alpha: Math.random() * 0.5 + 0.5,
+                          wiggleSeed: Math.random() * 100
+                      });
+                  }
+              }
+          }
+          particlesInitialized = true;
+      }
+      
+      if (video) {
           video.currentTime = 0;
           video.play();
-      }}
+      }
 
       var start = performance.now();
       var duration = (fadeIn + hold + fadeOut) * 1000;
 
-      function animate(time) {{
+      function animate(time) {
           var elapsed = time - start;
           var progress = Math.min(elapsed / (fadeIn * 1000), 1);
           
-          if (elapsed < fadeIn * 1000) {{
+          if (elapsed < fadeIn * 1000) {
               // Fade In Sequence
               var imgOpacity = progress;
               var txtOpacity = progress;
 
-              if (style === 'Rise') {{
+              if (style === 'Rise') {
                   overlay.style.marginTop = (60 * (1 - progress)) + 'px';
-              }} else if (style === 'Exposure') {{
+              } else if (style === 'Exposure') {
                   imgOpacity = Math.pow(progress, 0.4);
                   var curScale = 1.5 - 0.5 * progress;
-                  overlay.style.transform = 'scale(' + curScale + ')';
-              }} else if (style === 'Cinematic') {{
+                  overlay.style.transform = 'translate(-50%, -50%) scale(' + curScale + ')';
+              } else if (style === 'Cinematic') {
                   var curScale = 1.0 + 0.08 * progress;
                   container.style.transform = 'scale(' + curScale + ')';
-              }} else if (style === 'Glitch') {{
-                  if (Math.random() < 0.15) {{
+              } else if (style === 'Glitch') {
+                  if (Math.random() < 0.15) {
                       txtOpacity = Math.random() * 0.5 + 0.2;
                       overlay.style.marginLeft = (Math.random() * 20 - 10) + 'px';
                       overlay.style.marginTop = (Math.random() * 10 - 5) + 'px';
-                  }} else {{
+                  } else {
                       overlay.style.marginLeft = '0px';
                       overlay.style.marginTop = '0px';
-                  }}
-              }}
+                  }
+              } else if (style === 'CRT') {
+                  if (Math.random() < 0.1) {
+                      overlay.style.marginTop = (Math.random() * 8 - 4) + 'px';
+                  } else {
+                      overlay.style.marginTop = '0px';
+                  }
+              } else if (style === 'RGBSplit') {
+                  var redOffset = 18 * Math.sin(progress * Math.PI * 4);
+                  overlay.style.textShadow = redOffset + 'px 0px 0px rgba(255,0,0,0.8), ' + (-redOffset) + 'px 0px 0px rgba(0,255,255,0.8)';
+                  if (Math.random() < 0.2) {
+                      overlay.style.marginLeft = (Math.random() * 16 - 8) + 'px';
+                      overlay.style.marginTop = (Math.random() * 8 - 4) + 'px';
+                      txtOpacity = Math.random() * 0.4 + 0.6;
+                  } else {
+                      overlay.style.marginLeft = '0px';
+                      overlay.style.marginTop = '0px';
+                  }
+              } else if (style === 'SoundReactive') {
+                  var pulse = 1.0 + 0.05 * Math.sin(progress * Math.PI * 6);
+                  container.style.transform = 'scale(' + pulse + ')';
+                  overlay.style.transform = 'translate(-50%, -50%) scale(' + pulse + ')';
+              } else if (style === 'ParticleSmoke' || style === 'ParticleSand' || style === 'ParticleEmbers' || style === 'ParticleRain' || style === 'ParticleSnow') {
+                  txtOpacity = progress > 0.7 ? (progress - 0.7) / 0.3 : 0;
+              }
 
               container.style.opacity = imgOpacity;
               overlay.style.opacity = txtOpacity;
-          }} else if (elapsed < (fadeIn + hold) * 1000) {{
+          } else if (elapsed < (fadeIn + hold) * 1000) {
               // Hold State
               container.style.opacity = '1';
               overlay.style.opacity = '1';
 
               var holdProgress = (elapsed - fadeIn * 1000) / (hold * 1000);
 
-              if (style === 'Cinematic') {{
+              if (style === 'Cinematic') {
                   var curScale = 1.08 + 0.12 * holdProgress;
                   container.style.transform = 'scale(' + curScale + ')';
-              }} else if (style === 'Glitch') {{
-                  if (Math.random() < 0.08) {{
+              } else if (style === 'Glitch') {
+                  if (Math.random() < 0.08) {
                       overlay.style.opacity = Math.random() * 0.6 + 0.3;
                       overlay.style.marginLeft = (Math.random() * 30 - 15) + 'px';
                       overlay.style.marginTop = (Math.random() * 16 - 8) + 'px';
-                  }} else {{
+                  } else {
                       overlay.style.marginLeft = '0px';
                       overlay.style.marginTop = '0px';
-                  }}
-              }} else {{
+                  }
+              } else if (style === 'CRT') {
+                  if (Math.random() < 0.08) {
+                      overlay.style.marginTop = (Math.random() * 6 - 3) + 'px';
+                      overlay.style.opacity = Math.random() * 0.4 + 0.6;
+                  } else {
+                      overlay.style.marginTop = '0px';
+                      overlay.style.opacity = '1';
+                  }
+              } else if (style === 'RGBSplit') {
+                  var redOffset = 14 * Math.sin(holdProgress * Math.PI * 8);
+                  overlay.style.textShadow = redOffset + 'px 0px 0px rgba(255,0,0,0.8), ' + (-redOffset) + 'px 0px 0px rgba(0,255,255,0.8)';
+                  if (Math.random() < 0.15) {
+                      overlay.style.marginLeft = (Math.random() * 18 - 9) + 'px';
+                      overlay.style.marginTop = (Math.random() * 10 - 5) + 'px';
+                      overlay.style.opacity = Math.random() * 0.3 + 0.7;
+                  } else {
+                      overlay.style.marginLeft = '0px';
+                      overlay.style.marginTop = '0px';
+                      overlay.style.opacity = '1';
+                  }
+              } else if (style === 'SoundReactive') {
+                  var pulse = 1.0 + 0.04 * Math.abs(Math.sin(holdProgress * Math.PI * 8));
+                  container.style.transform = 'scale(' + pulse + ')';
+                  overlay.style.transform = 'translate(-50%, -50%) scale(' + pulse + ')';
+              } else {
                   overlay.style.marginLeft = '0px';
                   overlay.style.marginTop = '0px';
-                  overlay.style.transform = 'scale(1)';
-              }}
-          }} else if (elapsed < duration) {{
+                  overlay.style.transform = 'translate(-50%, -50%) scale(1)';
+              }
+          } else if (elapsed < duration) {
               // Fade Out Sequence
               var outProgress = (elapsed - (fadeIn + hold) * 1000) / (fadeOut * 1000);
               container.style.opacity = (1 - outProgress);
               overlay.style.opacity = (1 - outProgress);
 
-              if (style === 'Cinematic') {{
+              if (style === 'Cinematic') {
                   var curScale = 1.20 + 0.05 * outProgress;
                   container.style.transform = 'scale(' + curScale + ')';
-              }}
-          }} else {{
+              } else if (style === 'CRT') {
+                  if (Math.random() < 0.1) {
+                      overlay.style.marginTop = (Math.random() * 8 - 4) + 'px';
+                  }
+              } else if (style === 'RGBSplit') {
+                  var redOffset = 10 * Math.sin(outProgress * Math.PI * 4) * (1 - outProgress);
+                  overlay.style.textShadow = redOffset + 'px 0px 0px rgba(255,0,0,0.8), ' + (-redOffset) + 'px 0px 0px rgba(0,255,255,0.8)';
+              } else if (style === 'SoundReactive') {
+                  var pulse = 1.0 + 0.05 * Math.sin(outProgress * Math.PI * 4);
+                  container.style.transform = 'scale(' + (pulse * (1 - outProgress)) + ')';
+                  overlay.style.transform = 'translate(-50%, -50%) scale(' + (pulse * (1 - outProgress)) + ')';
+              }
+          } else {
               // End State
               container.style.opacity = '1';
               overlay.style.opacity = '1';
               container.style.transform = 'scale(1)';
-              overlay.style.transform = 'scale(1)';
+              overlay.style.transform = 'translate(-50%, -50%) scale(1)';
+              overlay.style.textShadow = '0 2px 10px rgba(0,0,0,0.8)';
               overlay.style.marginLeft = '0px';
               overlay.style.marginTop = '0px';
+              overlay.style.visibility = 'visible';
+              if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
               return;
-          }}
+          }
+
+          // Draw particles
+          if (particlesInitialized && ctx) {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              for (var j = 0; j < particles.length; j++) {
+                  var p = particles[j];
+                  if (elapsed < fadeIn * 1000) {
+                      var progressT = elapsed / (fadeIn * 1000);
+                      var curX = p.x + (p.tx - p.x) * progressT;
+                      var curY = p.y + (p.ty - p.y) * progressT;
+                      ctx.globalAlpha = progressT * p.alpha;
+                  } else if (elapsed < (fadeIn + hold) * 1000) {
+                      var holdProgress = (elapsed - fadeIn * 1000) / (hold * 1000);
+                      var driftProgress = (elapsed - fadeIn * 1000) / 1000;
+                      var curX = p.tx + Math.sin(driftProgress + p.wiggleSeed) * 2;
+                      var curY = p.ty + Math.cos(driftProgress + p.wiggleSeed) * 1.5;
+                      ctx.globalAlpha = (1 - holdProgress) * p.alpha;
+                  } else {
+                      var outT = (elapsed - (fadeIn + hold) * 1000) / (fadeOut * 1000);
+                      var speed = (style === 'ParticleSmoke') ? 3 : 5;
+                      var curX = p.tx + (Math.sin(outT * 5 + p.wiggleSeed) * 40 * outT);
+                      var curY = p.ty - (speed * 80 * outT);
+                      ctx.globalAlpha = 0;
+                  }
+                  
+                  ctx.beginPath();
+                  if (style === 'ParticleSmoke') {
+                      var grad = ctx.createRadialGradient(curX, curY, 0, curX, curY, p.size * 2);
+                      grad.addColorStop(0, p.color);
+                      grad.addColorStop(1, 'rgba(0,0,0,0)');
+                      ctx.fillStyle = grad;
+                      ctx.arc(curX, curY, p.size * 2.5, 0, Math.PI * 2);
+                  } else {
+                      ctx.fillStyle = p.color;
+                      ctx.arc(curX, curY, p.size, 0, Math.PI * 2);
+                  }
+                  ctx.fill();
+              }
+          }
 
           requestAnimationFrame(animate);
-      }}
+      }
 
       requestAnimationFrame(animate);
-  }}
+  }
 </script>
 </head>
 <body>
   <div class=""splash-container"">
     <video src=""{fileUri}"" autoplay loop playsinline></video>
+    <canvas class=""particle-canvas""></canvas>
+    <div class=""crt-scanlines""></div>
     <div class=""text-overlay"">{text}</div>
   </div>
 </body>
 </html>";
+
+                    htmlContent = htmlContent
+                        .Replace("{textX}", textX.ToString(global::System.Globalization.CultureInfo.InvariantCulture))
+                        .Replace("{textY}", textY.ToString(global::System.Globalization.CultureInfo.InvariantCulture))
+                        .Replace("{fontColor}", fontColor)
+                        .Replace("{fontSize}", fontSize.ToString(global::System.Globalization.CultureInfo.InvariantCulture))
+                        .Replace("{fontName}", fontName)
+                        .Replace("{text}", text)
+                        .Replace("{fileUri}", fileUri);
 
                     File.WriteAllText(tempHtmlPath, htmlContent, Encoding.UTF8);
                     
@@ -4761,6 +4959,7 @@ namespace RagNext.Designer.Avalonia.Views
                 case "playermoveinventorytocharacter": return "player.moveInventoryToChar";
                 case "playermoveinventorytoroom": return "player.moveInventoryToRoom";
                 case "playermovetoroom": return "player.moveTo";
+                case "playerscreenshake": return "player.screenShake";
                 case "playermovetocharacter": return "player.moveToChar";
                 case "playermovetoobject": return "player.moveToObject";
                 case "playersetattribute": return "player.setAttribute";

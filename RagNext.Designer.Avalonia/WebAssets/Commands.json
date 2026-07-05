@@ -504,6 +504,32 @@
           "label": "Destination Room",
           "controlType": "ComboBox",
           "dataType": "Room"
+        },
+        {
+          "label": "Transition Style",
+          "controlType": "ComboBox",
+          "dataType": "String"
+        },
+        {
+          "label": "Transition Duration",
+          "controlType": "Number",
+          "dataType": "Single"
+        }
+      ]
+    },
+    {
+      "name": "Player: Screen Shake",
+      "category": "Player",
+      "inputs": [
+        {
+          "label": "Transition Intensity",
+          "controlType": "ComboBox",
+          "dataType": "Single"
+        },
+        {
+          "label": "Transition Duration",
+          "controlType": "Number",
+          "dataType": "Single"
         }
       ]
     },

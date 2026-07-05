@@ -551,6 +551,59 @@ namespace RagNext.Designer.Avalonia.Services
                 Console.WriteLine($"Error patching ZIP file headers: {ex.Message}");
             }
         }
+
+        public static bool IsTargetInUse(string outputDirectory, string cleanTitle, PackagingTarget target)
+        {
+            if (!Directory.Exists(outputDirectory)) return false;
+
+            string exeName = target switch
+            {
+                PackagingTarget.Windows => cleanTitle + ".exe",
+                PackagingTarget.Linux => cleanTitle,
+                PackagingTarget.MacOS => cleanTitle + ".app",
+                _ => ""
+            };
+
+            List<string> filesToCheck = new();
+            if (!string.IsNullOrEmpty(exeName))
+            {
+                if (target == PackagingTarget.MacOS)
+                {
+                    string innerExe = Path.Combine(outputDirectory, exeName, "Contents", "MacOS", cleanTitle);
+                    if (File.Exists(innerExe)) filesToCheck.Add(innerExe);
+                }
+                else
+                {
+                    string mainExe = Path.Combine(outputDirectory, exeName);
+                    if (File.Exists(mainExe)) filesToCheck.Add(mainExe);
+                }
+            }
+
+            string crashHandler = target == PackagingTarget.Windows ? "UnityCrashHandler64.exe" : "UnityCrashHandler64";
+            string crashHandlerPath = Path.Combine(outputDirectory, crashHandler);
+            if (File.Exists(crashHandlerPath)) filesToCheck.Add(crashHandlerPath);
+
+            foreach (var filePath in filesToCheck)
+            {
+                try
+                {
+                    using (var stream = File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                    {
+                        // Not locked
+                    }
+                }
+                catch (IOException)
+                {
+                    return true;
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     /// <summary>Summary stats shown in the publish confirmation dialog.</summary>

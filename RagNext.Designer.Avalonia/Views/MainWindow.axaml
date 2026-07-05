@@ -758,6 +758,42 @@
                                                 </StackPanel>
                                             </Expander>
 
+                                            <!-- VFX & Ambient Effects -->
+                                            <Expander Header="VFX &amp; Ambient Effects" Background="{DynamicResource InputBg}" Margin="0,8,0,0" IsExpanded="True">
+                                                <StackPanel Spacing="10" Margin="10">
+                                                    <!-- Ambient Overlay Selector -->
+                                                    <Grid ColumnDefinitions="*,2*">
+                                                        <TextBlock Grid.Column="0" Text="Ambient Overlay:" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextNormal}"/>
+                                                        <ComboBox Grid.Column="1" SelectedItem="{Binding AmbientOverlay}" Height="32" HorizontalAlignment="Stretch">
+                                                            <x:String>None</x:String>
+                                                            <x:String>Embers</x:String>
+                                                            <x:String>Rain</x:String>
+                                                            <x:String>Snow</x:String>
+                                                            <x:String>Sand</x:String>
+                                                            <x:String>Smoke</x:String>
+                                                        </ComboBox>
+                                                    </Grid>
+
+                                                    <!-- Camera Shake Selector -->
+                                                    <Grid ColumnDefinitions="*,2*">
+                                                        <TextBlock Grid.Column="0" Text="Screen Shake:" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextNormal}"/>
+                                                        <ComboBox Grid.Column="1" SelectedItem="{Binding ScreenEffect}" Height="32" HorizontalAlignment="Stretch">
+                                                            <x:String>None</x:String>
+                                                            <x:String>0.1</x:String>
+                                                            <x:String>0.2</x:String>
+                                                            <x:String>0.3</x:String>
+                                                            <x:String>0.4</x:String>
+                                                            <x:String>0.5</x:String>
+                                                            <x:String>0.6</x:String>
+                                                            <x:String>0.7</x:String>
+                                                            <x:String>0.8</x:String>
+                                                            <x:String>0.9</x:String>
+                                                            <x:String>1.0</x:String>
+                                                        </ComboBox>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Expander>
+
                                             <!-- Collapsible Attributes -->
                                             <Expander Header="Attributes" Background="{DynamicResource InputBg}" Margin="0,8,0,0">
                                                 <StackPanel Spacing="10" Margin="10">
@@ -780,16 +816,10 @@
                                                                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
                                                                                 CommandParameter="{Binding}" 
                                                                                 Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
-                                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                                                            <Button Content="✏️ Edit"
-                                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
-                                                                                    CommandParameter="{Binding}"
-                                                                                    Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
-                                                                            <Button Content="🗑️ Remove"
-                                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                                    CommandParameter="{Binding}"
-                                                                                    Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
-                                                                        </StackPanel>
+                                                                        <Button Content="🗑️ Remove"
+                                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                                                CommandParameter="{Binding}"
+                                                                                Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                                                     </StackPanel>
                                                                 </Grid>
                                                             </DataTemplate>
@@ -1645,6 +1675,14 @@
                                             <x:String>Cinematic</x:String>
                                             <x:String>Glitch</x:String>
                                             <x:String>Exposure</x:String>
+                                            <x:String>CRT</x:String>
+                                            <x:String>RGBSplit</x:String>
+                                            <x:String>ParticleSmoke</x:String>
+                                            <x:String>ParticleSand</x:String>
+                                            <x:String>ParticleEmbers</x:String>
+                                            <x:String>ParticleRain</x:String>
+                                            <x:String>ParticleSnow</x:String>
+                                            <x:String>SoundReactive</x:String>
                                         </ComboBox>
  
                                         <TextBlock Grid.Row="3" Grid.Column="0" Text="Display Title Text:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" Margin="0,10,0,0"/>
@@ -1659,6 +1697,7 @@
                                         <TextBlock Grid.Row="5" Grid.Column="0" Text="Font Size (pt):" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" Margin="0,10,0,0"/>
                                         <NumericUpDown Grid.Row="5" Grid.Column="1" Value="{Binding FontSize, Mode=TwoWay}" Minimum="10" Maximum="120" Background="{DynamicResource InputBg}" Margin="0,10,0,0"/>
                                     </Grid>
+                                    <TextBlock Text="ℹ️ Particle effects (Smoke, Sand) are simulated approximations in this preview. They render as high-fidelity visual elements in the Unity Player." FontSize="11" Foreground="#4A90E2" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                 </StackPanel>
                             </Border>
  

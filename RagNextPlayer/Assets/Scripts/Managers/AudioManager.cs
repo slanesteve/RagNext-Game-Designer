@@ -343,6 +343,26 @@ namespace RagNextPlayer.Managers
                 return "file://" + fullPath;
         }
 
+        public float GetLoudnessOfSound(string soundId)
+        {
+            if (string.IsNullOrWhiteSpace(soundId)) return 0f;
+            foreach (var src in _pool)
+            {
+                if (src != null && src.isPlaying && _sourceIds.TryGetValue(src, out var id) && string.Equals(id, soundId, StringComparison.OrdinalIgnoreCase))
+                {
+                    float[] samples = new float[64];
+                    src.GetOutputData(samples, 0);
+                    float sum = 0f;
+                    for (int i = 0; i < samples.Length; i++)
+                    {
+                        sum += samples[i] * samples[i];
+                    }
+                    return Mathf.Sqrt(sum / samples.Length);
+                }
+            }
+            return 0f;
+        }
+
         private AudioSource? GetFreeSource()
         {
             foreach (var s in _pool)

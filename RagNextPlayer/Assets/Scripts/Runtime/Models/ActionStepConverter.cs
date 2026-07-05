@@ -172,6 +172,7 @@ namespace RagNextPlayer.Runtime.Models
                 "player.moveInventoryToRoom" => typeof(PlayerMoveInventoryToRoomCommandData),
                 "player.moveToChar"         => typeof(PlayerMoveToCharacterCommandData),
                 "player.moveToObject"       => typeof(PlayerMoveToObjectCommandData),
+                "player.screenShake"        => typeof(ScreenShakeCommandData),
                 "room.moveItemsToPlayer"    => typeof(RoomMoveItemsToPlayerCommandData),
 
                 _ => throw new JsonSerializationException($"Unknown ActionStep $type: '{typeName}'")

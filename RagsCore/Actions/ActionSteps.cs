@@ -51,6 +51,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SetStatusElementImageCommand), "status.setImage")]
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
+    [JsonDerivedType(typeof(ScreenShakeCommand), "player.screenShake")]
     [JsonDerivedType(typeof(AddObjectToRoomCommand), "room.addObject")]
     [JsonDerivedType(typeof(RemoveObjectFromRoomCommand), "room.removeObject")]
     [JsonDerivedType(typeof(ObjectDisplayDescriptionCommand), "object.displayDescription")]
@@ -186,7 +187,7 @@ namespace RagsCore.Actions
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear", "item.remove",
                 "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
-                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic"
+                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake"
             };
 
             // Convert unrecognized/unknown $type values to general.debugText to prevent crashes
@@ -428,6 +429,8 @@ namespace RagsCore.Actions
     public sealed class MovePlayerToRoomCommand : GameCommand
     {
         public string RoomId { get; set; } = string.Empty;
+        public string TransitionStyle { get; set; } = string.Empty;
+        public float TransitionDuration { get; set; } = 0f;
         public override string TypeName => "Move player to room";
         public override void Execute(ActionContext ctx)
         {
@@ -436,6 +439,17 @@ namespace RagsCore.Actions
                 ctx.SetVariable("player.currentRoomId", g.ToString());
             else if (!string.IsNullOrEmpty(resolved))
                 ctx.SetVariable("player.currentRoomId", resolved);
+        }
+    }
+
+    public sealed class ScreenShakeCommand : GameCommand
+    {
+        public float Intensity { get; set; } = 0.3f;
+        public float Duration { get; set; } = 1.0f;
+        public override string TypeName => "Player: Screen Shake";
+        public override void Execute(ActionContext ctx)
+        {
+            // State command handled on client side in CommandEffectRouter
         }
     }
 

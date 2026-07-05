@@ -406,7 +406,6 @@ namespace RagNextPlayer.Managers
                     }
                 }
             }
-
             // 4. Player's OnCharacterKilled (Global)
             if (ActiveGame.Player?.Actions != null)
             {
@@ -426,8 +425,9 @@ namespace RagNextPlayer.Managers
         /// Thread-safe room transition entry point. Safe to call from button callbacks.
         /// </summary>
         public void MovePlayerToRoom(string roomId) => MovePlayerToRoom(roomId, null);
+        public void MovePlayerToRoom(string roomId, string? direction) => MovePlayerToRoom(roomId, direction, null, 0f);
 
-        public void MovePlayerToRoom(string roomId, string? direction)
+        public void MovePlayerToRoom(string roomId, string? direction, string? transitionStyle, float transitionDuration)
         {
             InteractionController.Instance?.HideMenu();
             if (CurrentState == GameState.Transitioning)
@@ -439,12 +439,13 @@ namespace RagNextPlayer.Managers
                 }
                 return;
             }
-            _ = TransitionToRoomAsync(roomId, direction);
+            _ = TransitionToRoomAsync(roomId, direction, transitionStyle, transitionDuration);
         }
 
         private async Task TransitionToRoomAsync(string roomId) => await TransitionToRoomAsync(roomId, null);
+        private async Task TransitionToRoomAsync(string roomId, string? direction) => await TransitionToRoomAsync(roomId, direction, null, 0f);
 
-        private async Task TransitionToRoomAsync(string roomId, string? direction)
+        private async Task TransitionToRoomAsync(string roomId, string? direction, string? transitionStyle, float transitionDuration)
         {
             await _transitionLock.WaitAsync();
             try
@@ -549,12 +550,28 @@ namespace RagNextPlayer.Managers
                         }
 
                         // Robust Interception Check: if redirected back to the starting/current room, abort early
-                        if (string.Equals(currentTargetRoomId, CurrentRoom.Id, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(currentTargetRoomId, CurrentRoom?.Id, StringComparison.OrdinalIgnoreCase))
                         {
                             var rVar = ActiveGame.Variables.Find(v => string.Equals(v.Name, "player.currentRoomId", StringComparison.OrdinalIgnoreCase));
                             if (rVar != null) rVar.Value = CurrentRoom.Id;
                             break;
                         }
+                    }
+
+                    // 1. Play particle transition if active
+                    if (!string.IsNullOrEmpty(transitionStyle) && TransitionVFXManager.Instance != null && transitionDuration > 0f)
+                    {
+                        // Temporarily disable active room ambient overlays so the screen transition stands out cleanly
+                        TransitionVFXManager.Instance.SetAmbientOverlay("Embers", false);
+                        TransitionVFXManager.Instance.SetAmbientOverlay("Rain", false);
+                        TransitionVFXManager.Instance.SetAmbientOverlay("Snow", false);
+                        TransitionVFXManager.Instance.SetAmbientOverlay("Sand", false);
+                        TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", false);
+
+                        UIManager.Instance?.SetTransitionBackdrop(true, transitionDuration);
+                        TransitionVFXManager.Instance.PlayTransitionEffect(transitionStyle, transitionDuration);
+                        // Delay by ~50% of duration to wait for screen to get covered by particles
+                        await Task.Delay((int)(transitionDuration * 500f));
                     }
 
                     // 1. Fade out
@@ -640,7 +657,10 @@ namespace RagNextPlayer.Managers
 
                     // 4. Fade in
                     if (UIManager.Instance is not null)
+                    {
+                        UIManager.Instance.SetTransitionBackdrop(false, transitionDuration);
                         await UIManager.Instance.FadeNarrativeAsync(1f, 300);
+                    }
 
                     break;
                 }

@@ -15,9 +15,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public GameAction Action { get; }
         public ObservableCollection<string> AvailableSteps { get; } =
             new([
-                "var.equals", "player.inRoom", "room.hasObject", 
-                "var.set", "var.evaluate", "player.moveTo", "room.addObject", "room.removeObject",
-                "object.displayDescription", "object.moveToCharacter", "object.moveToInventory", "object.moveInsideObject"
+                "var.equals", "player.inRoom", "room.hasObject",                 "var.set", "var.evaluate", "player.moveTo", "player.screenShake", "room.addObject", "room.removeObject",
+                 "object.displayDescription", "object.moveToCharacter", "object.moveToInventory", "object.moveInsideObject"
             ]);
 
         private string? _selectedStepKey;
@@ -88,6 +87,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "var.set" => new SetVariableCommand(),
             "var.evaluate" => new EvaluateFormulaCommand(),
             "player.moveTo" => new MovePlayerToRoomCommand(),
+            "player.screenShake" => new ScreenShakeCommand(),
             "room.addObject" => new AddObjectToRoomCommand(),
             "room.removeObject" => new RemoveObjectFromRoomCommand(),
             "object.displayDescription" => new ObjectDisplayDescriptionCommand(),

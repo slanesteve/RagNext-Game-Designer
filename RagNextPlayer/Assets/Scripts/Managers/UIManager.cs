@@ -23,6 +23,7 @@ namespace RagNextPlayer.Managers
 
         // ── UXML Element References ───────────────────────────────────────────
         private VisualElement  _root;
+        public VisualElement RootElement => _root;
         private VisualElement  _roomActionsContainer;
         private PrimeTween.Tween _pulseTween;
         private VisualElement  _roomPortrait;
@@ -93,6 +94,16 @@ namespace RagNextPlayer.Managers
         // Game Over modal references
         private VisualElement  _gameOverMenu;
         private Label          _gameOverMessage;
+
+        private struct UIParticle
+        {
+            public VisualElement element;
+            public Vector2 startPos;
+            public Vector2 targetPos;
+            public float size;
+            public float alpha;
+            public float wiggleSeed;
+        }
         private Button         _gameOverRestartBtn;
         private Button         _gameOverLoadBtn;
         private Button         _gameOverExitBtn;
@@ -150,6 +161,12 @@ namespace RagNextPlayer.Managers
         {
             if (Instance == null) Instance = this;
             else { Destroy(gameObject); return; }
+
+            if (TransitionVFXManager.Instance == null)
+            {
+                var vfxGo = new GameObject("TransitionVFXManager");
+                vfxGo.AddComponent<TransitionVFXManager>();
+            }
         }
 
         private bool _isSubscribed = false;
@@ -176,10 +193,63 @@ namespace RagNextPlayer.Managers
             }
         }
 
+        private void SetupVFXOverlay()
+        {
+            if (_root == null) return;
+            
+            // Check if already created
+            VisualElement existing = _root.Q("vfx-overlay");
+            if (existing != null)
+            {
+                // Ensure RenderTexture is bound in case of transitions/reloads
+                if (TransitionVFXManager.Instance != null && TransitionVFXManager.Instance.VFXRenderTexture != null)
+                {
+                    existing.style.backgroundImage = Background.FromRenderTexture(TransitionVFXManager.Instance.VFXRenderTexture);
+                }
+                return;
+            }
+            
+            if (TransitionVFXManager.Instance != null && TransitionVFXManager.Instance.VFXRenderTexture != null)
+            {
+                VisualElement vfxElement = new VisualElement();
+                vfxElement.name = "vfx-overlay";
+                vfxElement.style.position = Position.Absolute;
+                vfxElement.style.left = 0;
+                vfxElement.style.right = 0;
+                vfxElement.style.top = 0;
+                vfxElement.style.bottom = 0;
+                vfxElement.pickingMode = PickingMode.Ignore; // Clicks pass through
+                
+                vfxElement.style.backgroundImage = Background.FromRenderTexture(TransitionVFXManager.Instance.VFXRenderTexture);
+                
+                // Add it at the top of the root so it renders on top of UI elements
+                _root.Add(vfxElement);
+                UnityEngine.Debug.Log("[UIManager] Successfully added VFX Render Texture Overlay to UI Toolkit!");
+            }
+        }
+
+        private void Update()
+        {
+            if (_root != null)
+            {
+                VisualElement vfx = _root.Q("vfx-overlay");
+                if (vfx != null)
+                {
+                    vfx.MarkDirtyRepaint();
+                }
+            }
+
+            if (Time.frameCount % 60 == 0 && TransitionVFXManager.Instance != null)
+            {
+                TransitionVFXManager.Instance.LogActiveParticles();
+            }
+        }
+
         private void OnEnable()
         {
             var doc = GetComponent<UIDocument>();
-            _root   = doc.rootVisualElement;
+            _root   = doc != null ? doc.rootVisualElement : null;
+            SetupVFXOverlay();
 
             // Query elements by their UXML names
             _roomTitleLabel         = _root.Q<Label>("room-title");
@@ -441,6 +511,7 @@ namespace RagNextPlayer.Managers
 
         private void Start()
         {
+            SetupVFXOverlay();
             SubscribeEvents();
 
             // Self-healing synchronization: if game is already loaded AND no room has
@@ -460,6 +531,102 @@ namespace RagNextPlayer.Managers
             }
         }
  
+        private void InitTransitionEffects(
+            SplashScreenSettingsData settings, 
+            Label titleLabel, 
+            ref Label cCyan, 
+            ref Label cMagenta, 
+            ref VisualElement cScanlines, 
+            ref VisualElement pContainer, 
+            List<UIParticle> particlesList)
+        {
+            if (_splashScreen == null) return;
+
+            if (settings.TransitionStyle == "CRT")
+            {
+                cScanlines = new VisualElement();
+                cScanlines.style.position = Position.Absolute;
+                cScanlines.style.width = Length.Percent(100);
+                cScanlines.style.height = Length.Percent(100);
+                cScanlines.style.backgroundColor = new Color(0f, 0.2f, 0f, 0.08f); // Phosphor tint
+                cScanlines.pickingMode = PickingMode.Ignore;
+                _splashScreen.Add(cScanlines);
+            }
+
+            if (titleLabel != null && settings.TransitionStyle == "RGBSplit")
+            {
+                cCyan = new Label();
+                cMagenta = new Label();
+                
+                cCyan.text = titleLabel.text;
+                cCyan.style.position = Position.Absolute;
+                cCyan.style.left = titleLabel.style.left;
+                cCyan.style.top = titleLabel.style.top;
+                cCyan.style.fontSize = titleLabel.style.fontSize;
+                cCyan.style.unityTextAlign = titleLabel.style.unityTextAlign;
+                cCyan.style.width = titleLabel.style.width;
+                cCyan.style.height = titleLabel.style.height;
+                cCyan.style.marginLeft = titleLabel.style.marginLeft;
+                cCyan.style.marginTop = titleLabel.style.marginTop;
+                cCyan.style.color = Color.cyan;
+                cCyan.pickingMode = PickingMode.Ignore;
+                
+                cMagenta.text = titleLabel.text;
+                cMagenta.style.position = Position.Absolute;
+                cMagenta.style.left = titleLabel.style.left;
+                cMagenta.style.top = titleLabel.style.top;
+                cMagenta.style.fontSize = titleLabel.style.fontSize;
+                cMagenta.style.unityTextAlign = titleLabel.style.unityTextAlign;
+                cMagenta.style.width = titleLabel.style.width;
+                cMagenta.style.height = titleLabel.style.height;
+                cMagenta.style.marginLeft = titleLabel.style.marginLeft;
+                cMagenta.style.marginTop = titleLabel.style.marginTop;
+                cMagenta.style.color = Color.magenta;
+                cMagenta.pickingMode = PickingMode.Ignore;
+
+                _splashScreen.Add(cCyan);
+                _splashScreen.Add(cMagenta);
+            }
+
+            Debug.Log($"[UIManager] InitTransitionEffects: TransitionStyle='{settings.TransitionStyle}', titleLabel.text='{titleLabel?.text}'");
+            if (titleLabel != null && (
+                settings.TransitionStyle == "ParticleSmoke" || 
+                settings.TransitionStyle == "ParticleSand" || 
+                settings.TransitionStyle == "ParticleEmbers" || 
+                settings.TransitionStyle == "ParticleRain" || 
+                settings.TransitionStyle == "ParticleSnow"))
+            {
+                titleLabel.style.opacity = 0f;
+                if (TransitionVFXManager.Instance != null)
+                {
+                    float totalDuration = (float)(settings.FadeInDuration + settings.DisplayDuration);
+                    Debug.Log($"[UIManager] Triggering 3D Particle effect: {settings.TransitionStyle} for {totalDuration}s");
+                    TransitionVFXManager.Instance.PlayTransitionEffect(settings.TransitionStyle, totalDuration);
+                }
+                else
+                {
+                    Debug.LogWarning("[UIManager] InitTransitionEffects: TransitionVFXManager.Instance is NULL!");
+                }
+            }
+        }
+
+        private void CleanupTransitionEffects(
+            Label splitCyan, 
+            Label splitMagenta, 
+            VisualElement crtScanlines, 
+            VisualElement particleContainer)
+        {
+            if (_splashScreen == null) return;
+            if (splitCyan != null) _splashScreen.Remove(splitCyan);
+            if (splitMagenta != null) _splashScreen.Remove(splitMagenta);
+            if (crtScanlines != null) _splashScreen.Remove(crtScanlines);
+            if (particleContainer != null) _splashScreen.Remove(particleContainer);
+            if (TransitionVFXManager.Instance != null)
+            {
+                TransitionVFXManager.Instance.StopAllTransitionEffects();
+            }
+        }
+
         private System.Collections.IEnumerator PlaySplashScreenSequenceRoutine()
         {
             var game = GameManager.Instance?.ActiveGame;
@@ -595,6 +762,10 @@ namespace RagNextPlayer.Managers
                 }
                 SetGameplayUIVisible(true);
                 IsSplashFinished = true;
+                if (GameManager.Instance?.CurrentRoom != null)
+                {
+                    TriggerRoomAmbientEffects(GameManager.Instance.CurrentRoom);
+                }
                 yield break;
             }
 
@@ -607,6 +778,12 @@ namespace RagNextPlayer.Managers
             }
 
             var titleLabel = _splashScreen?.Q<Label>(className: "splash-title");
+
+            Label splitCyan = null;
+            Label splitMagenta = null;
+            VisualElement crtScanlines = null;
+            VisualElement particleContainer = null;
+            List<UIParticle> particles = new List<UIParticle>();
 
             if (settings.Mode == "Video")
             {
@@ -698,6 +875,7 @@ namespace RagNextPlayer.Managers
                         }
                     }
 
+                    InitTransitionEffects(settings, titleLabel, ref splitCyan, ref splitMagenta, ref crtScanlines, ref particleContainer, particles);
                     _splashScreen.style.opacity = 0f;
                     if (titleLabel != null) titleLabel.style.opacity = 0f;
                     _videoPlayer.Play();
@@ -724,8 +902,27 @@ namespace RagNextPlayer.Managers
 
                             if (settings.TransitionStyle == "Cinematic")
                             {
-                                float curScale = Mathf.Lerp(1f, 1.02f, t);
+                                float curScale = Mathf.Lerp(1f, 1.08f, t);
                                 _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                            }
+                            else if (settings.TransitionStyle == "SoundReactive")
+                            {
+                                float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                                if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                                float pulse = 1f + loudness * 0.5f;
+                                _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                            }
+                        }
+
+                        if (particles.Count > 0)
+                        {
+                            foreach (var p in particles)
+                            {
+                                float curX = Mathf.Lerp(p.startPos.x, p.targetPos.x, t);
+                                float curY = Mathf.Lerp(p.startPos.y, p.targetPos.y, t);
+                                p.element.style.left = curX;
+                                p.element.style.top = curY;
+                                p.element.style.opacity = t * p.alpha;
                             }
                         }
 
@@ -754,6 +951,54 @@ namespace RagNextPlayer.Managers
                                     titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
                                 }
                             }
+                            else if (settings.TransitionStyle == "CRT")
+                            {
+                                if (UnityEngine.Random.value < 0.1f)
+                                {
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(0, UnityEngine.Random.Range(-4f, 4f)));
+                                }
+                                else
+                                {
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                                }
+                                titleLabel.style.opacity = t;
+                            }
+                            else if (settings.TransitionStyle == "RGBSplit")
+                            {
+                                titleLabel.style.opacity = t;
+                                float offset = 18f * Mathf.Sin(t * Mathf.PI * 4);
+                                if (UnityEngine.Random.value < 0.2f)
+                                {
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-12f, 12f), UnityEngine.Random.Range(-6f, 6f)));
+                                    titleLabel.style.opacity = UnityEngine.Random.Range(0.5f, 1.0f);
+                                }
+                                else
+                                {
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                                }
+                                if (splitCyan != null)
+                                {
+                                    splitCyan.style.translate = new StyleTranslate(new Translate(offset, UnityEngine.Random.Range(-2f, 2f)));
+                                    splitCyan.style.opacity = t;
+                                }
+                                if (splitMagenta != null)
+                                {
+                                    splitMagenta.style.translate = new StyleTranslate(new Translate(-offset, UnityEngine.Random.Range(-2f, 2f)));
+                                    splitMagenta.style.opacity = t;
+                                }
+                            }
+                            else if (settings.TransitionStyle == "SoundReactive")
+                            {
+                                float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                                if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                                float pulse = 1f + loudness * 0.5f;
+                                titleLabel.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                                titleLabel.style.opacity = t;
+                            }
+                            else if (settings.TransitionStyle == "ParticleSmoke" || settings.TransitionStyle == "ParticleSand")
+                            {
+                                titleLabel.style.opacity = t > 0.7f ? (t - 0.7f) / 0.3f : 0f;
+                            }
                             else
                             {
                                 titleLabel.style.opacity = t;
@@ -769,9 +1014,6 @@ namespace RagNextPlayer.Managers
                         titleLabel.style.opacity = 1f;
                     }
 
-                    // Bug #4: Wait DisplayDuration then proceed to fade-out —
-                    // do NOT block until the video finishes. This allows fade transitions
-                    // to fire dynamically while the video is still playing.
                     float displayDuration = (float)settings.DisplayDuration;
                     if (displayDuration < 0.1f) displayDuration = 0.1f;
                     float elapsedDisplay = 0f;
@@ -780,36 +1022,106 @@ namespace RagNextPlayer.Managers
                         elapsedDisplay += UnityEngine.Time.deltaTime;
                         float progress = elapsedDisplay / displayDuration;
 
-                        if (_splashScreen != null && settings.TransitionStyle == "Cinematic")
+                        if (_splashScreen != null)
                         {
-                            float curScale = Mathf.Lerp(1.02f, 1.05f, progress);
-                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                            if (settings.TransitionStyle == "Cinematic")
+                            {
+                                float curScale = Mathf.Lerp(1.08f, 1.20f, progress);
+                                _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                            }
+                            else if (settings.TransitionStyle == "SoundReactive")
+                            {
+                                float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                                if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                                float pulse = 1f + loudness * 0.5f;
+                                _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                            }
                         }
 
-                        if (titleLabel != null && settings.TransitionStyle == "Glitch")
+                        if (particles.Count > 0)
                         {
-                            if (UnityEngine.Random.value < 0.08f)
+                            foreach (var p in particles)
                             {
-                                titleLabel.style.opacity = UnityEngine.Random.Range(0.3f, 0.9f);
-                                titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-15f, 15f), UnityEngine.Random.Range(-8f, 8f)));
+                                float curX = p.targetPos.x + Mathf.Sin(elapsedDisplay + p.wiggleSeed) * 4f;
+                                float curY = p.targetPos.y + Mathf.Cos(elapsedDisplay + p.wiggleSeed) * 3f;
+                                p.element.style.left = curX;
+                                p.element.style.top = curY;
+                                p.element.style.opacity = (1f - progress) * p.alpha;
                             }
-                            else
+                        }
+
+                        if (titleLabel != null)
+                        {
+                            if (settings.TransitionStyle == "Glitch")
+                            {
+                                if (UnityEngine.Random.value < 0.08f)
+                                {
+                                    titleLabel.style.opacity = UnityEngine.Random.Range(0.3f, 0.9f);
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-15f, 15f), UnityEngine.Random.Range(-8f, 8f)));
+                                }
+                                else
+                                {
+                                    titleLabel.style.opacity = 1f;
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                                }
+                            }
+                            else if (settings.TransitionStyle == "CRT")
+                            {
+                                if (UnityEngine.Random.value < 0.08f)
+                                {
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(0, UnityEngine.Random.Range(-3f, 3f)));
+                                    titleLabel.style.opacity = UnityEngine.Random.Range(0.6f, 1.0f);
+                                }
+                                else
+                                {
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                                    titleLabel.style.opacity = 1f;
+                                }
+                            }
+                            else if (settings.TransitionStyle == "RGBSplit")
+                            {
+                                float offset = 6f * Mathf.Sin(progress * Mathf.PI * 10);
+                                if (UnityEngine.Random.value < 0.15f)
+                                {
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-16f, 16f), UnityEngine.Random.Range(-8f, 8f)));
+                                    titleLabel.style.opacity = UnityEngine.Random.Range(0.4f, 1.0f);
+                                }
+                                else
+                                {
+                                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                                    titleLabel.style.opacity = 1f;
+                                }
+                                if (splitCyan != null)
+                                {
+                                    splitCyan.style.translate = new StyleTranslate(new Translate(offset, UnityEngine.Random.Range(-3f, 3f)));
+                                    splitCyan.style.opacity = 1f;
+                                }
+                                if (splitMagenta != null)
+                                {
+                                    splitMagenta.style.translate = new StyleTranslate(new Translate(-offset, UnityEngine.Random.Range(-3f, 3f)));
+                                    splitMagenta.style.opacity = 1f;
+                                }
+                            }
+                            else if (settings.TransitionStyle == "SoundReactive")
+                            {
+                                float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                                if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                                float pulse = 1f + loudness * 0.5f;
+                                titleLabel.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                                titleLabel.style.opacity = 1f;
+                            }
+                            else if (settings.TransitionStyle == "ParticleSmoke" || settings.TransitionStyle == "ParticleSand")
                             {
                                 titleLabel.style.opacity = 1f;
-                                titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
                             }
                         }
                         yield return null;
                     }
-                    // Bug #4: Do NOT stop the video here.
-                    // The fade-out runs below while the video is still playing.
-                    // _videoPlayer.Stop() is called after the fade-out completes.
                 }
             }
             else
             {
                 // ── IMAGE & TEXT CUSTOM MODE ──
-                // Load Custom Background Image
                 var asset = game.MediaAssets.Find(a => 
                     string.Equals(a.Id, settings.ImageAssetId, StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(a.OriginalFileName, settings.ImageAssetId, StringComparison.OrdinalIgnoreCase));
@@ -820,7 +1132,6 @@ namespace RagNextPlayer.Managers
                 }
                 else
                 {
-                    // Fallback to pure black
                     if (_splashScreen != null)
                     {
                         _splashScreen.style.backgroundImage = null;
@@ -828,7 +1139,6 @@ namespace RagNextPlayer.Managers
                     }
                 }
 
-                // Customize Overlay Text block
                 if (titleLabel != null)
                 {
                     titleLabel.text = settings.Text;
@@ -866,18 +1176,17 @@ namespace RagNextPlayer.Managers
                     }
                 }
 
-                // Play custom dramatic sound effect if configured
                 if (!string.IsNullOrEmpty(settings.SoundAssetId) && AudioManager.Instance != null)
                 {
                     AudioManager.Instance.PlaySound(settings.SoundAssetId, 1f, false);
                 }
 
-                // Play the chosen cinematic Transition In sequence
+                InitTransitionEffects(settings, titleLabel, ref splitCyan, ref splitMagenta, ref crtScanlines, ref particleContainer, particles);
+
                 float elapsed = 0f;
                 float fadeInDuration = (float)settings.FadeInDuration;
                 if (fadeInDuration < 0.1f) fadeInDuration = 0.1f;
 
-                // Handle Rise / Cinematic / Glitch / Exposure setup
                 if (titleLabel != null)
                 {
                     if (settings.TransitionStyle == "Rise")
@@ -913,8 +1222,27 @@ namespace RagNextPlayer.Managers
 
                         if (settings.TransitionStyle == "Cinematic")
                         {
-                            float curScale = Mathf.Lerp(1f, 1.02f, t);
+                            float curScale = Mathf.Lerp(1f, 1.08f, t);
                             _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                        }
+                        else if (settings.TransitionStyle == "SoundReactive")
+                        {
+                            float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                            if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                            float pulse = 1f + loudness * 0.5f;
+                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                        }
+                    }
+
+                    if (particles.Count > 0)
+                    {
+                        foreach (var p in particles)
+                        {
+                            float curX = Mathf.Lerp(p.startPos.x, p.targetPos.x, t);
+                            float curY = Mathf.Lerp(p.startPos.y, p.targetPos.y, t);
+                            p.element.style.left = curX;
+                            p.element.style.top = curY;
+                            p.element.style.opacity = t * p.alpha;
                         }
                     }
 
@@ -943,6 +1271,58 @@ namespace RagNextPlayer.Managers
                                 titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
                             }
                         }
+                        else if (settings.TransitionStyle == "CRT")
+                        {
+                            if (UnityEngine.Random.value < 0.1f)
+                            {
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, UnityEngine.Random.Range(-4f, 4f)));
+                            }
+                            else
+                            {
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                            }
+                            titleLabel.style.opacity = t;
+                        }
+                        else if (settings.TransitionStyle == "RGBSplit")
+                        {
+                            titleLabel.style.opacity = t;
+                            float offset = 18f * Mathf.Sin(t * Mathf.PI * 4);
+                            if (UnityEngine.Random.value < 0.2f)
+                            {
+                                titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-12f, 12f), UnityEngine.Random.Range(-6f, 6f)));
+                                titleLabel.style.opacity = UnityEngine.Random.Range(0.5f, 1.0f);
+                            }
+                            else
+                            {
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                            }
+                            if (splitCyan != null)
+                            {
+                                splitCyan.style.translate = new StyleTranslate(new Translate(offset, UnityEngine.Random.Range(-2f, 2f)));
+                                splitCyan.style.opacity = t;
+                            }
+                            if (splitMagenta != null)
+                            {
+                                splitMagenta.style.translate = new StyleTranslate(new Translate(-offset, UnityEngine.Random.Range(-2f, 2f)));
+                                splitMagenta.style.opacity = t;
+                            }
+                        }
+                        else if (settings.TransitionStyle == "SoundReactive")
+                        {
+                            float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                            if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                            float pulse = 1f + loudness * 0.5f;
+                            titleLabel.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                            titleLabel.style.opacity = t;
+                        }
+                        else if (settings.TransitionStyle == "ParticleSmoke" || settings.TransitionStyle == "ParticleSand")
+                        {
+                            titleLabel.style.opacity = t > 0.7f ? (t - 0.7f) / 0.3f : 0f;
+                        }
+                        else
+                        {
+                            titleLabel.style.opacity = t;
+                        }
                     }
                     yield return null;
                 }
@@ -958,7 +1338,6 @@ namespace RagNextPlayer.Managers
                     titleLabel.style.opacity = 1f;
                 }
 
-                // Hold duration loop (with real-time animations for Cinematic/Glitch)
                 float holdDuration = (float)settings.DisplayDuration;
                 float elapsedHold = 0f;
                 while (elapsedHold < holdDuration)
@@ -966,23 +1345,97 @@ namespace RagNextPlayer.Managers
                     elapsedHold += UnityEngine.Time.deltaTime;
                     float progress = elapsedHold / holdDuration;
 
-                    if (_splashScreen != null && settings.TransitionStyle == "Cinematic")
+                    if (_splashScreen != null)
                     {
-                        float curScale = Mathf.Lerp(1.02f, 1.05f, progress);
-                        _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                        if (settings.TransitionStyle == "Cinematic")
+                        {
+                            float curScale = Mathf.Lerp(1.08f, 1.20f, progress);
+                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                        }
+                        else if (settings.TransitionStyle == "SoundReactive")
+                        {
+                            float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                            if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                            float pulse = 1f + loudness * 0.5f;
+                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                        }
                     }
 
-                    if (titleLabel != null && settings.TransitionStyle == "Glitch")
+                    if (particles.Count > 0)
                     {
-                        if (UnityEngine.Random.value < 0.08f)
+                        foreach (var p in particles)
                         {
-                            titleLabel.style.opacity = UnityEngine.Random.Range(0.3f, 0.9f);
-                            titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-15f, 15f), UnityEngine.Random.Range(-8f, 8f)));
+                            float curX = p.targetPos.x + Mathf.Sin(elapsedHold + p.wiggleSeed) * 4f;
+                            float curY = p.targetPos.y + Mathf.Cos(elapsedHold + p.wiggleSeed) * 3f;
+                            p.element.style.left = curX;
+                            p.element.style.top = curY;
+                            p.element.style.opacity = (1f - progress) * p.alpha;
                         }
-                        else
+                    }
+
+                    if (titleLabel != null)
+                    {
+                        if (settings.TransitionStyle == "Glitch")
+                        {
+                            if (UnityEngine.Random.value < 0.08f)
+                            {
+                                titleLabel.style.opacity = UnityEngine.Random.Range(0.3f, 0.9f);
+                                titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-15f, 15f), UnityEngine.Random.Range(-8f, 8f)));
+                            }
+                            else
+                            {
+                                titleLabel.style.opacity = 1f;
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                            }
+                        }
+                        else if (settings.TransitionStyle == "CRT")
+                        {
+                            if (UnityEngine.Random.value < 0.08f)
+                            {
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, UnityEngine.Random.Range(-3f, 3f)));
+                                titleLabel.style.opacity = UnityEngine.Random.Range(0.6f, 1.0f);
+                            }
+                            else
+                            {
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                                titleLabel.style.opacity = 1f;
+                            }
+                        }
+                        else if (settings.TransitionStyle == "RGBSplit")
+                        {
+                            float offset = 6f * Mathf.Sin(progress * Mathf.PI * 10);
+                            if (UnityEngine.Random.value < 0.15f)
+                            {
+                                titleLabel.style.translate = new StyleTranslate(new Translate(UnityEngine.Random.Range(-16f, 16f), UnityEngine.Random.Range(-8f, 8f)));
+                                titleLabel.style.opacity = UnityEngine.Random.Range(0.4f, 1.0f);
+                            }
+                            else
+                            {
+                                titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                                titleLabel.style.opacity = 1f;
+                            }
+                            if (splitCyan != null)
+                            {
+                                splitCyan.style.translate = new StyleTranslate(new Translate(offset, UnityEngine.Random.Range(-3f, 3f)));
+                                splitCyan.style.opacity = 1f;
+                            }
+                            if (splitMagenta != null)
+                            {
+                                splitMagenta.style.translate = new StyleTranslate(new Translate(-offset, UnityEngine.Random.Range(-3f, 3f)));
+                                splitMagenta.style.opacity = 1f;
+                            }
+                        }
+                        else if (settings.TransitionStyle == "SoundReactive")
+                        {
+                            float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                            if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                            float pulse = 1f + loudness * 0.5f;
+                            titleLabel.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                            titleLabel.style.opacity = 1f;
+                        }
+                        else if (settings.TransitionStyle == "ParticleSmoke" || settings.TransitionStyle == "ParticleSand")
                         {
                             titleLabel.style.opacity = 1f;
-                            titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
                         }
                     }
                     yield return null;
@@ -1003,8 +1456,61 @@ namespace RagNextPlayer.Managers
                     _splashScreen.style.opacity = Mathf.Lerp(1f, 0f, t);
                     if (settings != null && settings.TransitionStyle == "Cinematic")
                     {
-                        float curScale = Mathf.Lerp(1.05f, 1.07f, t);
+                        float curScale = Mathf.Lerp(1.20f, 1.25f, t);
                         _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                    }
+                    else if (settings != null && settings.TransitionStyle == "SoundReactive")
+                    {
+                        float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                        if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                        float pulse = (1f + loudness * 0.5f) * (1f - t);
+                        _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                    }
+                }
+
+                if (particles.Count > 0)
+                {
+                    float speed = (settings.TransitionStyle == "ParticleSmoke") ? 150f : 250f;
+                    foreach (var p in particles)
+                    {
+                        float curX = p.targetPos.x + (Mathf.Sin(t * 5f + p.wiggleSeed) * 50f * t);
+                        float curY = p.targetPos.y - (speed * t);
+                        p.element.style.left = curX;
+                        p.element.style.top = curY;
+                        p.element.style.opacity = (1f - t) * p.alpha;
+                    }
+                }
+
+                if (titleLabel != null)
+                {
+                    if (settings.TransitionStyle == "CRT")
+                    {
+                        if (UnityEngine.Random.value < 0.1f)
+                        {
+                            titleLabel.style.translate = new StyleTranslate(new Translate(0, UnityEngine.Random.Range(-4f, 4f)));
+                        }
+                    }
+                    else if (settings.TransitionStyle == "RGBSplit")
+                    {
+                        float offset = 10f * Mathf.Sin(t * Mathf.PI * 4) * (1f - t);
+                        if (splitCyan != null)
+                        {
+                            splitCyan.style.translate = new StyleTranslate(new Translate(offset, 0));
+                            splitCyan.style.opacity = 1f - t;
+                        }
+                        if (splitMagenta != null)
+                        {
+                            splitMagenta.style.translate = new StyleTranslate(new Translate(-offset, 0));
+                            splitMagenta.style.opacity = 1f - t;
+                        }
+                    }
+                    else if (settings.TransitionStyle == "SoundReactive")
+                    {
+                        float loudness = AudioManager.Instance != null ? AudioManager.Instance.GetLoudnessOfSound(settings.SoundAssetId) : 0f;
+                        if (loudness < 0.001f) loudness = Mathf.Abs(Mathf.Sin(UnityEngine.Time.time * Mathf.PI * 2f)) * 0.2f;
+                        float pulse = (1f + loudness * 0.5f) * (1f - t);
+                        titleLabel.style.scale = new StyleScale(new Scale(new Vector3(pulse, pulse, 1f)));
+                        titleLabel.style.opacity = 1f - t;
                     }
                 }
                 yield return null;
@@ -1014,6 +1520,9 @@ namespace RagNextPlayer.Managers
             {
                 _splashScreen.style.display = DisplayStyle.None;
             }
+
+            // Clean up temporary effects elements
+            CleanupTransitionEffects(splitCyan, splitMagenta, crtScanlines, particleContainer);
 
             // Bug #4: Stop video AFTER the fade-out so transitions play over the live video.
             if (_videoPlayer != null && _videoPlayer.isPlaying)
@@ -1029,6 +1538,10 @@ namespace RagNextPlayer.Managers
 
             SetGameplayUIVisible(true);
             IsSplashFinished = true;
+            if (GameManager.Instance?.CurrentRoom != null)
+            {
+                TriggerRoomAmbientEffects(GameManager.Instance.CurrentRoom);
+            }
         }
 
         private float EasingSpring(float t)
@@ -1234,6 +1747,13 @@ namespace RagNextPlayer.Managers
         {
             if (room is null) return;
 
+            SetupVFXOverlay();
+
+            if (IsSplashFinished)
+            {
+                TriggerRoomAmbientEffects(room);
+            }
+
             if (_firstRoomRendered)
             {
                 PrepareForNewAction();
@@ -1300,6 +1820,55 @@ namespace RagNextPlayer.Managers
 
             // Pulse room-actions-container if active actions are available
             UpdateRoomActionsPulse(room);
+        }
+
+        private void TriggerRoomAmbientEffects(RoomData room)
+        {
+            if (TransitionVFXManager.Instance == null) return;
+
+            if (room.Attributes != null)
+            {
+                if (room.Attributes.TryGetValue("Weather", out var weatherVal))
+                {
+                    Debug.Log($"[UIManager] Setting Weather Overlay: '{weatherVal}'");
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", weatherVal.Equals("Embers", StringComparison.OrdinalIgnoreCase));
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", weatherVal.Equals("Rain", StringComparison.OrdinalIgnoreCase));
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", weatherVal.Equals("Snow", StringComparison.OrdinalIgnoreCase));
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", weatherVal.Equals("Sand", StringComparison.OrdinalIgnoreCase) || weatherVal.Equals("Sandstorm", StringComparison.OrdinalIgnoreCase));
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", weatherVal.Equals("Smoke", StringComparison.OrdinalIgnoreCase));
+                }
+                else if (room.Attributes.TryGetValue("Atmosphere", out var atmosVal))
+                {
+                    Debug.Log($"[UIManager] Setting Atmosphere Overlay: '{atmosVal}'");
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", atmosVal.Equals("Embers", StringComparison.OrdinalIgnoreCase));
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", atmosVal.Equals("Rain", StringComparison.OrdinalIgnoreCase));
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", atmosVal.Equals("Snow", StringComparison.OrdinalIgnoreCase));
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", atmosVal.Equals("Sand", StringComparison.OrdinalIgnoreCase) || atmosVal.Equals("Sandstorm", StringComparison.OrdinalIgnoreCase));
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", atmosVal.Equals("Smoke", StringComparison.OrdinalIgnoreCase));
+                }
+                else
+                {
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", false);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", false);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", false);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", false);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", false);
+                }
+
+                if (room.Attributes.TryGetValue("Shake", out var shakeVal) && float.TryParse(shakeVal, out var shakeInt))
+                {
+                    Debug.Log($"[UIManager] Triggering Screen Shake: {shakeInt}");
+                    TransitionVFXManager.Instance.TriggerScreenShake(shakeInt, 1.0f);
+                }
+            }
+            else
+            {
+                TransitionVFXManager.Instance.SetAmbientOverlay("Embers", false);
+                TransitionVFXManager.Instance.SetAmbientOverlay("Rain", false);
+                TransitionVFXManager.Instance.SetAmbientOverlay("Snow", false);
+                TransitionVFXManager.Instance.SetAmbientOverlay("Sand", false);
+                TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", false);
+            }
         }
 
         private void UpdateRoomActionsPulse(RoomData room)
@@ -1752,6 +2321,78 @@ namespace RagNextPlayer.Managers
                 await System.Threading.Tasks.Task.Yield();
             }
             _narrativePanel.style.opacity = targetOpacity;
+        }
+
+        private VisualElement _transitionBackdrop;
+
+        public void SetTransitionBackdrop(bool active, float durationSec)
+        {
+            if (_root == null) return;
+
+            if (active)
+            {
+                if (_transitionBackdrop == null)
+                {
+                    _transitionBackdrop = new VisualElement();
+                    _transitionBackdrop.name = "transition-backdrop";
+                    _transitionBackdrop.style.position = Position.Absolute;
+                    _transitionBackdrop.style.left = 0;
+                    _transitionBackdrop.style.right = 0;
+                    _transitionBackdrop.style.top = 0;
+                    _transitionBackdrop.style.bottom = 0;
+                    _transitionBackdrop.style.backgroundColor = Color.black;
+                    _transitionBackdrop.pickingMode = PickingMode.Position; // block click events
+                }
+
+                // Insert it just before the vfx-overlay so it lies on top of gameplay UI but underneath particles
+                VisualElement vfx = _root.Q("vfx-overlay");
+                if (vfx != null)
+                {
+                    int index = _root.IndexOf(vfx);
+                    if (!_root.Contains(_transitionBackdrop))
+                    {
+                        _root.Insert(index, _transitionBackdrop);
+                    }
+                }
+                else
+                {
+                    if (!_root.Contains(_transitionBackdrop))
+                    {
+                        _root.Add(_transitionBackdrop);
+                    }
+                }
+
+                // Fade in to 1 over half of transition duration
+                _transitionBackdrop.style.opacity = 0f;
+                _transitionBackdrop.style.display = DisplayStyle.Flex;
+                
+                StartCoroutine(FadeBackdropRoutine(0f, 1f, durationSec * 0.5f));
+            }
+            else
+            {
+                if (_transitionBackdrop != null && _root.Contains(_transitionBackdrop))
+                {
+                    // Fade out over second half, then hide
+                    StartCoroutine(FadeBackdropRoutine(1f, 0f, durationSec * 0.5f, () => {
+                        _transitionBackdrop.style.display = DisplayStyle.None;
+                    }));
+                }
+            }
+        }
+
+        private System.Collections.IEnumerator FadeBackdropRoutine(float startAlpha, float targetAlpha, float duration, System.Action onComplete = null)
+        {
+            if (_transitionBackdrop == null) yield break;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                _transitionBackdrop.style.opacity = Mathf.Lerp(startAlpha, targetAlpha, t);
+                yield return null;
+            }
+            _transitionBackdrop.style.opacity = targetAlpha;
+            onComplete?.Invoke();
         }
 
         // ── Private Helpers ───────────────────────────────────────────────────

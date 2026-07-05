@@ -66,8 +66,12 @@ namespace RagNextPlayer.Managers
                         // Now trigger the animated room transition.
                         var roomId = ctx.GetVariable("player.currentRoomId")?.Value;
                         if (!string.IsNullOrEmpty(roomId))
-                            GameManager.Instance?.MovePlayerToRoom(roomId);
+                            GameManager.Instance?.MovePlayerToRoom(roomId, null, c.TransitionStyle, c.TransitionDuration);
                     }
+                    break;
+
+                case ScreenShakeCommandData c:
+                    TransitionVFXManager.Instance?.TriggerScreenShake(c.Intensity, c.Duration);
                     break;
 
                 case AddObjectToRoomCommandData:

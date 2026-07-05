@@ -178,7 +178,8 @@ namespace RagNextPlayer.Runtime.Models
     public class VariableDecrementCommandData        : CommandData { public string Name { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class VariableSetToVariableCommandData    : CommandData { public string Name { get; set; } = string.Empty; public string SourceName { get; set; } = string.Empty; }
     public class SetNumericRandomlyCommandData       : CommandData { public string Name { get; set; } = string.Empty; public double Minimum { get; set; } public double Maximum { get; set; } }
-    public class MovePlayerToRoomCommandData         : CommandData { public string RoomId { get; set; } = string.Empty; }
+    public class MovePlayerToRoomCommandData         : CommandData { public string RoomId { get; set; } = string.Empty; public string TransitionStyle { get; set; } = string.Empty; public float TransitionDuration { get; set; } = 0f; }
+    public class ScreenShakeCommandData              : CommandData { public float Intensity { get; set; } = 0.3f; public float Duration { get; set; } = 1.0f; }
     public class AddObjectToRoomCommandData          : CommandData { public string RoomId { get; set; } = string.Empty; public string ObjectId { get; set; } = string.Empty; }
     public class RemoveObjectFromRoomCommandData     : CommandData { public string RoomId { get; set; } = string.Empty; public string ObjectId { get; set; } = string.Empty; }
     public class SetRoomExitCommandData              : CommandData { public string RoomId { get; set; } = string.Empty; public string Direction { get; set; } = string.Empty; public string DestinationRoomId { get; set; } = string.Empty; }

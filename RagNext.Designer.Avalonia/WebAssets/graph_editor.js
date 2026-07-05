@@ -120,6 +120,7 @@ const fallbackDiscriminators = {
     "playermoveinventorytocharacter": "player.moveInventoryToChar",
     "playermoveinventorytoroom": "player.moveInventoryToRoom",
     "playermovetoroom": "player.moveTo",
+    "playerscreenshake": "player.screenShake",
     "playermovetocharacter": "player.moveToChar",
     "playermovetoobject": "player.moveToObject",
     "playersetattribute": "player.setAttribute",
@@ -217,6 +218,9 @@ const propertyMappings = {
     "DateTime Component": ["DateTimeComponent", "dateTimeComponent"],
     "Duration": ["Duration", "duration"],
     "Constant Value": ["ConstantValue", "constantValue"],
+    "Transition Style": ["TransitionStyle", "transitionStyle"],
+    "Transition Duration": ["Duration", "duration", "TransitionDuration", "transitionDuration"],
+    "Transition Intensity": ["Intensity", "intensity"],
     "Sound File": ["SoundId", "soundId"],
     "Video File": ["VideoId", "videoId"],
     "Array Variable": ["ArrayVariableName", "arrayVariableName"],
@@ -2746,6 +2750,23 @@ function refreshCommandFields(node) {
                     { Id: "Non-binary", Name: "Non-binary" },
                     { Id: "Other", Name: "Other" }
                 ];
+            } else if (inputSchema.label === 'Transition Intensity' || inputSchema.label === 'TransitionIntensity' || inputSchema.label === 'Intensity') {
+                optionsList = [
+                    { Id: "0.1", Name: "Very Low (0.1)" },
+                    { Id: "0.3", Name: "Low (0.3)" },
+                    { Id: "0.5", Name: "Medium (0.5)" },
+                    { Id: "0.8", Name: "High (0.8)" },
+                    { Id: "1.0", Name: "Extreme (1.0)" }
+                ];
+            } else if (inputSchema.label === 'Transition Style' || inputSchema.label === 'TransitionStyle') {
+                optionsList = [
+                    { Id: "None", Name: "None" },
+                    { Id: "Smoke", Name: "Smoke" },
+                    { Id: "Sand", Name: "Sand" },
+                    { Id: "Embers", Name: "Embers" },
+                    { Id: "Rain", Name: "Rain" },
+                    { Id: "Snow", Name: "Snow" }
+                ];
             } else if (inputSchema.label === 'InputType' || inputSchema.label === 'Input Type') {
                 optionsList = [
                     { Id: "Text", Name: "Text" },
@@ -2859,9 +2880,10 @@ function refreshCommandFields(node) {
             const existsInOptions = optionsList.some(opt => {
                 const nameVal = opt.Name !== undefined ? opt.Name : opt.name;
                 const idVal = opt.Id !== undefined ? opt.Id : opt.id;
-                return (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') ? nameVal === initialVal : idVal === initialVal;
+                const target = (inputSchema.dataType === 'Variable' || inputSchema.dataType === 'PromptName' || inputSchema.label === 'Attribute Name' || inputSchema.label === 'AttributeName') ? nameVal : idVal;
+                return String(target) === String(initialVal);
             });
-            let isExprMode = (initialVal && (initialVal.includes('{') || initialVal.includes('}') || !existsInOptions));
+            let isExprMode = (initialVal && typeof initialVal === 'string' && (initialVal.includes('{') || initialVal.includes('}'))) || (initialVal !== undefined && initialVal !== null && initialVal !== "" && !existsInOptions);
 
             pickerSelect.style.display = isExprMode ? 'none' : 'block';
             textInput.style.display = isExprMode ? 'block' : 'none';
@@ -3067,7 +3089,11 @@ function refreshCommandFields(node) {
                 const numberInput = document.createElement('input');
                 numberInput.type = 'number';
                 numberInput.style.width = "100%";
-                numberInput.placeholder = "Enter number...";
+                if (inputSchema.label && inputSchema.label.toLowerCase().includes('duration')) {
+                    numberInput.placeholder = "Enter duration in seconds...";
+                } else {
+                    numberInput.placeholder = "Enter number...";
+                }
 
                 const textInput = document.createElement('input');
                 textInput.type = 'text';
@@ -5827,6 +5853,7 @@ const nodeDescriptions = {
     "player.moveInventoryToChar": "Transfers an item from the player's inventory to a character.",
     "player.moveInventoryToRoom": "Drops an item from the player's inventory into the room.",
     "player.moveTo": "Moves the player to a specific room.",
+    "player.screenShake": "Shakes the screen camera with specified intensity and duration.",
     "player.moveToChar": "Moves the player to the room where a specific character is located.",
     "player.moveToObject": "Places the player inside a container object.",
     "player.setActionActive": "Enables or disables a custom action command on the player.",
