@@ -568,27 +568,108 @@ namespace RagNextPlayer.Managers
                     string.Equals(a.Id, settings.VideoAssetId, StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(a.OriginalFileName, settings.VideoAssetId, StringComparison.OrdinalIgnoreCase));
                 
-                string videoPath = "";
                 if (asset != null)
                 {
-                    videoPath = System.IO.Path.Combine(Application.streamingAssetsPath, asset.RelativePath);
-                }
+                    if (_videoTexture == null)
+                    {
+                        _videoTexture = new RenderTexture(1280, 720, 16, RenderTextureFormat.ARGB32);
+                        _videoTexture.Create();
+                    }
 
-                if (_videoPlayer != null && !string.IsNullOrEmpty(videoPath) && System.IO.File.Exists(videoPath))
-                {
-                    _videoPlayer.url = videoPath;
+                    if (_videoPlayer == null)
+                    {
+                        _videoPlayer = gameObject.GetComponent<UnityEngine.Video.VideoPlayer>();
+                        if (_videoPlayer == null)
+                            _videoPlayer = gameObject.AddComponent<UnityEngine.Video.VideoPlayer>();
+                    }
+
+                    _videoPlayer.playOnAwake = false;
+                    _videoPlayer.isLooping = false;
+                    _videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.RenderTexture;
+                    _videoPlayer.targetTexture = _videoTexture;
+
+                    string url = FormatLocalPathForWeb(asset.RelativePath);
+                    if (url.StartsWith("file://")) _videoPlayer.url = new Uri(url).LocalPath;
+                    else _videoPlayer.url = url;
+
+                    if (_splashScreen != null)
+                    {
+                        _splashScreen.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
+                    }
+
+                    if (titleLabel != null)
+                    {
+                        titleLabel.text = settings.Text;
+                        titleLabel.style.display = DisplayStyle.Flex;
+                        titleLabel.style.position = Position.Absolute;
+                        titleLabel.style.opacity = 1f;
+                        titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                        titleLabel.style.left = Length.Percent((float)settings.TextX);
+                        titleLabel.style.top = Length.Percent((float)settings.TextY);
+                        titleLabel.style.width = 2000f;
+                        titleLabel.style.height = 200f;
+                        titleLabel.style.marginLeft = -1000f;
+                        titleLabel.style.marginTop = -100f;
+                        titleLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                        titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                        titleLabel.style.whiteSpace = WhiteSpace.NoWrap;
+
+                        if (double.TryParse(settings.FontSize.ToString(), out var sizeVal))
+                        {
+                            titleLabel.style.fontSize = (float)sizeVal * 2.75f;
+                        }
+
+                        string fontColorHex = settings.FontColor;
+                        if (fontColorHex != null && fontColorHex.StartsWith("#") && fontColorHex.Length == 9)
+                        {
+                            fontColorHex = "#" + fontColorHex.Substring(3, 6) + fontColorHex.Substring(1, 2);
+                        }
+                        if (ColorUtility.TryParseHtmlString(fontColorHex, out var clr))
+                        {
+                            titleLabel.style.color = clr;
+                        }
+                        else
+                        {
+                            titleLabel.style.color = Color.white;
+                        }
+                    }
+
                     _videoPlayer.Prepare();
                     while (!_videoPlayer.isPrepared)
                     {
                         yield return null;
                     }
 
-                    if (titleLabel != null) titleLabel.style.opacity = 0f;
                     _videoPlayer.Play();
+
+                    if (!string.IsNullOrEmpty(settings.SoundAssetId) && AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.PlaySound(settings.SoundAssetId, 1f, false);
+                    }
+
+                    InitTransitionEffects(settings, titleLabel, ref splitCyan, ref splitMagenta, ref crtScanlines, ref particleContainer, particles);
 
                     float elapsedIn = 0f;
                     float fadeInDuration = (float)settings.FadeInDuration;
                     if (fadeInDuration < 0.1f) fadeInDuration = 0.1f;
+
+                    if (titleLabel != null)
+                    {
+                        if (settings.TransitionStyle == "Rise")
+                        {
+                            titleLabel.style.translate = new StyleTranslate(new Translate(0, 60));
+                        }
+                        else if (settings.TransitionStyle == "Cinematic")
+                        {
+                            if (_splashScreen != null)
+                                _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                        }
+                        else if (settings.TransitionStyle == "Exposure")
+                        {
+                            titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1.5f, 1.5f, 1f)));
+                        }
+                    }
+
                     while (elapsedIn < fadeInDuration)
                     {
                         elapsedIn += UnityEngine.Time.deltaTime;
