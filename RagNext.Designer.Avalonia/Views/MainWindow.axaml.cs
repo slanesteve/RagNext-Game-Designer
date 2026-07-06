@@ -3264,7 +3264,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                     var fileUri = new Uri(filePath).AbsoluteUri;
                     
-                    var splash = vm.CurrentGame?.SplashScreen;
+                    var splash = vm.SelectedSplashScreen ?? vm.CurrentGame?.SplashScreen;
                     string text = splash?.Text ?? "My Adventure";
                     double textX = splash?.TextX ?? 50;
                     double textY = splash?.TextY ?? 50;
