@@ -2377,6 +2377,10 @@ namespace RagNextPlayer.Managers
             var requiredCharacters = new List<GameObjectData>();
             foreach (var ch in game.Characters)
             {
+                if (game.Player != null && string.Equals(ch.Id, game.Player.Id, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
                 var charRoomVar = game.Variables.Find(v => string.Equals(v.Name, $"char.{ch.Id}.currentRoomId", StringComparison.OrdinalIgnoreCase))?.Value;
                 bool isInThisRoom = false;
 

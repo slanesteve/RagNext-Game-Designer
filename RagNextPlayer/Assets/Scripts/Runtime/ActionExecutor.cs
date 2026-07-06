@@ -2080,11 +2080,10 @@ namespace RagNextPlayer.Runtime
                             ctx.Game.Player.Inventory.Clear();
                             foreach (var item in targetChar.Inventory) ctx.Game.Player.Inventory.Add(item);
 
-                            if (!string.IsNullOrEmpty(targetChar.StartingRoomId))
+                            var currentRoomId2 = ctx.GetVariable("player.currentRoomId")?.Value;
+                            if (!string.IsNullOrEmpty(currentRoomId2))
                             {
-                                ctx.SetVariable("player.currentRoomId", targetChar.StartingRoomId);
-                                
-                                var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetChar.StartingRoomId, StringComparison.OrdinalIgnoreCase));
+                                var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, currentRoomId2, StringComparison.OrdinalIgnoreCase));
                                 if (room != null && UIManager.Instance != null)
                                 {
                                     UIManager.Instance.OnRoomEntered(room);
