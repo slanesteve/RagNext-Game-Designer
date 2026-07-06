@@ -556,7 +556,7 @@ namespace RagNextPlayer.Managers
             }
             else
             {
-                ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
         }
 
