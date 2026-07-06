@@ -4,6 +4,9 @@ namespace RagsCore.Models
 {
     public class SplashScreenSettings : BaseModel
     {
+        private string _name = "Default";
+        public string Name { get => _name; set => SetProperty(ref _name, value); }
+
         private bool _enabled = false;
         public bool Enabled { get => _enabled; set => SetProperty(ref _enabled, value); }
 

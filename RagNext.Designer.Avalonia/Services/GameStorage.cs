@@ -82,10 +82,12 @@ namespace RagNext.Designer.Avalonia.Services
             fileName = targetFileName;
 
             var fullPath = Path.Combine(SavesDirectory, $"{fileName}.json");
+            var tempPath = fullPath + ".tmp";
             System.Diagnostics.Debug.WriteLine($"[DEBUG] GameStorage.SaveAsync: Player.StartingRoom is {(game.Player?.StartingRoom != null ? game.Player.StartingRoom.Name : "null")}");
             Console.WriteLine($"[DEBUG] GameStorage.SaveAsync: Player.StartingRoom is {(game.Player?.StartingRoom != null ? game.Player.StartingRoom.Name : "null")}");
             var json = JsonSerializer.Serialize(game, RagsCore.RagsJsonContext.CustomDefault.Game);
-            await File.WriteAllTextAsync(fullPath, json).ConfigureAwait(false);
+            await File.WriteAllTextAsync(tempPath, json).ConfigureAwait(false);
+            File.Move(tempPath, fullPath, overwrite: true);
 
             // Track the successfully saved filename on the game object
             game.FileName = fileName;

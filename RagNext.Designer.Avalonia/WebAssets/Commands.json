@@ -504,16 +504,17 @@
           "label": "Destination Room",
           "controlType": "ComboBox",
           "dataType": "Room"
-        },
+        }
+      ]
+    },
+    {
+      "name": "Player: Swap Character",
+      "category": "Player",
+      "inputs": [
         {
-          "label": "Transition Style",
+          "label": "Character",
           "controlType": "ComboBox",
-          "dataType": "String"
-        },
-        {
-          "label": "Transition Duration",
-          "controlType": "Number",
-          "dataType": "Single"
+          "dataType": "Character"
         }
       ]
     },
@@ -741,6 +742,17 @@
           "label": "Visible",
           "controlType": "Checkbox",
           "dataType": "Bool"
+        }
+      ]
+    },
+    {
+      "name": "UI: Show Splash Screen",
+      "category": "UI",
+      "inputs": [
+        {
+          "label": "Splash Screen Name",
+          "controlType": "ComboBox",
+          "dataType": "SplashScreen"
         }
       ]
     },

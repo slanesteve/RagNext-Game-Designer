@@ -98,6 +98,8 @@ namespace RagNextPlayer.Runtime.Models
                 "player.setDescription"  => typeof(PlayerSetDescriptionCommandData),
                 "player.setGender"       => typeof(PlayerSetGenderCommandData),
                 "player.setPortraitMedia"=> typeof(PlayerSetPortraitMediaCommandData),
+                "player.swapCharacter"   => typeof(SwapPlayerCharacterCommandData),
+                "ui.showSplashScreen"    => typeof(ShowSplashScreenCommandData),
                 "char.moveToRoom"        => typeof(CharacterMoveToRoomCommandData),
                 "char.moveToRandomAdjacent" => typeof(CharacterMoveToRandomAdjacentCommandData),
                 "char.moveAlongPatrolPath" => typeof(CharacterMoveAlongPatrolPathCommandData),

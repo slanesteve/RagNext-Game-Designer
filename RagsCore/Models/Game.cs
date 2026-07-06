@@ -56,7 +56,28 @@ namespace RagsCore.Models
         private ObservableCollection<string> _wearSlots = new() { "Head", "Torso", "Legs", "Feet", "Hands", "Neck", "Back" };
         public ObservableCollection<string> WearSlots { get => _wearSlots; set => SetProperty(ref _wearSlots, value); }
 
-        public SplashScreenSettings SplashScreen { get; set; } = new();
+        public Guid ActivePlayerCharacterId { get; set; }
+
+        public ObservableCollection<SplashScreenSettings> SplashScreens { get; set; } = new();
+        public string DefaultSplashScreenName { get; set; } = "Default";
+
+        private SplashScreenSettings _splashScreen = new() { Name = "Default" };
+        public SplashScreenSettings SplashScreen
+        {
+            get => _splashScreen;
+            set
+            {
+                _splashScreen = value;
+                if (SplashScreens != null)
+                {
+                    var existing = System.Linq.Enumerable.FirstOrDefault(SplashScreens, s => s.Name == (value.Name ?? "Default"));
+                    if (existing == null)
+                    {
+                        SplashScreens.Add(value);
+                    }
+                }
+            }
+        }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

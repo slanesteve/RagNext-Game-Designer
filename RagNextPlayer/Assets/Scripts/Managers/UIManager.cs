@@ -530,7 +530,255 @@ namespace RagNextPlayer.Managers
                 StartCoroutine(PlaySplashScreenSequenceRoutine());
             }
         }
- 
+
+        public void PlayCustomSplashScreen(SplashScreenSettingsData settings, System.Action onComplete = null)
+        {
+            if (_splashScreen == null || settings == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+            StartCoroutine(PlayCustomSplashScreenRoutine(settings, onComplete));
+        }
+
+        private System.Collections.IEnumerator PlayCustomSplashScreenRoutine(SplashScreenSettingsData settings, System.Action onComplete)
+        {
+            SetGameplayUIVisible(false);
+            
+            if (_splashScreen != null)
+            {
+                _splashScreen.style.display = DisplayStyle.Flex;
+                _splashScreen.style.opacity = 0f;
+                _splashScreen.style.alignItems = Align.FlexStart;
+                _splashScreen.style.justifyContent = Justify.FlexStart;
+            }
+
+            var titleLabel = _splashScreen?.Q<Label>(className: "splash-title");
+            Label splitCyan = null;
+            Label splitMagenta = null;
+            VisualElement crtScanlines = null;
+            VisualElement particleContainer = null;
+            List<UIParticle> particles = new List<UIParticle>();
+
+            var game = GameManager.Instance?.ActiveGame;
+
+            if (settings.Mode == "Video")
+            {
+                var asset = game?.MediaAssets.Find(a => 
+                    string.Equals(a.Id, settings.VideoAssetId, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(a.OriginalFileName, settings.VideoAssetId, StringComparison.OrdinalIgnoreCase));
+                
+                string videoPath = "";
+                if (asset != null)
+                {
+                    videoPath = System.IO.Path.Combine(Application.streamingAssetsPath, asset.RelativePath);
+                }
+
+                if (_videoPlayer != null && !string.IsNullOrEmpty(videoPath) && System.IO.File.Exists(videoPath))
+                {
+                    _videoPlayer.url = videoPath;
+                    _videoPlayer.Prepare();
+                    while (!_videoPlayer.isPrepared)
+                    {
+                        yield return null;
+                    }
+
+                    if (titleLabel != null) titleLabel.style.opacity = 0f;
+                    _videoPlayer.Play();
+
+                    float elapsedIn = 0f;
+                    float fadeInDuration = (float)settings.FadeInDuration;
+                    if (fadeInDuration < 0.1f) fadeInDuration = 0.1f;
+                    while (elapsedIn < fadeInDuration)
+                    {
+                        elapsedIn += UnityEngine.Time.deltaTime;
+                        float t = Mathf.Clamp01(elapsedIn / fadeInDuration);
+                        if (_splashScreen != null)
+                        {
+                            if (settings.TransitionStyle == "Exposure")
+                            {
+                                float expT = Mathf.Pow(t, 0.4f);
+                                _splashScreen.style.opacity = expT;
+                            }
+                            else
+                            {
+                                _splashScreen.style.opacity = t;
+                            }
+
+                            if (settings.TransitionStyle == "Cinematic")
+                            {
+                                float curScale = Mathf.Lerp(1f, 1.08f, t);
+                                _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                            }
+                        }
+                        yield return null;
+                    }
+                }
+            }
+            else
+            {
+                var asset = game?.MediaAssets.Find(a => 
+                    string.Equals(a.Id, settings.ImageAssetId, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(a.OriginalFileName, settings.ImageAssetId, StringComparison.OrdinalIgnoreCase));
+                
+                if (asset != null)
+                {
+                    yield return StartCoroutine(LoadImageCoroutine(asset.RelativePath, "splash-screen"));
+                }
+                else
+                {
+                    if (_splashScreen != null)
+                    {
+                        _splashScreen.style.backgroundImage = null;
+                        _splashScreen.style.backgroundColor = Color.black;
+                    }
+                }
+
+                if (titleLabel != null)
+                {
+                    titleLabel.text = settings.Text;
+                    titleLabel.style.display = DisplayStyle.Flex;
+                    titleLabel.style.position = Position.Absolute;
+                    titleLabel.style.opacity = 1f;
+                    titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                    titleLabel.style.left = Length.Percent((float)settings.TextX);
+                    titleLabel.style.top = Length.Percent((float)settings.TextY);
+                    titleLabel.style.width = 2000f;
+                    titleLabel.style.height = 200f;
+                    titleLabel.style.marginLeft = -1000f;
+                    titleLabel.style.marginTop = -100f;
+                    titleLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                    titleLabel.style.translate = new StyleTranslate(new Translate(0, 0));
+                    titleLabel.style.whiteSpace = WhiteSpace.NoWrap;
+
+                    if (double.TryParse(settings.FontSize.ToString(), out var sizeVal))
+                    {
+                        titleLabel.style.fontSize = (float)sizeVal * 2.75f;
+                    }
+
+                    string fontColorHex = settings.FontColor;
+                    if (fontColorHex != null && fontColorHex.StartsWith("#") && fontColorHex.Length == 9)
+                    {
+                        fontColorHex = "#" + fontColorHex.Substring(3, 6) + fontColorHex.Substring(1, 2);
+                    }
+                    if (ColorUtility.TryParseHtmlString(fontColorHex, out var clr))
+                    {
+                        titleLabel.style.color = clr;
+                    }
+                    else
+                    {
+                        titleLabel.style.color = Color.white;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(settings.SoundAssetId) && AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySound(settings.SoundAssetId, 1f, false);
+                }
+
+                InitTransitionEffects(settings, titleLabel, ref splitCyan, ref splitMagenta, ref crtScanlines, ref particleContainer, particles);
+
+                float elapsed = 0f;
+                float fadeInDuration = (float)settings.FadeInDuration;
+                if (fadeInDuration < 0.1f) fadeInDuration = 0.1f;
+
+                if (titleLabel != null)
+                {
+                    if (settings.TransitionStyle == "Rise")
+                    {
+                        titleLabel.style.translate = new StyleTranslate(new Translate(0, 60));
+                    }
+                    else if (settings.TransitionStyle == "Cinematic")
+                    {
+                        if (_splashScreen != null)
+                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(1f, 1f, 1f)));
+                    }
+                    else if (settings.TransitionStyle == "Exposure")
+                    {
+                        titleLabel.style.scale = new StyleScale(new Scale(new Vector3(1.5f, 1.5f, 1f)));
+                    }
+                }
+
+                while (elapsed < fadeInDuration)
+                {
+                    elapsed += UnityEngine.Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsed / fadeInDuration);
+                    if (_splashScreen != null)
+                    {
+                        if (settings.TransitionStyle == "Exposure")
+                        {
+                            float expT = Mathf.Pow(t, 0.4f);
+                            _splashScreen.style.opacity = expT;
+                        }
+                        else
+                        {
+                            _splashScreen.style.opacity = t;
+                        }
+
+                        if (settings.TransitionStyle == "Cinematic")
+                        {
+                            float curScale = Mathf.Lerp(1f, 1.08f, t);
+                            _splashScreen.style.scale = new StyleScale(new Scale(new Vector3(curScale, curScale, 1f)));
+                        }
+                    }
+                    yield return null;
+                }
+            }
+
+            if (_splashScreen != null)
+            {
+                _splashScreen.style.opacity = 1f;
+            }
+
+            float holdDuration = (float)settings.DisplayDuration;
+            float elapsedHold = 0f;
+            while (elapsedHold < holdDuration)
+            {
+                elapsedHold += UnityEngine.Time.deltaTime;
+                yield return null;
+            }
+
+            float elapsedOutCustom = 0f;
+            float fadeOutDuration = (float)settings.FadeOutDuration;
+            if (fadeOutDuration < 0.1f) fadeOutDuration = 0.1f;
+
+            while (elapsedOutCustom < fadeOutDuration)
+            {
+                elapsedOutCustom += UnityEngine.Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedOutCustom / fadeOutDuration);
+                if (_splashScreen != null)
+                {
+                    _splashScreen.style.opacity = Mathf.Lerp(1f, 0f, t);
+                }
+                yield return null;
+            }
+
+            if (_splashScreen != null)
+            {
+                _splashScreen.style.display = DisplayStyle.None;
+            }
+
+            CleanupTransitionEffects(splitCyan, splitMagenta, crtScanlines, particleContainer);
+
+            if (_videoPlayer != null && _videoPlayer.isPlaying)
+            {
+                _videoPlayer.Stop();
+            }
+
+            if (!string.IsNullOrEmpty(settings.SoundAssetId) && AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopSound(settings.SoundAssetId);
+            }
+
+            SetGameplayUIVisible(true);
+            if (GameManager.Instance?.CurrentRoom != null)
+            {
+                TriggerRoomAmbientEffects(GameManager.Instance.CurrentRoom);
+            }
+
+            onComplete?.Invoke();
+        }
+
         private void InitTransitionEffects(
             SplashScreenSettingsData settings, 
             Label titleLabel, 
@@ -1689,7 +1937,7 @@ namespace RagNextPlayer.Managers
 
         // ── Game / Room Events ────────────────────────────────────────────────
 
-        private void OnGameLoaded(GameData game)
+        public void OnGameLoaded(GameData game)
         {
             if (_gameInfoLabel is not null)
                 _gameInfoLabel.text = $"by {game.Author}  ·  v{game.Version}";
@@ -1734,7 +1982,7 @@ namespace RagNextPlayer.Managers
         }
 
 
-        private void OnRoomEntered(RoomData room)
+        public void OnRoomEntered(RoomData room)
         {
             RenderRoom(room);
             _firstRoomRendered = true;
@@ -3003,7 +3251,8 @@ namespace RagNextPlayer.Managers
         private IEnumerator LoadImageCoroutine(string url, string elementName)
         {
             Debug.Log($"[UIManager] Loading texture for '{elementName}' from URL: '{url}'");
-            using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url);
+            string formattedUrl = FormatLocalPathForWeb(url);
+            using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(formattedUrl);
 
             yield return req.SendWebRequest();
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)

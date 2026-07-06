@@ -24,6 +24,7 @@ namespace RagNext.Designer.Avalonia.Services
         public List<ExportFunctionDto>? Functions { get; set; }
         public List<ExportTimerDto>? Timers { get; set; }
         public ExportSplashScreenDto? SplashScreen { get; set; }
+        public List<ExportSplashScreenDto>? SplashScreens { get; set; }
         public List<ExportStatusBarElementDto>? StatusBarElements { get; set; }
         public List<string>? WearSlots { get; set; }
     }
@@ -134,6 +135,7 @@ namespace RagNext.Designer.Avalonia.Services
 
     public class ExportSplashScreenDto
     {
+        public string Name { get; set; } = string.Empty;
         public bool Enabled { get; set; }
         public string? Mode { get; set; }
         public string? ImageAssetId { get; set; }
@@ -234,6 +236,28 @@ namespace RagNext.Designer.Avalonia.Services
                 BorderColor = game.SplashScreen.BorderColor,
                 BorderRadius = game.SplashScreen.BorderRadius
             } : null,
+            SplashScreens = game.SplashScreens?.Select(s => new ExportSplashScreenDto
+            {
+                Name = s.Name ?? string.Empty,
+                Enabled = s.Enabled,
+                Mode = s.Mode,
+                ImageAssetId = s.ImageAssetId,
+                SoundAssetId = s.SoundAssetId,
+                Text = s.Text,
+                FontName = s.FontName,
+                FontSize = s.FontSize,
+                FontColor = s.FontColor,
+                TextX = s.TextX,
+                TextY = s.TextY,
+                FadeInDuration = s.FadeInDuration,
+                DisplayDuration = s.DisplayDuration,
+                FadeOutDuration = s.FadeOutDuration,
+                VideoAssetId = s.VideoAssetId,
+                TransitionStyle = s.TransitionStyle,
+                BorderWidth = s.BorderWidth,
+                BorderColor = s.BorderColor,
+                BorderRadius = s.BorderRadius
+            }).ToList(),
             StatusBarElements = game.StatusBarElements.Select(s => new ExportStatusBarElementDto
             {
                 Id = s.Id.ToString(),

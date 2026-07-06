@@ -123,6 +123,8 @@ const fallbackDiscriminators = {
     "playerscreenshake": "player.screenShake",
     "playermovetocharacter": "player.moveToChar",
     "playermovetoobject": "player.moveToObject",
+    "playerswapcharacter": "player.swapCharacter",
+    "uishowsplashscreen": "ui.showSplashScreen",
     "playersetattribute": "player.setAttribute",
     "playersetdescription": "player.setDescription",
     "playersetname": "player.setName",
@@ -208,6 +210,7 @@ const propertyMappings = {
     "Direction": ["Direction", "direction"],
     "Prompt Text": ["PromptText", "promptText"],
     "Input Type": ["InputType", "inputType"],
+    "Splash Screen Name": ["SplashScreenName", "splashScreenName"],
     "Custom Options": ["CustomOptions", "customOptions"],
     "Store Variable": ["StoreVariableName", "storeVariableName"],
     "Prompt Name": ["PromptName", "promptName"],
@@ -2695,6 +2698,7 @@ function refreshCommandFields(node) {
             else if (inputSchema.dataType === 'Function') optionsList = catalogs.Functions || [];
             else if (inputSchema.dataType === 'Timer') optionsList = catalogs.Timers || [];
             else if (inputSchema.dataType === 'StatusBarElement') optionsList = catalogs.StatusBarElements || [];
+            else if (inputSchema.dataType === 'SplashScreen') optionsList = catalogs.SplashScreens || [];
             else if (inputSchema.dataType === 'PromptName') {
                 optionsList = [];
                 nodes.forEach(n => {
@@ -5862,6 +5866,7 @@ const nodeDescriptions = {
     "player.setName": "Sets the protagonist's name.",
     "player.setGender": "Sets the protagonist's gender.",
     "player.setPortraitMedia": "Sets the protagonist's portrait image.",
+    "player.swapCharacter": "Swaps the active protagonist character with another character, moving inventory and properties.",
 
     // Room Commands
     "room.displayDescription": "Outputs a room's description text.",
@@ -5876,6 +5881,7 @@ const nodeDescriptions = {
 
     // UI & Status Elements
     "ui.setStatusBarVisible": "Shows or hides the status bar display.",
+    "ui.showSplashScreen": "Triggers showing a named splash screen in-game.",
     "status.show": "Displays a status bar element.",
     "status.hide": "Hides a status bar element.",
     "status.setText": "Updates the display text of a status bar element.",

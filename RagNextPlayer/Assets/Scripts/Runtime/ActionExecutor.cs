@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RagNextPlayer.Runtime.Models;
+using RagNextPlayer.Managers;
 using UnityEngine;
 
 namespace RagNextPlayer.Runtime
@@ -1998,6 +1999,103 @@ namespace RagNextPlayer.Runtime
                                         ctx.Game.Player.Inventory.Add(item);
                                     }
                                 }
+                            }
+                        }
+                    }
+                    break;
+
+                case ShowSplashScreenCommandData c:
+                    {
+                        var resolvedName = ctx.Resolve(c.SplashScreenName);
+                        var splash = ctx.Game.SplashScreens?.Find(s => string.Equals(s.Name, resolvedName, StringComparison.OrdinalIgnoreCase));
+                        if (splash != null && UIManager.Instance != null)
+                        {
+                            UIManager.Instance.PlayCustomSplashScreen(splash);
+                        }
+                    }
+                    break;
+
+                case SwapPlayerCharacterCommandData c:
+                    {
+                        var resolvedId = ctx.Resolve(c.CharacterId);
+                        
+                        // 1. Find or create character for the current player
+                        var currentPlayerChar = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, ctx.Game.ActivePlayerCharacterId, StringComparison.OrdinalIgnoreCase));
+                        if (currentPlayerChar == null)
+                        {
+                            currentPlayerChar = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, ctx.Game.Player.Id, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (currentPlayerChar == null)
+                        {
+                            currentPlayerChar = new GameObjectData
+                            {
+                                Id = ctx.Game.Player.Id,
+                                Name = ctx.Game.Player.Name,
+                                Description = ctx.Game.Player.Description,
+                                Gender = ctx.Game.Player.Gender,
+                                PortraitImagePath = ctx.Game.Player.PortraitImagePath
+                            };
+                            ctx.Game.Characters.Add(currentPlayerChar);
+                            ctx.Game.ActivePlayerCharacterId = currentPlayerChar.Id;
+                        }
+
+                        // 2. Save current player data into currentPlayerChar
+                        currentPlayerChar.Attributes.Clear();
+                        foreach (var kvp in ctx.Game.Player.Attributes) currentPlayerChar.Attributes.Add(kvp.Key, kvp.Value);
+
+                        currentPlayerChar.Actions.Clear();
+                        foreach (var act in ctx.Game.Player.Actions) currentPlayerChar.Actions.Add(act);
+
+                        currentPlayerChar.Inventory.Clear();
+                        foreach (var item in ctx.Game.Player.Inventory) currentPlayerChar.Inventory.Add(item);
+
+                        currentPlayerChar.Name = ctx.Game.Player.Name;
+                        currentPlayerChar.Description = ctx.Game.Player.Description;
+                        currentPlayerChar.Gender = ctx.Game.Player.Gender;
+                        currentPlayerChar.PortraitImagePath = ctx.Game.Player.PortraitImagePath;
+
+                        var currentRoomId = ctx.GetVariable("player.currentRoomId")?.Value;
+                        if (!string.IsNullOrEmpty(currentRoomId))
+                        {
+                            currentPlayerChar.StartingRoomId = currentRoomId;
+                        }
+
+                        // 3. Find the target character to swap in
+                        var targetChar = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedId, StringComparison.OrdinalIgnoreCase));
+                        if (targetChar != null)
+                        {
+                            // 4. Load targetChar data into Player
+                            ctx.Game.Player.Id = targetChar.Id;
+                            ctx.Game.Player.Name = targetChar.Name;
+                            ctx.Game.Player.Description = targetChar.Description;
+                            ctx.Game.Player.Gender = targetChar.Gender;
+                            ctx.Game.Player.PortraitImagePath = targetChar.PortraitImagePath;
+
+                            ctx.Game.Player.Attributes.Clear();
+                            foreach (var kvp in targetChar.Attributes) ctx.Game.Player.Attributes.Add(kvp.Key, kvp.Value);
+
+                            ctx.Game.Player.Actions.Clear();
+                            foreach (var act in targetChar.Actions) ctx.Game.Player.Actions.Add(act);
+
+                            ctx.Game.Player.Inventory.Clear();
+                            foreach (var item in targetChar.Inventory) ctx.Game.Player.Inventory.Add(item);
+
+                            if (!string.IsNullOrEmpty(targetChar.StartingRoomId))
+                            {
+                                ctx.SetVariable("player.currentRoomId", targetChar.StartingRoomId);
+                                
+                                var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetChar.StartingRoomId, StringComparison.OrdinalIgnoreCase));
+                                if (room != null && UIManager.Instance != null)
+                                {
+                                    UIManager.Instance.OnRoomEntered(room);
+                                }
+                            }
+
+                            ctx.Game.ActivePlayerCharacterId = targetChar.Id;
+                            
+                            if (UIManager.Instance != null)
+                            {
+                                UIManager.Instance.OnGameLoaded(ctx.Game);
                             }
                         }
                     }

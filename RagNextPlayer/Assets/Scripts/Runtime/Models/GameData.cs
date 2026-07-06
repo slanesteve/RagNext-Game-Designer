@@ -21,6 +21,9 @@ namespace RagNextPlayer.Runtime.Models
         public List<GlobalFunctionData>   Functions   { get; set; } = new List<GlobalFunctionData>();
         public List<GameTimerData>        Timers      { get; set; } = new List<GameTimerData>();
         public SplashScreenSettingsData   SplashScreen{ get; set; } = new SplashScreenSettingsData();
+        public List<SplashScreenSettingsData> SplashScreens { get; set; } = new List<SplashScreenSettingsData>();
+        public string DefaultSplashScreenName { get; set; } = "Default";
+        public string ActivePlayerCharacterId { get; set; } = string.Empty;
         public List<StatusBarElementData> StatusBarElements { get; set; } = new List<StatusBarElementData>();
         public List<string>               WearSlots           { get; set; } = new List<string>();
 
@@ -30,6 +33,7 @@ namespace RagNextPlayer.Runtime.Models
 
     public class SplashScreenSettingsData
     {
+        public string Name { get; set; } = string.Empty;
         public bool Enabled { get; set; } = false;
         public string Mode { get; set; } = "ImageAndText"; // "ImageAndText" or "Video"
         public string ImageAssetId { get; set; } = string.Empty;
@@ -89,6 +93,7 @@ namespace RagNextPlayer.Runtime.Models
         public string  Name               { get; set; } = string.Empty;
         public string  Description        { get; set; } = string.Empty;
         public string? PortraitImagePath  { get; set; }
+        public string  Gender             { get; set; } = "Male";
         public bool    IsCollectible      { get; set; }
         public bool    IsCharacter        { get; set; }
         public List<ActionData>            Actions            { get; set; } = new List<ActionData>();
@@ -178,7 +183,7 @@ namespace RagNextPlayer.Runtime.Models
     public class VariableDecrementCommandData        : CommandData { public string Name { get; set; } = string.Empty; public string Value { get; set; } = string.Empty; }
     public class VariableSetToVariableCommandData    : CommandData { public string Name { get; set; } = string.Empty; public string SourceName { get; set; } = string.Empty; }
     public class SetNumericRandomlyCommandData       : CommandData { public string Name { get; set; } = string.Empty; public double Minimum { get; set; } public double Maximum { get; set; } }
-    public class MovePlayerToRoomCommandData         : CommandData { public string RoomId { get; set; } = string.Empty; public string TransitionStyle { get; set; } = string.Empty; public float TransitionDuration { get; set; } = 0f; }
+    public class MovePlayerToRoomCommandData         : CommandData { public string RoomId { get; set; } = string.Empty; public string TransitionStyle { get; set; } = "None"; public float TransitionDuration { get; set; } = 0f; }
     public class ScreenShakeCommandData              : CommandData { public float Intensity { get; set; } = 0.3f; public float Duration { get; set; } = 1.0f; }
     public class AddObjectToRoomCommandData          : CommandData { public string RoomId { get; set; } = string.Empty; public string ObjectId { get; set; } = string.Empty; }
     public class RemoveObjectFromRoomCommandData     : CommandData { public string RoomId { get; set; } = string.Empty; public string ObjectId { get; set; } = string.Empty; }
@@ -190,6 +195,8 @@ namespace RagNextPlayer.Runtime.Models
     public class PlayerSetDescriptionCommandData     : CommandData { public string Description { get; set; } = string.Empty; }
     public class PlayerSetGenderCommandData          : CommandData { public string Gender { get; set; } = "Male"; }
     public class PlayerSetPortraitMediaCommandData   : CommandData { public string MediaId { get; set; } = string.Empty; }
+    public class SwapPlayerCharacterCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; }
+    public class ShowSplashScreenCommandData         : CommandData { public string SplashScreenName { get; set; } = "Default"; }
     public class CharacterMoveToRoomCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; public string RoomId { get; set; } = string.Empty; }
     public class CharacterMoveToRandomAdjacentCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }
     public class CharacterMoveAlongPatrolPathCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string PatrolPath { get; set; } = string.Empty; public string IndexVariable { get; set; } = string.Empty; public bool PingPong { get; set; } }

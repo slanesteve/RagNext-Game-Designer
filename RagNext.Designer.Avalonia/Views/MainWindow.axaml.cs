@@ -666,6 +666,26 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                 }
 
+                var allChars = vm.CurrentGame.Characters.Select(c => new CatalogEntityDto
+                {
+                    Id = c.Id.ToString(), Name = c.Name,
+                    Attributes = c.Attributes.Select(a => a.Name).ToList(),
+                    // Bug #5: Include action names for character action pickers.
+                    Actions = c.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList(),
+                    StartingRoomId = c.StartingRoom?.Id.ToString()
+                }).ToList();
+
+                if (vm.CurrentGame.Player != null && !allChars.Any(c => c.Id == vm.CurrentGame.Player.Id.ToString()))
+                {
+                    allChars.Insert(0, new CatalogEntityDto
+                    {
+                        Id = vm.CurrentGame.Player.Id.ToString(),
+                        Name = string.IsNullOrWhiteSpace(vm.CurrentGame.Player.Name) ? "Player" : vm.CurrentGame.Player.Name,
+                        Attributes = vm.CurrentGame.Player.Attributes.Select(a => a.Name).ToList(),
+                        Actions = vm.CurrentGame.Player.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList()
+                    });
+                }
+
                 var catalogsObj = new CatalogsDto
                 {
                     Rooms = vm.CurrentGame.Rooms.Select(r => new CatalogEntityDto
@@ -676,14 +696,7 @@ namespace RagNext.Designer.Avalonia.Views
                         Actions = r.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList(),
                         Exits = r.Exits.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString())
                     }).ToList(),
-                    Characters = vm.CurrentGame.Characters.Select(c => new CatalogEntityDto
-                    {
-                        Id = c.Id.ToString(), Name = c.Name,
-                        Attributes = c.Attributes.Select(a => a.Name).ToList(),
-                        // Bug #5: Include action names for character action pickers.
-                        Actions = c.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList(),
-                        StartingRoomId = c.StartingRoom?.Id.ToString()
-                    }).ToList(),
+                    Characters = allChars,
                     GameObjects = vm.CurrentGame.Objects.Select(o => new CatalogEntityDto
                     {
                         Id = o.Id.ToString(), Name = o.Name, IsContainer = o.IsContainer,
@@ -704,7 +717,8 @@ namespace RagNext.Designer.Avalonia.Views
                     Timers = vm.CurrentGame.Timers.Select(t => new CatalogEntityDto { Id = t.Name, Name = t.Name, Attributes = t.Attributes.Select(a => a.Name).ToList() }).ToList(),
                     // Bug #5: Top-level PlayerActions for the player.setActionActive command.
                     PlayerActions = vm.CurrentGame.Player.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList(),
-                    StatusBarElements = vm.CurrentGame.StatusBarElements.Select(s => new CatalogEntityDto { Id = s.Id.ToString(), Name = s.Name }).ToList()
+                    StatusBarElements = vm.CurrentGame.StatusBarElements.Select(s => new CatalogEntityDto { Id = s.Id.ToString(), Name = s.Name }).ToList(),
+                    SplashScreens = vm.CurrentGame.SplashScreens.Select(s => new CatalogEntityDto { Id = s.Name, Name = s.Name }).ToList()
                 };
                 string catalogsJson = JsonSerializer.Serialize(catalogsObj, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.CatalogsDto);
 
@@ -4962,6 +4976,8 @@ namespace RagNext.Designer.Avalonia.Views
                 case "playerscreenshake": return "player.screenShake";
                 case "playermovetocharacter": return "player.moveToChar";
                 case "playermovetoobject": return "player.moveToObject";
+                case "playerswapcharacter": return "player.swapCharacter";
+                case "uishowsplashscreen": return "ui.showSplashScreen";
                 case "playersetattribute": return "player.setAttribute";
                 case "playersetdescription": return "player.setDescription";
                 case "playersetname": return "player.setName";

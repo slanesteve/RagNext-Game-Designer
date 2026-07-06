@@ -1011,9 +1011,18 @@
                                 </ComboBox>
 
                                 <!-- Inventory -->
-                                <Expander Header="Inventory" Background="{DynamicResource InputBg}" Margin="0,8,0,0">
-                                    <StackPanel Spacing="10" Margin="10">
-                                                                 <ListBox ItemsSource="{Binding Inventory}" Height="120" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                <Expander Header="🎒 Starting Inventory" Background="{DynamicResource InputBg}" Margin="0,8,0,0" IsExpanded="True">
+                                    <StackPanel Spacing="12" Margin="10">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Items that this character possesses at the beginning of the story" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="➕ Add Item" 
+                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerAddInventoryCommand}" 
+                                                    CommandParameter="{Binding}" 
+                                                    Background="#8E2DE2" Foreground="White" CornerRadius="4" Padding="10,6" FontSize="12"/>
+                                        </Grid>
+                                        <ListBox ItemsSource="{Binding Inventory}" Height="120" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:GameObject">
                                                     <Grid ColumnDefinitions="*,Auto" Height="36">
@@ -1023,8 +1032,14 @@
                                                         </StackPanel>
                                                         <Button Grid.Column="1" Content="🗑️ Remove" 
                                                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveInventoryItemCommand}"
-                                                                CommandParameter="{Binding}" 
-                                                                Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
+                                                                Background="Transparent" Foreground="#E74C3C" FontSize="11">
+                                                            <Button.CommandParameter>
+                                                                <MultiBinding Converter="{x:Static vm:MainWindowViewModel.MakeTupleConverter}">
+                                                                    <Binding Path="$parent[Expander].DataContext"/>
+                                                                    <Binding Path="."/>
+                                                                </MultiBinding>
+                                                            </Button.CommandParameter>
+                                                        </Button>
                                                     </Grid>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
@@ -1611,7 +1626,31 @@
 
                 <!-- 7b. Splash Screen Settings Tab -->
                 <ScrollViewer IsVisible="{Binding ActiveView, ConverterParameter=SplashScreen, Converter={x:Static ObjectConverters.Equal}}">
-                    <Grid ColumnDefinitions="*, *" HorizontalAlignment="Stretch" DataContext="{Binding SplashScreen}" x:DataType="models:SplashScreenSettings">
+                    <StackPanel Spacing="16" Margin="0,0,0,20">
+                        <!-- Top Controls: Multiple Splash Screens Management -->
+                        <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <TextBlock Text="Select Setup:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" FontWeight="Bold"/>
+                                    <ComboBox ItemsSource="{Binding CurrentGame.SplashScreens}" SelectedItem="{Binding SelectedSplashScreen, Mode=TwoWay}" Width="250" Background="{DynamicResource InputBg}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="models:SplashScreenSettings">
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="➕ Add Setup" Command="{Binding AddSplashScreenCommand}" Margin="10,0,0,0"/>
+                                <Button Grid.Column="2" Content="❌ Delete Setup" Command="{Binding DeleteSplashScreenCommand}" Margin="10,0,0,0"/>
+                                
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" Margin="20,0,0,0" DataContext="{Binding SelectedSplashScreen}" x:DataType="models:SplashScreenSettings">
+                                    <TextBlock Text="Rename Setup:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBox Text="{Binding Name, Mode=TwoWay}" Width="180" Background="{DynamicResource InputBg}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Grid ColumnDefinitions="*, *" HorizontalAlignment="Stretch" DataContext="{Binding SplashScreen}" x:DataType="models:SplashScreenSettings">
                         <!-- Left Side: Customization Parameters -->
                         <StackPanel Grid.Column="0" Spacing="20" Margin="0,0,24,0">
                             <TextBlock Text="Splash Screen Settings" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
@@ -1620,12 +1659,15 @@
                                 <StackPanel Spacing="14">
                                     <TextBlock Text="🎨 Active Setup" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
                                     
-                                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="200,*">
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Enable Custom Splash Screen:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
-                                        <ToggleSwitch Grid.Row="0" Grid.Column="1" IsChecked="{Binding Enabled, Mode=TwoWay}" OnContent="" OffContent=""/>
+                                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="270,*">
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Enable Startup Splash Screen (Global):" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
+                                        <ToggleSwitch Grid.Row="0" Grid.Column="1" IsChecked="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.SplashScreen.Enabled, Mode=TwoWay}" OnContent="" OffContent=""/>
                                         
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Splash Mode:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" Margin="0,10,0,0"/>
-                                        <ComboBox Grid.Row="1" Grid.Column="1" SelectedItem="{Binding Mode, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Margin="0,10,0,0">
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Use as Startup Splash Screen:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" Margin="0,10,0,0"/>
+                                        <ToggleSwitch Grid.Row="1" Grid.Column="1" IsChecked="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsSelectedSplashDefault, Mode=TwoWay}" IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanToggleDefaultSplash}" OnContent="" OffContent="" Margin="0,10,0,0"/>
+                                        
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Splash Mode:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" Margin="0,10,0,0"/>
+                                        <ComboBox Grid.Row="2" Grid.Column="1" SelectedItem="{Binding Mode, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Margin="0,10,0,0">
                                             <x:String>ImageAndText</x:String>
                                             <x:String>Video</x:String>
                                         </ComboBox>
@@ -1826,6 +1868,7 @@
                             </Border>
                         </StackPanel>
                     </Grid>
+                    </StackPanel>
                 </ScrollViewer>
 
                 <!-- 5b. Status Elements Tab -->

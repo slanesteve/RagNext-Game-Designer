@@ -16,7 +16,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ObservableCollection<string> AvailableSteps { get; } =
             new([
                 "var.equals", "player.inRoom", "room.hasObject",                 "var.set", "var.evaluate", "player.moveTo", "player.screenShake", "room.addObject", "room.removeObject",
-                 "object.displayDescription", "object.moveToCharacter", "object.moveToInventory", "object.moveInsideObject"
+                 "object.displayDescription", "object.moveToCharacter", "object.moveToInventory", "object.moveInsideObject",
+                 "player.swapCharacter", "ui.showSplashScreen"
             ]);
 
         private string? _selectedStepKey;
@@ -94,6 +95,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "object.moveToCharacter" => new ObjectMoveToCharacterCommand(),
             "object.moveToInventory" => new ObjectMoveToInventoryCommand(),
             "object.moveInsideObject" => new ObjectMoveInsideObjectCommand(),
+            "player.swapCharacter" => new SwapPlayerCharacterCommand(),
+            "ui.showSplashScreen" => new ShowSplashScreenCommand(),
             _ => throw new NotSupportedException(key)
         };
     }

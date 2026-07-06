@@ -134,6 +134,8 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SetStatusBarVisibleCommand), "ui.setStatusBarVisible")]
     [JsonDerivedType(typeof(SetBackgroundMusicCommand), "media.setBackgroundMusic")]
     [JsonDerivedType(typeof(StopBackgroundMusicCommand), "media.stopBackgroundMusic")]
+    [JsonDerivedType(typeof(SwapPlayerCharacterCommand), "player.swapCharacter")]
+    [JsonDerivedType(typeof(ShowSplashScreenCommand), "ui.showSplashScreen")]
     public abstract class ActionStep
     {
         public static string NormalizeLegacyDiscriminators(string json)
@@ -187,7 +189,7 @@ namespace RagsCore.Actions
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear", "item.remove",
                 "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
-                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake"
+                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen"
             };
 
             // Convert unrecognized/unknown $type values to general.debugText to prevent crashes
@@ -202,6 +204,7 @@ namespace RagsCore.Actions
             });
 
             return json
+                .Replace("\"text.output\"", "\"general.displayText\"")
                 .Replace("\"char.customPropertyCheck\"", "\"char.attributeCheck\"")
                 .Replace("\"item.customPropertyCheck\"", "\"item.attributeCheck\"")
                 .Replace("\"player.customPropertyCheck\"", "\"player.attributeCheck\"")
@@ -429,7 +432,7 @@ namespace RagsCore.Actions
     public sealed class MovePlayerToRoomCommand : GameCommand
     {
         public string RoomId { get; set; } = string.Empty;
-        public string TransitionStyle { get; set; } = string.Empty;
+        public string TransitionStyle { get; set; } = "None";
         public float TransitionDuration { get; set; } = 0f;
         public override string TypeName => "Move player to room";
         public override void Execute(ActionContext ctx)
@@ -439,6 +442,98 @@ namespace RagsCore.Actions
                 ctx.SetVariable("player.currentRoomId", g.ToString());
             else if (!string.IsNullOrEmpty(resolved))
                 ctx.SetVariable("player.currentRoomId", resolved);
+        }
+    }
+
+    public sealed class SwapPlayerCharacterCommand : GameCommand
+    {
+        public string CharacterId { get; set; } = string.Empty;
+        public override string TypeName => "Player: Swap Character";
+        public override void Execute(ActionContext ctx)
+        {
+            if (ctx.Game == null) return;
+            var resolvedId = RagsCore.Services.TemplateResolver.Resolve(CharacterId, ctx);
+            if (!Guid.TryParse(resolvedId, out var targetCharId)) return;
+
+            // 1. Find or create the character representing the current player
+            var currentPlayerChar = System.Linq.Enumerable.FirstOrDefault(ctx.Game.Characters, c => c.Id == ctx.Game.ActivePlayerCharacterId);
+            if (currentPlayerChar == null)
+            {
+                currentPlayerChar = System.Linq.Enumerable.FirstOrDefault(ctx.Game.Characters, c => c.Id == ctx.Game.Player.Id);
+            }
+            if (currentPlayerChar == null)
+            {
+                currentPlayerChar = new Character
+                {
+                    Id = ctx.Game.Player.Id,
+                    Name = ctx.Game.Player.Name,
+                    Description = ctx.Game.Player.Description,
+                    Gender = ctx.Game.Player.Gender,
+                    PortraitImagePath = ctx.Game.Player.PortraitImagePath
+                };
+                ctx.Game.Characters.Add(currentPlayerChar);
+                ctx.Game.ActivePlayerCharacterId = currentPlayerChar.Id;
+            }
+
+            // 2. Save current player data into currentPlayerChar
+            currentPlayerChar.Attributes.Clear();
+            foreach (var attr in ctx.Game.Player.Attributes) currentPlayerChar.Attributes.Add(attr);
+
+            currentPlayerChar.Actions.Clear();
+            foreach (var act in ctx.Game.Player.Actions) currentPlayerChar.Actions.Add(act);
+
+            currentPlayerChar.Inventory.Clear();
+            foreach (var item in ctx.Game.Player.Inventory) currentPlayerChar.Inventory.Add(item);
+
+            currentPlayerChar.Name = ctx.Game.Player.Name;
+            currentPlayerChar.Description = ctx.Game.Player.Description;
+            currentPlayerChar.Gender = ctx.Game.Player.Gender;
+            currentPlayerChar.PortraitImagePath = ctx.Game.Player.PortraitImagePath;
+
+            string? currentRoomId = ctx.GetVariable("player.currentRoomId")?.Value;
+            if (currentRoomId != null && Guid.TryParse(currentRoomId, out var crId))
+            {
+                currentPlayerChar.StartingRoom = System.Linq.Enumerable.FirstOrDefault(ctx.Game.Rooms, r => r.Id == crId);
+            }
+
+            // 3. Find the target character to swap in
+            var targetChar = System.Linq.Enumerable.FirstOrDefault(ctx.Game.Characters, c => c.Id == targetCharId);
+            if (targetChar != null)
+            {
+                // 4. Load targetChar data into Player
+                ctx.Game.Player.Id = targetChar.Id;
+                ctx.Game.Player.Name = targetChar.Name;
+                ctx.Game.Player.Description = targetChar.Description;
+                ctx.Game.Player.Gender = targetChar.Gender;
+                ctx.Game.Player.PortraitImagePath = targetChar.PortraitImagePath;
+
+                ctx.Game.Player.Attributes.Clear();
+                foreach (var attr in targetChar.Attributes) ctx.Game.Player.Attributes.Add(attr);
+
+                ctx.Game.Player.Actions.Clear();
+                foreach (var act in targetChar.Actions) ctx.Game.Player.Actions.Add(act);
+
+                ctx.Game.Player.Inventory.Clear();
+                foreach (var item in targetChar.Inventory) ctx.Game.Player.Inventory.Add(item);
+
+                var targetRoom = targetChar.StartingRoom;
+                if (targetRoom != null)
+                {
+                    ctx.SetVariable("player.currentRoomId", targetRoom.Id.ToString());
+                }
+
+                ctx.Game.ActivePlayerCharacterId = targetChar.Id;
+            }
+        }
+    }
+
+    public sealed class ShowSplashScreenCommand : GameCommand
+    {
+        public string SplashScreenName { get; set; } = "Default";
+        public override string TypeName => "UI: Show Splash Screen";
+        public override void Execute(ActionContext ctx)
+        {
+            // Handled client side
         }
     }
 

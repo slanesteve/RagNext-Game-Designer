@@ -51,6 +51,7 @@ namespace RagNext.Designer.Avalonia.Views
         // Bug #5: Top-level player action names for the PlayerSetActionActive picker.
         public List<CatalogActionDto>? PlayerActions { get; set; }
         public List<CatalogEntityDto>? StatusBarElements { get; set; }
+        public List<CatalogEntityDto>? SplashScreens { get; set; }
     }
 
     public class CatalogEntityDto

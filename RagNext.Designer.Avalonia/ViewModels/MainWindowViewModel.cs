@@ -88,14 +88,26 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             }
                         }
 
+                        string baseDir;
                         if (!string.IsNullOrEmpty(Preferences?.LastPublishDirectory))
                         {
-                            PublishDestination = Preferences.LastPublishDirectory;
+                            baseDir = Preferences.LastPublishDirectory;
                         }
                         else
                         {
                             string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                            PublishDestination = Path.Combine(docs, "RagNext_Published");
+                            baseDir = Path.Combine(docs, "RagNext_Published");
+                        }
+
+                        string safeGameName = GetSafeDirectoryName(value.Title);
+                        string? parentDir = Path.GetDirectoryName(baseDir);
+                        if (!string.IsNullOrEmpty(parentDir))
+                        {
+                            PublishDestination = Path.Combine(parentDir, safeGameName);
+                        }
+                        else
+                        {
+                            PublishDestination = Path.Combine(baseDir, safeGameName);
                         }
 
                         value.MediaAssets.CollectionChanged += (sender, args) =>
@@ -158,47 +170,23 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             };
                         }
 
-                        if (value.SplashScreen != null)
+                        if (value.SplashScreens != null)
                         {
-                            value.SplashScreen.PropertyChanged += (sender, args) =>
+                            if (value.SplashScreens.Count == 0 && value.SplashScreen != null)
                             {
-                                if (args.PropertyName == nameof(SplashScreenSettings.ImageAssetId) ||
-                                    args.PropertyName == nameof(SplashScreenSettings.VideoAssetId) ||
-                                    args.PropertyName == nameof(SplashScreenSettings.SoundAssetId) ||
-                                    args.PropertyName == nameof(SplashScreenSettings.Mode) ||
-                                    args.PropertyName == nameof(SplashScreenSettings.Text) ||
-                                    args.PropertyName == nameof(SplashScreenSettings.FontColor) ||
-                                    args.PropertyName == nameof(SplashScreenSettings.FontSize) ||
-                                    args.PropertyName == nameof(SplashScreenSettings.TextX) ||
-                                    args.PropertyName == nameof(SplashScreenSettings.TextY))
+                                value.SplashScreens.Add(value.SplashScreen);
+                            }
+                            foreach (var s in value.SplashScreens) HookSplashScreen(s);
+                            value.SplashScreens.CollectionChanged += (sender, args) =>
+                            {
+                                if (args.NewItems != null)
                                 {
-                                    OnPropertyChanged(nameof(SplashBackgroundPath));
-                                    OnPropertyChanged(nameof(IsSplashVideoMode));
-                                    OnPropertyChanged(nameof(IsSplashVideoPreviewVisible));
-                                    OnPropertyChanged(nameof(SelectedSplashImageAsset));
-                                    OnPropertyChanged(nameof(SelectedSplashVideoAsset));
-                                    OnPropertyChanged(nameof(SelectedSplashSoundAsset));
-                                    
-                                    // Auto-save changes immediately!
-                                    _ = SaveGameAsync();
+                                    foreach (SplashScreenSettings s in args.NewItems) HookSplashScreen(s);
                                 }
-                                
-                                if (args.PropertyName == nameof(SplashScreenSettings.TextX))
-                                {
-                                    OnPropertyChanged(nameof(SplashPreviewTextLeft));
-                                    OnPropertyChanged(nameof(SplashPreviewTextLeftWithOffset));
-                                }
-                                else if (args.PropertyName == nameof(SplashScreenSettings.TextY))
-                                {
-                                    OnPropertyChanged(nameof(SplashPreviewTextTop));
-                                    OnPropertyChanged(nameof(SplashPreviewTextTopWithOffset));
-                                }
-                                else if (args.PropertyName == nameof(SplashScreenSettings.FontSize))
-                                {
-                                    OnPropertyChanged(nameof(SplashPreviewFontSize));
-                                }
+                                _ = SaveGameAsync();
                             };
                         }
+                        SelectedSplashScreen = value.SplashScreen;
                     }
                     OnPropertyChanged(nameof(SplashBackgroundPath));
                     OnPropertyChanged(nameof(IsSplashVideoMode));
@@ -263,6 +251,57 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
+        private void HookSplashScreen(SplashScreenSettings s)
+        {
+            s.PropertyChanged += (sender, args) =>
+            {
+                if (args.PropertyName == nameof(SplashScreenSettings.ImageAssetId) ||
+                    args.PropertyName == nameof(SplashScreenSettings.VideoAssetId) ||
+                    args.PropertyName == nameof(SplashScreenSettings.SoundAssetId) ||
+                    args.PropertyName == nameof(SplashScreenSettings.Mode) ||
+                    args.PropertyName == nameof(SplashScreenSettings.Text) ||
+                    args.PropertyName == nameof(SplashScreenSettings.FontColor) ||
+                    args.PropertyName == nameof(SplashScreenSettings.FontSize) ||
+                    args.PropertyName == nameof(SplashScreenSettings.TextX) ||
+                    args.PropertyName == nameof(SplashScreenSettings.TextY) ||
+                    args.PropertyName == nameof(SplashScreenSettings.Name))
+                {
+                    OnPropertyChanged(nameof(SplashBackgroundPath));
+                    OnPropertyChanged(nameof(IsSplashVideoMode));
+                    OnPropertyChanged(nameof(IsSplashVideoPreviewVisible));
+                    OnPropertyChanged(nameof(SelectedSplashImageAsset));
+                    OnPropertyChanged(nameof(SelectedSplashVideoAsset));
+                    OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                    
+                    // Auto-save changes immediately!
+                    _ = SaveGameAsync();
+                }
+                
+                if (args.PropertyName == nameof(SplashScreenSettings.TextX))
+                {
+                    OnPropertyChanged(nameof(SplashPreviewTextLeft));
+                    OnPropertyChanged(nameof(SplashPreviewTextLeftWithOffset));
+                }
+                else if (args.PropertyName == nameof(SplashScreenSettings.TextY))
+                {
+                    OnPropertyChanged(nameof(SplashPreviewTextTop));
+                    OnPropertyChanged(nameof(SplashPreviewTextTopWithOffset));
+                }
+                else if (args.PropertyName == nameof(SplashScreenSettings.FontSize))
+                {
+                    OnPropertyChanged(nameof(SplashPreviewFontSize));
+                }
+                else if (args.PropertyName == nameof(SplashScreenSettings.Name))
+                {
+                    if (CurrentGame != null && !System.Linq.Enumerable.Any(CurrentGame.SplashScreens, x => x.Name == CurrentGame.DefaultSplashScreenName))
+                    {
+                        CurrentGame.DefaultSplashScreenName = s.Name;
+                    }
+                    OnPropertyChanged(nameof(IsSelectedSplashDefault));
+                }
+            };
+        }
+
         public string GameVersion
         {
             get => CurrentGame?.Version ?? string.Empty;
@@ -310,11 +349,59 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         // Active properties
         public Player? Player => CurrentGame?.Player;
-        public SplashScreenSettings? SplashScreen => CurrentGame?.SplashScreen;
 
-        public double SplashPreviewTextLeft => (CurrentGame?.SplashScreen?.TextX ?? 50) * 19.2;
-        public double SplashPreviewTextTop => (CurrentGame?.SplashScreen?.TextY ?? 50) * 10.8;
-        public double SplashPreviewFontSize => (CurrentGame?.SplashScreen?.FontSize ?? 32) * 2.4;
+        private SplashScreenSettings? _selectedSplashScreen;
+        public SplashScreenSettings? SelectedSplashScreen
+        {
+            get => _selectedSplashScreen ?? CurrentGame?.SplashScreen;
+            set
+            {
+                if (SetProperty(ref _selectedSplashScreen, value))
+                {
+                    OnPropertyChanged(nameof(SplashScreen));
+                    OnPropertyChanged(nameof(SplashPreviewTextLeft));
+                    OnPropertyChanged(nameof(SplashPreviewTextTop));
+                    OnPropertyChanged(nameof(SplashPreviewFontSize));
+                    OnPropertyChanged(nameof(SplashBackgroundPath));
+                    OnPropertyChanged(nameof(IsSplashVideoMode));
+                    OnPropertyChanged(nameof(IsSplashVideoPreviewVisible));
+                    OnPropertyChanged(nameof(SelectedSplashImageAsset));
+                    OnPropertyChanged(nameof(SelectedSplashVideoAsset));
+                    OnPropertyChanged(nameof(SelectedSplashSoundAsset));
+                    OnPropertyChanged(nameof(IsSelectedSplashDefault));
+                    OnPropertyChanged(nameof(CanToggleDefaultSplash));
+                }
+            }
+        }
+
+        public bool IsSelectedSplashDefault
+        {
+            get
+            {
+                if (CurrentGame == null || SelectedSplashScreen == null) return false;
+                if (CurrentGame.SplashScreens.Count <= 1) return true;
+                return CurrentGame.DefaultSplashScreenName == SelectedSplashScreen.Name;
+            }
+            set
+            {
+                if (CurrentGame == null || SelectedSplashScreen == null) return;
+                if (CurrentGame.SplashScreens.Count <= 1) return;
+                if (value)
+                {
+                    CurrentGame.DefaultSplashScreenName = SelectedSplashScreen.Name;
+                    OnPropertyChanged();
+                    _ = SaveGameAsync();
+                }
+            }
+        }
+
+        public bool CanToggleDefaultSplash => CurrentGame != null && CurrentGame.SplashScreens.Count > 1;
+
+        public SplashScreenSettings? SplashScreen => SelectedSplashScreen;
+
+        public double SplashPreviewTextLeft => (SplashScreen?.TextX ?? 50) * 19.2;
+        public double SplashPreviewTextTop => (SplashScreen?.TextY ?? 50) * 10.8;
+        public double SplashPreviewFontSize => (SplashScreen?.FontSize ?? 32) * 2.4;
 
         private double _splashPreviewTextLeftOffset = 0.0;
         public double SplashPreviewTextLeftOffset
@@ -350,7 +437,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get
             {
                 var game = CurrentGame;
-                var splash = game?.SplashScreen;
+                var splash = SplashScreen;
                 if (splash != null)
                 {
                     string assetId = splash.Mode == "Video" ? splash.VideoAssetId : splash.ImageAssetId;
@@ -370,27 +457,19 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
-        public bool IsSplashVideoMode => CurrentGame?.SplashScreen?.Mode == "Video";
+        public bool IsSplashVideoMode => SplashScreen?.Mode == "Video";
         public bool IsSplashVideoPreviewVisible => IsSplashVideoMode && (ActiveView == "SplashScreen");
 
         public MediaAsset? SelectedSplashImageAsset
         {
-            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.ImageAssetId);
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == SplashScreen?.ImageAssetId);
             set
             {
-                if (CurrentGame == null) return;
-                // Bug #3: Auto-initialize SplashScreen so setter never silently drops values.
-                if (CurrentGame.SplashScreen == null)
-                {
-                    CurrentGame.SplashScreen = new RagsCore.Models.SplashScreenSettings();
-                    CurrentGame.SplashScreen.PropertyChanged += (s, a) => _ = SaveGameAsync();
-                }
+                if (CurrentGame == null || SplashScreen == null) return;
                 var newId = value?.IdString ?? string.Empty;
-                // Guard: Avalonia resets ComboBox SelectedItem to null whenever ItemsSource
-                // is refreshed. Prevent that from silently overwriting an already-saved ID.
-                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(CurrentGame.SplashScreen.ImageAssetId)) return;
-                if (newId == CurrentGame.SplashScreen.ImageAssetId) return;
-                CurrentGame.SplashScreen.ImageAssetId = newId;
+                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(SplashScreen.ImageAssetId)) return;
+                if (newId == SplashScreen.ImageAssetId) return;
+                SplashScreen.ImageAssetId = newId;
                 OnPropertyChanged(nameof(SelectedSplashImageAsset));
                 OnPropertyChanged(nameof(SplashBackgroundPath));
                 _ = SaveGameAsync();
@@ -399,21 +478,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public MediaAsset? SelectedSplashVideoAsset
         {
-            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.VideoAssetId);
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == SplashScreen?.VideoAssetId);
             set
             {
-                if (CurrentGame == null) return;
-                // Bug #3: Auto-initialize SplashScreen.
-                if (CurrentGame.SplashScreen == null)
-                {
-                    CurrentGame.SplashScreen = new RagsCore.Models.SplashScreenSettings();
-                    CurrentGame.SplashScreen.PropertyChanged += (s, a) => _ = SaveGameAsync();
-                }
+                if (CurrentGame == null || SplashScreen == null) return;
                 var newId = value?.IdString ?? string.Empty;
-                // Guard: prevent Avalonia ComboBox reset from blanking a saved ID.
-                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(CurrentGame.SplashScreen.VideoAssetId)) return;
-                if (newId == CurrentGame.SplashScreen.VideoAssetId) return;
-                CurrentGame.SplashScreen.VideoAssetId = newId;
+                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(SplashScreen.VideoAssetId)) return;
+                if (newId == SplashScreen.VideoAssetId) return;
+                SplashScreen.VideoAssetId = newId;
                 OnPropertyChanged(nameof(SelectedSplashVideoAsset));
                 OnPropertyChanged(nameof(SplashBackgroundPath));
                 _ = SaveGameAsync();
@@ -422,21 +494,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public MediaAsset? SelectedSplashSoundAsset
         {
-            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == CurrentGame?.SplashScreen?.SoundAssetId);
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.IdString == SplashScreen?.SoundAssetId);
             set
             {
-                if (CurrentGame == null) return;
-                // Bug #3: Auto-initialize SplashScreen.
-                if (CurrentGame.SplashScreen == null)
-                {
-                    CurrentGame.SplashScreen = new RagsCore.Models.SplashScreenSettings();
-                    CurrentGame.SplashScreen.PropertyChanged += (s, a) => _ = SaveGameAsync();
-                }
+                if (CurrentGame == null || SplashScreen == null) return;
                 var newId = value?.IdString ?? string.Empty;
-                // Guard: prevent Avalonia ComboBox reset from blanking a saved ID.
-                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(CurrentGame.SplashScreen.SoundAssetId)) return;
-                if (newId == CurrentGame.SplashScreen.SoundAssetId) return;
-                CurrentGame.SplashScreen.SoundAssetId = newId;
+                if (string.IsNullOrEmpty(newId) && !string.IsNullOrEmpty(SplashScreen.SoundAssetId)) return;
+                if (newId == SplashScreen.SoundAssetId) return;
+                SplashScreen.SoundAssetId = newId;
                 OnPropertyChanged(nameof(SelectedSplashSoundAsset));
                 _ = SaveGameAsync();
             }
@@ -814,6 +879,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         // Commands
         public ICommand NavigateCommand { get; }
+        public ICommand AddSplashScreenCommand { get; }
+        public ICommand DeleteSplashScreenCommand { get; }
         public ICommand NewGameCommand { get; }
         public ICommand ShowLoadGameCommand { get; }
         public ICommand LoadSelectedGameCommand { get; }
@@ -974,12 +1041,42 @@ namespace RagNext.Designer.Avalonia.ViewModels
             NavigateCommand = new Command<string>(view => ActiveView = view ?? "Dashboard");
             ToggleAssetsSidebarCommand = new Command(() => IsAssetsSidebarOpen = !IsAssetsSidebarOpen);
 
+            AddSplashScreenCommand = new Command(() =>
+            {
+                if (CurrentGame == null) return;
+                var count = CurrentGame.SplashScreens.Count;
+                var newSplash = new SplashScreenSettings
+                {
+                    Name = $"Splash Screen {count + 1}"
+                };
+                HookSplashScreen(newSplash);
+                CurrentGame.SplashScreens.Add(newSplash);
+                SelectedSplashScreen = newSplash;
+                OnPropertyChanged(nameof(CanToggleDefaultSplash));
+                OnPropertyChanged(nameof(IsSelectedSplashDefault));
+                _ = SaveGameAsync();
+            });
+
+            DeleteSplashScreenCommand = new Command(() =>
+            {
+                if (CurrentGame == null || SelectedSplashScreen == null) return;
+                if (CurrentGame.SplashScreens.Count <= 1) return;
+                
+                var toDelete = SelectedSplashScreen;
+                CurrentGame.SplashScreens.Remove(toDelete);
+                
+                SelectedSplashScreen = CurrentGame.SplashScreens.FirstOrDefault();
+                OnPropertyChanged(nameof(CanToggleDefaultSplash));
+                OnPropertyChanged(nameof(IsSelectedSplashDefault));
+                _ = SaveGameAsync();
+            });
+
             PreviewTransitionCommand = new Command(async () =>
             {
-                if (IsPlayingSplashPreview || CurrentGame?.SplashScreen == null) return;
+                if (IsPlayingSplashPreview || SplashScreen == null) return;
                 IsPlayingSplashPreview = true;
 
-                var splash = CurrentGame.SplashScreen;
+                var splash = SplashScreen;
                 double fadeIn = Math.Max(0.1, splash.FadeInDuration);
                 double hold = Math.Max(0.1, splash.DisplayDuration);
                 double fadeOut = Math.Max(0.1, splash.FadeOutDuration);
@@ -2613,6 +2710,15 @@ namespace RagNext.Designer.Avalonia.ViewModels
             var invalid = Path.GetInvalidFileNameChars();
             var sanitized = new string(name.Where(c => !invalid.Contains(c)).ToArray()).Trim();
             return string.IsNullOrEmpty(sanitized) ? "save" : sanitized;
+        }
+
+        private static string GetSafeDirectoryName(string title)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                return "RagNextProject";
+            var invalid = Path.GetInvalidFileNameChars();
+            var sanitized = new string(title.Where(c => !invalid.Contains(c) && !char.IsWhiteSpace(c)).ToArray());
+            return string.IsNullOrEmpty(sanitized) ? "RagNextProject" : sanitized;
         }
 
         public static global::Avalonia.Data.Converters.IMultiValueConverter MakeTupleConverter { get; } = new FuncMultiValueConverter<object, Tuple<object, object>>(parts =>
