@@ -2091,9 +2091,16 @@ namespace RagNextPlayer.Runtime
                             {
                                 ctx.SetVariable("player.currentRoomId", targetRoomId);
                                 var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetRoomId, StringComparison.OrdinalIgnoreCase));
-                                if (room != null && UIManager.Instance != null)
+                                if (room != null)
                                 {
-                                    UIManager.Instance.OnRoomEntered(room);
+                                    if (GameManager.Instance != null)
+                                    {
+                                        GameManager.Instance.SetCurrentRoom(room);
+                                    }
+                                    if (UIManager.Instance != null)
+                                    {
+                                        UIManager.Instance.OnRoomEntered(room);
+                                    }
                                 }
                             }
 

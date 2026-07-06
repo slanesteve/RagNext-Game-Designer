@@ -25,6 +25,10 @@ namespace RagNextPlayer.Managers
         // ── State ────────────────────────────────────────────────────────────
         public GameData?  ActiveGame    { get; private set; }
         public RoomData?  CurrentRoom   { get; private set; }
+        public void SetCurrentRoom(RoomData room)
+        {
+            CurrentRoom = room;
+        }
         public GameState  CurrentState  { get; private set; } = GameState.Initializing;
 
         // Prevents concurrent room transitions (e.g. spamming compass buttons)
