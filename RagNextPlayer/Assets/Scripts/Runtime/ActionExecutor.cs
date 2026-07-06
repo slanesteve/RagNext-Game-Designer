@@ -2058,6 +2058,7 @@ namespace RagNextPlayer.Runtime
                         if (!string.IsNullOrEmpty(currentRoomId))
                         {
                             currentPlayerChar.StartingRoomId = currentRoomId;
+                            ctx.SetVariable($"char.{currentPlayerChar.Id}.currentRoomId", currentRoomId);
                         }
 
                         // 3. Find the target character to swap in
@@ -2080,10 +2081,16 @@ namespace RagNextPlayer.Runtime
                             ctx.Game.Player.Inventory.Clear();
                             foreach (var item in targetChar.Inventory) ctx.Game.Player.Inventory.Add(item);
 
-                            var currentRoomId2 = ctx.GetVariable("player.currentRoomId")?.Value;
-                            if (!string.IsNullOrEmpty(currentRoomId2))
+                            string targetRoomId = ctx.GetVariable($"char.{targetChar.Id}.currentRoomId")?.Value;
+                            if (string.IsNullOrEmpty(targetRoomId))
                             {
-                                var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, currentRoomId2, StringComparison.OrdinalIgnoreCase));
+                                targetRoomId = targetChar.StartingRoomId;
+                            }
+
+                            if (!string.IsNullOrEmpty(targetRoomId))
+                            {
+                                ctx.SetVariable("player.currentRoomId", targetRoomId);
+                                var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, targetRoomId, StringComparison.OrdinalIgnoreCase));
                                 if (room != null && UIManager.Instance != null)
                                 {
                                     UIManager.Instance.OnRoomEntered(room);
