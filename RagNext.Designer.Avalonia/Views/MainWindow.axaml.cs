@@ -778,6 +778,172 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        public void OnAddHotspotClicked(object sender, RoutedEventArgs e)
+        {
+            var room = this.FindControl<ListBox>("RoomsList")?.SelectedItem as Room;
+            if (room != null)
+            {
+                if (room.InteractiveScreenSettings == null)
+                    room.InteractiveScreenSettings = new InteractiveScreenSettings();
+                room.InteractiveScreenSettings.Hotspots.Add(new ScreenHotspot { Name = "New Button" });
+            }
+        }
+
+        public void OnRemoveHotspotClicked(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var hotspot = button?.CommandParameter as ScreenHotspot;
+            var room = this.FindControl<ListBox>("RoomsList")?.SelectedItem as Room;
+            if (room != null && hotspot != null)
+            {
+                room.InteractiveScreenSettings?.Hotspots.Remove(hotspot);
+            }
+        }
+
+        public void OnAddObjectHotspotClicked(object sender, RoutedEventArgs e)
+        {
+            var obj = this.FindControl<ListBox>("ObjectsList")?.SelectedItem as GameObject;
+            if (obj != null)
+            {
+                if (obj.InteractiveScreenSettings == null)
+                    obj.InteractiveScreenSettings = new InteractiveScreenSettings();
+                obj.InteractiveScreenSettings.Hotspots.Add(new ScreenHotspot { Name = "New Button" });
+            }
+        }
+
+        public void OnRemoveObjectHotspotClicked(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var hotspot = button?.CommandParameter as ScreenHotspot;
+            var obj = this.FindControl<ListBox>("ObjectsList")?.SelectedItem as GameObject;
+            if (obj != null && hotspot != null)
+            {
+                obj.InteractiveScreenSettings?.Hotspots.Remove(hotspot);
+            }
+        }
+
+        public async void OnInteractiveScreenDrop(object? sender, global::Avalonia.Input.DragEventArgs e)
+        {
+            var vm = DataContext as MainWindowViewModel;
+            if (vm == null) return;
+
+            string[]? paths = null;
+            var files = e.DataTransfer.TryGetFiles();
+            if (files != null && files.Any())
+            {
+                paths = files.Select(f => f.Path.LocalPath).ToArray();
+            }
+            else
+            {
+                var textData = e.DataTransfer.TryGetText();
+                if (!string.IsNullOrWhiteSpace(textData))
+                {
+                    if (File.Exists(textData))
+                    {
+                        paths = new[] { textData };
+                    }
+                }
+            }
+
+            if (paths == null || paths.Length == 0) return;
+
+            var firstPath = paths[0];
+            var game = App.CurrentGame;
+            if (game == null) return;
+
+            var matchingAsset = game.MediaAssets.FirstOrDefault(a => 
+                string.Equals(new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, a), firstPath, StringComparison.OrdinalIgnoreCase));
+
+            string backdropName = "";
+            if (matchingAsset != null)
+            {
+                backdropName = matchingAsset.OriginalFileName;
+            }
+            else
+            {
+                await vm.Media.ImportFilesFromPathsAsync(new[] { firstPath }, null);
+                var fileName = Path.GetFileName(firstPath);
+                var asset = game.MediaAssets.FirstOrDefault(a => string.Equals(a.OriginalFileName, fileName, StringComparison.OrdinalIgnoreCase));
+                if (asset != null)
+                {
+                    backdropName = asset.OriginalFileName;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(backdropName))
+            {
+                var room = this.FindControl<ListBox>("RoomsList")?.SelectedItem as Room;
+                if (room != null)
+                {
+                    if (room.InteractiveScreenSettings == null) room.InteractiveScreenSettings = new InteractiveScreenSettings();
+                    room.InteractiveScreenSettings.BackdropAssetId = backdropName;
+                }
+                var obj = this.FindControl<ListBox>("ObjectsList")?.SelectedItem as GameObject;
+                if (obj != null)
+                {
+                    if (obj.InteractiveScreenSettings == null) obj.InteractiveScreenSettings = new InteractiveScreenSettings();
+                    obj.InteractiveScreenSettings.BackdropAssetId = backdropName;
+                }
+            }
+        }
+
+        private bool _isDraggingHotspot;
+        private Point _dragStartPos;
+        private double _hotspotStartLeft;
+        private double _hotspotStartTop;
+        private ScreenHotspot? _draggedHotspot;
+
+        public void OnHotspotPointerPressed(object sender, global::Avalonia.Input.PointerPressedEventArgs e)
+        {
+            var border = sender as Border;
+            _draggedHotspot = border?.DataContext as ScreenHotspot;
+            if (_draggedHotspot == null || border == null) return;
+
+            var parent = border.Parent?.Parent as Visual;
+            if (parent == null) return;
+
+            _isDraggingHotspot = true;
+            _dragStartPos = e.GetPosition(parent);
+            _hotspotStartLeft = _draggedHotspot.X;
+            _hotspotStartTop = _draggedHotspot.Y;
+            e.Pointer.Capture(border);
+            e.Handled = true;
+        }
+
+        public void OnHotspotPointerMoved(object sender, global::Avalonia.Input.PointerEventArgs e)
+        {
+            if (!_isDraggingHotspot || _draggedHotspot == null) return;
+            var border = sender as Border;
+            var parent = border?.Parent?.Parent as Visual;
+            if (parent == null) return;
+
+            var currentPos = e.GetPosition(parent);
+            var delta = currentPos - _dragStartPos;
+
+            if (parent.Bounds.Width > 0 && parent.Bounds.Height > 0)
+            {
+                double deltaX = (delta.X / parent.Bounds.Width) * 100.0;
+                double deltaY = (delta.Y / parent.Bounds.Height) * 100.0;
+
+                _draggedHotspot.X = Math.Clamp(Math.Round(_hotspotStartLeft + deltaX, 1), 0.0, 100.0);
+                _draggedHotspot.Y = Math.Clamp(Math.Round(_hotspotStartTop + deltaY, 1), 0.0, 100.0);
+            }
+        }
+
+        public void OnHotspotPointerReleased(object sender, global::Avalonia.Input.PointerReleasedEventArgs e)
+        {
+            if (_isDraggingHotspot)
+            {
+                var border = sender as Border;
+                if (border != null)
+                {
+                    e.Pointer.Capture(null);
+                }
+                _isDraggingHotspot = false;
+                _draggedHotspot = null;
+            }
+        }
+
         public void OnCloseActionSelectorClicked(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("[DEBUG] OnCloseActionSelectorClicked code-behind triggered");
@@ -4969,6 +5135,7 @@ namespace RagNext.Designer.Avalonia.Views
                 case "itemsetattribute": return "item.setAttribute";
                 case "itemwearitem": return "item.wear";
                 case "itemremoveitem": return "item.remove";
+                case "itemshowinteractivescreen": return "item.showInteractiveScreen";
                 case "playerdisplaydescription": return "player.displayDescription";
                 case "playermoveinventorytocharacter": return "player.moveInventoryToChar";
                 case "playermoveinventorytoroom": return "player.moveInventoryToRoom";
@@ -6108,6 +6275,80 @@ namespace RagNext.Designer.Avalonia.Views
         }
     }
 
+    public class ActionToIdStringConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly ActionToIdStringConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string guidStr && Guid.TryParse(guidStr, out var guid))
+            {
+                var game = App.CurrentGame;
+                if (game != null)
+                {
+                    foreach (var room in game.Rooms)
+                    {
+                        var act = room.Actions.FirstOrDefault(a => a.Id == guid);
+                        if (act != null) return act;
+                    }
+                    foreach (var obj in game.Objects)
+                    {
+                        var act = obj.Actions.FirstOrDefault(a => a.Id == guid);
+                        if (act != null) return act;
+                    }
+                }
+            }
+            return null;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is RagsCore.Models.Action action)
+            {
+                return action.IdString;
+            }
+            return global::Avalonia.Data.BindingOperations.DoNothing;
+        }
+    }
+
+    public class AssetIdToBitmapConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly AssetIdToBitmapConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string assetId && !string.IsNullOrEmpty(assetId))
+            {
+                var game = App.CurrentGame;
+                if (game != null)
+                {
+                    var asset = game.MediaAssets.FirstOrDefault(a => 
+                        string.Equals(a.Id.ToString(), assetId, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(a.OriginalFileName, assetId, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (asset != null)
+                    {
+                        var localPath = new MediaLibrary(new AvaloniaMediaPathProvider()).GetLocalPath(game, asset);
+                        if (File.Exists(localPath))
+                        {
+                            try
+                            {
+                                return new global::Avalonia.Media.Imaging.Bitmap(localPath);
+                            }
+                            catch
+                            {
+                                // Fall through
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
     public class ImagePathToBitmapConverter : global::Avalonia.Data.Converters.IValueConverter
     {
         public static readonly ImagePathToBitmapConverter Instance = new();
@@ -6287,6 +6528,30 @@ namespace RagNext.Designer.Avalonia.Views
         }
     }
 
+    public class HotspotFontSizeScaleConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly HotspotFontSizeScaleConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is double val)
+            {
+                return val / 5.0;
+            }
+            if (value is int ival)
+            {
+                return ival / 5.0;
+            }
+            if (value is float fval)
+            {
+                return fval / 5.0;
+            }
+            return 3.0;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
     public class ColorToBrushConverter : global::Avalonia.Data.Converters.IValueConverter
     {
         public static readonly ColorToBrushConverter Instance = new();
@@ -6429,6 +6694,41 @@ namespace RagNext.Designer.Avalonia.Views
                 return asset.Id;
             }
             return null;
+        }
+    }
+
+    public class YScaleConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly YScaleConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is double d)
+            {
+                return d * 0.5625;
+            }
+            if (value is float f)
+            {
+                return f * 0.5625f;
+            }
+            if (value is int i)
+            {
+                return i * 0.5625;
+            }
+            return value;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is double d)
+            {
+                return d / 0.5625;
+            }
+            if (value is float f)
+            {
+                return f / 0.5625f;
+            }
+            return value;
         }
     }
 }

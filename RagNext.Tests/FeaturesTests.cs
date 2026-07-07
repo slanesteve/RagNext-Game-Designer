@@ -171,5 +171,55 @@ namespace RagNext.Tests
             // Assert
             Assert.Equal("Feet", resolvedSlot);
         }
+
+        [Fact]
+        public void InteractiveScreenSettings_Serialization_ShouldRoundtrip()
+        {
+            // Arrange
+            var room = new Room
+            {
+                Name = "Test Screen Room",
+                InteractiveScreenSettings = new InteractiveScreenSettings
+                {
+                    Enabled = true,
+                    BackdropAssetId = "test_backdrop.png"
+                }
+            };
+            room.InteractiveScreenSettings.Hotspots.Add(new ScreenHotspot
+            {
+                Name = "Test Hotspot",
+                X = 12.5,
+                Y = 34.2,
+                Width = 20,
+                Height = 10,
+                StyleType = "TextButton",
+                LabelText = "Click Me"
+            });
+
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                TypeInfoResolver = RagsCore.RagsJsonContext.Default
+            };
+
+            // Act
+            var json = System.Text.Json.JsonSerializer.Serialize(room, options);
+            var deserialized = System.Text.Json.JsonSerializer.Deserialize<Room>(json, options);
+
+            // Assert
+            Assert.NotNull(deserialized);
+            Assert.NotNull(deserialized.InteractiveScreenSettings);
+            Assert.True(deserialized.InteractiveScreenSettings.Enabled);
+            Assert.Equal("test_backdrop.png", deserialized.InteractiveScreenSettings.BackdropAssetId);
+            Assert.Single(deserialized.InteractiveScreenSettings.Hotspots);
+
+            var hotspot = deserialized.InteractiveScreenSettings.Hotspots[0];
+            Assert.Equal("Test Hotspot", hotspot.Name);
+            Assert.Equal(12.5, hotspot.X);
+            Assert.Equal(34.2, hotspot.Y);
+            Assert.Equal(20, hotspot.Width);
+            Assert.Equal(10, hotspot.Height);
+            Assert.Equal("TextButton", hotspot.StyleType);
+            Assert.Equal("Click Me", hotspot.LabelText);
+        }
     }
 }

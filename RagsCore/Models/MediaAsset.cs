@@ -13,6 +13,11 @@ namespace RagsCore.Models
         [System.Text.Json.Serialization.JsonIgnore]
         public string Name => OriginalFileName;
 
+        public override string ToString()
+        {
+            return OriginalFileName;
+        }
+
         [System.Text.Json.Serialization.JsonIgnore]
         public string IdString => Id.ToString();
 

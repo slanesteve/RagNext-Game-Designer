@@ -23,6 +23,8 @@ namespace RagsCore
     [JsonSerializable(typeof(MediaAsset))]
     [JsonSerializable(typeof(SplashScreenSettings))]
     [JsonSerializable(typeof(StatusBarElement))]
+    [JsonSerializable(typeof(InteractiveScreenSettings))]
+    [JsonSerializable(typeof(ScreenHotspot))]
     [JsonSerializable(typeof(System.Collections.ObjectModel.ObservableCollection<StatusBarElement>))]
     [JsonSerializable(typeof(StepDefinitionBase))]
     [JsonSerializable(typeof(CommandDefinition))]

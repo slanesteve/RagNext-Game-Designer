@@ -51,6 +51,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SetStatusElementImageCommand), "status.setImage")]
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
+    [JsonDerivedType(typeof(ShowInteractiveScreenCommand), "item.showInteractiveScreen")]
     [JsonDerivedType(typeof(ScreenShakeCommand), "player.screenShake")]
     [JsonDerivedType(typeof(AddObjectToRoomCommand), "room.addObject")]
     [JsonDerivedType(typeof(RemoveObjectFromRoomCommand), "room.removeObject")]
@@ -189,7 +190,7 @@ namespace RagsCore.Actions
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear", "item.remove",
                 "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
-                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen"
+                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen"
             };
 
             // Convert unrecognized/unknown $type values to general.debugText to prevent crashes
@@ -442,6 +443,18 @@ namespace RagsCore.Actions
                 ctx.SetVariable("player.currentRoomId", g.ToString());
             else if (!string.IsNullOrEmpty(resolved))
                 ctx.SetVariable("player.currentRoomId", resolved);
+        }
+    }
+
+    public sealed class ShowInteractiveScreenCommand : GameCommand
+    {
+        public string ObjectId { get; set; } = string.Empty;
+        public override string TypeName => "Item: Show Interactive Screen";
+        public override void Execute(ActionContext ctx)
+        {
+            var resolved = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
+            if (!string.IsNullOrEmpty(resolved))
+                ctx.SetVariable("player.activeInteractiveScreenObjectId", resolved);
         }
     }
 

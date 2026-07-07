@@ -54,6 +54,30 @@ namespace RagNextPlayer.Runtime.Models
         public double BorderRadius { get; set; } = 12;
     }
 
+    public class InteractiveScreenSettingsData
+    {
+        public bool Enabled { get; set; }
+        public string BackdropAssetId { get; set; } = string.Empty;
+        public List<ScreenHotspotData> Hotspots { get; set; } = new List<ScreenHotspotData>();
+    }
+
+    public class ScreenHotspotData
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+        public string StyleType { get; set; } = "Invisible";
+        public string LabelText { get; set; } = string.Empty;
+        public string FontColor { get; set; } = "#FFFFFF";
+        public double FontSize { get; set; } = 14;
+        public string BackgroundColor { get; set; } = "#1A1A1A";
+        public string ImageAssetId { get; set; } = string.Empty;
+        public string LinkedActionId { get; set; } = string.Empty;
+    }
+
     // ── Player ────────────────────────────────────────────────────────────────
     public class PlayerData
     {
@@ -84,6 +108,7 @@ namespace RagNextPlayer.Runtime.Models
         public List<ActionData>           Actions   { get; set; } = new List<ActionData>();
         [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
+        public InteractiveScreenSettingsData? InteractiveScreenSettings { get; set; }
     }
 
     // ── Game Object / Character ───────────────────────────────────────────────
@@ -108,6 +133,7 @@ namespace RagNextPlayer.Runtime.Models
         public string                      WearSlot           { get; set; } = string.Empty;
         [JsonConverter(typeof(AttributesConverter))]
         public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
+        public InteractiveScreenSettingsData? InteractiveScreenSettings { get; set; }
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -196,6 +222,7 @@ namespace RagNextPlayer.Runtime.Models
     public class PlayerSetGenderCommandData          : CommandData { public string Gender { get; set; } = "Male"; }
     public class PlayerSetPortraitMediaCommandData   : CommandData { public string MediaId { get; set; } = string.Empty; }
     public class SwapPlayerCharacterCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; }
+    public class ShowInteractiveScreenCommandData    : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class ShowSplashScreenCommandData         : CommandData { public string SplashScreenName { get; set; } = "Default"; }
     public class CharacterMoveToRoomCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; public string RoomId { get; set; } = string.Empty; }
     public class CharacterMoveToRandomAdjacentCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }

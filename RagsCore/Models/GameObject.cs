@@ -58,5 +58,8 @@ namespace RagsCore.Models
         }
 
         public string PortraitImageFileName => System.IO.Path.GetFileName(_portraitImagePath ?? string.Empty);
+
+        private InteractiveScreenSettings _interactiveScreenSettings = new();
+        public InteractiveScreenSettings InteractiveScreenSettings { get => _interactiveScreenSettings; set => SetProperty(ref _interactiveScreenSettings, value); }
     }
 }

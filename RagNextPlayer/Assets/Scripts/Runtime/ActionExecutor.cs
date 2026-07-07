@@ -831,6 +831,13 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case ShowInteractiveScreenCommandData c:
+                    {
+                        var resolved = ctx.Resolve(c.ObjectId);
+                        ctx.SetVariable("player.activeInteractiveScreenObjectId", resolved);
+                    }
+                    break;
+
                 case AddObjectToRoomCommandData c:
                     {
                         var resolvedRoom = ctx.Resolve(c.RoomId);

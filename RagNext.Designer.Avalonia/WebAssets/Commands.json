@@ -1002,6 +1002,17 @@
       ]
     },
     {
+      "name": "Item: Show Interactive Screen",
+      "category": "Item",
+      "inputs": [
+        {
+          "label": "Object",
+          "controlType": "ComboBox",
+          "dataType": "GameObject"
+        }
+      ]
+    },
+    {
       "name": "Variable: Break Loop",
       "category": "Variable",
       "inputs": []

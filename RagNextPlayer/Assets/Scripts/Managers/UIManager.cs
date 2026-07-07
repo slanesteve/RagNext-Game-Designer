@@ -2076,6 +2076,37 @@ namespace RagNextPlayer.Managers
         {
             if (room is null) return;
 
+            bool isInteractive = room.InteractiveScreenSettings != null && room.InteractiveScreenSettings.Enabled;
+            if (_roomActionsContainer != null)
+                _roomActionsContainer.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+            if (_roomActionThumbnailWrapper != null)
+                _roomActionThumbnailWrapper.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+
+            if (_rightSidebarContainer != null)
+                _rightSidebarContainer.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+
+            var narrativePanel = _root?.Q<VisualElement>("narrative-panel");
+            if (narrativePanel != null)
+                narrativePanel.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+
+            var floatingProfiles = _root?.Q<VisualElement>("floating-profiles-container");
+            if (floatingProfiles != null)
+                floatingProfiles.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+
+            var compassContainer = _root?.Q<VisualElement>("compass-container");
+            if (compassContainer != null)
+                compassContainer.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+
+            var compassHud = _root?.Q<VisualElement>("compass-hud-container");
+            if (compassHud != null)
+                compassHud.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+
+            _activeScreenSettings = room.InteractiveScreenSettings;
+            _activeScreenRoom = room;
+            _activeScreenObject = null;
+
+            RenderInteractiveScreen(_activeScreenSettings, _activeScreenRoom);
+
             SetupVFXOverlay();
 
             if (IsSplashFinished)
@@ -2127,9 +2158,13 @@ namespace RagNextPlayer.Managers
             }
 
             // Scene image (preserve aspect ratio scale and hide placeholder)
-            if (!string.IsNullOrWhiteSpace(room.PortraitImagePath))
+            if (!isInteractive && !string.IsNullOrWhiteSpace(room.PortraitImagePath))
             {
                 DisplaySceneImage(room.PortraitImagePath);
+            }
+            else if (isInteractive)
+            {
+                // Managed by RenderInteractiveScreen
             }
             else
             {
@@ -2261,7 +2296,14 @@ namespace RagNextPlayer.Managers
 
         public void AppendNarrativeText(string text)
         {
-            if (string.IsNullOrWhiteSpace(text) || _narrativeScroll is null) return;
+            if (string.IsNullOrWhiteSpace(text)) return;
+
+            if (_activeScreenSettings != null && _activeScreenSettings.Enabled)
+            {
+                ShowInteractiveToast(text);
+            }
+
+            if (_narrativeScroll is null) return;
             AutocompleteActiveTypewriters();
 
             // Save old narrative entry into history log
@@ -2440,6 +2482,289 @@ namespace RagNextPlayer.Managers
                 }
             });
 
+            RefreshActiveInteractiveScreen();
+        }
+
+        private InteractiveScreenSettingsData _activeScreenSettings;
+        private RoomData _activeScreenRoom;
+        private GameObjectData _activeScreenObject;
+
+        public void ShowItemInteractiveScreen(GameObjectData obj)
+        {
+            if (obj == null || obj.InteractiveScreenSettings == null || !obj.InteractiveScreenSettings.Enabled) return;
+
+            if (_roomActionsContainer != null) _roomActionsContainer.style.display = DisplayStyle.None;
+            if (_roomActionThumbnailWrapper != null) _roomActionThumbnailWrapper.style.display = DisplayStyle.None;
+            if (_rightSidebarContainer != null) _rightSidebarContainer.style.display = DisplayStyle.None;
+            
+            var narrativePanel = _root?.Q<VisualElement>("narrative-panel");
+            if (narrativePanel != null) narrativePanel.style.display = DisplayStyle.None;
+
+            var floatingProfiles = _root?.Q<VisualElement>("floating-profiles-container");
+            if (floatingProfiles != null) floatingProfiles.style.display = DisplayStyle.None;
+
+            var compassContainer = _root?.Q<VisualElement>("compass-container");
+            if (compassContainer != null) compassContainer.style.display = DisplayStyle.None;
+
+            var compassHud = _root?.Q<VisualElement>("compass-hud-container");
+            if (compassHud != null) compassHud.style.display = DisplayStyle.None;
+
+            _activeScreenSettings = obj.InteractiveScreenSettings;
+            _activeScreenRoom = GameManager.Instance?.CurrentRoom;
+            _activeScreenObject = obj;
+
+            RenderInteractiveScreen(_activeScreenSettings, _activeScreenRoom);
+        }
+
+        public void RefreshActiveInteractiveScreen()
+        {
+            if (_activeScreenSettings != null && _activeScreenSettings.Enabled && _activeScreenRoom != null)
+            {
+                RenderInteractiveScreen(_activeScreenSettings, _activeScreenRoom);
+            }
+        }
+
+        private void RenderInteractiveScreen(InteractiveScreenSettingsData settings, RoomData room)
+        {
+            var sceneImage = _root?.Q<VisualElement>("scene-image");
+            if (sceneImage == null) return;
+
+            var vignette = _root?.Q<VisualElement>("media-vignette");
+            if (vignette != null) vignette.pickingMode = PickingMode.Ignore;
+
+            var placeholder = _root?.Q<VisualElement>("scene-placeholder");
+            if (placeholder != null) placeholder.pickingMode = PickingMode.Ignore;
+
+            // Clear old hotspots and close buttons
+            var toRemove = new System.Collections.Generic.List<VisualElement>();
+            sceneImage.Query<VisualElement>(className: "screen-hotspot").ForEach(el => toRemove.Add(el));
+            foreach (var el in toRemove) el.parent?.Remove(el);
+
+            sceneImage.Query<Button>(className: "screen-close-btn").ForEach(el => el.parent?.Remove(el));
+
+            if (settings == null || !settings.Enabled)
+            {
+                sceneImage.style.aspectRatio = StyleKeyword.Null;
+                sceneImage.style.width = Length.Percent(100);
+                sceneImage.style.height = Length.Percent(100);
+                sceneImage.style.maxWidth = StyleKeyword.Null;
+                sceneImage.style.maxHeight = StyleKeyword.Null;
+                sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                return;
+            }
+
+            sceneImage.style.aspectRatio = 16f / 9f;
+            sceneImage.style.width = StyleKeyword.Auto;
+            sceneImage.style.height = Length.Percent(100);
+            sceneImage.style.maxWidth = Length.Percent(100);
+            sceneImage.style.maxHeight = Length.Percent(100);
+            sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+
+            // Optional custom backdrop
+            if (!string.IsNullOrEmpty(settings.BackdropAssetId))
+            {
+                var game = GameManager.Instance?.ActiveGame;
+                var asset = game?.MediaAssets.Find(a => 
+                    string.Equals(a.Id, settings.BackdropAssetId, System.StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(a.OriginalFileName, settings.BackdropAssetId, System.StringComparison.OrdinalIgnoreCase));
+                
+                if (asset != null)
+                {
+                    LoadAndDisplayImage(asset.RelativePath, "scene-image");
+                }
+            }
+
+            // Create hotspots
+            foreach (var hotspot in settings.Hotspots)
+            {
+                var btn = new Button();
+                btn.name = hotspot.Id;
+                btn.AddToClassList("screen-hotspot");
+                
+                btn.style.position = Position.Absolute;
+                btn.style.left = Length.Percent((float)hotspot.X);
+                btn.style.top = Length.Percent((float)hotspot.Y);
+                btn.style.width = Length.Percent((float)hotspot.Width);
+                btn.style.height = Length.Percent((float)hotspot.Height);
+                
+                // Style defaults
+                btn.style.borderLeftWidth = 0;
+                btn.style.borderRightWidth = 0;
+                btn.style.borderTopWidth = 0;
+                btn.style.borderBottomWidth = 0;
+                btn.style.borderTopLeftRadius = 0;
+                btn.style.borderTopRightRadius = 0;
+                btn.style.borderBottomLeftRadius = 0;
+                btn.style.borderBottomRightRadius = 0;
+                btn.style.backgroundColor = Color.clear;
+
+                Color resolvedBgColor = Color.clear;
+
+                if (hotspot.StyleType == "Invisible")
+                {
+                    // standard transparent button
+                }
+                else
+                {
+                    // Resolve variable templates for visuals
+                    var game = GameManager.Instance?.ActiveGame;
+                    string resolvedLabel = game != null ? TemplateResolver.Resolve(hotspot.LabelText, game, room, null) : hotspot.LabelText;
+                    btn.text = resolvedLabel;
+
+                    string resolvedBg = game != null ? TemplateResolver.Resolve(hotspot.BackgroundColor, game, room, null) : hotspot.BackgroundColor;
+                    if (ColorUtility.TryParseHtmlString(resolvedBg, out var bgColor))
+                    {
+                        resolvedBgColor = bgColor;
+                        btn.style.backgroundColor = bgColor;
+                    }
+
+                    string resolvedColor = game != null ? TemplateResolver.Resolve(hotspot.FontColor, game, room, null) : hotspot.FontColor;
+                    if (ColorUtility.TryParseHtmlString(resolvedColor, out var textColor))
+                    {
+                        btn.style.color = textColor;
+                    }
+
+                    btn.style.fontSize = (float)hotspot.FontSize;
+                    btn.style.borderLeftWidth = 1;
+                    btn.style.borderRightWidth = 1;
+                    btn.style.borderTopWidth = 1;
+                    btn.style.borderBottomWidth = 1;
+                    btn.style.borderLeftColor = Color.white;
+                    btn.style.borderRightColor = Color.white;
+                    btn.style.borderTopColor = Color.white;
+                    btn.style.borderBottomColor = Color.white;
+                    btn.style.borderTopLeftRadius = 4;
+                    btn.style.borderTopRightRadius = 4;
+                    btn.style.borderBottomLeftRadius = 4;
+                    btn.style.borderBottomRightRadius = 4;
+
+                    string resolvedImage = game != null ? TemplateResolver.Resolve(hotspot.ImageAssetId, game, room, null) : hotspot.ImageAssetId;
+                    if (!string.IsNullOrEmpty(resolvedImage))
+                    {
+                        var asset = game?.MediaAssets.Find(a => 
+                            string.Equals(a.Id, resolvedImage, System.StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(a.OriginalFileName, resolvedImage, System.StringComparison.OrdinalIgnoreCase));
+                        
+                        if (asset != null)
+                        {
+                            LoadAndDisplayImageForElement(asset.RelativePath, btn);
+                        }
+                    }
+                }
+
+                // Hover / pointer-enter micro-animations and highlight visuals
+                btn.RegisterCallback<PointerOverEvent>(evt => {
+                    btn.style.scale = new Scale(new UnityEngine.Vector3(1.03f, 1.03f, 1.03f));
+                    if (hotspot.StyleType == "Invisible")
+                    {
+                        btn.style.borderLeftWidth = 1;
+                        btn.style.borderRightWidth = 1;
+                        btn.style.borderTopWidth = 1;
+                        btn.style.borderBottomWidth = 1;
+                        btn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.45f);
+                        btn.style.borderRightColor = new Color(1f, 1f, 1f, 0.45f);
+                        btn.style.borderTopColor = new Color(1f, 1f, 1f, 0.45f);
+                        btn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.45f);
+                        btn.style.borderTopLeftRadius = 4;
+                        btn.style.borderTopRightRadius = 4;
+                        btn.style.borderBottomLeftRadius = 4;
+                        btn.style.borderBottomRightRadius = 4;
+                    }
+                    else
+                    {
+                        btn.style.backgroundColor = new Color(resolvedBgColor.r * 1.18f, resolvedBgColor.g * 1.18f, resolvedBgColor.b * 1.18f, resolvedBgColor.a);
+                    }
+                });
+
+                btn.RegisterCallback<PointerOutEvent>(evt => {
+                    btn.style.scale = StyleKeyword.Null;
+                    if (hotspot.StyleType == "Invisible")
+                    {
+                        btn.style.borderLeftWidth = 0;
+                        btn.style.borderRightWidth = 0;
+                        btn.style.borderTopWidth = 0;
+                        btn.style.borderBottomWidth = 0;
+                    }
+                    else
+                    {
+                        btn.style.backgroundColor = resolvedBgColor;
+                    }
+                });
+
+                btn.clicked += () => {
+                    if (!string.IsNullOrEmpty(hotspot.LinkedActionId) && InteractionController.Instance != null)
+                    {
+                        InteractionController.Instance.ExecuteActionById(hotspot.LinkedActionId, null, room);
+                        // Refresh screen overlay state dynamically after running the action
+                        RenderInteractiveScreen(settings, room);
+                    }
+                };
+
+                sceneImage.Add(btn);
+            }
+
+
+
+            // Render close button if this screen belongs to an object/item
+            if (_activeScreenObject != null)
+            {
+                var closeBtn = new Button();
+                closeBtn.text = "✕";
+                closeBtn.AddToClassList("screen-close-btn");
+                closeBtn.style.position = Position.Absolute;
+                closeBtn.style.top = 10;
+                closeBtn.style.right = 10;
+                closeBtn.style.width = 36;
+                closeBtn.style.height = 36;
+                closeBtn.style.fontSize = 20;
+                closeBtn.style.unityFontDefinition = StyleKeyword.Null; // default standard font
+                closeBtn.style.unityFontStyleAndWeight = FontStyle.Bold;
+                closeBtn.style.color = Color.white;
+                closeBtn.style.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 0.85f);
+                closeBtn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.15f);
+                closeBtn.style.borderRightColor = new Color(1f, 1f, 1f, 0.15f);
+                closeBtn.style.borderTopColor = new Color(1f, 1f, 1f, 0.15f);
+                closeBtn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.15f);
+                closeBtn.style.borderLeftWidth = 1;
+                closeBtn.style.borderRightWidth = 1;
+                closeBtn.style.borderTopWidth = 1;
+                closeBtn.style.borderBottomWidth = 1;
+                closeBtn.style.borderTopLeftRadius = 18;
+                closeBtn.style.borderTopRightRadius = 18;
+                closeBtn.style.borderBottomLeftRadius = 18;
+                closeBtn.style.borderBottomRightRadius = 18;
+
+                closeBtn.RegisterCallback<PointerOverEvent>(evt => {
+                    closeBtn.style.backgroundColor = new Color(0.9f, 0.2f, 0.2f, 0.95f);
+                });
+                closeBtn.RegisterCallback<PointerOutEvent>(evt => {
+                    closeBtn.style.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 0.85f);
+                });
+
+                closeBtn.clicked += () => {
+                    _activeScreenObject = null;
+                    var activeGame = GameManager.Instance?.ActiveGame;
+                    if (activeGame != null)
+                    {
+                        var variable = activeGame.Variables.Find(v => string.Equals(v.Name, "player.activeInteractiveScreenObjectId", System.StringComparison.OrdinalIgnoreCase));
+                        if (variable != null)
+                        {
+                            variable.Value = null;
+                        }
+                        else
+                        {
+                            activeGame.Variables.Add(new GameVariableData { Name = "player.activeInteractiveScreenObjectId", Value = null });
+                        }
+                    }
+                    var curRoom = GameManager.Instance?.CurrentRoom;
+                    if (curRoom != null)
+                    {
+                        RenderRoom(curRoom);
+                    }
+                };
+
+                sceneImage.Add(closeBtn);
+            }
         }
 
         public void RefreshPlayerPanel()
@@ -2732,14 +3057,19 @@ namespace RagNextPlayer.Managers
 
         private void AppendNarrativeEntry(string roomName, string description)
         {
-            if (_narrativeScroll is null) return;
-            AutocompleteActiveTypewriters();
-
             var game = GameManager.Instance?.ActiveGame;
             var room = GameManager.Instance?.CurrentRoom;
             var resolved = game is not null
                 ? TemplateResolver.Resolve(description, game, room)
                 : description;
+
+            if (_activeScreenSettings != null && _activeScreenSettings.Enabled && !string.IsNullOrWhiteSpace(resolved))
+            {
+                ShowInteractiveToast(resolved);
+            }
+
+            if (_narrativeScroll is null) return;
+            AutocompleteActiveTypewriters();
 
             // Save old narrative entry into history log
             if (!string.IsNullOrWhiteSpace(resolved))
@@ -2963,6 +3293,27 @@ namespace RagNextPlayer.Managers
 
         private void BuildExitButtons(RoomData room)
         {
+            if (room?.InteractiveScreenSettings != null && room.InteractiveScreenSettings.Enabled)
+            {
+                foreach (var kvp in _compassButtons)
+                {
+                    if (kvp.Value is null) continue;
+                    kvp.Value.RemoveFromClassList("compass-btn--active");
+                    kvp.Value.AddToClassList("compass-btn--inactive");
+                    kvp.Value.SetEnabled(false);
+                    kvp.Value.clickable = null;
+                }
+                foreach (var kvp in _compassButtonsHud)
+                {
+                    if (kvp.Value is null) continue;
+                    kvp.Value.RemoveFromClassList("compass-btn--active");
+                    kvp.Value.AddToClassList("compass-btn--inactive");
+                    kvp.Value.SetEnabled(false);
+                    kvp.Value.clickable = null;
+                }
+                return;
+            }
+
             // Reset all static compass buttons to inactive (dimmed, non-clickable) state
             foreach (var kvp in _compassButtons)
             {
@@ -3357,7 +3708,15 @@ namespace RagNextPlayer.Managers
                         if (tex != null)
                         {
                             float aspect = (float)tex.width / tex.height;
-                            elem.style.unityBackgroundScaleMode = aspect > 1.2f ? ScaleMode.ScaleAndCrop : ScaleMode.ScaleToFit;
+                            if (_activeScreenSettings != null && _activeScreenSettings.Enabled)
+                            {
+                                elem.style.aspectRatio = 16f / 9f;
+                                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                            }
+                            else
+                            {
+                                elem.style.unityBackgroundScaleMode = aspect > 1.2f ? ScaleMode.ScaleAndCrop : ScaleMode.ScaleToFit;
+                            }
                         }
                         if (_scenePlaceholder is not null)
                         {
@@ -4593,6 +4952,89 @@ namespace RagNextPlayer.Managers
                         profileLine.style.backgroundColor = val;
                     });
                 });
+            }
+        }
+
+        public void ShowInteractiveToast(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return;
+
+            // Remove any existing toast first
+            var existing = _root?.Q<VisualElement>("interactive-toast");
+            if (existing != null) existing.parent?.Remove(existing);
+
+            var toast = new VisualElement();
+            toast.name = "interactive-toast";
+            
+            // Set styles for a beautiful, modern glassmorphism toast popup
+            toast.style.position = Position.Absolute;
+            toast.style.bottom = Length.Percent(15);
+            toast.style.alignSelf = Align.Center;
+            toast.style.backgroundColor = new Color(0.05f, 0.05f, 0.07f, 0.85f);
+            toast.style.borderLeftColor = new Color(0f, 0.73f, 0.83f, 0.8f); // Cyan accent
+            toast.style.borderRightColor = new Color(0f, 0.73f, 0.83f, 0.8f);
+            toast.style.borderTopColor = new Color(0f, 0.73f, 0.83f, 0.8f);
+            toast.style.borderBottomColor = new Color(0f, 0.73f, 0.83f, 0.8f);
+            toast.style.borderLeftWidth = 1;
+            toast.style.borderRightWidth = 1;
+            toast.style.borderTopWidth = 1;
+            toast.style.borderBottomWidth = 1;
+            toast.style.borderTopLeftRadius = 8;
+            toast.style.borderTopRightRadius = 8;
+            toast.style.borderBottomLeftRadius = 8;
+            toast.style.borderBottomRightRadius = 8;
+            toast.style.paddingLeft = 20;
+            toast.style.paddingRight = 20;
+            toast.style.paddingTop = 12;
+            toast.style.paddingBottom = 12;
+            toast.style.maxWidth = Length.Percent(70);
+            toast.style.minWidth = 280;
+
+            var label = new Label(text);
+            label.style.color = Color.white;
+            label.style.fontSize = 14;
+            label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            label.style.whiteSpace = WhiteSpace.Normal;
+            toast.Add(label);
+
+            // Close button
+            var closeBtn = new Button();
+            closeBtn.text = "✕";
+            closeBtn.style.position = Position.Absolute;
+            closeBtn.style.right = 6;
+            closeBtn.style.top = 4;
+            closeBtn.style.backgroundColor = Color.clear;
+            closeBtn.style.color = new Color(1f, 1f, 1f, 0.6f);
+            closeBtn.style.borderLeftWidth = 0;
+            closeBtn.style.borderRightWidth = 0;
+            closeBtn.style.borderTopWidth = 0;
+            closeBtn.style.borderBottomWidth = 0;
+            closeBtn.style.fontSize = 11;
+            closeBtn.clicked += () => toast.parent?.Remove(toast);
+            toast.Add(closeBtn);
+
+            // Add to root container
+            _root?.Add(toast);
+
+            // Auto hide after 4.5 seconds
+            StartCoroutine(AutoHideToastCoroutine(toast, 4.5f));
+        }
+
+        private System.Collections.IEnumerator AutoHideToastCoroutine(VisualElement toast, float delay)
+        {
+            yield return new UnityEngine.WaitForSeconds(delay);
+            if (toast != null && toast.parent != null)
+            {
+                float elapsed = 0f;
+                float duration = 0.5f;
+                while (elapsed < duration)
+                {
+                    if (toast == null || toast.parent == null) yield break;
+                    elapsed += UnityEngine.Time.deltaTime;
+                    toast.style.opacity = 1f - (elapsed / duration);
+                    yield return null;
+                }
+                toast.parent?.Remove(toast);
             }
         }
     }

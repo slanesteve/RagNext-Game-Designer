@@ -9,11 +9,17 @@ namespace RagsCore.Models
     public class Action : BaseModel
     {
         public Guid Id { get; set; } = Guid.NewGuid();
+        public string IdString => Id.ToString();
 
         private string _name = string.Empty;
         public string Name { get => _name; set => SetProperty(ref _name, value); }
         private bool _initiallyactive = true;
         public bool InitallyActive { get => _initiallyactive; set => SetProperty(ref _initiallyactive, value); }
+
+        public override string ToString()
+        {
+            return Name;
+        }
 
         private ActionTrigger _trigger = ActionTrigger.UserClicked;
         public ActionTrigger Trigger 

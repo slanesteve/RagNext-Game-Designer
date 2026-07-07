@@ -278,6 +278,53 @@ namespace RagNextPlayer.Managers
             }
         }
 
+        public void ExecuteActionById(string actionId, GameObjectData entity = null, RoomData room = null)
+        {
+            if (entity != null)
+            {
+                var action = entity.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
+                if (action != null)
+                {
+                    ExecuteCustomAction(entity, action);
+                    return;
+                }
+            }
+            if (room != null)
+            {
+                var action = room.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
+                if (action != null)
+                {
+                    ExecuteRoomAction(room, action);
+                    return;
+                }
+            }
+            var game = GameManager.Instance?.ActiveGame;
+            if (game != null)
+            {
+                foreach (var c in game.Characters)
+                {
+                    var action = c.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
+                    if (action != null) { ExecuteCustomAction(c, action); return; }
+                }
+                foreach (var o in game.Objects)
+                {
+                    var action = o.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
+                    if (action != null) { ExecuteCustomAction(o, action); return; }
+                }
+                if (game.Player != null)
+                {
+                    var action = game.Player.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
+                    if (action != null) { ExecutePlayerAction(game.Player, action); return; }
+
+                    foreach (var invItem in game.Player.Inventory)
+                    {
+                        var invAction = invItem.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
+                        if (invAction != null) { ExecuteCustomAction(invItem, invAction); return; }
+                    }
+                }
+            }
+        }
+
 
 
         // ── Menu UI Builder ───────────────────────────────────────────────────

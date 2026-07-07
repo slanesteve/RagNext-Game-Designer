@@ -116,6 +116,7 @@ const fallbackDiscriminators = {
     "itemmoveinsideobject": "object.moveInsideObject",
     "itemmovetoroom": "room.addObject",
     "itemsetattribute": "item.setAttribute",
+    "itemshowinteractivescreen": "item.showInteractiveScreen",
     "playerdisplaydescription": "player.displayDescription",
     "playermoveinventorytocharacter": "player.moveInventoryToChar",
     "playermoveinventorytoroom": "player.moveInventoryToRoom",
@@ -2260,6 +2261,20 @@ function refreshCommandFields(node) {
     }
 
     const type = node.type === 'command' ? node.data.commandType : node.data.conditionType;
+
+    // Hide output pins for terminal nodes
+    const outPin = node.element ? node.element.querySelector('.pin.output') : null;
+    if (outPin) {
+        if (type === 'general.endGame' || type === 'item.showInteractiveScreen') {
+            outPin.style.display = 'none';
+            // Break any connections originating from this pin
+            connections = connections.filter(conn => conn.fromPinId !== outPin.id);
+            redrawConnections();
+        } else {
+            outPin.style.display = 'flex';
+        }
+    }
+
     const schema = typeToInputsMap[type];
     node.inputs = [];
 

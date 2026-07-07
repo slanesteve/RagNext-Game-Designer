@@ -7,6 +7,7 @@
         xmlns:models="using:RagsCore.Models"
         xmlns:views="using:RagNext.Designer.Avalonia.Views"
         xmlns:services="using:RagNext.Designer.Avalonia.Services"
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="750"
         x:Class="RagNext.Designer.Avalonia.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -880,6 +881,162 @@
                                         </StackPanel>
                                     </ScrollViewer>
                                 </TabItem>
+
+                                <TabItem Header="Interactive Screen">
+                                    <Border DragDrop.AllowDrop="True" DragDrop.Drop="OnInteractiveScreenDrop">
+                                        <Grid ColumnDefinitions="325,*" Margin="0,10,0,0">
+                                            <!-- Column 0: Global Settings & List -->
+                                            <ScrollViewer Grid.Column="0" Margin="0,0,8,0">
+                                                <StackPanel Spacing="16">
+                                                    <CheckBox IsChecked="{Binding InteractiveScreenSettings.Enabled}" Content="Enable Interactive Mode" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
+                                                    
+                                                    <TextBlock Text="Backdrop Asset ID / Path:" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
+                                                    <ComboBox Text="{Binding InteractiveScreenSettings.BackdropAssetId, Mode=TwoWay}" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" HorizontalAlignment="Stretch" IsEditable="True" Background="{DynamicResource CardBg}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="models:MediaAsset">
+                                                                <TextBlock Text="{Binding OriginalFileName}"/>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    
+                                                    <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,4">
+                                                        <TextBlock Grid.Column="0" Text="Clickable Hotspots" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2" VerticalAlignment="Center"/>
+                                                        <Button Grid.Column="1" Content="➕ Add" Click="OnAddHotspotClicked" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="11" Padding="8,4"/>
+                                                    </Grid>
+                                                    
+                                                    <ListBox ItemsSource="{Binding InteractiveScreenSettings.Hotspots}" x:Name="RoomHotspotsList" Height="180" SelectedIndex="0" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                                        <ListBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="models:ScreenHotspot">
+                                                                <Grid ColumnDefinitions="*,Auto" Height="36">
+                                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                    <Button Grid.Column="1" Content="🗑️" Click="OnRemoveHotspotClicked" CommandParameter="{Binding}" Background="Transparent" Foreground="#E74C3C" FontSize="10" Padding="4,2" VerticalAlignment="Center"/>
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                    </ListBox>
+                                                    <!-- Hotspot Property Inspector stacked below -->
+                                                    <Border Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,12,0,0" IsVisible="{Binding #RoomHotspotsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                        <StackPanel Spacing="10" DataContext="{Binding #RoomHotspotsList.SelectedItem}" x:DataType="models:ScreenHotspot">
+                                                        <TextBlock Text="Edit Hotspot Properties" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                        
+                                                        <TextBlock Text="Button Name (Designer Only):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                        <TextBox Text="{Binding Name, Mode=TwoWay}" Watermark="Button Name" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                        
+                                                        <TextBlock Text="Linked Action:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                        <ComboBox SelectedItem="{Binding LinkedActionId, Mode=TwoWay, Converter={x:Static views:ActionToIdStringConverter.Instance}}" ItemsSource="{Binding $parent[TabControl].DataContext.Actions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate x:DataType="models:Action">
+                                                                    <TextBlock Text="{Binding Name}"/>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+
+                                                        <!-- Position grid -->
+                                                        <TextBlock Text="Coordinates &amp; Dimensions (%):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                        <Grid ColumnDefinitions="*,*,*,*" Margin="0,2">
+                                                            <StackPanel Margin="0,0,4,0">
+                                                                <TextBlock Text="Left (X)" FontSize="9" Foreground="Gray"/>
+                                                                <TextBox Text="{Binding X, Mode=TwoWay}" FontSize="10" Padding="4,3"/>
+                                                            </StackPanel>
+                                                            <StackPanel Margin="4,0" Grid.Column="1">
+                                                                <TextBlock Text="Top (Y)" FontSize="9" Foreground="Gray"/>
+                                                                <TextBox Text="{Binding Y, Mode=TwoWay}" FontSize="10" Padding="4,3"/>
+                                                            </StackPanel>
+                                                            <StackPanel Margin="4,0" Grid.Column="2">
+                                                                <TextBlock Text="Width" FontSize="9" Foreground="Gray"/>
+                                                                <TextBox Text="{Binding Width, Mode=TwoWay}" FontSize="10" Padding="4,3"/>
+                                                            </StackPanel>
+                                                            <StackPanel Margin="4,0,0,0" Grid.Column="3">
+                                                                <TextBlock Text="Height" FontSize="9" Foreground="Gray"/>
+                                                                <TextBox Text="{Binding Height, Mode=TwoWay}" FontSize="10" Padding="4,3"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        
+                                                        <TextBlock Text="Style Type:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                        <ComboBox SelectedItem="{Binding StyleType, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}">
+                                                            <ComboBox.Items>
+                                                                <sys:String>Invisible</sys:String>
+                                                                <sys:String>TextButton</sys:String>
+                                                                <sys:String>IconButton</sys:String>
+                                                                <sys:String>ImageButton</sys:String>
+                                                                <sys:String>CustomBorder</sys:String>
+                                                            </ComboBox.Items>
+                                                        </ComboBox>
+                                                        
+                                                        <StackPanel Spacing="10" IsVisible="{Binding StyleType, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=Invisible}">
+                                                            <TextBlock Text="Label Text:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                            <TextBox Text="{Binding LabelText, Mode=TwoWay}" Watermark="Label (supports {var.name})" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                            
+                                                            <TextBlock Text="Background Color:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBox Text="{Binding BackgroundColor, Mode=TwoWay}" Watermark="#1A1A1A or {var.color}" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                                <ColorPicker Grid.Column="1" Color="{Binding BackgroundColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0"/>
+                                                            </Grid>
+
+                                                            <TextBlock Text="Font Color:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBox Text="{Binding FontColor, Mode=TwoWay}" Watermark="#FFFFFF or {var.color}" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                                <ColorPicker Grid.Column="1" Color="{Binding FontColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0"/>
+                                                            </Grid>
+
+                                                            <TextBlock Text="Font Size:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                            <TextBox Text="{Binding FontSize, Mode=TwoWay}" FontSize="11" Background="{DynamicResource CardBg}"/>
+
+                                                            <TextBlock Text="Image Asset ID / Template:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                            <ComboBox Text="{Binding ImageAssetId, Mode=TwoWay}" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" HorizontalAlignment="Stretch" IsEditable="True" Background="{DynamicResource CardBg}">
+                                                                <ComboBox.ItemTemplate>
+                                                                    <DataTemplate x:DataType="models:MediaAsset">
+                                                                        <TextBlock Text="{Binding OriginalFileName}"/>
+                                                                    </DataTemplate>
+                                                                </ComboBox.ItemTemplate>
+                                                             </ComboBox>
+                                                         </StackPanel>
+                                                     </StackPanel>
+                                                 </Border>
+                                             </StackPanel>
+                                         </ScrollViewer>
+                                            
+                                            <!-- Column 1: Interactive Screen Canvas Coordinates Preview -->
+                                            <StackPanel Grid.Column="1" Spacing="10" Margin="16,0,0,0">
+                                                <TextBlock Text="Live Screen Coordinates Preview" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2"/>
+                                                <Border Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True" Height="450">
+                                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                        <Canvas Width="100" Height="56.25" Background="#14141F">
+                                                            <!-- Backdrop Image in Preview -->
+                                                            <Image Source="{Binding InteractiveScreenSettings.BackdropAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Width="100" Height="56.25" Stretch="UniformToFill"/>
+                                                            <TextBlock Text="Interactive Screen Canvas Preview (16:9)" FontSize="4" Foreground="Gray" Canvas.Left="4" Canvas.Top="4" IsVisible="False"/>
+                                                            
+                                                             <ItemsControl ItemsSource="{Binding InteractiveScreenSettings.Hotspots}">
+                                                                 <ItemsControl.ItemsPanel>
+                                                                     <ItemsPanelTemplate>
+                                                                         <Canvas Width="100" Height="56.25"/>
+                                                                     </ItemsPanelTemplate>
+                                                                 </ItemsControl.ItemsPanel>
+                                                                 <ItemsControl.Styles>
+                                                                     <Style Selector="ContentPresenter" x:DataType="models:ScreenHotspot">
+                                                                         <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                                                         <Setter Property="Canvas.Top" Value="{Binding Y, Converter={x:Static views:YScaleConverter.Instance}}"/>
+                                                                     </Style>
+                                                                 </ItemsControl.Styles>
+                                                                 <ItemsControl.ItemTemplate>
+                                                                     <DataTemplate x:DataType="models:ScreenHotspot">
+                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
+                                                                             <Grid>
+                                                                                 <!-- Button background icon/image -->
+                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="UniformToFill"/>
+                                                                                 <TextBlock Text="{Binding DisplayName}" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                             </Grid>
+                                                                         </Border>
+                                                                     </DataTemplate>
+                                                                 </ItemsControl.ItemTemplate>
+                                                             </ItemsControl>
+                                                         </Canvas>
+                                                    </Viewbox>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </TabItem>
                             </TabControl>
                         </Grid>
                     </Border>
@@ -1341,11 +1498,155 @@
                                                             <CheckBox IsChecked="{Binding InitallyActive, Mode=TwoWay}" Content="Initially Active" FontSize="11" Foreground="Gray"/>
                                                             <Button Content="🎨 Visual Graph Editor" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12"/>
                                                         </StackPanel>
-                                                    </ScrollViewer>
+                                                     </ScrollViewer>
+                                                 </Border>
+                                             </Grid>
+                                         </StackPanel>
+                                     </ScrollViewer>
+                                 </TabItem>
+
+                                <TabItem Header="Interactive Screen">
+                                    <Border DragDrop.AllowDrop="True" DragDrop.Drop="OnInteractiveScreenDrop">
+                                        <Grid ColumnDefinitions="325,*" Margin="0,10,0,0">
+                                            <!-- Column 0: Global Settings & List -->
+                                            <ScrollViewer Grid.Column="0" Margin="0,0,8,0">
+                                                <StackPanel Spacing="16">
+                                                    <CheckBox IsChecked="{Binding InteractiveScreenSettings.Enabled}" Content="Enable Interactive Mode" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
+                                                    
+                                                    <TextBlock Text="Backdrop Asset ID / Path:" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
+                                                    <ComboBox Text="{Binding InteractiveScreenSettings.BackdropAssetId, Mode=TwoWay}" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" HorizontalAlignment="Stretch" IsEditable="True" Background="{DynamicResource CardBg}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="models:MediaAsset">
+                                                                <TextBlock Text="{Binding OriginalFileName}"/>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    
+                                                    <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,4">
+                                                        <TextBlock Grid.Column="0" Text="Clickable Hotspots" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2" VerticalAlignment="Center"/>
+                                                        <Button Grid.Column="1" Content="➕ Add" Click="OnAddObjectHotspotClicked" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="11" Padding="8,4"/>
+                                                    </Grid>
+                                                    
+                                                    <ListBox ItemsSource="{Binding InteractiveScreenSettings.Hotspots}" x:Name="ObjectHotspotsList" Height="180" SelectedIndex="0" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                                        <ListBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="models:ScreenHotspot">
+                                                                <Grid ColumnDefinitions="*,Auto" Height="36">
+                                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                    <Button Grid.Column="1" Content="🗑️" Click="OnRemoveObjectHotspotClicked" CommandParameter="{Binding}" Background="Transparent" Foreground="#E74C3C" FontSize="10" Padding="4,2" VerticalAlignment="Center"/>
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                    </ListBox>
+                                                    <!-- Hotspot Property Inspector stacked below -->
+                                                    <Border Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,12,0,0" IsVisible="{Binding #ObjectHotspotsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                        <StackPanel Spacing="10" DataContext="{Binding #ObjectHotspotsList.SelectedItem}" x:DataType="models:ScreenHotspot">
+                                                        <TextBlock Text="Edit Hotspot Properties" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                        
+                                                        <TextBlock Text="Button Name (Designer Only):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                        <TextBox Text="{Binding Name, Mode=TwoWay}" Watermark="Button Name" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                        
+                                                        <TextBlock Text="Linked Action:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                        <ComboBox SelectedItem="{Binding LinkedActionId, Mode=TwoWay, Converter={x:Static views:ActionToIdStringConverter.Instance}}" ItemsSource="{Binding $parent[TabControl].DataContext.Actions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate x:DataType="models:Action">
+                                                                    <TextBlock Text="{Binding Name}"/>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+
+                                                        <!-- Position grid -->
+                                                        <TextBlock Text="Coordinates &amp; Dimensions (%):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                        <Grid ColumnDefinitions="*,*,*,*" Margin="0,2">
+                                                            <StackPanel Margin="0,0,4,0">
+                                                                <TextBlock Text="Left (X)" FontSize="9" Foreground="Gray"/>
+                                                                <TextBox Text="{Binding X, Mode=TwoWay}" FontSize="10" Padding="4,3"/>
+                                                            </StackPanel>
+                                                            <StackPanel Margin="4,0" Grid.Column="1">
+                                                                <TextBlock Text="Top (Y)" FontSize="9" Foreground="Gray"/>
+                                                                <TextBox Text="{Binding Y, Mode=TwoWay}" FontSize="10" Padding="4,3"/>
+                                                            </StackPanel>
+                                                            <StackPanel Margin="4,0" Grid.Column="2">
+                                                                <TextBlock Text="Width" FontSize="9" Foreground="Gray"/>
+                                                                <TextBox Text="{Binding Width, Mode=TwoWay}" FontSize="10" Padding="4,3"/>
+                                                            </StackPanel>
+                                                            <StackPanel Margin="4,0,0,0" Grid.Column="3">
+                                                                <TextBlock Text="Height" FontSize="9" Foreground="Gray"/>
+                                                                <TextBox Text="{Binding Height, Mode=TwoWay}" FontSize="10" Padding="4,3"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        
+                                                        <TextBlock Text="Style Type:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                        <ComboBox SelectedItem="{Binding StyleType, Mode=TwoWay}" HorizontalAlignment="Stretch" FontSize="11" Background="{DynamicResource CardBg}">
+                                                            <ComboBox.Items>
+                                                                <sys:String>Invisible</sys:String>
+                                                                <sys:String>TextButton</sys:String>
+                                                                <sys:String>IconButton</sys:String>
+                                                                <sys:String>ImageButton</sys:String>
+                                                                <sys:String>CustomBorder</sys:String>
+                                                            </ComboBox.Items>
+                                                        </ComboBox>
+                                                        
+                                                        <StackPanel Spacing="10" IsVisible="{Binding StyleType, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=Invisible}">
+                                                            <TextBlock Text="Label Text:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                            <TextBox Text="{Binding LabelText, Mode=TwoWay}" Watermark="Label (supports {var.name})" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                            
+                                                            <TextBlock Text="Background Color (HTML Hex):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                            <TextBox Text="{Binding BackgroundColor, Mode=TwoWay}" Watermark="#1A1A1A or {var.color}" FontSize="11" Background="{DynamicResource CardBg}"/>
+
+                                                            <TextBlock Text="Font Color (HTML Hex):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                            <TextBox Text="{Binding FontColor, Mode=TwoWay}" Watermark="#FFFFFF or {var.color}" FontSize="11" Background="{DynamicResource CardBg}"/>
+
+                                                             <TextBlock Text="Font Size:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                             <TextBox Text="{Binding FontSize, Mode=TwoWay}" FontSize="11" Background="{DynamicResource CardBg}"/>
+
+                                                             <TextBlock Text="Image Asset ID / Template:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                                             <TextBox Text="{Binding ImageAssetId, Mode=TwoWay}" Watermark="e.g. icon.png or {var.img}" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                         </StackPanel>
+                                                     </StackPanel>
+                                                 </Border>
+                                             </StackPanel>
+                                         </ScrollViewer>
+                                            
+                                            <!-- Column 1: Interactive Screen Canvas Coordinates Preview -->
+                                            <StackPanel Grid.Column="1" Spacing="10" Margin="16,0,0,0">
+                                                <TextBlock Text="Live Screen Coordinates Preview" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2"/>
+                                                <Border Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True" Height="450">
+                                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                        <Canvas Width="100" Height="56.25" Background="#14141F">
+                                                            <!-- Backdrop Image in Preview -->
+                                                            <Image Source="{Binding InteractiveScreenSettings.BackdropAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Width="100" Height="56.25" Stretch="UniformToFill"/>
+                                                            <TextBlock Text="Interactive Screen Canvas Preview (16:9)" FontSize="4" Foreground="Gray" Canvas.Left="4" Canvas.Top="4" IsVisible="False"/>
+                                                            
+                                                             <ItemsControl ItemsSource="{Binding InteractiveScreenSettings.Hotspots}">
+                                                                 <ItemsControl.ItemsPanel>
+                                                                     <ItemsPanelTemplate>
+                                                                         <Canvas Width="100" Height="56.25"/>
+                                                                     </ItemsPanelTemplate>
+                                                                 </ItemsControl.ItemsPanel>
+                                                                 <ItemsControl.Styles>
+                                                                     <Style Selector="ContentPresenter" x:DataType="models:ScreenHotspot">
+                                                                         <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                                                         <Setter Property="Canvas.Top" Value="{Binding Y, Converter={x:Static views:YScaleConverter.Instance}}"/>
+                                                                     </Style>
+                                                                 </ItemsControl.Styles>
+                                                                 <ItemsControl.ItemTemplate>
+                                                                     <DataTemplate x:DataType="models:ScreenHotspot">
+                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
+                                                                             <Grid>
+                                                                                 <!-- Button background icon/image -->
+                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="UniformToFill"/>
+                                                                                 <TextBlock Text="{Binding DisplayName}" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                             </Grid>
+                                                                         </Border>
+                                                                     </DataTemplate>
+                                                                 </ItemsControl.ItemTemplate>
+                                                             </ItemsControl>
+                                                         </Canvas>
+                                                    </Viewbox>
                                                 </Border>
-                                            </Grid>
-                                        </StackPanel>
-                                    </ScrollViewer>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </TabItem>
                             </TabControl>
                         </Grid>

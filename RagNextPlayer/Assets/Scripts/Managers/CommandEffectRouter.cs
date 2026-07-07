@@ -70,6 +70,21 @@ namespace RagNextPlayer.Managers
                     }
                     break;
 
+                case ShowInteractiveScreenCommandData c:
+                    {
+                        var objectId = ctx.Resolve(c.ObjectId);
+                        if (!string.IsNullOrEmpty(objectId))
+                        {
+                            var game = GameManager.Instance?.ActiveGame;
+                            var obj = game?.Objects?.Find(o => string.Equals(o.Id, objectId, System.StringComparison.OrdinalIgnoreCase));
+                            if (obj != null)
+                            {
+                                UIManager.Instance?.ShowItemInteractiveScreen(obj);
+                            }
+                        }
+                    }
+                    break;
+
                 case ScreenShakeCommandData c:
                     TransitionVFXManager.Instance?.TriggerScreenShake(c.Intensity, c.Duration);
                     break;

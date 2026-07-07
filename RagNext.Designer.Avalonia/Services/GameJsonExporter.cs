@@ -64,6 +64,7 @@ namespace RagNext.Designer.Avalonia.Services
         public List<string>? ObjectIds { get; set; }
         public List<ExportActionDto>? Actions { get; set; }
         public Dictionary<string, string>? Attributes { get; set; }
+        public ExportInteractiveScreenSettingsDto? InteractiveScreenSettings { get; set; }
     }
 
     public class ExportObjectDto
@@ -85,6 +86,7 @@ namespace RagNext.Designer.Avalonia.Services
         public bool IsWorn { get; set; }
         public string? WearSlot { get; set; }
         public Dictionary<string, string>? Attributes { get; set; }
+        public ExportInteractiveScreenSettingsDto? InteractiveScreenSettings { get; set; }
     }
 
     public class ExportActionDto
@@ -154,6 +156,30 @@ namespace RagNext.Designer.Avalonia.Services
         public double BorderWidth { get; set; }
         public string? BorderColor { get; set; }
         public double BorderRadius { get; set; }
+    }
+
+    public class ExportInteractiveScreenSettingsDto
+    {
+        public bool Enabled { get; set; }
+        public string? BackdropAssetId { get; set; }
+        public List<ExportScreenHotspotDto>? Hotspots { get; set; }
+    }
+
+    public class ExportScreenHotspotDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+        public string? StyleType { get; set; }
+        public string? LabelText { get; set; }
+        public string? FontColor { get; set; }
+        public double FontSize { get; set; }
+        public string? BackgroundColor { get; set; }
+        public string? ImageAssetId { get; set; }
+        public string? LinkedActionId { get; set; }
     }
 
     /// <summary>
@@ -299,7 +325,8 @@ namespace RagNext.Designer.Avalonia.Services
             LockedExits       = r.LockedExits.ToDictionary(k => k.Key, v => v.Value),
             ObjectIds         = r.ObjectIds.Select(id => id.ToString()).ToList(),
             Actions           = r.Actions.Select(a => BuildActionDto(a)).ToList(),
-            Attributes        = r.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
+            Attributes        = r.Attributes.ToDictionary(a => a.Name, a => a.Value ?? ""),
+            InteractiveScreenSettings = BuildInteractiveScreenSettingsDto(r.InteractiveScreenSettings)
         };
 
         private static ExportObjectDto BuildObjectDto(GameObject o) => new ExportObjectDto
@@ -322,8 +349,35 @@ namespace RagNext.Designer.Avalonia.Services
             IsWearable        = o.IsWearable,
             IsWorn            = o.IsWorn,
             WearSlot          = o.WearSlot,
-            Attributes        = o.Attributes.ToDictionary(a => a.Name, a => a.Value ?? "")
+            Attributes        = o.Attributes.ToDictionary(a => a.Name, a => a.Value ?? ""),
+            InteractiveScreenSettings = BuildInteractiveScreenSettingsDto(o.InteractiveScreenSettings)
         };
+
+        private static ExportInteractiveScreenSettingsDto? BuildInteractiveScreenSettingsDto(InteractiveScreenSettings? s)
+        {
+            if (s == null) return null;
+            return new ExportInteractiveScreenSettingsDto
+            {
+                Enabled = s.Enabled,
+                BackdropAssetId = s.BackdropAssetId,
+                Hotspots = s.Hotspots?.Select(h => new ExportScreenHotspotDto
+                {
+                    Id = h.Id,
+                    Name = h.Name,
+                    X = h.X,
+                    Y = h.Y,
+                    Width = h.Width,
+                    Height = h.Height,
+                    StyleType = h.StyleType,
+                    LabelText = h.LabelText,
+                    FontColor = h.FontColor,
+                    FontSize = h.FontSize,
+                    BackgroundColor = h.BackgroundColor,
+                    ImageAssetId = h.ImageAssetId,
+                    LinkedActionId = h.LinkedActionId
+                }).ToList()
+            };
+        }
 
         private static ExportActionDto BuildActionDto(RagsCore.Models.Action a) => new ExportActionDto
         {
