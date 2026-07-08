@@ -1600,7 +1600,13 @@
                                                              <TextBox Text="{Binding FontSize, Mode=TwoWay}" FontSize="11" Background="{DynamicResource CardBg}"/>
 
                                                              <TextBlock Text="Image Asset ID / Template:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                             <TextBox Text="{Binding ImageAssetId, Mode=TwoWay}" Watermark="e.g. icon.png or {var.img}" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                             <ComboBox Text="{Binding ImageAssetId, Mode=TwoWay}" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" HorizontalAlignment="Stretch" IsEditable="True" Background="{DynamicResource CardBg}">
+                                                                 <ComboBox.ItemTemplate>
+                                                                     <DataTemplate x:DataType="models:MediaAsset">
+                                                                         <TextBlock Text="{Binding OriginalFileName}"/>
+                                                                     </DataTemplate>
+                                                                 </ComboBox.ItemTemplate>
+                                                             </ComboBox>
                                                          </StackPanel>
                                                      </StackPanel>
                                                  </Border>

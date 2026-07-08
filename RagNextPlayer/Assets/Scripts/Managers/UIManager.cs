@@ -2105,6 +2105,14 @@ namespace RagNextPlayer.Managers
             _activeScreenRoom = room;
             _activeScreenObject = null;
 
+            // Clear any media overlay from previous rooms/actions
+            var sceneImage = _root?.Q<VisualElement>("scene-image");
+            if (sceneImage != null)
+            {
+                var activeOverlay = sceneImage.Q("interactive-media-overlay");
+                if (activeOverlay != null) activeOverlay.parent?.Remove(activeOverlay);
+            }
+
             RenderInteractiveScreen(_activeScreenSettings, _activeScreenRoom);
 
             SetupVFXOverlay();
@@ -2544,6 +2552,9 @@ namespace RagNextPlayer.Managers
 
             if (settings == null || !settings.Enabled)
             {
+                var activeOverlay = sceneImage.Q("interactive-media-overlay");
+                if (activeOverlay != null) activeOverlay.parent?.Remove(activeOverlay);
+
                 sceneImage.style.aspectRatio = StyleKeyword.Null;
                 sceneImage.style.width = Length.Percent(100);
                 sceneImage.style.height = Length.Percent(100);
@@ -2694,7 +2705,7 @@ namespace RagNextPlayer.Managers
                 btn.clicked += () => {
                     if (!string.IsNullOrEmpty(hotspot.LinkedActionId) && InteractionController.Instance != null)
                     {
-                        InteractionController.Instance.ExecuteActionById(hotspot.LinkedActionId, null, room);
+                        InteractionController.Instance.ExecuteActionById(hotspot.LinkedActionId, null, room, true);
                         // Refresh screen overlay state dynamically after running the action
                         RenderInteractiveScreen(settings, room);
                     }
@@ -2764,6 +2775,12 @@ namespace RagNextPlayer.Managers
                 };
 
                 sceneImage.Add(closeBtn);
+            }
+
+            var mediaOverlay = sceneImage.Q("interactive-media-overlay");
+            if (mediaOverlay != null)
+            {
+                mediaOverlay.BringToFront();
             }
         }
 
@@ -2854,7 +2871,71 @@ namespace RagNextPlayer.Managers
 
         public void DisplaySceneImage(string path)
         {
-            LoadAndDisplayImage(path, "scene-image");
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            bool isInteractive = _activeScreenSettings != null && _activeScreenSettings.Enabled;
+            if (isInteractive)
+            {
+                var sceneImage = _root?.Q<VisualElement>("scene-image");
+                if (sceneImage != null)
+                {
+                    var existing = sceneImage.Q("interactive-media-overlay");
+                    if (existing != null) existing.parent?.Remove(existing);
+
+                    var overlay = new VisualElement();
+                    overlay.name = "interactive-media-overlay";
+                    overlay.style.position = Position.Absolute;
+                    overlay.style.left = 0;
+                    overlay.style.right = 0;
+                    overlay.style.top = 0;
+                    overlay.style.bottom = 0;
+                    overlay.style.backgroundColor = Color.black;
+                    overlay.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+
+                    sceneImage.Add(overlay);
+
+                    LoadAndDisplayImageForElement(path, overlay);
+
+                    StartCoroutine(AutoHideOverlayCoroutine(overlay, 4.5f));
+                }
+            }
+            else
+            {
+                LoadAndDisplayImage(path, "scene-image");
+            }
+        }
+
+        private System.Collections.IEnumerator AutoHideOverlayCoroutine(VisualElement overlay, float delay)
+        {
+            yield return new UnityEngine.WaitForSeconds(delay);
+            if (overlay != null && overlay.parent != null)
+            {
+                overlay.parent.Remove(overlay);
+            }
+        }
+
+        private System.Collections.IEnumerator MonitorInteractiveVideoPlaybackCoroutine(VisualElement overlay, double endTime, bool loop)
+        {
+            yield return new UnityEngine.WaitForEndOfFrame();
+
+            while (_videoPlayer != null && _videoPlayer.isPlaying)
+            {
+                if (endTime > 0 && _videoPlayer.time >= endTime)
+                {
+                    break;
+                }
+                yield return null;
+            }
+
+            if (_videoPlayer != null)
+            {
+                _videoPlayer.Stop();
+            }
+
+            if (overlay != null && overlay.parent != null)
+            {
+                overlay.parent.Remove(overlay);
+            }
         }
 
         private double _targetStartTime;
@@ -2903,12 +2984,88 @@ namespace RagNextPlayer.Managers
 
             _videoPlayer.audioOutputMode = UnityEngine.Video.VideoAudioOutputMode.Direct;
 
-            var elem = _root?.Q<VisualElement>("scene-image");
-            if (elem is not null)
+            bool isInteractive = _activeScreenSettings != null && _activeScreenSettings.Enabled;
+            VisualElement targetMediaContainer = null;
+
+            if (isInteractive)
             {
-                elem.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
-                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
-                if (_scenePlaceholder is not null)
+                var sceneImage = _root?.Q<VisualElement>("scene-image");
+                if (sceneImage != null)
+                {
+                    var existing = sceneImage.Q("interactive-media-overlay");
+                    if (existing != null) existing.parent?.Remove(existing);
+
+                    var overlay = new VisualElement();
+                    overlay.name = "interactive-media-overlay";
+                    overlay.style.position = Position.Absolute;
+                    overlay.style.left = 0;
+                    overlay.style.right = 0;
+                    overlay.style.top = 0;
+                    overlay.style.bottom = 0;
+                    overlay.style.backgroundColor = Color.black;
+                    overlay.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+
+                    // Add close button
+                    var closeBtn = new Button();
+                    closeBtn.text = "✕";
+                    closeBtn.style.position = Position.Absolute;
+                    closeBtn.style.top = 10;
+                    closeBtn.style.right = 10;
+                    closeBtn.style.width = 36;
+                    closeBtn.style.height = 36;
+                    closeBtn.style.fontSize = 20;
+                    closeBtn.style.unityFontDefinition = StyleKeyword.Null;
+                    closeBtn.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    closeBtn.style.color = Color.white;
+                    closeBtn.style.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 0.85f);
+                    closeBtn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.15f);
+                    closeBtn.style.borderRightColor = new Color(1f, 1f, 1f, 0.15f);
+                    closeBtn.style.borderTopColor = new Color(1f, 1f, 1f, 0.15f);
+                    closeBtn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.15f);
+                    closeBtn.style.borderLeftWidth = 1;
+                    closeBtn.style.borderRightWidth = 1;
+                    closeBtn.style.borderTopWidth = 1;
+                    closeBtn.style.borderBottomWidth = 1;
+                    closeBtn.style.borderTopLeftRadius = 18;
+                    closeBtn.style.borderTopRightRadius = 18;
+                    closeBtn.style.borderBottomLeftRadius = 18;
+                    closeBtn.style.borderBottomRightRadius = 18;
+
+                    closeBtn.RegisterCallback<PointerOverEvent>(evt => {
+                        closeBtn.style.backgroundColor = new Color(0.9f, 0.2f, 0.2f, 0.95f);
+                    });
+                    closeBtn.RegisterCallback<PointerOutEvent>(evt => {
+                        closeBtn.style.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 0.85f);
+                    });
+
+                    closeBtn.clicked += () => {
+                        if (_videoPlayer != null && _videoPlayer.isPlaying)
+                        {
+                            _videoPlayer.Stop();
+                        }
+                        if (_videoMonitorCoroutine != null)
+                        {
+                            StopCoroutine(_videoMonitorCoroutine);
+                            _videoMonitorCoroutine = null;
+                        }
+                        overlay.parent?.Remove(overlay);
+                    };
+
+                    overlay.Add(closeBtn);
+                    sceneImage.Add(overlay);
+                    targetMediaContainer = overlay;
+                }
+            }
+            else
+            {
+                targetMediaContainer = _root?.Q<VisualElement>("scene-image");
+            }
+
+            if (targetMediaContainer is not null)
+            {
+                targetMediaContainer.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
+                targetMediaContainer.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                if (!isInteractive && _scenePlaceholder is not null)
                 {
                     _scenePlaceholder.style.display = DisplayStyle.None;
                 }
@@ -2937,7 +3094,17 @@ namespace RagNextPlayer.Managers
             vp.time = _targetStartTime;
             vp.Play();
 
-            if (_targetEndTime > _targetStartTime)
+            bool isInteractive = _activeScreenSettings != null && _activeScreenSettings.Enabled;
+            if (isInteractive)
+            {
+                var sceneImage = _root?.Q<VisualElement>("scene-image");
+                var overlay = sceneImage?.Q("interactive-media-overlay");
+                if (overlay != null)
+                {
+                    _videoMonitorCoroutine = StartCoroutine(MonitorInteractiveVideoPlaybackCoroutine(overlay, _targetEndTime, vp.isLooping));
+                }
+            }
+            else if (_targetEndTime > _targetStartTime)
             {
                 _videoMonitorCoroutine = StartCoroutine(MonitorVideoPlaybackCoroutine(_targetEndTime));
             }

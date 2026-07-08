@@ -637,10 +637,10 @@ namespace RagNextPlayer.Runtime
             ActiveRunner?.Resume();
         }
 
-        public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null, bool isUserInteraction = true)
+        public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null, bool isUserInteraction = true, bool forceExecute = false)
         {
             if (action is null || ctx is null) return;
-            if (!action.InitallyActive)
+            if (!action.InitallyActive && !forceExecute)
             {
                 Debug.Log($"[ActionExecutor] Skip executing inactive action: '{action.Name}' ({action.Id}).");
                 return;

@@ -227,19 +227,19 @@ namespace RagNextPlayer.Managers
 
         // ── Action Handlers ───────────────────────────────────────────────────
 
-        private void ExecuteCustomAction(GameObjectData entity, ActionData action)
+        private void ExecuteCustomAction(GameObjectData entity, ActionData action, bool forceExecute = false)
         {
             HideMenu();
             var ctx  = GameManager.Instance?.MakeContext(entity);
             var sink = GetComponent<CommandEffectRouter>();
             if (ctx is not null)
             {
-                ActionExecutor.Execute(action, ctx, sink);
+                ActionExecutor.Execute(action, ctx, sink, true, forceExecute);
                 UIManager.Instance?.RefreshEntityLists();
             }
         }
 
-        private void ExecuteRoomAction(RoomData room, ActionData action)
+        private void ExecuteRoomAction(RoomData room, ActionData action, bool forceExecute = false)
         {
             HideMenu();
             var game = GameManager.Instance?.ActiveGame;
@@ -248,12 +248,12 @@ namespace RagNextPlayer.Managers
             var sink = GetComponent<CommandEffectRouter>();
             if (sink is not null)
             {
-                ActionExecutor.Execute(action, ctx, sink);
+                ActionExecutor.Execute(action, ctx, sink, true, forceExecute);
                 UIManager.Instance?.RefreshEntityLists();
             }
         }
 
-        private void ExecutePlayerAction(PlayerData player, ActionData action)
+        private void ExecutePlayerAction(PlayerData player, ActionData action, bool forceExecute = false)
         {
             HideMenu();
             var game = GameManager.Instance?.ActiveGame;
@@ -273,19 +273,19 @@ namespace RagNextPlayer.Managers
             var sink = GetComponent<CommandEffectRouter>();
             if (sink is not null)
             {
-                ActionExecutor.Execute(action, ctx, sink);
+                ActionExecutor.Execute(action, ctx, sink, true, forceExecute);
                 UIManager.Instance?.RefreshEntityLists();
             }
         }
 
-        public void ExecuteActionById(string actionId, GameObjectData entity = null, RoomData room = null)
+        public void ExecuteActionById(string actionId, GameObjectData entity = null, RoomData room = null, bool forceExecute = false)
         {
             if (entity != null)
             {
                 var action = entity.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
                 if (action != null)
                 {
-                    ExecuteCustomAction(entity, action);
+                    ExecuteCustomAction(entity, action, forceExecute);
                     return;
                 }
             }
@@ -294,7 +294,7 @@ namespace RagNextPlayer.Managers
                 var action = room.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
                 if (action != null)
                 {
-                    ExecuteRoomAction(room, action);
+                    ExecuteRoomAction(room, action, forceExecute);
                     return;
                 }
             }
@@ -304,22 +304,22 @@ namespace RagNextPlayer.Managers
                 foreach (var c in game.Characters)
                 {
                     var action = c.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
-                    if (action != null) { ExecuteCustomAction(c, action); return; }
+                    if (action != null) { ExecuteCustomAction(c, action, forceExecute); return; }
                 }
                 foreach (var o in game.Objects)
                 {
                     var action = o.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
-                    if (action != null) { ExecuteCustomAction(o, action); return; }
+                    if (action != null) { ExecuteCustomAction(o, action, forceExecute); return; }
                 }
                 if (game.Player != null)
                 {
                     var action = game.Player.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
-                    if (action != null) { ExecutePlayerAction(game.Player, action); return; }
+                    if (action != null) { ExecutePlayerAction(game.Player, action, forceExecute); return; }
 
                     foreach (var invItem in game.Player.Inventory)
                     {
                         var invAction = invItem.Actions.Find(a => string.Equals(a.Id, actionId, System.StringComparison.OrdinalIgnoreCase));
-                        if (invAction != null) { ExecuteCustomAction(invItem, invAction); return; }
+                        if (invAction != null) { ExecuteCustomAction(invItem, invAction, forceExecute); return; }
                     }
                 }
             }
