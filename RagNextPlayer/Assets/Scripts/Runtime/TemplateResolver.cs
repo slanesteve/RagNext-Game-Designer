@@ -240,7 +240,12 @@ namespace RagNextPlayer.Runtime
                     var charName = parts[1];
                     var character = game.Characters.Find(c => 
                         string.Equals(c.Name, charName, StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(c.Name.Replace(" ", ""), charName, StringComparison.OrdinalIgnoreCase));
+                        string.Equals(c.Name.Replace(" ", ""), charName, StringComparison.OrdinalIgnoreCase) ||
+                        (c.Properties != null && c.Properties.TryGetValue("OriginalName", out var origName) && (
+                            string.Equals(origName, charName, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(origName.Replace(" ", ""), charName, StringComparison.OrdinalIgnoreCase)
+                        ))
+                    );
                     if (character == null) return null;
                     if (parts.Length < 3) return character.Name;
                     switch (parts[2].ToLowerInvariant())

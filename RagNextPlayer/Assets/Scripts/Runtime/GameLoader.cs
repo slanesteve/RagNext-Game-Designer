@@ -79,7 +79,18 @@ namespace RagNextPlayer.Runtime
         {
             try
             {
-                return JsonConvert.DeserializeObject<GameData>(json, _settings);
+                var game = JsonConvert.DeserializeObject<GameData>(json, _settings);
+                if (game?.Objects != null)
+                {
+                    foreach (var obj in game.Objects)
+                    {
+                        if (obj != null && !obj.Properties.ContainsKey("OriginalName"))
+                        {
+                            obj.Properties["OriginalName"] = obj.Name;
+                        }
+                    }
+                }
+                return game;
             }
             catch (Exception ex)
             {
