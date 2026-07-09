@@ -183,15 +183,15 @@ namespace RagNextPlayer.Managers
             CurrentState = GameState.Playing;
             OnGameLoaded?.Invoke(ActiveGame);
             
-            // Execute all OnGameStart actions globally
-            FireStartupTriggers();
-
             // Navigate to the starting room
             var startId = ActiveGame.Player.StartingRoomId
                           ?? (ActiveGame.Rooms.Count > 0 ? ActiveGame.Rooms[0].Id : null);
 
             if (startId is not null)
                 await TransitionToRoomAsync(startId);
+
+            // Execute all OnGameStart actions globally
+            FireStartupTriggers();
         }
 
         private void FireStartupTriggers()
