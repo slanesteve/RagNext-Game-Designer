@@ -80,13 +80,26 @@ namespace RagNextPlayer.Runtime
             try
             {
                 var game = JsonConvert.DeserializeObject<GameData>(json, _settings);
-                if (game?.Objects != null)
+                if (game != null)
                 {
-                    foreach (var obj in game.Objects)
+                    if (game.Objects != null)
                     {
-                        if (obj != null && !obj.Properties.ContainsKey("OriginalName"))
+                        foreach (var obj in game.Objects)
                         {
-                            obj.Properties["OriginalName"] = obj.Name;
+                            if (obj != null && !obj.Properties.ContainsKey("OriginalName"))
+                            {
+                                obj.Properties["OriginalName"] = obj.Name;
+                            }
+                        }
+                    }
+                    if (game.Characters != null)
+                    {
+                        foreach (var ch in game.Characters)
+                        {
+                            if (ch != null && !ch.Properties.ContainsKey("OriginalName"))
+                            {
+                                ch.Properties["OriginalName"] = ch.Name;
+                            }
                         }
                     }
                 }
