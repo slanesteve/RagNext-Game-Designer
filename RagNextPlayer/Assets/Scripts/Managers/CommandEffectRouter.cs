@@ -177,10 +177,12 @@ namespace RagNextPlayer.Managers
                 case DisplayMultimediaCommandData:
                     {
                         var mediaId  = ctx.GetVariable("media.lastDisplayedMediaId")?.Value;
+                        UnityEngine.Debug.Log($"[CommandEffectRouter] DisplayMultimedia: lastDisplayedMediaId='{mediaId}'");
                         if (!string.IsNullOrEmpty(mediaId))
                         {
                             var asset = ctx.Game.MediaAssets.Find(a => a.Id == mediaId);
                             var path = asset is not null ? asset.RelativePath : mediaId;
+                            UnityEngine.Debug.Log($"[CommandEffectRouter] DisplayMultimedia: assetFound={(asset != null)}, path='{path}'");
                             UIManager.Instance?.DisplaySceneImage(path);
                         }
                     }

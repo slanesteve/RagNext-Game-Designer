@@ -196,6 +196,7 @@ const propertyMappings = {
     "Destination Room": ["RoomId", "roomId", "DestinationRoom", "destinationRoom"],
     "Room": ["RoomId", "roomId", "Room"],
     "Media File": ["MediaId", "mediaId", "MediaFile", "mediaFile"],
+    "Media": ["MediaId", "mediaId", "Media"],
     "Portrait Media": ["PortraitId", "portraitId", "PortraitMedia", "portraitMedia", "MediaId"],
     "Object": ["ObjectId", "objectId", "Object"],
     "Item": ["ItemId", "itemId", "Item", "ObjectId", "objectId"],

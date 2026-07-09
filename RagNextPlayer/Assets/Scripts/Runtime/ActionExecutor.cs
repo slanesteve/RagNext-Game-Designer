@@ -946,10 +946,12 @@ namespace RagNextPlayer.Runtime
                         var asset = ctx.Game.MediaAssets.Find(a => a.Id == resolved 
                             || string.Equals(a.Name, resolved, StringComparison.OrdinalIgnoreCase) 
                             || string.Equals(System.IO.Path.GetFileNameWithoutExtension(a.Name), resolved, StringComparison.OrdinalIgnoreCase));
+                        var prevPath = ctx.Player.PortraitImagePath;
                         ctx.Player.PortraitImagePath = asset?.RelativePath ?? resolved;
+                        Debug.Log($"[ActionExecutor] PlayerSetPortraitMedia: MediaId='{c.MediaId}' resolved to '{resolved}', assetFound={(asset != null)}, relativePath='{asset?.RelativePath}', player.PortraitImagePath changed from '{prevPath}' to '{ctx.Player.PortraitImagePath}'");
                     }
                     break;
-
+ 
                 case CharacterSetPortraitMediaCommandData c:
                     {
                         var charId = ResolveCharacterId(c.CharacterId, ctx);
@@ -960,7 +962,13 @@ namespace RagNextPlayer.Runtime
                         var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, charId, StringComparison.OrdinalIgnoreCase));
                         if (character != null)
                         {
+                            var prevPath = character.PortraitImagePath;
                             character.PortraitImagePath = asset?.RelativePath ?? resolved;
+                            Debug.Log($"[ActionExecutor] CharacterSetPortraitMedia: charId='{charId}' ({character.Name}), MediaId='{c.MediaId}' resolved to '{resolved}', assetFound={(asset != null)}, relativePath='{asset?.RelativePath}', PortraitImagePath changed from '{prevPath}' to '{character.PortraitImagePath}'");
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[ActionExecutor] CharacterSetPortraitMedia: Character not found for charId='{charId}' (resolved from '{c.CharacterId}')");
                         }
                     }
                     break;
@@ -1117,7 +1125,11 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case DisplayMultimediaCommandData c:
-                    ctx.SetVariable("media.lastDisplayedMediaId", ctx.Resolve(c.MediaId));
+                    {
+                        var resolved = ctx.Resolve(c.MediaId);
+                        Debug.Log($"[ActionExecutor] DisplayMultimedia: c.MediaId='{c.MediaId}' resolved to '{resolved}'");
+                        ctx.SetVariable("media.lastDisplayedMediaId", resolved);
+                    }
                     break;
 
                 case AddCommentCommandData:

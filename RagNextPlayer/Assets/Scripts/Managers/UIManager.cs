@@ -2407,6 +2407,7 @@ namespace RagNextPlayer.Managers
             ReconcileListContainer(_objectsListContainer, requiredObjects, tuple => {
                 return tuple.isNested ? CreateNestedEntityRow(tuple.data, false) : CreateEntityRow(tuple.data, false);
             }, (element, tuple) => {
+                UpdateEntityThumbnail(element, tuple.data);
                 var label = element.Q<Label>(className: "entity-name");
                 if (label != null)
                 {
@@ -2456,6 +2457,7 @@ namespace RagNextPlayer.Managers
             ReconcileListContainer(_charactersListContainer, requiredCharacters, ch => {
                 return CreateEntityRow(ch, false);
             }, (element, ch) => {
+                UpdateEntityThumbnail(element, ch);
                 var label = element.Q<Label>(className: "entity-name");
                 if (label != null)
                 {
@@ -2474,6 +2476,7 @@ namespace RagNextPlayer.Managers
             ReconcileListContainer(_inventoryListContainer, requiredInventory, tuple => {
                 return tuple.isNested ? CreateNestedEntityRow(tuple.data, true) : CreateEntityRow(tuple.data, true);
             }, (element, tuple) => {
+                UpdateEntityThumbnail(element, tuple.data);
                 var label = element.Q<Label>(className: "entity-name");
                 if (label != null)
                 {
@@ -2871,6 +2874,7 @@ namespace RagNextPlayer.Managers
 
         public void DisplaySceneImage(string path)
         {
+            Debug.Log($"[UIManager] DisplaySceneImage: path='{path}'");
             if (string.IsNullOrWhiteSpace(path)) return;
 
             bool isInteractive = _activeScreenSettings != null && _activeScreenSettings.Enabled;
@@ -4856,6 +4860,47 @@ namespace RagNextPlayer.Managers
                     textLabel.style.opacity = 1.0f;
                 });
             });
+        }
+
+        private void UpdateEntityThumbnail(VisualElement rowElement, GameObjectData entity)
+        {
+            var thumb = rowElement.Q<VisualElement>(className: "entity-thumbnail");
+            if (thumb != null)
+            {
+                if (!string.IsNullOrWhiteSpace(entity.PortraitImagePath))
+                {
+                    // Remove fallback icon if any
+                    var fallbackIcon = thumb.Q<Label>();
+                    if (fallbackIcon != null) thumb.Remove(fallbackIcon);
+
+                    // Load/Update image
+                    string url = FormatLocalPathForWeb(entity.PortraitImagePath);
+                    if (!_latestElementDirectUrls.TryGetValue(thumb, out var currentUrl) || currentUrl != url)
+                    {
+                        LoadAndDisplayImageForElement(entity.PortraitImagePath, thumb);
+                    }
+                }
+                else
+                {
+                    // Clear background image if any
+                    thumb.style.backgroundImage = null;
+                    if (_latestElementDirectUrls.ContainsKey(thumb))
+                    {
+                        _latestElementDirectUrls.Remove(thumb);
+                    }
+                    
+                    // Add fallback icon if not present
+                    var fallbackIcon = thumb.Q<Label>();
+                    if (fallbackIcon == null)
+                    {
+                        var icon = new Label(entity.IsCharacter ? "👤" : "📦");
+                        icon.style.unityTextAlign = TextAnchor.MiddleCenter;
+                        icon.style.fontSize = 20f;
+                        icon.style.color = new Color(0f, 188/255f, 212/255f, 0.6f);
+                        thumb.Add(icon);
+                    }
+                }
+            }
         }
 
         private void ReconcileListContainer<TData>(
