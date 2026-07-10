@@ -246,7 +246,11 @@ namespace RagNextPlayer.Runtime
                             string.Equals(origName.Replace(" ", ""), charName, StringComparison.OrdinalIgnoreCase)
                         ))
                     );
-                    if (character == null) return null;
+                    if (character == null)
+                    {
+                        UnityEngine.Debug.LogWarning($"[TemplateResolver] Character not found for name '{charName}'! Available: " + string.Join(", ", game.Characters.ConvertAll(ch => $"{ch.Name} (Id: {ch.Id}, Orig: {(ch.Properties != null && ch.Properties.TryGetValue("OriginalName", out var o) ? o : "N/A")})")));
+                        return null;
+                    }
                     if (parts.Length < 3) return character.Name;
                     switch (parts[2].ToLowerInvariant())
                     {
