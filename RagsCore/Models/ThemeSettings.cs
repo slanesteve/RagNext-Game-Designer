@@ -58,6 +58,9 @@ namespace RagsCore.Models
         private double _sidebarWidth = 360; // pixels
         public double SidebarWidth { get => _sidebarWidth; set => SetProperty(ref _sidebarWidth, value); }
 
+        private string _activePreset = "Default";
+        public string ActivePreset { get => _activePreset; set => SetProperty(ref _activePreset, value); }
+
         private double _bottomBarHeight = 220; // pixels
         public double BottomBarHeight { get => _bottomBarHeight; set => SetProperty(ref _bottomBarHeight, value); }
 

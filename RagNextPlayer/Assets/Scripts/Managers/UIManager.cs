@@ -2113,9 +2113,10 @@ namespace RagNextPlayer.Managers
             if (!string.IsNullOrEmpty(borderVar)) borderAccentStr = borderVar;
 
             // 1. Apply Colors to Root & Panels
+            var targetRoot = _root.Q<VisualElement>("root") ?? _root;
             if (TryParseHtmlColor(primaryBgStr, out var primaryBg))
             {
-                _root.style.backgroundColor = primaryBg;
+                targetRoot.style.backgroundColor = primaryBg;
 
                 // Create a translucent glass background color with 78% opacity
                 var glassBg = primaryBg;
@@ -2327,12 +2328,12 @@ namespace RagNextPlayer.Managers
                     string.Equals(a.Id, game.Theme.BackgroundAssetId, StringComparison.OrdinalIgnoreCase));
                 if (bgAsset != null)
                 {
-                    StartCoroutine(LoadThemeImageCoroutine(bgAsset.RelativePath, _root));
+                    StartCoroutine(LoadThemeImageCoroutine(bgAsset.RelativePath, targetRoot));
                 }
             }
             else
             {
-                _root.style.backgroundImage = null;
+                targetRoot.style.backgroundImage = null;
             }
 
             // 6. Apply Panel Frame Image if defined
@@ -2534,7 +2535,7 @@ namespace RagNextPlayer.Managers
                 else
                 {
                     element.style.backgroundImage = new StyleBackground(tex);
-                    if (element == _root)
+                    if (element == _root || element.name == "root")
                     {
                         element.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.Repeat, Repeat.Repeat));
                         element.style.backgroundSize = StyleKeyword.Null;

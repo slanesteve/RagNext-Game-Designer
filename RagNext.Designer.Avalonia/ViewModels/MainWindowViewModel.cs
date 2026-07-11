@@ -130,7 +130,6 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             OnPropertyChanged(nameof(VideoMediaAssets));
                             OnPropertyChanged(nameof(ImageMediaAssets));
                             OnPropertyChanged(nameof(AudioMediaAssets));
-                            OnPropertyChanged(nameof(FontMediaAssets));
                         };
 
                         if (value.StatusBarElements != null)
@@ -213,7 +212,6 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     OnPropertyChanged(nameof(VideoMediaAssets));
                     OnPropertyChanged(nameof(ImageMediaAssets));
                     OnPropertyChanged(nameof(AudioMediaAssets));
-                    OnPropertyChanged(nameof(FontMediaAssets));
                     Dispatcher.UIThread.Post(() =>
                     {
                         OnPropertyChanged(nameof(SelectedSplashImageAsset));
@@ -895,25 +893,30 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private CustomAttribute? _editingAttribute;
 
         // Theme Customizer properties
-        public IEnumerable<MediaAsset> FontMediaAssets => CurrentGame?.MediaAssets.Where(a => 
-            a.Kind == MediaKind.Other || 
-            (a.RelativePath != null && (a.RelativePath.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase) || a.RelativePath.EndsWith(".otf", StringComparison.OrdinalIgnoreCase)))
-        ) ?? Enumerable.Empty<MediaAsset>();
-
-        public MediaAsset? SelectedThemeFont
+        public List<string> BuiltInFonts { get; } = new List<string>
         {
-            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.FontAssetId);
+            "Outfit", "Inter", "Roboto", "Cinzel", "Playfair Display",
+            "Lora", "Orbitron", "Press Start 2P", "VT323", "Caveat",
+            "Pacifico", "Creepster", "Special Elite", "Montserrat", "Merriweather"
+        };
+
+        public string SelectedBuiltInFont
+        {
+            get => CurrentGame?.Theme?.FontName ?? "Outfit";
             set
             {
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
-                    CurrentGame.Theme.FontAssetId = value?.Id.ToString() ?? string.Empty;
-                    CurrentGame.Theme.FontName = value?.Name ?? "Outfit";
-                    OnPropertyChanged(nameof(SelectedThemeFont));
+                    CurrentGame.Theme.FontName = value ?? "Outfit";
+                    CurrentGame.Theme.FontAssetId = string.Empty; // Not using imported assets
+                    OnPropertyChanged(nameof(SelectedBuiltInFont));
+                    OnPropertyChanged(nameof(FontPreviewFamilyName));
                     _ = SaveGameAsync();
                 }
             }
         }
+
+        public string FontPreviewFamilyName => SelectedBuiltInFont;
 
         public MediaAsset? SelectedThemeBackground
         {
@@ -954,6 +957,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
             {
                 if (SetProperty(ref _selectedThemePreset, value) && !string.IsNullOrEmpty(value))
                 {
+                    if (CurrentGame?.Theme != null)
+                    {
+                        CurrentGame.Theme.ActivePreset = value;
+                    }
                     LoadThemePreset(value);
                     _ = SaveGameAsync();
                 }
@@ -1016,7 +1023,13 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     ThemePresets.Add(Path.GetFileNameWithoutExtension(file));
                 }
 
-                if (SelectedThemePreset == null && ThemePresets.Contains("Default"))
+                string activePreset = CurrentGame?.Theme?.ActivePreset;
+                if (!string.IsNullOrEmpty(activePreset) && ThemePresets.Contains(activePreset))
+                {
+                    _selectedThemePreset = activePreset;
+                    OnPropertyChanged(nameof(SelectedThemePreset));
+                }
+                else if (SelectedThemePreset == null && ThemePresets.Contains("Default"))
                 {
                     _selectedThemePreset = "Default";
                     OnPropertyChanged(nameof(SelectedThemePreset));
@@ -1091,10 +1104,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         CurrentGame.Theme.FrameApplyToMainText = loadedTheme.FrameApplyToMainText;
                         CurrentGame.Theme.FrameApplyToPopups = loadedTheme.FrameApplyToPopups;
                         CurrentGame.Theme.FrameApplyToSidebars = loadedTheme.FrameApplyToSidebars;
+                        CurrentGame.Theme.ActivePreset = presetName;
 
-                        OnPropertyChanged(nameof(SelectedThemeFont));
                         OnPropertyChanged(nameof(SelectedThemeBackground));
                         OnPropertyChanged(nameof(SelectedThemeFrame));
+                        OnPropertyChanged(nameof(SelectedBuiltInFont));
+                        OnPropertyChanged(nameof(FontPreviewFamilyName));
                     }
                 }
             }
@@ -1283,7 +1298,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 CurrentGame = g; 
                 OnPropertyChanged(nameof(Player));
                 OnPropertyChanged(nameof(SplashScreen));
-                OnPropertyChanged(nameof(SelectedThemeFont));
+                OnPropertyChanged(nameof(SelectedBuiltInFont));
+                OnPropertyChanged(nameof(FontPreviewFamilyName));
                 OnPropertyChanged(nameof(SelectedThemeBackground));
                 OnPropertyChanged(nameof(SelectedThemeFrame));
                 InitializePresets();
@@ -1295,7 +1311,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             SaveThemePresetCommand = new Command(() => SaveThemePreset());
             DeleteThemePresetCommand = new Command(() => DeleteThemePreset());
-            ClearThemeFontCommand = new Command(() => { SelectedThemeFont = null; });
+            ClearThemeFontCommand = new Command(() => { SelectedBuiltInFont = "Outfit"; });
             ClearThemeBackgroundCommand = new Command(() => { SelectedThemeBackground = null; });
             ClearThemeFrameCommand = new Command(() => { SelectedThemeFrame = null; });
 

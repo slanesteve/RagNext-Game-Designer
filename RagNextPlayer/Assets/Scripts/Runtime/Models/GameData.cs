@@ -52,6 +52,7 @@ namespace RagNextPlayer.Runtime.Models
         public double TextBoxHeight { get; set; } = 320; // pixels
         public string PortraitAlignment { get; set; } = "TopLeft"; // "TopLeft", "TopRight", "BottomLeft", "BottomRight"
         public double SidebarWidth { get; set; } = 360; // pixels
+        public string ActivePreset { get; set; } = "Default";
         public double BottomBarHeight { get; set; } = 200; // pixels
         public double FontSize { get; set; } = 18;
         public bool FrameApplyToGameScreen { get; set; } = true;

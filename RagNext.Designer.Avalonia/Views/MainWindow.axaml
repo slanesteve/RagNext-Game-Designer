@@ -2292,13 +2292,21 @@
                     <StackPanel Spacing="14">
                     <TextBlock Text="🖼️ Assets &amp; Fonts" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
                     
-                    <TextBlock Text="Custom Font Asset:" Foreground="{DynamicResource TextMuted}" FontSize="12"/>
+                    <TextBlock Text="Standard HUD Font:" Foreground="{DynamicResource TextMuted}" FontSize="12"/>
                     <Grid ColumnDefinitions="*,Auto">
-                        <ComboBox Grid.Column="0" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontMediaAssets}" 
-                        SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeFont, Mode=TwoWay}"
-                        HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Font Asset (TTF/OTF)..."/>
-                        <Button Grid.Column="1" Content="✕" ToolTip.Tip="Clear Font" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearThemeFontCommand}" Foreground="#f38ba8" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                        <ComboBox Grid.Column="0" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).BuiltInFonts}" 
+                        SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedBuiltInFont, Mode=TwoWay}"
+                        HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Font..."/>
+                        <Button Grid.Column="1" Content="✕" ToolTip.Tip="Reset Font to Outfit" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearThemeFontCommand}" Foreground="#f38ba8" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="4,0,0,0"/>
                     </Grid>
+                    
+                    <Border Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,2,0,2">
+                        <TextBlock Text="The quick brown fox jumps over 12345" 
+                                   FontFamily="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontPreviewFamilyName}" 
+                                   FontSize="13" 
+                                   HorizontalAlignment="Center" 
+                                   Foreground="{DynamicResource TextNormal}"/>
+                    </Border>
                     
                     <TextBlock Text="Font Size (Pixels):" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
                     <Grid ColumnDefinitions="*,Auto">
@@ -2346,7 +2354,12 @@
                     <Border Background="#0f0f12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
                     <Viewbox Stretch="Uniform" Width="480" Height="380">
                     <Border Width="1000" Height="800" Background="#111115" BorderBrush="#3f3f50" BorderThickness="2" CornerRadius="{Binding BorderRadius}" ClipToBounds="True">
-                    <!-- Overall HUD Container layout -->
+                        <Border.Styles>
+                            <Style Selector="TextBlock">
+                                <Setter Property="FontFamily" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontPreviewFamilyName}"/>
+                            </Style>
+                        </Border.Styles>
+                        <!-- Overall HUD Container layout -->
                     <DockPanel LastChildFill="True" Margin="{Binding PanelPadding}">
                     
                     <!-- Title Bar -->
