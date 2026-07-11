@@ -5519,9 +5519,25 @@ namespace RagNextPlayer.Managers
                 if (!element.enabledSelf) return;
                 PrimeTween.Tween.StopAll(textLabel); // Stop specifically on the text element
                 
+                var game = GameManager.Instance?.ActiveGame;
+                Color defaultBaseColor = Color.white;
+                Color hoverTargetColor = new Color(0f, 0.65f, 0.80f); // Default cyan hover
+
+                if (game?.Theme != null)
+                {
+                    if (TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+                    {
+                        defaultBaseColor = textMain;
+                    }
+                    if (TryParseHtmlColor(game.Theme.BorderAccentColor, out var borderAccent))
+                    {
+                        hoverTargetColor = borderAccent;
+                    }
+                }
+
                 // 1. Crisp Color Cross-fade
-                Color currentColor = textLabel.style.color.keyword == StyleKeyword.Undefined ? Color.white : textLabel.style.color.value;
-                PrimeTween.Tween.Custom(currentColor, new Color(0f, 0.65f, 0.80f), duration: 0.08f, onValueChange: val => {
+                Color currentColor = textLabel.style.color.keyword == StyleKeyword.Undefined ? defaultBaseColor : textLabel.style.color.value;
+                PrimeTween.Tween.Custom(currentColor, hoverTargetColor, duration: 0.08f, onValueChange: val => {
                     textLabel.style.color = val;
                 });
                 
@@ -5534,9 +5550,16 @@ namespace RagNextPlayer.Managers
             element.RegisterCallback<PointerOutEvent>(evt => {
                 PrimeTween.Tween.StopAll(textLabel);
                 
+                var game = GameManager.Instance?.ActiveGame;
+                Color targetColor = Color.white;
+                if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+                {
+                    targetColor = textMain;
+                }
+
                 // Smoothly restore position and color instead of a harsh snapping reset
-                Color currentColor = textLabel.style.color.keyword == StyleKeyword.Undefined ? Color.white : textLabel.style.color.value;
-                PrimeTween.Tween.Custom(currentColor, Color.white, duration: 0.08f, onValueChange: val => {
+                Color currentColor = textLabel.style.color.keyword == StyleKeyword.Undefined ? targetColor : textLabel.style.color.value;
+                PrimeTween.Tween.Custom(currentColor, targetColor, duration: 0.08f, onValueChange: val => {
                     textLabel.style.color = val;
                 });
                 PrimeTween.Tween.Custom(textLabel.transform.position.x, 0.0f, duration: 0.08f, onValueChange: val => {
