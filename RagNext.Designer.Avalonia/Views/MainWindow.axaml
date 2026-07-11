@@ -2364,21 +2364,21 @@
                     </MultiBinding>
                     </StackPanel.IsVisible>
                     <!-- Left Room Items -->
-                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
                     IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
-                    <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     
                     <!-- Left Inventory -->
-                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
                     IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
-                    <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     
                     <!-- Left Compass -->
-                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
                     IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
-                    <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     </StackPanel>
                     
@@ -2392,21 +2392,21 @@
                     </MultiBinding>
                     </StackPanel.IsVisible>
                     <!-- Right Room Items -->
-                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
                     IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
-                    <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     
                     <!-- Right Inventory -->
-                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
                     IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
-                    <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     
                     <!-- Right Compass -->
-                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
                     IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
-                    <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     </StackPanel>
                     
@@ -2422,13 +2422,13 @@
                     </Border>
                     
                     <!-- Top Player Portrait Panel (Overlay, only visible if aligned to Top!) -->
-                    <Border Width="160" Height="220" Margin="16" Background="#282835" BorderBrush="#4a4a5a" BorderThickness="2" CornerRadius="8" Padding="12"
+                    <Border Width="160" Height="220" Margin="16" Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="2" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}"
                     HorizontalAlignment="{Binding PortraitAlignment, Converter={x:Static views:PortraitHorizontalAlignmentConverter.Instance}}"
                     VerticalAlignment="Top"
                     IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=Top}">
                     <StackPanel Spacing="8">
-                    <Ellipse Width="80" Height="80" Fill="#444455" Stroke="#8E2DE2" StrokeThickness="3" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Joe" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="#ffffff"/>
+                    <Ellipse Width="80" Height="80" Fill="#444455" Stroke="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" StrokeThickness="3" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Joe" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}"/>
                     <TextBlock Text="Stats panel..." HorizontalAlignment="Center" FontSize="11" Foreground="#aaaaaa"/>
                     </StackPanel>
                     </Border>
@@ -2436,16 +2436,16 @@
                     <!-- Bottom Overlays (Narrative Text box + bottom-docked items stacked vertically) -->
                     <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Margin="16" Spacing="12">
                     <!-- Narrative Text Panel -->
-                    <Border Background="#282835" BorderBrush="#4a4a5a" BorderThickness="2" CornerRadius="8" Padding="16"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="2" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}"
                     HorizontalAlignment="{Binding TextBoxAlignment}"
                     Width="{Binding TextBoxWidth}"
                     Height="{Binding TextBoxHeight}">
                     <TextBlock Text="Lorem ipsum dolor sit amet, adventure text panel. You are inside the custom HUD layout overlaying the room scene." 
-                    Foreground="#ffffff" FontSize="13" TextWrapping="Wrap"/>
+                    Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontSize="13" TextWrapping="Wrap"/>
                     </Border>
                     
                     <!-- Bottom Dock Stack Compartment (Shared Glass Border) -->
-                    <Border Background="#282835" BorderBrush="#4a4a5a" BorderThickness="2" CornerRadius="8" Padding="12"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="2" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}"
                             Height="{Binding BottomBarHeight}"
                             HorizontalAlignment="Center">
                         <Border.IsVisible>
@@ -2461,9 +2461,9 @@
                             <Border Width="200" Background="Transparent" Padding="12" VerticalAlignment="Stretch"
                                     IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=BottomLeft}">
                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <Ellipse Width="48" Height="48" Fill="#444455" Stroke="#8E2DE2" StrokeThickness="2"/>
+                                    <Ellipse Width="48" Height="48" Fill="#444455" Stroke="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" StrokeThickness="2"/>
                                     <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="Joe" FontWeight="Bold" FontSize="12" Foreground="#ffffff"/>
+                                        <TextBlock Text="Joe" FontWeight="Bold" FontSize="12" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}"/>
                                         <TextBlock Text="Stats..." FontSize="10" Foreground="#aaaaaa"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -2472,28 +2472,28 @@
                             <!-- Bottom Room Items -->
                             <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
                                     IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
-                                <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                                <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                             </Border>
                             
                             <!-- Bottom Inventory -->
                             <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
                                     IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
-                                <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                                <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                             </Border>
                             
                             <!-- Bottom Compass -->
                             <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
                                     IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
-                                <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                                <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}" FontWeight="Bold"/>
                             </Border>
                             
                             <!-- Bottom Portrait (if BottomRight) -->
                             <Border Width="200" Background="Transparent" Padding="12" VerticalAlignment="Stretch"
                                     IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=BottomRight}">
                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <Ellipse Width="48" Height="48" Fill="#444455" Stroke="#8E2DE2" StrokeThickness="2"/>
+                                    <Ellipse Width="48" Height="48" Fill="#444455" Stroke="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" StrokeThickness="2"/>
                                     <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="Joe" FontWeight="Bold" FontSize="12" Foreground="#ffffff"/>
+                                        <TextBlock Text="Joe" FontWeight="Bold" FontSize="12" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToColorConverter.Instance}}"/>
                                         <TextBlock Text="Stats..." FontSize="10" Foreground="#aaaaaa"/>
                                     </StackPanel>
                                 </StackPanel>
