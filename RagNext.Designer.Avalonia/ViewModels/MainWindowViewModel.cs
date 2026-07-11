@@ -130,6 +130,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             OnPropertyChanged(nameof(VideoMediaAssets));
                             OnPropertyChanged(nameof(ImageMediaAssets));
                             OnPropertyChanged(nameof(AudioMediaAssets));
+                            OnPropertyChanged(nameof(SelectedThemeBackground));
+                            OnPropertyChanged(nameof(SelectedThemeFrame));
                         };
 
                         if (value.StatusBarElements != null)
@@ -916,7 +918,28 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
-        public string FontPreviewFamilyName => SelectedBuiltInFont;
+        public global::Avalonia.Media.FontFamily FontPreviewFamilyName
+        {
+            get
+            {
+                var name = SelectedBuiltInFont;
+                try
+                {
+                    var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    var resourcesDir = Path.GetFullPath(Path.Combine(baseDir, "../../../../RagNextPlayer/Assets/Resources"));
+                    if (Directory.Exists(resourcesDir))
+                    {
+                        var fileUri = new Uri($"file:///{resourcesDir.Replace("\\", "/")}/");
+                        return new global::Avalonia.Media.FontFamily(fileUri, $"./#{name}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[FontPreview] Failed to load custom font preview: {ex.Message}");
+                }
+                return new global::Avalonia.Media.FontFamily(name);
+            }
+        }
 
         public MediaAsset? SelectedThemeBackground
         {
@@ -2673,11 +2696,30 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
+        private void AutoSaveActivePreset()
+        {
+            if (CurrentGame?.Theme == null) return;
+            var active = CurrentGame.Theme.ActivePreset;
+            if (string.IsNullOrEmpty(active) || string.Equals(active, "Default", StringComparison.OrdinalIgnoreCase)) return;
+            try
+            {
+                var dir = GetPresetsDirectory();
+                var presetPath = Path.Combine(dir, $"{active.Trim()}.json");
+                var json = System.Text.Json.JsonSerializer.Serialize(CurrentGame.Theme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(presetPath, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Presets] Auto-save active preset failed: {ex.Message}");
+            }
+        }
+
         private readonly System.Threading.SemaphoreSlim _saveSemaphore = new System.Threading.SemaphoreSlim(1, 1);
 
         public async Task SaveGameAsync()
         {
             if (CurrentGame == null) return;
+            AutoSaveActivePreset();
             IsSaving = true;
             SaveStatusText = "Saving changes...";
             await _saveSemaphore.WaitAsync();
