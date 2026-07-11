@@ -2204,12 +2204,23 @@ namespace RagNextPlayer.Managers
                 profilesContainer.style.top = StyleKeyword.Null;
                 profilesContainer.style.bottom = StyleKeyword.Null;
 
+                var playerCard = _root.Q<VisualElement>("floating-player-card");
+
                 if (game.Theme.PortraitAlignment.Contains("Bottom"))
                 {
+                    if (playerCard != null)
+                    {
+                        playerCard.style.height = Length.Percent(100);
+                        playerCard.style.maxHeight = Length.Percent(100);
+                    }
+
                     if (hudScroll != null)
                     {
-                        float scrollHeight = (float)game.Theme.BottomBarHeight - 110f;
-                        if (scrollHeight < 90f) scrollHeight = 90f;
+                        // Calculate precise remaining height inside player box
+                        // bottomBarHeight - bottomCompartmentPadding(28) - playerCardPadding(24) - portraitHeight(80) - margin(6) = bottomBarHeight - 138px
+                        // We also give 4px of safety margin to be absolutely safe (142f)
+                        float scrollHeight = (float)game.Theme.BottomBarHeight - 142f;
+                        if (scrollHeight < 50f) scrollHeight = 50f;
                         hudScroll.style.height = scrollHeight;
                         hudScroll.style.maxHeight = scrollHeight;
                     }
@@ -2228,6 +2239,12 @@ namespace RagNextPlayer.Managers
                 }
                 else
                 {
+                    if (playerCard != null)
+                    {
+                        playerCard.style.height = StyleKeyword.Null;
+                        playerCard.style.maxHeight = StyleKeyword.Null;
+                    }
+
                     if (hudScroll != null)
                     {
                         hudScroll.style.height = StyleKeyword.Null;
