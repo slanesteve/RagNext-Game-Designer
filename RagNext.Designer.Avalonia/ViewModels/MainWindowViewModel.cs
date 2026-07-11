@@ -927,10 +927,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     var baseDir = AppDomain.CurrentDomain.BaseDirectory;
                     var resourcesDir = Path.GetFullPath(Path.Combine(baseDir, "../../../../RagNextPlayer/Assets/Resources"));
-                    if (Directory.Exists(resourcesDir))
+                    var fontFilePath = Path.Combine(resourcesDir, $"{name}.ttf");
+                    if (File.Exists(fontFilePath))
                     {
-                        var fileUri = new Uri($"file:///{resourcesDir.Replace("\\", "/")}/");
-                        return new global::Avalonia.Media.FontFamily(fileUri, $"./#{name}");
+                        var fileUri = new Uri($"file:///{fontFilePath.Replace("\\", "/")}");
+                        return new global::Avalonia.Media.FontFamily(fileUri, $"#{name}");
                     }
                 }
                 catch (Exception ex)
