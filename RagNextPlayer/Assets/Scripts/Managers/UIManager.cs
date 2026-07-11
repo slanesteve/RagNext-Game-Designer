@@ -2351,17 +2351,42 @@ namespace RagNextPlayer.Managers
             var compassContainer = _root.Q<VisualElement>("compass-hud-container");
             var bottomCompartment = _root.Q<VisualElement>("hud-bottom-compartment");
             var rightCompartment = _root.Q<VisualElement>("hud-right-compartment");
+            var leftSidebarCompartment = _root.Q<VisualElement>("hud-left-sidebar-compartment");
+            var leftSidebar = _root.Q<VisualElement>("left-sidebar-container");
 
             // Hide/Show bottom compartment
             bool hasBottomDock = string.Equals(inventoryPos, "Bottom", StringComparison.OrdinalIgnoreCase) ||
-                                 string.Equals(roomItemsPos, "Bottom", StringComparison.OrdinalIgnoreCase) ||
-                                 string.Equals(navPos, "Bottom", StringComparison.OrdinalIgnoreCase);
+                                  string.Equals(roomItemsPos, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                  string.Equals(navPos, "Bottom", StringComparison.OrdinalIgnoreCase);
             if (bottomCompartment != null)
             {
                 bottomCompartment.style.display = hasBottomDock ? DisplayStyle.Flex : DisplayStyle.None;
                 if (hasBottomDock)
                 {
                     bottomCompartment.style.height = bottomBarHeight;
+                }
+            }
+
+            // Hide/Show left compartment sidebar if empty
+            if (leftSidebarCompartment != null)
+            {
+                bool leftSidebarEmpty = !string.Equals(inventoryPos, "Left", StringComparison.OrdinalIgnoreCase) &&
+                                         !string.Equals(roomItemsPos, "Left", StringComparison.OrdinalIgnoreCase) &&
+                                         !string.Equals(navPos, "Left", StringComparison.OrdinalIgnoreCase);
+                if (leftSidebarEmpty)
+                {
+                    leftSidebarCompartment.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    leftSidebarCompartment.style.display = DisplayStyle.Flex;
+                    if (leftSidebar != null)
+                    {
+                        leftSidebar.style.display = DisplayStyle.Flex;
+                        leftSidebar.style.width = sidebarWidth;
+                        leftSidebar.style.maxWidth = StyleKeyword.Null;
+                        leftSidebar.style.minWidth = StyleKeyword.Null;
+                    }
                 }
             }
 
@@ -2396,8 +2421,11 @@ namespace RagNextPlayer.Managers
                 if (string.Equals(roomItemsPos, "Left", StringComparison.OrdinalIgnoreCase))
                 {
                     roomLegend.RemoveFromHierarchy();
-                    leftCompartment.Insert(0, roomLegend);
-                    roomLegend.style.width = sidebarWidth;
+                    if (leftSidebar != null)
+                    {
+                        leftSidebar.Insert(0, roomLegend);
+                    }
+                    roomLegend.style.width = StyleKeyword.Null;
                     roomLegend.style.height = StyleKeyword.Null;
                     roomLegend.style.marginTop = StyleKeyword.Null;
                     roomLegend.style.flexDirection = FlexDirection.Column;
@@ -2437,8 +2465,11 @@ namespace RagNextPlayer.Managers
                 else if (string.Equals(inventoryPos, "Left", StringComparison.OrdinalIgnoreCase))
                 {
                     inventory.RemoveFromHierarchy();
-                    leftCompartment.Insert(0, inventory);
-                    inventory.style.width = sidebarWidth;
+                    if (leftSidebar != null)
+                    {
+                        leftSidebar.Add(inventory);
+                    }
+                    inventory.style.width = StyleKeyword.Null;
                     inventory.style.height = StyleKeyword.Null;
                     inventory.style.marginTop = StyleKeyword.Null;
                     inventory.style.flexDirection = FlexDirection.Column;
@@ -2488,8 +2519,12 @@ namespace RagNextPlayer.Managers
                     if (navTitle != null) navTitle.style.display = DisplayStyle.Flex;
 
                     compassContainer.RemoveFromHierarchy();
-                    leftCompartment.Insert(0, compassContainer);
-                    compassContainer.style.alignItems = Align.FlexStart;
+                    ResetGlassCardStyle(compassContainer);
+                    if (leftSidebarCompartment != null)
+                    {
+                        leftSidebarCompartment.Add(compassContainer);
+                    }
+                    compassContainer.style.alignItems = Align.Center; // Match center width stretch
                 }
                 else if (string.Equals(navPos, "Bottom", StringComparison.OrdinalIgnoreCase))
                 {

@@ -29,6 +29,12 @@
       <!-- Overlay HUD Layout Wrapper -->
       <ui:VisualElement name="hud-layout-wrapper" picking-mode="Ignore" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; flex-direction: row;">
         
+        <!-- Left Sidebar Compartment: Interactive lists and collapsible compass -->
+        <ui:VisualElement name="hud-left-sidebar-compartment" picking-mode="Ignore" style="flex-shrink: 1; min-height: 0; padding: 24px 0 24px 24px; flex-direction: column; justify-content: space-between; align-items: stretch; display: none;">
+          <!-- Transparent Sidebar (Items and Inventory tabs) -->
+          <ui:VisualElement name="left-sidebar-container" class="left-column glass-card" picking-mode="Position" style="flex-grow: 1; flex-shrink: 1; min-height: 0; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-bottom: 20px;" />
+        </ui:VisualElement>
+
         <!-- Left Compartment: Floating profiles (player stats + room action thumbnail) & Narrative text card -->
         <ui:VisualElement name="hud-left-compartment" picking-mode="Ignore" style="flex-grow: 1; flex-shrink: 1; flex-basis: 0px; min-height: 0; padding: 24px; flex-direction: column; justify-content: space-between;">
           
