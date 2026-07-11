@@ -4718,7 +4718,16 @@ namespace RagNextPlayer.Managers
             bool isRooted = System.IO.Path.IsPathRooted(path) || (path.Length >= 2 && path[1] == ':');
             if (!isRooted)
             {
-                fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, path);
+                string testPath = System.IO.Path.Combine(Application.streamingAssetsPath, path);
+                if (System.IO.File.Exists(testPath))
+                {
+                    fullPath = testPath;
+                }
+                else
+                {
+                    var fileName = System.IO.Path.GetFileName(path.Replace("\\", "/"));
+                    fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Assets", fileName);
+                }
             }
             else
             {
