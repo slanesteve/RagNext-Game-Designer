@@ -3206,7 +3206,14 @@ function refreshCommandFields(node) {
 
                     const pickerSelect = document.createElement('select');
                     pickerSelect.style.width = "100%";
-                    const presets = ["default", "pink", "blue", "dark", "glass"];
+                    let presets = (catalogs.ThemePresets || []).map(p => p.toLowerCase());
+                    if (presets.length === 0) {
+                        presets = ["default", "pink", "blue", "dark", "glass"];
+                    } else {
+                        if (!presets.includes("default")) {
+                            presets.unshift("default");
+                        }
+                    }
                     presets.forEach(p => {
                         const opt = document.createElement('option');
                         opt.value = p;

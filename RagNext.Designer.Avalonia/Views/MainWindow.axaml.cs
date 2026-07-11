@@ -718,7 +718,8 @@ namespace RagNext.Designer.Avalonia.Views
                     // Bug #5: Top-level PlayerActions for the player.setActionActive command.
                     PlayerActions = vm.CurrentGame.Player.Actions.Select(a => new CatalogActionDto { Name = a.Name }).ToList(),
                     StatusBarElements = vm.CurrentGame.StatusBarElements.Select(s => new CatalogEntityDto { Id = s.Id.ToString(), Name = s.Name }).ToList(),
-                    SplashScreens = vm.CurrentGame.SplashScreens.Select(s => new CatalogEntityDto { Id = s.Name, Name = s.Name }).ToList()
+                    SplashScreens = vm.CurrentGame.SplashScreens.Select(s => new CatalogEntityDto { Id = s.Name, Name = s.Name }).ToList(),
+                    ThemePresets = vm.ThemePresets.ToList()
                 };
                 string catalogsJson = JsonSerializer.Serialize(catalogsObj, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.CatalogsDto);
 
