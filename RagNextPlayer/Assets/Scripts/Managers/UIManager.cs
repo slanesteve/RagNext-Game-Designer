@@ -2073,6 +2073,17 @@ namespace RagNextPlayer.Managers
             if (ColorUtility.TryParseHtmlString(game.Theme.PrimaryBgColor, out var primaryBg))
             {
                 _root.style.backgroundColor = primaryBg;
+                if (_narrativePanel != null) _narrativePanel.style.backgroundColor = primaryBg;
+                if (_rightSidebarContainer != null) _rightSidebarContainer.style.backgroundColor = primaryBg;
+
+                var leftSidebar = _root.Q<VisualElement>("left-sidebar-container");
+                if (leftSidebar != null) leftSidebar.style.backgroundColor = primaryBg;
+
+                var bottomCompartment = _root.Q<VisualElement>("hud-bottom-compartment");
+                if (bottomCompartment != null) bottomCompartment.style.backgroundColor = primaryBg;
+
+                var playerCard = _root.Q<VisualElement>("floating-player-card");
+                if (playerCard != null) playerCard.style.backgroundColor = primaryBg;
             }
 
             if (ColorUtility.TryParseHtmlString(game.Theme.TextMainColor, out var textMain))
@@ -2080,6 +2091,7 @@ namespace RagNextPlayer.Managers
                 _root.style.color = textMain;
                 if (_roomTitleLabel != null) _roomTitleLabel.style.color = textMain;
                 if (_gameInfoLabel != null) _gameInfoLabel.style.color = textMain;
+                if (_narrativePanel != null) _narrativePanel.style.color = textMain;
             }
 
             if (ColorUtility.TryParseHtmlString(game.Theme.BorderAccentColor, out var borderAccent))
@@ -2088,6 +2100,61 @@ namespace RagNextPlayer.Managers
                 _root.style.borderRightColor = borderAccent;
                 _root.style.borderTopColor = borderAccent;
                 _root.style.borderBottomColor = borderAccent;
+
+                if (_narrativePanel != null)
+                {
+                    _narrativePanel.style.borderLeftColor = borderAccent;
+                    _narrativePanel.style.borderRightColor = borderAccent;
+                    _narrativePanel.style.borderTopColor = borderAccent;
+                    _narrativePanel.style.borderBottomColor = borderAccent;
+                    _narrativePanel.style.borderLeftWidth = 1f;
+                    _narrativePanel.style.borderRightWidth = 1f;
+                    _narrativePanel.style.borderTopWidth = 1f;
+                    _narrativePanel.style.borderBottomWidth = 1f;
+                }
+                if (_rightSidebarContainer != null)
+                {
+                    _rightSidebarContainer.style.borderLeftColor = borderAccent;
+                    _rightSidebarContainer.style.borderRightColor = borderAccent;
+                    _rightSidebarContainer.style.borderTopColor = borderAccent;
+                    _rightSidebarContainer.style.borderBottomColor = borderAccent;
+                    _rightSidebarContainer.style.borderLeftWidth = 1f;
+                    _rightSidebarContainer.style.borderRightWidth = 1f;
+                    _rightSidebarContainer.style.borderTopWidth = 1f;
+                    _rightSidebarContainer.style.borderBottomWidth = 1f;
+                }
+                var leftSidebar = _root.Q<VisualElement>("left-sidebar-container");
+                if (leftSidebar != null)
+                {
+                    leftSidebar.style.borderLeftColor = borderAccent;
+                    leftSidebar.style.borderRightColor = borderAccent;
+                    leftSidebar.style.borderTopColor = borderAccent;
+                    leftSidebar.style.borderBottomColor = borderAccent;
+                    leftSidebar.style.borderLeftWidth = 1f;
+                    leftSidebar.style.borderRightWidth = 1f;
+                    leftSidebar.style.borderTopWidth = 1f;
+                    leftSidebar.style.borderBottomWidth = 1f;
+                }
+                var bottomCompartment = _root.Q<VisualElement>("hud-bottom-compartment");
+                if (bottomCompartment != null)
+                {
+                    bottomCompartment.style.borderLeftColor = borderAccent;
+                    bottomCompartment.style.borderRightColor = borderAccent;
+                    bottomCompartment.style.borderTopColor = borderAccent;
+                    bottomCompartment.style.borderBottomColor = borderAccent;
+                    bottomCompartment.style.borderLeftWidth = 1f;
+                    bottomCompartment.style.borderRightWidth = 1f;
+                    bottomCompartment.style.borderTopWidth = 1f;
+                    bottomCompartment.style.borderBottomWidth = 1f;
+                }
+                var playerCard = _root.Q<VisualElement>("floating-player-card");
+                if (playerCard != null)
+                {
+                    playerCard.style.borderLeftColor = borderAccent;
+                    playerCard.style.borderRightColor = borderAccent;
+                    playerCard.style.borderTopColor = borderAccent;
+                    playerCard.style.borderBottomColor = borderAccent;
+                }
             }
 
             // 2. Apply Padding & Border Rounding
