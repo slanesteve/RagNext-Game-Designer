@@ -3416,8 +3416,19 @@ namespace RagNextPlayer.Managers
                     ? TemplateResolver.Resolve(player.Name, game, room, player)
                     : player.Name;
 
+                if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+                {
+                    _playerNameLabel.style.color = textMain;
+                }
             }
-            if (_playerGenderLabel is not null) _playerGenderLabel.text = player.Gender;
+            if (_playerGenderLabel is not null)
+            {
+                _playerGenderLabel.text = player.Gender;
+                if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+                {
+                    _playerGenderLabel.style.color = textMain;
+                }
+            }
             RefreshPlayerPortrait();
 
             // Render status bar elements
@@ -3469,7 +3480,10 @@ namespace RagNextPlayer.Managers
                             lbl.style.whiteSpace = WhiteSpace.Normal;
                             lbl.style.flexGrow = 1;
                             lbl.style.flexShrink = 1;
-                            
+                            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+                            {
+                                lbl.style.color = textMain;
+                            }
                             container.Add(lbl);
                         }
 
@@ -3974,6 +3988,11 @@ namespace RagNextPlayer.Managers
                 link.text      = entityName;
                 link.focusable = false;
                 link.AddToClassList("narrative-hotlink");
+                var game = GameManager.Instance?.ActiveGame;
+                if (game?.Theme != null && TryParseHtmlColor(game.Theme.BorderAccentColor, out var borderAccent))
+                {
+                    link.style.color = borderAccent;
+                }
                 flow.Add(link);
 
                 lastIdx = match.Index + match.Length;
@@ -3996,6 +4015,11 @@ namespace RagNextPlayer.Managers
         {
             var lbl = new Label(text);
             lbl.AddToClassList("narrative-text");
+            var game = GameManager.Instance?.ActiveGame;
+            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+            {
+                lbl.style.color = textMain;
+            }
             return lbl;
         }
 
@@ -4235,11 +4259,19 @@ namespace RagNextPlayer.Managers
             }
             var lbl = new Label(nameText);
             lbl.AddToClassList("entity-name");
+            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+            {
+                lbl.style.color = textMain;
+            }
             row.Add(lbl);
 
             var btn = new Button(() => ShowEntityInteractionMenu(entity, isInventory));
             btn.text = "⋯";
             btn.AddToClassList("entity-action-btn");
+            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMainColor))
+            {
+                btn.style.color = textMainColor;
+            }
             row.Add(btn);
 
             // Tap on the whole row also opens the menu
@@ -4260,6 +4292,11 @@ namespace RagNextPlayer.Managers
 
             var arrow = new Label("↳");
             arrow.AddToClassList("entity-nested-arrow");
+            var gameData = GameManager.Instance?.ActiveGame;
+            if (gameData?.Theme != null && TryParseHtmlColor(gameData.Theme.TextMainColor, out var textMain))
+            {
+                arrow.style.color = textMain;
+            }
             row.Add(arrow);
 
             var thumb = new VisualElement();
@@ -4286,11 +4323,19 @@ namespace RagNextPlayer.Managers
             var lbl = new Label(nameText);
             lbl.AddToClassList("entity-name");
             lbl.AddToClassList("entity-name--nested");
+            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var nestedNameColor))
+            {
+                lbl.style.color = nestedNameColor;
+            }
             row.Add(lbl);
 
             var btn = new Button(() => ShowEntityInteractionMenu(entity, isInventory));
             btn.text = "⋯";
             btn.AddToClassList("entity-action-btn");
+            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMainColor))
+            {
+                btn.style.color = textMainColor;
+            }
             row.Add(btn);
 
             row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
