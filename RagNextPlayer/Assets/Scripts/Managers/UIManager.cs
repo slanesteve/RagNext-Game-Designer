@@ -619,12 +619,7 @@ namespace RagNextPlayer.Managers
                             titleLabel.style.fontSize = (float)sizeVal * 2.75f;
                         }
 
-                        string fontColorHex = settings.FontColor;
-                        if (fontColorHex != null && fontColorHex.StartsWith("#") && fontColorHex.Length == 9)
-                        {
-                            fontColorHex = "#" + fontColorHex.Substring(3, 6) + fontColorHex.Substring(1, 2);
-                        }
-                        if (ColorUtility.TryParseHtmlString(fontColorHex, out var clr))
+                        if (TryParseHtmlColor(settings.FontColor, out var clr))
                         {
                             titleLabel.style.color = clr;
                         }
@@ -737,12 +732,7 @@ namespace RagNextPlayer.Managers
                         titleLabel.style.fontSize = (float)sizeVal * 2.75f;
                     }
 
-                    string fontColorHex = settings.FontColor;
-                    if (fontColorHex != null && fontColorHex.StartsWith("#") && fontColorHex.Length == 9)
-                    {
-                        fontColorHex = "#" + fontColorHex.Substring(3, 6) + fontColorHex.Substring(1, 2);
-                    }
-                    if (ColorUtility.TryParseHtmlString(fontColorHex, out var clr))
+                    if (TryParseHtmlColor(settings.FontColor, out var clr))
                     {
                         titleLabel.style.color = clr;
                     }
@@ -1169,12 +1159,7 @@ namespace RagNextPlayer.Managers
                             titleLabel.style.fontSize = (float)sizeVal * 2.75f;
                         }
 
-                        string fontColorHex = settings.FontColor;
-                        if (fontColorHex != null && fontColorHex.StartsWith("#") && fontColorHex.Length == 9)
-                        {
-                            fontColorHex = "#" + fontColorHex.Substring(3, 6) + fontColorHex.Substring(1, 2);
-                        }
-                        if (ColorUtility.TryParseHtmlString(fontColorHex, out var clr))
+                        if (TryParseHtmlColor(settings.FontColor, out var clr))
                         {
                             titleLabel.style.color = clr;
                         }
@@ -1490,12 +1475,7 @@ namespace RagNextPlayer.Managers
                         titleLabel.style.fontSize = (float)sizeVal * 2.75f;
                     }
 
-                    string fontColorHex = settings.FontColor;
-                    if (fontColorHex != null && fontColorHex.StartsWith("#") && fontColorHex.Length == 9)
-                    {
-                        fontColorHex = "#" + fontColorHex.Substring(3, 6) + fontColorHex.Substring(1, 2);
-                    }
-                    if (ColorUtility.TryParseHtmlString(fontColorHex, out var clr))
+                    if (TryParseHtmlColor(settings.FontColor, out var clr))
                     {
                         titleLabel.style.color = clr;
                     }
@@ -2040,12 +2020,7 @@ namespace RagNextPlayer.Managers
                 rootEl.style.borderBottomLeftRadius = borderRadius;
                 rootEl.style.borderBottomRightRadius = borderRadius;
                 
-                string hexColor = game.SplashScreen.BorderColor;
-                if (hexColor != null && hexColor.StartsWith("#") && hexColor.Length == 9)
-                {
-                    hexColor = "#" + hexColor.Substring(3, 6) + hexColor.Substring(1, 2);
-                }
-                if (ColorUtility.TryParseHtmlString(hexColor, out var clr))
+                if (TryParseHtmlColor(game.SplashScreen.BorderColor, out var clr))
                 {
                     rootEl.style.borderLeftColor = clr;
                     rootEl.style.borderRightColor = clr;
