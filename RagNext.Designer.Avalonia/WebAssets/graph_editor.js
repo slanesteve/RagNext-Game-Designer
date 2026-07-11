@@ -3196,19 +3196,192 @@ function refreshCommandFields(node) {
                     triggerAutoSave();
                 });
             } else {
-                inputElement = document.createElement('input');
-                inputElement.type = 'text';
-                inputElement.placeholder = `Enter ${inputSchema.label}...`;
-                inputElement.value = initialVal;
-                inputElement.style.width = "100%";
-                inputElement.addEventListener('input', () => {
-                    node.data[inputSchema.label] = inputElement.value;
-                    const aliases = propertyMappings[inputSchema.label] || [];
-                    aliases.forEach(alias => {
-                        node.data[alias] = inputElement.value;
+                const varName = node.data["Name"] || node.data["name"] || node.data["VariableName"] || node.data["variableName"] || node.data["Variable"] || node.data["variable"] || "";
+                if (varName === "theme.preset") {
+                    const fieldWrapper = document.createElement('div');
+                    fieldWrapper.className = 'toggle-field-wrapper';
+                    fieldWrapper.style.display = 'flex';
+                    fieldWrapper.style.flexDirection = 'column';
+                    fieldWrapper.style.gap = '4px';
+
+                    const pickerSelect = document.createElement('select');
+                    pickerSelect.style.width = "100%";
+                    const presets = ["default", "pink", "blue", "dark", "glass"];
+                    presets.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.innerText = p;
+                        pickerSelect.appendChild(opt);
                     });
-                    triggerAutoSave();
-                });
+
+                    const textInput = document.createElement('input');
+                    textInput.type = 'text';
+                    textInput.placeholder = `Enter expression / {this.name}...`;
+                    textInput.style.width = "100%";
+
+                    const existsInOptions = presets.includes(initialVal);
+                    let isExprMode = (initialVal && !existsInOptions);
+
+                    pickerSelect.style.display = isExprMode ? 'none' : 'block';
+                    textInput.style.display = isExprMode ? 'block' : 'none';
+
+                    label.style.display = 'flex';
+                    label.style.justifyContent = 'space-between';
+                    label.style.alignItems = 'center';
+
+                    const toggleLink = document.createElement('span');
+                    toggleLink.className = 'field-toggle-mode';
+                    toggleLink.style.fontSize = '9px';
+                    toggleLink.style.cursor = 'pointer';
+                    toggleLink.style.textDecoration = 'underline';
+                    toggleLink.style.color = '#a855f7';
+                    toggleLink.style.marginLeft = 'auto';
+                    toggleLink.innerText = isExprMode ? "👁️ Preset Dropdown" : "📝 Text Mode";
+
+                    toggleLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        isExprMode = !isExprMode;
+                        if (isExprMode) {
+                            textInput.style.display = 'block';
+                            pickerSelect.style.display = 'none';
+                            toggleLink.innerText = "👁️ Preset Dropdown";
+                            textInput.value = pickerSelect.value;
+                        } else {
+                            textInput.style.display = 'none';
+                            pickerSelect.style.display = 'block';
+                            toggleLink.innerText = "📝 Text Mode";
+                            pickerSelect.value = textInput.value;
+                        }
+                    });
+                    label.appendChild(toggleLink);
+
+                    pickerSelect.value = existsInOptions ? initialVal : "default";
+                    textInput.value = initialVal || "";
+
+                    pickerSelect.addEventListener('change', () => {
+                        textInput.value = pickerSelect.value;
+                        node.data[inputSchema.label] = pickerSelect.value;
+                        const aliases = propertyMappings[inputSchema.label] || [];
+                        aliases.forEach(alias => {
+                            node.data[alias] = pickerSelect.value;
+                        });
+                        triggerAutoSave();
+                    });
+
+                    textInput.addEventListener('input', () => {
+                        pickerSelect.value = textInput.value;
+                        node.data[inputSchema.label] = textInput.value;
+                        const aliases = propertyMappings[inputSchema.label] || [];
+                        aliases.forEach(alias => {
+                            node.data[alias] = textInput.value;
+                        });
+                        triggerAutoSave();
+                    });
+
+                    fieldWrapper.appendChild(pickerSelect);
+                    fieldWrapper.appendChild(textInput);
+                    inputElement = fieldWrapper;
+                } else if (varName === "theme.primaryBgColor" || varName === "theme.textMainColor" || varName === "theme.borderAccentColor") {
+                    const fieldWrapper = document.createElement('div');
+                    fieldWrapper.className = 'toggle-field-wrapper';
+                    fieldWrapper.style.display = 'flex';
+                    fieldWrapper.style.flexDirection = 'column';
+                    fieldWrapper.style.gap = '4px';
+
+                    const colorInput = document.createElement('input');
+                    colorInput.type = 'color';
+                    colorInput.style.width = "100%";
+                    colorInput.style.height = "32px";
+                    colorInput.style.padding = "0";
+                    colorInput.style.border = "none";
+                    colorInput.style.cursor = "pointer";
+
+                    const textInput = document.createElement('input');
+                    textInput.type = 'text';
+                    textInput.placeholder = `Enter hex color (e.g. #ff00ff) or expression...`;
+                    textInput.style.width = "100%";
+
+                    const existsInOptions = initialVal && /^#[0-9A-Fa-f]{6}$/.test(initialVal);
+                    let isExprMode = (initialVal && !existsInOptions);
+
+                    colorInput.style.display = isExprMode ? 'none' : 'block';
+                    textInput.style.display = isExprMode ? 'block' : 'none';
+
+                    label.style.display = 'flex';
+                    label.style.justifyContent = 'space-between';
+                    label.style.alignItems = 'center';
+
+                    const toggleLink = document.createElement('span');
+                    toggleLink.className = 'field-toggle-mode';
+                    toggleLink.style.fontSize = '9px';
+                    toggleLink.style.cursor = 'pointer';
+                    toggleLink.style.textDecoration = 'underline';
+                    toggleLink.style.color = '#a855f7';
+                    toggleLink.style.marginLeft = 'auto';
+                    toggleLink.innerText = isExprMode ? "👁️ Color Picker" : "📝 Text Mode";
+
+                    toggleLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        isExprMode = !isExprMode;
+                        if (isExprMode) {
+                            textInput.style.display = 'block';
+                            colorInput.style.display = 'none';
+                            toggleLink.innerText = "👁️ Color Picker";
+                            textInput.value = colorInput.value;
+                        } else {
+                            textInput.style.display = 'none';
+                            colorInput.style.display = 'block';
+                            toggleLink.innerText = "📝 Text Mode";
+                            if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
+                                colorInput.value = textInput.value;
+                            }
+                        }
+                    });
+                    label.appendChild(toggleLink);
+
+                    colorInput.value = existsInOptions ? initialVal : "#000000";
+                    textInput.value = initialVal || "";
+
+                    colorInput.addEventListener('input', () => {
+                        textInput.value = colorInput.value;
+                        node.data[inputSchema.label] = colorInput.value;
+                        const aliases = propertyMappings[inputSchema.label] || [];
+                        aliases.forEach(alias => {
+                            node.data[alias] = colorInput.value;
+                        });
+                        triggerAutoSave();
+                    });
+
+                    textInput.addEventListener('input', () => {
+                        if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
+                            colorInput.value = textInput.value;
+                        }
+                        node.data[inputSchema.label] = textInput.value;
+                        const aliases = propertyMappings[inputSchema.label] || [];
+                        aliases.forEach(alias => {
+                            node.data[alias] = textInput.value;
+                        });
+                        triggerAutoSave();
+                    });
+
+                    fieldWrapper.appendChild(colorInput);
+                    fieldWrapper.appendChild(textInput);
+                    inputElement = fieldWrapper;
+                } else {
+                    inputElement = document.createElement('input');
+                    inputElement.type = 'text';
+                    inputElement.placeholder = `Enter ${inputSchema.label}...`;
+                    inputElement.value = initialVal;
+                    inputElement.style.width = "100%";
+                    inputElement.addEventListener('input', () => {
+                        node.data[inputSchema.label] = inputElement.value;
+                        const aliases = propertyMappings[inputSchema.label] || [];
+                        aliases.forEach(alias => {
+                            node.data[alias] = inputElement.value;
+                        });
+                        triggerAutoSave();
+                    });
+                }
             }
             row.appendChild(inputElement);
         } else {

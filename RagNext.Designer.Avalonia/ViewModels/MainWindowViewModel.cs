@@ -44,6 +44,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => _game;
             set
             {
+                if (value?.Variables != null)
+                {
+                    void EnsureSystemThemeVar(string varName, string defVal)
+                    {
+                        if (!global::System.Linq.Enumerable.Any(value.Variables, v => string.Equals(v.Name, varName, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            value.Variables.Add(new RagsCore.Models.GameVariable { Id = Guid.NewGuid(), Name = varName, Value = defVal, Type = "string" });
+                        }
+                    }
+                    EnsureSystemThemeVar("theme.preset", "default");
+                    EnsureSystemThemeVar("theme.primaryBgColor", "");
+                    EnsureSystemThemeVar("theme.textMainColor", "");
+                    EnsureSystemThemeVar("theme.borderAccentColor", "");
+                }
+
                 if (SetProperty(ref _game, value))
                 {
                     App.CurrentGame = value;
