@@ -6731,4 +6731,129 @@ namespace RagNext.Designer.Avalonia.Views
             return value;
         }
     }
+
+    public class TextBoxScaleConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly TextBoxScaleConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is double val)
+            {
+                return val / 2.2;
+            }
+            return value;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class PortraitHorizontalAlignmentConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly PortraitHorizontalAlignmentConverter Instance = new();
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string s && s.Contains("Right")) return global::Avalonia.Layout.HorizontalAlignment.Right;
+            return global::Avalonia.Layout.HorizontalAlignment.Left;
+        }
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class PortraitVerticalAlignmentConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly PortraitVerticalAlignmentConverter Instance = new();
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string s && s.Contains("Bottom")) return global::Avalonia.Layout.VerticalAlignment.Bottom;
+            return global::Avalonia.Layout.VerticalAlignment.Top;
+        }
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class LeftDockVisibleConverter : global::Avalonia.Data.Converters.IMultiValueConverter
+    {
+        public static readonly LeftDockVisibleConverter Instance = new();
+        public object Convert(global::System.Collections.Generic.IList<object?> values, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (values.Count >= 3)
+            {
+                var room = values[0] as string;
+                var inv = values[1] as string;
+                var nav = values[2] as string;
+                return string.Equals(room, "Left", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(inv, "Left", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(nav, "Left", StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
+        }
+    }
+
+    public class RightDockVisibleConverter : global::Avalonia.Data.Converters.IMultiValueConverter
+    {
+        public static readonly RightDockVisibleConverter Instance = new();
+        public object Convert(global::System.Collections.Generic.IList<object?> values, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (values.Count >= 3)
+            {
+                var room = values[0] as string;
+                var inv = values[1] as string;
+                var nav = values[2] as string;
+                return string.Equals(room, "Right", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(inv, "Right", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(nav, "Right", StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
+        }
+    }
+
+    public class PortraitMarginConverter : global::Avalonia.Data.Converters.IMultiValueConverter
+    {
+        public static readonly PortraitMarginConverter Instance = new();
+        public object Convert(global::System.Collections.Generic.IList<object?> values, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (values.Count >= 2 && values[0] is string align && values[1] is double textBoxHeight)
+            {
+                if (align.Contains("Bottom"))
+                {
+                    return new global::Avalonia.Thickness(16, 16, 16, textBoxHeight + 24);
+                }
+            }
+            return new global::Avalonia.Thickness(16);
+        }
+    }
+
+    public class PortraitPositionConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly PortraitPositionConverter Instance = new();
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string s && parameter is string param)
+            {
+                if (param == "Top") return s.Contains("Top");
+                return string.Equals(s, param, StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
+        }
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class BottomDockVisibleConverter : global::Avalonia.Data.Converters.IMultiValueConverter
+    {
+        public static readonly BottomDockVisibleConverter Instance = new();
+        public object Convert(global::System.Collections.Generic.IList<object?> values, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (values.Count >= 4)
+            {
+                var inv = values[0] as string;
+                var room = values[1] as string;
+                var nav = values[2] as string;
+                var port = values[3] as string;
+                return string.Equals(inv, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(room, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(nav, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                       (port != null && port.Contains("Bottom"));
+            }
+            return false;
+        }
+    }
 }

@@ -79,6 +79,9 @@ namespace RagsCore.Models
             }
         }
 
+        private ThemeSettings _theme = new();
+        public ThemeSettings Theme { get => _theme; set => SetProperty(ref _theme, value); }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public Game() { }

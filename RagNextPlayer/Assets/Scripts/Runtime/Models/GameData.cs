@@ -23,12 +23,36 @@ namespace RagNextPlayer.Runtime.Models
         public SplashScreenSettingsData   SplashScreen{ get; set; } = new SplashScreenSettingsData();
         public List<SplashScreenSettingsData> SplashScreens { get; set; } = new List<SplashScreenSettingsData>();
         public string DefaultSplashScreenName { get; set; } = "Default";
+        public ThemeSettingsData          Theme       { get; set; } = new ThemeSettingsData();
         public string ActivePlayerCharacterId { get; set; } = string.Empty;
         public List<StatusBarElementData> StatusBarElements { get; set; } = new List<StatusBarElementData>();
         public List<string>               WearSlots           { get; set; } = new List<string>();
 
         [JsonIgnore]
         public List<RuntimeCustomChoice> CustomChoices { get; } = new List<RuntimeCustomChoice>();
+    }
+
+    public class ThemeSettingsData
+    {
+        public string PrimaryBgColor { get; set; } = "#1e1e24";
+        public string TextMainColor { get; set; } = "#ffffff";
+        public string BorderAccentColor { get; set; } = "#4a4a5a";
+        public string FontName { get; set; } = "Outfit";
+        public string FontAssetId { get; set; } = string.Empty;
+        public string BackgroundAssetId { get; set; } = string.Empty;
+        public string FrameAssetId { get; set; } = string.Empty;
+        public string InventoryDockPosition { get; set; } = "Right"; // "Bottom", "Left", "Right"
+        public string RoomItemsDockPosition { get; set; } = "Right"; // "Right", "Left", "Bottom"
+        public string NavigationDockPosition { get; set; } = "Right"; // "Right", "Left", "Bottom"
+        public double PanelPadding { get; set; } = 12;
+        public double BorderRadius { get; set; } = 8;
+        public double AspectRatio { get; set; } = 1.333; // Scene image aspect ratio
+        public string TextBoxAlignment { get; set; } = "Left"; // "Left", "Center", "Right"
+        public double TextBoxWidth { get; set; } = 780; // pixels
+        public double TextBoxHeight { get; set; } = 320; // pixels
+        public string PortraitAlignment { get; set; } = "TopLeft"; // "TopLeft", "TopRight", "BottomLeft", "BottomRight"
+        public double SidebarWidth { get; set; } = 360; // pixels
+        public double BottomBarHeight { get; set; } = 200; // pixels
     }
 
     public class SplashScreenSettingsData

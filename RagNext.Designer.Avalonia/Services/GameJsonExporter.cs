@@ -25,6 +25,7 @@ namespace RagNext.Designer.Avalonia.Services
         public List<ExportTimerDto>? Timers { get; set; }
         public ExportSplashScreenDto? SplashScreen { get; set; }
         public List<ExportSplashScreenDto>? SplashScreens { get; set; }
+        public ExportThemeSettingsDto? Theme { get; set; }
         public List<ExportStatusBarElementDto>? StatusBarElements { get; set; }
         public List<string>? WearSlots { get; set; }
     }
@@ -182,6 +183,29 @@ namespace RagNext.Designer.Avalonia.Services
         public string? LinkedActionId { get; set; }
     }
 
+    public class ExportThemeSettingsDto
+    {
+        public string? PrimaryBgColor { get; set; }
+        public string? TextMainColor { get; set; }
+        public string? BorderAccentColor { get; set; }
+        public string? FontName { get; set; }
+        public string? FontAssetId { get; set; }
+        public string? BackgroundAssetId { get; set; }
+        public string? FrameAssetId { get; set; }
+        public string? InventoryDockPosition { get; set; }
+        public string? RoomItemsDockPosition { get; set; }
+        public string? NavigationDockPosition { get; set; }
+        public double PanelPadding { get; set; }
+        public double BorderRadius { get; set; }
+        public double AspectRatio { get; set; }
+        public string? TextBoxAlignment { get; set; }
+        public double TextBoxWidth { get; set; }
+        public double TextBoxHeight { get; set; }
+        public string? PortraitAlignment { get; set; }
+        public double SidebarWidth { get; set; }
+        public double BottomBarHeight { get; set; }
+    }
+
     /// <summary>
     /// Produces Unity-compatible flat game.json with no $id/$ref reference tracking.
     /// </summary>
@@ -204,6 +228,28 @@ namespace RagNext.Designer.Avalonia.Services
             Author = game.Author,
             Version = game.Version,
             Description = "",
+            Theme = game.Theme == null ? null : new ExportThemeSettingsDto
+            {
+                PrimaryBgColor = game.Theme.PrimaryBgColor,
+                TextMainColor = game.Theme.TextMainColor,
+                BorderAccentColor = game.Theme.BorderAccentColor,
+                FontName = game.Theme.FontName,
+                FontAssetId = game.Theme.FontAssetId,
+                BackgroundAssetId = game.Theme.BackgroundAssetId,
+                FrameAssetId = game.Theme.FrameAssetId,
+                InventoryDockPosition = game.Theme.InventoryDockPosition,
+                RoomItemsDockPosition = game.Theme.RoomItemsDockPosition,
+                NavigationDockPosition = game.Theme.NavigationDockPosition,
+                PanelPadding = game.Theme.PanelPadding,
+                BorderRadius = game.Theme.BorderRadius,
+                AspectRatio = game.Theme.AspectRatio,
+                TextBoxAlignment = game.Theme.TextBoxAlignment,
+                TextBoxWidth = game.Theme.TextBoxWidth,
+                TextBoxHeight = game.Theme.TextBoxHeight,
+                PortraitAlignment = game.Theme.PortraitAlignment,
+                SidebarWidth = game.Theme.SidebarWidth,
+                BottomBarHeight = game.Theme.BottomBarHeight
+            },
             Player     = BuildPlayerDto(game.Player),
             Rooms      = game.Rooms.Select(r => BuildRoomDto(r)).ToList(),
             Objects    = game.Objects.Select(o => BuildObjectDto(o)).ToList(),

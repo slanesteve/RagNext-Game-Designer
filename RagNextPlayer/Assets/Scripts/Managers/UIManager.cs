@@ -2054,12 +2054,459 @@ namespace RagNextPlayer.Managers
                 }
             }
 
+            // Apply custom theme settings from game configuration
+            ApplyTheme(game);
+
             // Clear narrative history on game load to restore pristine log state
             _narrativeScroll?.Clear();
             _firstRoomRendered = false;
 
             RefreshPlayerPanel();
             RefreshPlayerPortrait();
+        }
+
+        private void ApplyTheme(GameData game)
+        {
+            if (game?.Theme == null || _root == null) return;
+
+            // 1. Apply Colors to Root & Panels
+            if (ColorUtility.TryParseHtmlString(game.Theme.PrimaryBgColor, out var primaryBg))
+            {
+                _root.style.backgroundColor = primaryBg;
+            }
+
+            if (ColorUtility.TryParseHtmlString(game.Theme.TextMainColor, out var textMain))
+            {
+                _root.style.color = textMain;
+                if (_roomTitleLabel != null) _roomTitleLabel.style.color = textMain;
+                if (_gameInfoLabel != null) _gameInfoLabel.style.color = textMain;
+            }
+
+            if (ColorUtility.TryParseHtmlString(game.Theme.BorderAccentColor, out var borderAccent))
+            {
+                _root.style.borderLeftColor = borderAccent;
+                _root.style.borderRightColor = borderAccent;
+                _root.style.borderTopColor = borderAccent;
+                _root.style.borderBottomColor = borderAccent;
+            }
+
+            // 2. Apply Padding & Border Rounding
+            float borderRadius = (float)game.Theme.BorderRadius;
+            float panelPadding = (float)game.Theme.PanelPadding;
+            
+            StyleLength radiusLen = new Length(borderRadius, LengthUnit.Pixel);
+            if (_narrativePanel != null)
+            {
+                _narrativePanel.style.borderTopLeftRadius = radiusLen;
+                _narrativePanel.style.borderTopRightRadius = radiusLen;
+                _narrativePanel.style.borderBottomLeftRadius = radiusLen;
+                _narrativePanel.style.borderBottomRightRadius = radiusLen;
+                _narrativePanel.style.paddingLeft = panelPadding;
+                _narrativePanel.style.paddingRight = panelPadding;
+                _narrativePanel.style.paddingTop = panelPadding;
+                _narrativePanel.style.paddingBottom = panelPadding;
+            }
+
+            if (_rightSidebarContainer != null)
+            {
+                _rightSidebarContainer.style.borderTopLeftRadius = radiusLen;
+                _rightSidebarContainer.style.borderTopRightRadius = radiusLen;
+                _rightSidebarContainer.style.borderBottomLeftRadius = radiusLen;
+                _rightSidebarContainer.style.borderBottomRightRadius = radiusLen;
+                _rightSidebarContainer.style.paddingLeft = panelPadding;
+                _rightSidebarContainer.style.paddingRight = panelPadding;
+                _rightSidebarContainer.style.paddingTop = panelPadding;
+                _rightSidebarContainer.style.paddingBottom = panelPadding;
+            }
+
+            var contentArea = _root.Q<VisualElement>("content-area");
+            if (contentArea != null)
+            {
+                contentArea.style.paddingLeft = panelPadding;
+                contentArea.style.paddingRight = panelPadding;
+                contentArea.style.paddingTop = panelPadding;
+                contentArea.style.paddingBottom = panelPadding;
+            }
+
+            // 3. Apply Text Box Size & Alignment
+            if (_narrativePanel != null)
+            {
+                _narrativePanel.style.width = (float)game.Theme.TextBoxWidth;
+                _narrativePanel.style.height = (float)game.Theme.TextBoxHeight;
+                _narrativePanel.style.maxWidth = StyleKeyword.Null;
+                _narrativePanel.style.maxHeight = StyleKeyword.Null;
+                _narrativePanel.style.minWidth = StyleKeyword.Null;
+                _narrativePanel.style.minHeight = StyleKeyword.Null;
+
+                if (string.Equals(game.Theme.TextBoxAlignment, "Center", StringComparison.OrdinalIgnoreCase))
+                    _narrativePanel.style.alignSelf = Align.Center;
+                else if (string.Equals(game.Theme.TextBoxAlignment, "Right", StringComparison.OrdinalIgnoreCase))
+                    _narrativePanel.style.alignSelf = Align.FlexEnd;
+                else
+                    _narrativePanel.style.alignSelf = Align.FlexStart;
+            }
+
+            // 4. Apply Custom Font if defined
+            if (!string.IsNullOrEmpty(game.Theme.FontAssetId))
+            {
+                var fontAsset = game.MediaAssets.Find(a => 
+                    string.Equals(a.Id, game.Theme.FontAssetId, StringComparison.OrdinalIgnoreCase));
+                if (fontAsset != null)
+                {
+                    StartCoroutine(LoadAndApplyThemeFontCoroutine(fontAsset.RelativePath));
+                }
+            }
+
+            // 5. Apply Background Image Texture if defined
+            if (!string.IsNullOrEmpty(game.Theme.BackgroundAssetId))
+            {
+                var bgAsset = game.MediaAssets.Find(a => 
+                    string.Equals(a.Id, game.Theme.BackgroundAssetId, StringComparison.OrdinalIgnoreCase));
+                if (bgAsset != null)
+                {
+                    StartCoroutine(LoadThemeImageCoroutine(bgAsset.RelativePath, _root));
+                }
+            }
+
+            // 6. Apply Panel Frame Image if defined
+            if (!string.IsNullOrEmpty(game.Theme.FrameAssetId))
+            {
+                var frameAsset = game.MediaAssets.Find(a => 
+                    string.Equals(a.Id, game.Theme.FrameAssetId, StringComparison.OrdinalIgnoreCase));
+                if (frameAsset != null)
+                {
+                    var sceneImg = _root.Q<VisualElement>("scene-image");
+                    if (sceneImg != null)
+                    {
+                        StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, sceneImg));
+                    }
+                    if (_narrativePanel != null)
+                    {
+                        StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, _narrativePanel));
+                    }
+                }
+            }
+
+            // 7. Apply Player Portrait Panel Alignment
+            var profilesContainer = _root.Q<VisualElement>("floating-profiles-container");
+            var leftComp = _root.Q<VisualElement>("hud-left-compartment");
+            var bottomComp = _root.Q<VisualElement>("hud-bottom-compartment");
+            var hudScroll = _root.Q<ScrollView>("player-hud-scroll");
+            if (profilesContainer != null && leftComp != null && bottomComp != null && !string.IsNullOrEmpty(game.Theme.PortraitAlignment))
+            {
+                leftComp.style.justifyContent = Justify.FlexEnd;
+
+                // Reset standard layout values
+                ResetGlassCardStyle(profilesContainer);
+                profilesContainer.style.position = Position.Relative;
+                profilesContainer.style.left = StyleKeyword.Null;
+                profilesContainer.style.right = StyleKeyword.Null;
+                profilesContainer.style.top = StyleKeyword.Null;
+                profilesContainer.style.bottom = StyleKeyword.Null;
+
+                if (game.Theme.PortraitAlignment.Contains("Bottom"))
+                {
+                    if (hudScroll != null)
+                    {
+                        float scrollHeight = (float)game.Theme.BottomBarHeight - 110f;
+                        if (scrollHeight < 90f) scrollHeight = 90f;
+                        hudScroll.style.height = scrollHeight;
+                        hudScroll.style.maxHeight = scrollHeight;
+                    }
+
+                    profilesContainer.RemoveFromHierarchy();
+                    ApplyBottomRowChildStyle(profilesContainer);
+
+                    if (game.Theme.PortraitAlignment.Contains("Left"))
+                    {
+                        bottomComp.Insert(0, profilesContainer);
+                    }
+                    else
+                    {
+                        bottomComp.Add(profilesContainer);
+                    }
+                }
+                else
+                {
+                    if (hudScroll != null)
+                    {
+                        hudScroll.style.height = StyleKeyword.Null;
+                        hudScroll.style.maxHeight = StyleKeyword.Null;
+                    }
+
+                    profilesContainer.style.position = Position.Absolute;
+                    if (game.Theme.PortraitAlignment.Contains("Right"))
+                    {
+                        profilesContainer.style.right = 24;
+                    }
+                    else
+                    {
+                        profilesContainer.style.left = 24;
+                    }
+                    profilesContainer.style.top = 24;
+                }
+            }
+
+            // 8. Apply Dynamic Docking Layout configurations
+            ApplyDockingLayout(game.Theme.InventoryDockPosition, game.Theme.RoomItemsDockPosition, game.Theme.NavigationDockPosition, (float)game.Theme.SidebarWidth, (float)game.Theme.BottomBarHeight);
+        }
+
+        private IEnumerator LoadAndApplyThemeFontCoroutine(string path)
+        {
+            var fontName = System.IO.Path.GetFileNameWithoutExtension(path);
+            Font loadedFont = Font.CreateDynamicFontFromOSFont(fontName, 14);
+            if (loadedFont == null)
+            {
+                loadedFont = Resources.Load<Font>(fontName);
+            }
+            if (loadedFont != null)
+            {
+                _root.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromFont(loadedFont));
+            }
+            yield break;
+        }
+
+        private IEnumerator LoadThemeImageCoroutine(string relativePath, VisualElement element)
+        {
+            if (element == null || string.IsNullOrWhiteSpace(relativePath)) yield break;
+            string url = FormatLocalPathForWeb(relativePath);
+            using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url);
+            yield return req.SendWebRequest();
+            if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+            {
+                var tex = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
+                element.style.backgroundImage = new StyleBackground(tex);
+                if (element.name == "scene-image" || element.name == "narrative-panel")
+                {
+                    element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(Length.Percent(100), Length.Percent(100)));
+                }
+            }
+        }
+
+        private void ApplyGlassCardPaddingAndRadius(VisualElement element)
+        {
+            if (element == null) return;
+            element.style.width = 200;
+            element.style.height = 130;
+            element.style.paddingLeft = 12;
+            element.style.paddingRight = 12;
+            element.style.paddingTop = 12;
+            element.style.paddingBottom = 12;
+            element.style.borderTopLeftRadius = 8;
+            element.style.borderTopRightRadius = 8;
+            element.style.borderBottomLeftRadius = 8;
+            element.style.borderBottomRightRadius = 8;
+        }
+
+        private void ApplyBottomRowChildStyle(VisualElement element)
+        {
+            if (element == null) return;
+            element.style.flexGrow = 1;
+            element.style.flexShrink = 1;
+            element.style.flexBasis = 0;
+            element.style.height = Length.Percent(100);
+            element.style.width = StyleKeyword.Null;
+            element.RemoveFromClassList("glass-card");
+        }
+
+        private void ResetGlassCardStyle(VisualElement element)
+        {
+            if (element == null) return;
+            element.style.width = StyleKeyword.Null;
+            element.style.height = StyleKeyword.Null;
+            element.style.paddingLeft = StyleKeyword.Null;
+            element.style.paddingRight = StyleKeyword.Null;
+            element.style.paddingTop = StyleKeyword.Null;
+            element.style.paddingBottom = StyleKeyword.Null;
+            element.style.borderTopLeftRadius = StyleKeyword.Null;
+            element.style.borderTopRightRadius = StyleKeyword.Null;
+            element.style.borderBottomLeftRadius = StyleKeyword.Null;
+            element.style.borderBottomRightRadius = StyleKeyword.Null;
+            element.RemoveFromClassList("glass-card");
+        }
+
+        private void ApplyDockingLayout(string inventoryPos, string roomItemsPos, string navPos, float sidebarWidth, float bottomBarHeight)
+        {
+            var inventory = _root.Q<VisualElement>("inventory-container");
+            var roomLegend = _root.Q<VisualElement>("room-items-container");
+            var leftCompartment = _root.Q<VisualElement>("hud-left-compartment");
+            var rightSidebar = _root.Q<VisualElement>("right-sidebar-container");
+            var compassContainer = _root.Q<VisualElement>("compass-hud-container");
+            var bottomCompartment = _root.Q<VisualElement>("hud-bottom-compartment");
+            var rightCompartment = _root.Q<VisualElement>("hud-right-compartment");
+
+            // Hide/Show bottom compartment
+            bool hasBottomDock = string.Equals(inventoryPos, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                 string.Equals(roomItemsPos, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                 string.Equals(navPos, "Bottom", StringComparison.OrdinalIgnoreCase);
+            if (bottomCompartment != null)
+            {
+                bottomCompartment.style.display = hasBottomDock ? DisplayStyle.Flex : DisplayStyle.None;
+                if (hasBottomDock)
+                {
+                    bottomCompartment.style.height = bottomBarHeight;
+                }
+            }
+
+            // Hide right compartment if empty
+            if (rightCompartment != null)
+            {
+                bool rightSidebarEmpty = !string.Equals(inventoryPos, "Right", StringComparison.OrdinalIgnoreCase) &&
+                                         !string.Equals(roomItemsPos, "Right", StringComparison.OrdinalIgnoreCase) &&
+                                         !string.Equals(navPos, "Right", StringComparison.OrdinalIgnoreCase);
+                if (rightSidebarEmpty)
+                {
+                    rightCompartment.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    rightCompartment.style.display = DisplayStyle.Flex;
+                    if (rightSidebar != null)
+                    {
+                        rightSidebar.style.display = DisplayStyle.Flex;
+                        rightSidebar.style.width = sidebarWidth;
+                        rightSidebar.style.maxWidth = StyleKeyword.Null;
+                        rightSidebar.style.minWidth = StyleKeyword.Null;
+                    }
+                }
+            }
+
+            // Handle Room Items dock
+            if (roomLegend != null && leftCompartment != null && rightSidebar != null && bottomCompartment != null)
+            {
+                ResetGlassCardStyle(roomLegend);
+
+                if (string.Equals(roomItemsPos, "Left", StringComparison.OrdinalIgnoreCase))
+                {
+                    roomLegend.RemoveFromHierarchy();
+                    leftCompartment.Insert(0, roomLegend);
+                    roomLegend.style.width = sidebarWidth;
+                    roomLegend.style.height = StyleKeyword.Null;
+                    roomLegend.style.marginTop = StyleKeyword.Null;
+                    roomLegend.style.flexDirection = FlexDirection.Column;
+                }
+                else if (string.Equals(roomItemsPos, "Bottom", StringComparison.OrdinalIgnoreCase))
+                {
+                    roomLegend.RemoveFromHierarchy();
+                    bottomCompartment.Add(roomLegend);
+                    ApplyBottomRowChildStyle(roomLegend);
+                    roomLegend.style.marginTop = StyleKeyword.Null;
+                    roomLegend.style.flexDirection = FlexDirection.Column;
+                }
+                else // Right
+                {
+                    roomLegend.RemoveFromHierarchy();
+                    rightSidebar.Insert(0, roomLegend);
+                    roomLegend.style.width = StyleKeyword.Null;
+                    roomLegend.style.height = StyleKeyword.Null;
+                    roomLegend.style.marginTop = StyleKeyword.Null;
+                    roomLegend.style.flexDirection = FlexDirection.Column;
+                }
+            }
+
+            // Handle Inventory dock
+            if (inventory != null && leftCompartment != null && rightSidebar != null && bottomCompartment != null)
+            {
+                ResetGlassCardStyle(inventory);
+
+                if (string.Equals(inventoryPos, "Bottom", StringComparison.OrdinalIgnoreCase))
+                {
+                    inventory.RemoveFromHierarchy();
+                    bottomCompartment.Add(inventory);
+                    ApplyBottomRowChildStyle(inventory);
+                    inventory.style.marginTop = StyleKeyword.Null;
+                    inventory.style.flexDirection = FlexDirection.Column;
+                }
+                else if (string.Equals(inventoryPos, "Left", StringComparison.OrdinalIgnoreCase))
+                {
+                    inventory.RemoveFromHierarchy();
+                    leftCompartment.Insert(0, inventory);
+                    inventory.style.width = sidebarWidth;
+                    inventory.style.height = StyleKeyword.Null;
+                    inventory.style.marginTop = StyleKeyword.Null;
+                    inventory.style.flexDirection = FlexDirection.Column;
+                }
+                else // Right
+                {
+                    inventory.RemoveFromHierarchy();
+                    rightSidebar.Add(inventory);
+                    inventory.style.width = StyleKeyword.Null;
+                    inventory.style.height = StyleKeyword.Null;
+                    inventory.style.marginTop = StyleKeyword.Null;
+                    inventory.style.flexDirection = FlexDirection.Column;
+                }
+            }
+
+            // Handle Compass dock
+            if (compassContainer != null && leftCompartment != null && rightSidebar != null && bottomCompartment != null)
+            {
+                compassContainer.style.width = Length.Percent(100);
+                compassContainer.style.maxWidth = StyleKeyword.Null;
+
+                // Strip absolute overlay modes inside bottom dock
+                var dialOverlay = compassContainer.Q<VisualElement>("compass-dial-overlay");
+                var toggleBtn = compassContainer.Q<Button>("compass-toggle-btn");
+                var navTitle = compassContainer.Q<Label>("navigation-title-hud");
+
+                if (dialOverlay != null)
+                {
+                    dialOverlay.RemoveFromClassList("glass-card");
+                    dialOverlay.style.paddingLeft = StyleKeyword.Null;
+                    dialOverlay.style.paddingRight = StyleKeyword.Null;
+                    dialOverlay.style.paddingTop = StyleKeyword.Null;
+                    dialOverlay.style.paddingBottom = StyleKeyword.Null;
+                    dialOverlay.style.borderTopLeftRadius = StyleKeyword.Null;
+                    dialOverlay.style.borderTopRightRadius = StyleKeyword.Null;
+                    dialOverlay.style.borderBottomLeftRadius = StyleKeyword.Null;
+                    dialOverlay.style.borderBottomRightRadius = StyleKeyword.Null;
+                    dialOverlay.style.borderLeftWidth = 0;
+                    dialOverlay.style.borderRightWidth = 0;
+                    dialOverlay.style.borderTopWidth = 0;
+                    dialOverlay.style.borderBottomWidth = 0;
+                }
+
+                if (string.Equals(navPos, "Left", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (toggleBtn != null) toggleBtn.style.display = DisplayStyle.Flex;
+                    if (navTitle != null) navTitle.style.display = DisplayStyle.Flex;
+
+                    compassContainer.RemoveFromHierarchy();
+                    leftCompartment.Insert(0, compassContainer);
+                    compassContainer.style.alignItems = Align.FlexStart;
+                }
+                else if (string.Equals(navPos, "Bottom", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (toggleBtn != null) toggleBtn.style.display = DisplayStyle.None;
+                    if (navTitle != null) navTitle.style.display = DisplayStyle.None;
+
+                    if (dialOverlay != null)
+                    {
+                        dialOverlay.style.display = DisplayStyle.Flex;
+                        dialOverlay.style.opacity = 1f;
+                        dialOverlay.transform.scale = UnityEngine.Vector3.one;
+                    }
+
+                    compassContainer.RemoveFromHierarchy();
+                    bottomCompartment.Add(compassContainer);
+                    ApplyBottomRowChildStyle(compassContainer);
+                    // Give compass slightly more flex priority or horizontal width budget
+                    compassContainer.style.flexGrow = 1.3f;
+                    compassContainer.style.alignItems = Align.Center;
+                }
+                else // Right
+                {
+                    if (toggleBtn != null) toggleBtn.style.display = DisplayStyle.Flex;
+                    if (navTitle != null) navTitle.style.display = DisplayStyle.Flex;
+
+                    compassContainer.RemoveFromHierarchy();
+                    ResetGlassCardStyle(compassContainer);
+                    if (rightCompartment != null)
+                    {
+                        rightCompartment.Add(compassContainer);
+                    }
+                    compassContainer.style.alignItems = Align.Center; // Match center width stretch
+                }
+            }
         }
 
 
@@ -2081,6 +2528,25 @@ namespace RagNextPlayer.Managers
                 _roomActionsContainer.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
             if (_roomActionThumbnailWrapper != null)
                 _roomActionThumbnailWrapper.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+
+            var bottomCompartment = _root?.Q<VisualElement>("hud-bottom-compartment");
+            if (bottomCompartment != null)
+            {
+                if (isInteractive)
+                {
+                    bottomCompartment.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    var game = GameManager.Instance?.ActiveGame;
+                    bool hasBottomDock = game != null && game.Theme != null && (
+                                         string.Equals(game.Theme.InventoryDockPosition, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                         string.Equals(game.Theme.RoomItemsDockPosition, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                         string.Equals(game.Theme.NavigationDockPosition, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                         (game.Theme.PortraitAlignment != null && game.Theme.PortraitAlignment.Contains("Bottom")));
+                    bottomCompartment.style.display = hasBottomDock ? DisplayStyle.Flex : DisplayStyle.None;
+                }
+            }
 
             if (_rightSidebarContainer != null)
                 _rightSidebarContainer.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
@@ -2540,6 +3006,25 @@ namespace RagNextPlayer.Managers
             var sceneImage = _root?.Q<VisualElement>("scene-image");
             if (sceneImage == null) return;
 
+            var bottomCompartment = _root?.Q<VisualElement>("hud-bottom-compartment");
+            if (bottomCompartment != null)
+            {
+                if (settings != null && settings.Enabled)
+                {
+                    bottomCompartment.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    var game = GameManager.Instance?.ActiveGame;
+                    bool hasBottomDock = game != null && game.Theme != null && (
+                                         string.Equals(game.Theme.InventoryDockPosition, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                         string.Equals(game.Theme.RoomItemsDockPosition, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                         string.Equals(game.Theme.NavigationDockPosition, "Bottom", StringComparison.OrdinalIgnoreCase) ||
+                                         (game.Theme.PortraitAlignment != null && game.Theme.PortraitAlignment.Contains("Bottom")));
+                    bottomCompartment.style.display = hasBottomDock ? DisplayStyle.Flex : DisplayStyle.None;
+                }
+            }
+
             var vignette = _root?.Q<VisualElement>("media-vignette");
             if (vignette != null) vignette.pickingMode = PickingMode.Ignore;
 
@@ -2911,7 +3396,25 @@ namespace RagNextPlayer.Managers
 
         private System.Collections.IEnumerator AutoHideOverlayCoroutine(VisualElement overlay, float delay)
         {
-            yield return new UnityEngine.WaitForSeconds(delay);
+            float elapsedDelay = 0f;
+            while (elapsedDelay < delay)
+            {
+                if (RagNextPlayer.Runtime.ActionExecutor.ActiveRunner != null)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                elapsedDelay += UnityEngine.Time.deltaTime;
+                yield return null;
+            }
+
+            // Additional safety yield if runner is active at the end
+            while (RagNextPlayer.Runtime.ActionExecutor.ActiveRunner != null)
+            {
+                yield return null;
+            }
+
             if (overlay != null && overlay.parent != null)
             {
                 overlay.parent.Remove(overlay);
@@ -2928,6 +3431,12 @@ namespace RagNextPlayer.Managers
                 {
                     break;
                 }
+                yield return null;
+            }
+
+            // Pause cleanup if active runner is running
+            while (RagNextPlayer.Runtime.ActionExecutor.ActiveRunner != null)
+            {
                 yield return null;
             }
 
@@ -5234,7 +5743,25 @@ namespace RagNextPlayer.Managers
 
         private System.Collections.IEnumerator AutoHideToastCoroutine(VisualElement toast, float delay)
         {
-            yield return new UnityEngine.WaitForSeconds(delay);
+            float elapsedDelay = 0f;
+            while (elapsedDelay < delay)
+            {
+                if (RagNextPlayer.Runtime.ActionExecutor.ActiveRunner != null)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                elapsedDelay += UnityEngine.Time.deltaTime;
+                yield return null;
+            }
+
+            // Additional safety yield if runner is active at the end
+            while (RagNextPlayer.Runtime.ActionExecutor.ActiveRunner != null)
+            {
+                yield return null;
+            }
+
             if (toast != null && toast.parent != null)
             {
                 float elapsed = 0f;

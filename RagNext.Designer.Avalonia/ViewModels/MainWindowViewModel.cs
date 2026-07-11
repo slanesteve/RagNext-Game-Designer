@@ -877,10 +877,219 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         private CustomAttribute? _editingAttribute;
 
+        // Theme Customizer properties
+        public IEnumerable<MediaAsset> FontMediaAssets => CurrentGame?.MediaAssets.Where(a => 
+            a.Kind == MediaKind.Other || 
+            (a.RelativePath != null && (a.RelativePath.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase) || a.RelativePath.EndsWith(".otf", StringComparison.OrdinalIgnoreCase)))
+        ) ?? Enumerable.Empty<MediaAsset>();
+
+        public MediaAsset? SelectedThemeFont
+        {
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.FontAssetId);
+            set
+            {
+                if (CurrentGame != null && CurrentGame.Theme != null)
+                {
+                    CurrentGame.Theme.FontAssetId = value?.Id.ToString() ?? string.Empty;
+                    CurrentGame.Theme.FontName = value?.Name ?? "Outfit";
+                    OnPropertyChanged(nameof(SelectedThemeFont));
+                    _ = SaveGameAsync();
+                }
+            }
+        }
+
+        public MediaAsset? SelectedThemeBackground
+        {
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.BackgroundAssetId);
+            set
+            {
+                if (CurrentGame != null && CurrentGame.Theme != null)
+                {
+                    CurrentGame.Theme.BackgroundAssetId = value?.Id.ToString() ?? string.Empty;
+                    OnPropertyChanged(nameof(SelectedThemeBackground));
+                    _ = SaveGameAsync();
+                }
+            }
+        }
+
+        public MediaAsset? SelectedThemeFrame
+        {
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.FrameAssetId);
+            set
+            {
+                if (CurrentGame != null && CurrentGame.Theme != null)
+                {
+                    CurrentGame.Theme.FrameAssetId = value?.Id.ToString() ?? string.Empty;
+                    OnPropertyChanged(nameof(SelectedThemeFrame));
+                    _ = SaveGameAsync();
+                }
+            }
+        }
+
+        private ObservableCollection<string> _themePresets = new();
+        public ObservableCollection<string> ThemePresets { get => _themePresets; set => SetProperty(ref _themePresets, value); }
+
+        private string? _selectedThemePreset;
+        public string? SelectedThemePreset
+        {
+            get => _selectedThemePreset;
+            set
+            {
+                if (SetProperty(ref _selectedThemePreset, value) && !string.IsNullOrEmpty(value))
+                {
+                    LoadThemePreset(value);
+                    _ = SaveGameAsync();
+                }
+            }
+        }
+
+        private string _newPresetName = string.Empty;
+        public string NewPresetName { get => _newPresetName; set => SetProperty(ref _newPresetName, value); }
+
+        public void InitializePresets()
+        {
+            try
+            {
+                var path = GetPresetsDirectory();
+                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+                
+                var defaultPresetPath = Path.Combine(path, "Default.json");
+                if (!File.Exists(defaultPresetPath))
+                {
+                    var defaultTheme = new ThemeSettings
+                    {
+                        PrimaryBgColor = "#1e1e24",
+                        TextMainColor = "#ffffff",
+                        BorderAccentColor = "#4a4a5a",
+                        FontName = "Outfit",
+                        InventoryDockPosition = "Right",
+                        RoomItemsDockPosition = "Right",
+                        NavigationDockPosition = "Right",
+                        PanelPadding = 12,
+                        BorderRadius = 8,
+                        AspectRatio = 1.333,
+                        TextBoxAlignment = "Left",
+                        TextBoxWidth = 780,
+                        TextBoxHeight = 320,
+                        PortraitAlignment = "TopLeft",
+                        SidebarWidth = 360,
+                        BottomBarHeight = 220
+                    };
+                    var json = System.Text.Json.JsonSerializer.Serialize(defaultTheme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(defaultPresetPath, json);
+                }
+
+                ThemePresets.Clear();
+                foreach (var file in Directory.GetFiles(path, "*.json"))
+                {
+                    ThemePresets.Add(Path.GetFileNameWithoutExtension(file));
+                }
+
+                if (SelectedThemePreset == null && ThemePresets.Contains("Default"))
+                {
+                    _selectedThemePreset = "Default";
+                    OnPropertyChanged(nameof(SelectedThemePreset));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Presets] Failed to list presets: {ex.Message}");
+            }
+        }
+
+        private string GetPresetsDirectory() =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
+
+        private void SaveThemePreset()
+        {
+            if (string.IsNullOrWhiteSpace(NewPresetName) || CurrentGame?.Theme == null) return;
+            try
+            {
+                var dir = GetPresetsDirectory();
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+                var presetPath = Path.Combine(dir, $"{NewPresetName.Trim()}.json");
+                var json = System.Text.Json.JsonSerializer.Serialize(CurrentGame.Theme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(presetPath, json);
+
+                if (!ThemePresets.Contains(NewPresetName.Trim()))
+                {
+                    ThemePresets.Add(NewPresetName.Trim());
+                }
+                NewPresetName = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Presets] Failed to save preset: {ex.Message}");
+            }
+        }
+
+        private void LoadThemePreset(string presetName)
+        {
+            if (CurrentGame?.Theme == null) return;
+            try
+            {
+                var file = Path.Combine(GetPresetsDirectory(), $"{presetName}.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var loadedTheme = System.Text.Json.JsonSerializer.Deserialize<ThemeSettings>(json);
+                    if (loadedTheme != null)
+                    {
+                        CurrentGame.Theme.PrimaryBgColor = loadedTheme.PrimaryBgColor;
+                        CurrentGame.Theme.TextMainColor = loadedTheme.TextMainColor;
+                        CurrentGame.Theme.BorderAccentColor = loadedTheme.BorderAccentColor;
+                        CurrentGame.Theme.FontName = loadedTheme.FontName;
+                        CurrentGame.Theme.FontAssetId = loadedTheme.FontAssetId;
+                        CurrentGame.Theme.BackgroundAssetId = loadedTheme.BackgroundAssetId;
+                        CurrentGame.Theme.FrameAssetId = loadedTheme.FrameAssetId;
+                        CurrentGame.Theme.InventoryDockPosition = loadedTheme.InventoryDockPosition;
+                        CurrentGame.Theme.RoomItemsDockPosition = loadedTheme.RoomItemsDockPosition ?? "Right";
+                        CurrentGame.Theme.NavigationDockPosition = loadedTheme.NavigationDockPosition;
+                        CurrentGame.Theme.PanelPadding = loadedTheme.PanelPadding;
+                        CurrentGame.Theme.BorderRadius = loadedTheme.BorderRadius;
+                        CurrentGame.Theme.AspectRatio = loadedTheme.AspectRatio;
+                        CurrentGame.Theme.TextBoxAlignment = loadedTheme.TextBoxAlignment ?? "Left";
+                        CurrentGame.Theme.TextBoxWidth = loadedTheme.TextBoxWidth > 0 ? loadedTheme.TextBoxWidth : 780;
+                        CurrentGame.Theme.TextBoxHeight = loadedTheme.TextBoxHeight > 0 ? loadedTheme.TextBoxHeight : 320;
+                        CurrentGame.Theme.PortraitAlignment = loadedTheme.PortraitAlignment ?? "TopLeft";
+                        CurrentGame.Theme.SidebarWidth = loadedTheme.SidebarWidth > 0 ? loadedTheme.SidebarWidth : 360;
+                        CurrentGame.Theme.BottomBarHeight = loadedTheme.BottomBarHeight > 0 ? loadedTheme.BottomBarHeight : 220;
+
+                        OnPropertyChanged(nameof(SelectedThemeFont));
+                        OnPropertyChanged(nameof(SelectedThemeBackground));
+                        OnPropertyChanged(nameof(SelectedThemeFrame));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Presets] Failed to load preset: {ex.Message}");
+            }
+        }
+
+        private void DeleteThemePreset()
+        {
+            if (string.IsNullOrEmpty(SelectedThemePreset)) return;
+            try
+            {
+                var file = Path.Combine(GetPresetsDirectory(), $"{SelectedThemePreset}.json");
+                if (File.Exists(file)) File.Delete(file);
+                ThemePresets.Remove(SelectedThemePreset);
+                SelectedThemePreset = null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Presets] Failed to delete preset: {ex.Message}");
+            }
+        }
+
         // Commands
         public ICommand NavigateCommand { get; }
         public ICommand AddSplashScreenCommand { get; }
         public ICommand DeleteSplashScreenCommand { get; }
+        public ICommand SaveThemePresetCommand { get; }
+        public ICommand DeleteThemePresetCommand { get; }
         public ICommand NewGameCommand { get; }
         public ICommand ShowLoadGameCommand { get; }
         public ICommand LoadSelectedGameCommand { get; }
@@ -1035,11 +1244,18 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 CurrentGame = g; 
                 OnPropertyChanged(nameof(Player));
                 OnPropertyChanged(nameof(SplashScreen));
+                OnPropertyChanged(nameof(SelectedThemeFont));
+                OnPropertyChanged(nameof(SelectedThemeBackground));
+                OnPropertyChanged(nameof(SelectedThemeFrame));
+                InitializePresets();
                 Media.Refresh();
             };
 
             NavigateCommand = new Command<string>(view => ActiveView = view ?? "Dashboard");
             ToggleAssetsSidebarCommand = new Command(() => IsAssetsSidebarOpen = !IsAssetsSidebarOpen);
+
+            SaveThemePresetCommand = new Command(() => SaveThemePreset());
+            DeleteThemePresetCommand = new Command(() => DeleteThemePreset());
 
             AddSplashScreenCommand = new Command(() =>
             {

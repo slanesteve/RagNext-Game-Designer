@@ -1,0 +1,64 @@
+using System;
+
+namespace RagsCore.Models
+{
+    public class ThemeSettings : BaseModel
+    {
+        private string _primaryBgColor = "#1e1e24";
+        public string PrimaryBgColor { get => _primaryBgColor; set => SetProperty(ref _primaryBgColor, value); }
+
+        private string _textMainColor = "#ffffff";
+        public string TextMainColor { get => _textMainColor; set => SetProperty(ref _textMainColor, value); }
+
+        private string _borderAccentColor = "#4a4a5a";
+        public string BorderAccentColor { get => _borderAccentColor; set => SetProperty(ref _borderAccentColor, value); }
+
+        private string _fontName = "Outfit";
+        public string FontName { get => _fontName; set => SetProperty(ref _fontName, value); }
+
+        private string _fontAssetId = string.Empty;
+        public string FontAssetId { get => _fontAssetId; set => SetProperty(ref _fontAssetId, value); }
+
+        private string _backgroundAssetId = string.Empty;
+        public string BackgroundAssetId { get => _backgroundAssetId; set => SetProperty(ref _backgroundAssetId, value); }
+
+        private string _frameAssetId = string.Empty;
+        public string FrameAssetId { get => _frameAssetId; set => SetProperty(ref _frameAssetId, value); }
+
+        private string _inventoryDockPosition = "Right"; // "Bottom", "Left", "Right"
+        public string InventoryDockPosition { get => _inventoryDockPosition; set => SetProperty(ref _inventoryDockPosition, value); }
+
+        private string _roomItemsDockPosition = "Right"; // "Right", "Left", "Bottom"
+        public string RoomItemsDockPosition { get => _roomItemsDockPosition; set => SetProperty(ref _roomItemsDockPosition, value); }
+
+        private string _navigationDockPosition = "Right"; // "Right", "Left", "Bottom"
+        public string NavigationDockPosition { get => _navigationDockPosition; set => SetProperty(ref _navigationDockPosition, value); }
+
+        private double _panelPadding = 12;
+        public double PanelPadding { get => _panelPadding; set => SetProperty(ref _panelPadding, value); }
+
+        private double _borderRadius = 8;
+        public double BorderRadius { get => _borderRadius; set => SetProperty(ref _borderRadius, value); }
+
+        private double _aspectRatio = 1.333; // Scene image aspect ratio
+        public double AspectRatio { get => _aspectRatio; set => SetProperty(ref _aspectRatio, value); }
+
+        private string _textBoxAlignment = "Left"; // "Left", "Center", "Right"
+        public string TextBoxAlignment { get => _textBoxAlignment; set => SetProperty(ref _textBoxAlignment, value); }
+
+        private double _textBoxWidth = 780; // pixels
+        public double TextBoxWidth { get => _textBoxWidth; set => SetProperty(ref _textBoxWidth, value); }
+
+        private double _textBoxHeight = 320; // pixels
+        public double TextBoxHeight { get => _textBoxHeight; set => SetProperty(ref _textBoxHeight, value); }
+
+        private string _portraitAlignment = "TopLeft"; // "TopLeft", "TopRight", "BottomLeft", "BottomRight"
+        public string PortraitAlignment { get => _portraitAlignment; set => SetProperty(ref _portraitAlignment, value); }
+
+        private double _sidebarWidth = 360; // pixels
+        public double SidebarWidth { get => _sidebarWidth; set => SetProperty(ref _sidebarWidth, value); }
+
+        private double _bottomBarHeight = 220; // pixels
+        public double BottomBarHeight { get => _bottomBarHeight; set => SetProperty(ref _bottomBarHeight, value); }
+    }
+}

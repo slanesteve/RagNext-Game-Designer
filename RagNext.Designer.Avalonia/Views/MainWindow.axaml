@@ -94,30 +94,33 @@
 
             <!-- Left Sidebar Navigation -->
             <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="12,16">
-                <Grid RowDefinitions="*">
-                    <!-- Nav Tabs -->
-                    <StackPanel Grid.Row="0" Spacing="6" IsEnabled="{Binding HasGame}">
-                        <TextBlock Text="DESIGNER" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="8,0,0,8" LetterSpacing="1"/>
-                        
-                        <Button Classes="nav" Content="🏠 Project Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Dashboard, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="👤 Player &amp; Start Config" Command="{Binding NavigateCommand}" CommandParameter="Player" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Player, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="🚪 Rooms Editor" Command="{Binding NavigateCommand}" CommandParameter="Rooms" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Rooms, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="👥 Characters Database" Command="{Binding NavigateCommand}" CommandParameter="Characters" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Characters, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="📦 Game Objects &amp; Items" Command="{Binding NavigateCommand}" CommandParameter="Objects" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Objects, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="📊 Global Variables" Command="{Binding NavigateCommand}" CommandParameter="Variables" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Variables, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="⏱️ System Timers" Command="{Binding NavigateCommand}" CommandParameter="Timers" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Timers, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="📜 Global Functions" Command="{Binding NavigateCommand}" CommandParameter="Functions" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Functions, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="🎨 Splash Screen" Command="{Binding NavigateCommand}" CommandParameter="SplashScreen" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=SplashScreen, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="📊 Status Elements" Command="{Binding NavigateCommand}" CommandParameter="StatusBar" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=StatusBar, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="📂 Media Asset Library" Command="{Binding NavigateCommand}" CommandParameter="Media" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Media, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="🛠️ Action Library" Command="{Binding NavigateCommand}" CommandParameter="ActionLibrary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=ActionLibrary, Converter={x:Static ObjectConverters.Equal}}"/>
-
-                        <TextBlock Text="DIAGNOSTICS &amp; DISTRIBUTION" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="8,16,0,8" LetterSpacing="1"/>
-                        <Button Classes="nav" Content="🔍 Validation Engine" Command="{Binding NavigateCommand}" CommandParameter="Validation" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Validation, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="🚀 Publisher" Command="{Binding NavigateCommand}" CommandParameter="Publish" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Publish, Converter={x:Static ObjectConverters.Equal}}"/>
-                        <Button Classes="nav" Content="⚙️ Workspace Preferences" Command="{Binding NavigateCommand}" CommandParameter="Preferences" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Preferences, Converter={x:Static ObjectConverters.Equal}}"/>
-                    </StackPanel>
-                </Grid>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid RowDefinitions="*">
+            <!-- Nav Tabs -->
+            <StackPanel Grid.Row="0" Spacing="6" IsEnabled="{Binding HasGame}">
+            <TextBlock Text="DESIGNER" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="8,0,0,8" LetterSpacing="1"/>
+            
+            <Button Classes="nav" Content="🏠 Project Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Dashboard, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="👤 Player &amp; Start Config" Command="{Binding NavigateCommand}" CommandParameter="Player" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Player, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="🚪 Rooms Editor" Command="{Binding NavigateCommand}" CommandParameter="Rooms" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Rooms, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="👥 Characters Database" Command="{Binding NavigateCommand}" CommandParameter="Characters" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Characters, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="📦 Game Objects &amp; Items" Command="{Binding NavigateCommand}" CommandParameter="Objects" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Objects, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="📊 Global Variables" Command="{Binding NavigateCommand}" CommandParameter="Variables" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Variables, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="⏱️ System Timers" Command="{Binding NavigateCommand}" CommandParameter="Timers" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Timers, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="📜 Global Functions" Command="{Binding NavigateCommand}" CommandParameter="Functions" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Functions, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="🎨 Splash Screen" Command="{Binding NavigateCommand}" CommandParameter="SplashScreen" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=SplashScreen, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="🎨 HUD Theme Editor" Command="{Binding NavigateCommand}" CommandParameter="Theme" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Theme, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="📊 Status Elements" Command="{Binding NavigateCommand}" CommandParameter="StatusBar" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=StatusBar, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="📂 Media Asset Library" Command="{Binding NavigateCommand}" CommandParameter="Media" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Media, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="🛠️ Action Library" Command="{Binding NavigateCommand}" CommandParameter="ActionLibrary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=ActionLibrary, Converter={x:Static ObjectConverters.Equal}}"/>
+            
+            <TextBlock Text="DIAGNOSTICS &amp; DISTRIBUTION" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="8,16,0,8" LetterSpacing="1"/>
+            <Button Classes="nav" Content="🔍 Validation Engine" Command="{Binding NavigateCommand}" CommandParameter="Validation" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Validation, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="🚀 Publisher" Command="{Binding NavigateCommand}" CommandParameter="Publish" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Publish, Converter={x:Static ObjectConverters.Equal}}"/>
+            <Button Classes="nav" Content="⚙️ Workspace Preferences" Command="{Binding NavigateCommand}" CommandParameter="Preferences" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Preferences, Converter={x:Static ObjectConverters.Equal}}"/>
+            </StackPanel>
+            </Grid>
+            </ScrollViewer>
             </Border>
 
             <!-- Main Workstation Canvas -->
@@ -2176,9 +2179,339 @@
                         </StackPanel>
                     </Grid>
                     </StackPanel>
-                </ScrollViewer>
-
-                <!-- 5b. Status Elements Tab -->
+                    </ScrollViewer>
+                    
+                    <!-- 7c. HUD Theme Editor Tab -->
+                    <ScrollViewer IsVisible="{Binding ActiveView, ConverterParameter=Theme, Converter={x:Static ObjectConverters.Equal}}">
+                    <StackPanel Spacing="16" Margin="0,0,0,20">
+                    <Grid ColumnDefinitions="*, *" HorizontalAlignment="Stretch" DataContext="{Binding CurrentGame.Theme}" x:DataType="models:ThemeSettings">
+                    <!-- Left Column: Customization Parameters -->
+                    <StackPanel Grid.Column="0" Spacing="20" Margin="0,0,24,0">
+                    <TextBlock Text="HUD Theme Editor" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
+                    
+                    <!-- Preset Manager -->
+                    <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="14">
+                    <TextBlock Text="💾 Theme Presets &amp; Library" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
+                    
+                    <Grid ColumnDefinitions="*,Auto">
+                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ThemePresets}" 
+                    SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemePreset, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Theme Preset..."/>
+                    <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteThemePresetCommand}" Margin="8,0,0,0"/>
+                    </Grid>
+                    
+                    <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).NewPresetName, Mode=TwoWay}" PlaceholderText="Preset Name..." Background="{DynamicResource InputBg}"/>
+                    <Button Grid.Column="1" Content="Save Preset" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveThemePresetCommand}" Margin="8,0,0,0"/>
+                    </Grid>
+                    </StackPanel>
+                    </Border>
+                    
+                    <!-- Panel 1: Colors & Rounded Corners -->
+                    <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="14">
+                    <TextBlock Text="🎨 Colors &amp; Styling" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
+                    
+                    <TextBlock Text="Primary HUD Background Color:" Foreground="{DynamicResource TextMuted}" FontSize="12"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Text="{Binding PrimaryBgColor, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                    <ColorPicker Color="{Binding PrimaryBgColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0" Grid.Column="1"/>
+                    </Grid>
+                    
+                    <TextBlock Text="Main Narrative Text Color:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Text="{Binding TextMainColor, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                    <ColorPicker Color="{Binding TextMainColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0" Grid.Column="1"/>
+                    </Grid>
+                    
+                    <TextBlock Text="Accent/Border Color:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Text="{Binding BorderAccentColor, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                    <ColorPicker Color="{Binding BorderAccentColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0" Grid.Column="1"/>
+                    </Grid>
+                    
+                    <TextBlock Text="Corner Radius (Rounding):" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <Slider Value="{Binding BorderRadius, Mode=TwoWay}" Minimum="0" Maximum="32" IsSnapToTickEnabled="True" TickFrequency="1" Grid.Column="0"/>
+                    <TextBlock Text="{Binding BorderRadius, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
+                    
+                    <TextBlock Text="Panel Padding (spacing inside HUD panels):" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <Slider Value="{Binding PanelPadding, Mode=TwoWay}" Minimum="0" Maximum="40" IsSnapToTickEnabled="True" TickFrequency="1" Grid.Column="0"/>
+                    <TextBlock Text="{Binding PanelPadding, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
+                    </StackPanel>
+                    </Border>
+                    
+                    <!-- Panel 2: Alignment & Docking -->
+                    <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="14">
+                    <TextBlock Text="🧱 Layout Alignment &amp; Docking" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
+                    
+                    <TextBlock Text="Room Items Panel Dock Position:" Foreground="{DynamicResource TextMuted}" FontSize="12"/>
+                    <ComboBox SelectedItem="{Binding RoomItemsDockPosition, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                    <x:String>Right</x:String>
+                    <x:String>Left</x:String>
+                    <x:String>Bottom</x:String>
+                    </ComboBox>
+                    
+                    <TextBlock Text="Inventory Panel Dock Position:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <ComboBox SelectedItem="{Binding InventoryDockPosition, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                    <x:String>Right</x:String>
+                    <x:String>Left</x:String>
+                    <x:String>Bottom</x:String>
+                    </ComboBox>
+                    
+                    <TextBlock Text="Directions Compass Dock Position:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <ComboBox SelectedItem="{Binding NavigationDockPosition, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                    <x:String>Right</x:String>
+                    <x:String>Left</x:String>
+                    <x:String>Bottom</x:String>
+                    </ComboBox>
+                    
+                    <Separator Height="1" Background="{DynamicResource BorderBrush}" Margin="0,8,0,8"/>
+                    
+                    <TextBlock Text="Main Narrative Text Box Alignment:" Foreground="{DynamicResource TextMuted}" FontSize="12"/>
+                    <ComboBox SelectedItem="{Binding TextBoxAlignment, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                    <x:String>Left</x:String>
+                    <x:String>Center</x:String>
+                    <x:String>Right</x:String>
+                    </ComboBox>
+                    
+                    <TextBlock Text="Narrative Text Box Width (pixels):" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <Slider Value="{Binding TextBoxWidth, Mode=TwoWay}" Minimum="300" Maximum="1000" IsSnapToTickEnabled="True" TickFrequency="10" Grid.Column="0"/>
+                    <TextBlock Text="{Binding TextBoxWidth, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
+                    
+                    <TextBlock Text="Narrative Text Box Height (pixels):" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <Slider Value="{Binding TextBoxHeight, Mode=TwoWay}" Minimum="100" Maximum="600" IsSnapToTickEnabled="True" TickFrequency="10" Grid.Column="0"/>
+                    <TextBlock Text="{Binding TextBoxHeight, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
+                    
+                    <Separator Height="1" Background="{DynamicResource BorderBrush}" Margin="0,8,0,8"/>
+                    
+                    <TextBlock Text="Sidebars Panel Width (pixels):" Foreground="{DynamicResource TextMuted}" FontSize="12"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <Slider Value="{Binding SidebarWidth, Mode=TwoWay}" Minimum="200" Maximum="500" IsSnapToTickEnabled="True" TickFrequency="10" Grid.Column="0"/>
+                    <TextBlock Text="{Binding SidebarWidth, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
+                    
+                    <TextBlock Text="Player Portrait Panel Alignment:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <ComboBox SelectedItem="{Binding PortraitAlignment, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                    <x:String>TopLeft</x:String>
+                    <x:String>TopRight</x:String>
+                    <x:String>BottomLeft</x:String>
+                    <x:String>BottomRight</x:String>
+                    </ComboBox>
+                    </StackPanel>
+                    </Border>
+                    
+                    <!-- Panel 3: Typography & Assets -->
+                    <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="14">
+                    <TextBlock Text="🖼️ Assets &amp; Fonts" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
+                    
+                    <TextBlock Text="Custom Font Asset:" Foreground="{DynamicResource TextMuted}" FontSize="12"/>
+                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontMediaAssets}" 
+                    SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeFont, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Font Asset (TTF/OTF)..."/>
+                    
+                    <TextBlock Text="HUD Background Image/Texture:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" 
+                    SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeBackground, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Background Texture..."/>
+                    
+                    <TextBlock Text="Decorative Frame Image:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" 
+                    SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeFrame, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Frame Border Asset..."/>
+                    
+                    <TextBlock Text="Scene Viewport Aspect Ratio (Width / Height):" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <Slider Value="{Binding AspectRatio, Mode=TwoWay}" Minimum="0.5" Maximum="2.5" SmallChange="0.05" LargeChange="0.1" Grid.Column="0"/>
+                    <TextBlock Text="{Binding AspectRatio, StringFormat='{}{0:F2}'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
+                    </StackPanel>
+                    </Border>
+                    </StackPanel>
+                    
+                    <!-- Right Column: Live Mockup HUD Preview -->
+                    <StackPanel Grid.Column="1" Spacing="20" VerticalAlignment="Top">
+                    <TextBlock Text="HUD Layout Preview" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
+                    
+                    <Border Background="#0f0f12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+                    <Viewbox Stretch="Uniform" Width="480" Height="380">
+                    <Border Width="1000" Height="800" Background="#111115" BorderBrush="#3f3f50" BorderThickness="2" CornerRadius="{Binding BorderRadius}" ClipToBounds="True">
+                    <!-- Overall HUD Container layout -->
+                    <DockPanel LastChildFill="True" Margin="{Binding PanelPadding}">
+                    
+                    <!-- Title Bar -->
+                    <Border DockPanel.Dock="Top" Height="40" Background="#1c1c24" BorderBrush="#3a3a48" BorderThickness="1.5" Margin="0,0,0,12" CornerRadius="6">
+                    <TextBlock Text="BATHROOM" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" FontWeight="Bold" Foreground="#ffffff"/>
+                    </Border>
+                    
+                    <!-- Left Dock Stack Compartment -->
+                    <StackPanel DockPanel.Dock="Left" Width="{Binding SidebarWidth}" Margin="0,0,12,0" Spacing="12" VerticalAlignment="Stretch">
+                    <StackPanel.IsVisible>
+                    <MultiBinding Converter="{x:Static views:LeftDockVisibleConverter.Instance}">
+                    <Binding Path="RoomItemsDockPosition"/>
+                    <Binding Path="InventoryDockPosition"/>
+                    <Binding Path="NavigationDockPosition"/>
+                    </MultiBinding>
+                    </StackPanel.IsVisible>
+                    <!-- Left Room Items -->
+                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
+                    <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    </Border>
+                    
+                    <!-- Left Inventory -->
+                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
+                    <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    </Border>
+                    
+                    <!-- Left Compass -->
+                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
+                    <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    </Border>
+                    </StackPanel>
+                    
+                    <!-- Right Dock Stack Compartment -->
+                    <StackPanel DockPanel.Dock="Right" Width="{Binding SidebarWidth}" Margin="12,0,0,0" Spacing="12" VerticalAlignment="Stretch">
+                    <StackPanel.IsVisible>
+                    <MultiBinding Converter="{x:Static views:RightDockVisibleConverter.Instance}">
+                    <Binding Path="RoomItemsDockPosition"/>
+                    <Binding Path="InventoryDockPosition"/>
+                    <Binding Path="NavigationDockPosition"/>
+                    </MultiBinding>
+                    </StackPanel.IsVisible>
+                    <!-- Right Room Items -->
+                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
+                    <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    </Border>
+                    
+                    <!-- Right Inventory -->
+                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
+                    <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    </Border>
+                    
+                    <!-- Right Compass -->
+                    <Border Background="#252530" BorderBrush="#4a4a5f" BorderThickness="1.5" CornerRadius="6" Padding="12" Height="180"
+                    IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
+                    <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                    </Border>
+                    </StackPanel>
+                    
+                    <!-- Main Content Area: Viewport extending all the way to the bottom with overlapping elements -->
+                    <Grid>
+                    <!-- Scene Image Background (extends all the way to the bottom!) -->
+                    <Border BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToColorConverter.Instance}}" BorderThickness="2.5" CornerRadius="6" Background="#1c1c24" ClipToBounds="True">
+                    <Grid>
+                    <!-- Custom frame texture simulation -->
+                    <Border BorderBrush="#ffaa00" BorderThickness="5" IsVisible="{Binding FrameAssetId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Opacity="0.5"/>
+                    <TextBlock Text="🖼️ Scene Background Viewport" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Foreground="#555566"/>
+                    </Grid>
+                    </Border>
+                    
+                    <!-- Top Player Portrait Panel (Overlay, only visible if aligned to Top!) -->
+                    <Border Width="160" Height="220" Margin="16" Background="#282835" BorderBrush="#4a4a5a" BorderThickness="2" CornerRadius="8" Padding="12"
+                    HorizontalAlignment="{Binding PortraitAlignment, Converter={x:Static views:PortraitHorizontalAlignmentConverter.Instance}}"
+                    VerticalAlignment="Top"
+                    IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=Top}">
+                    <StackPanel Spacing="8">
+                    <Ellipse Width="80" Height="80" Fill="#444455" Stroke="#8E2DE2" StrokeThickness="3" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Joe" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="#ffffff"/>
+                    <TextBlock Text="Stats panel..." HorizontalAlignment="Center" FontSize="11" Foreground="#aaaaaa"/>
+                    </StackPanel>
+                    </Border>
+                    
+                    <!-- Bottom Overlays (Narrative Text box + bottom-docked items stacked vertically) -->
+                    <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Margin="16" Spacing="12">
+                    <!-- Narrative Text Panel -->
+                    <Border Background="#282835" BorderBrush="#4a4a5a" BorderThickness="2" CornerRadius="8" Padding="16"
+                    HorizontalAlignment="{Binding TextBoxAlignment}"
+                    Width="{Binding TextBoxWidth}"
+                    Height="{Binding TextBoxHeight}">
+                    <TextBlock Text="Lorem ipsum dolor sit amet, adventure text panel. You are inside the custom HUD layout overlaying the room scene." 
+                    Foreground="#ffffff" FontSize="13" TextWrapping="Wrap"/>
+                    </Border>
+                    
+                    <!-- Bottom Dock Stack Compartment (Shared Glass Border) -->
+                    <Border Background="#282835" BorderBrush="#4a4a5a" BorderThickness="2" CornerRadius="8" Padding="12"
+                            Height="{Binding BottomBarHeight}"
+                            HorizontalAlignment="Center">
+                        <Border.IsVisible>
+                            <MultiBinding Converter="{x:Static views:BottomDockVisibleConverter.Instance}">
+                                <Binding Path="InventoryDockPosition"/>
+                                <Binding Path="RoomItemsDockPosition"/>
+                                <Binding Path="NavigationDockPosition"/>
+                                <Binding Path="PortraitAlignment"/>
+                            </MultiBinding>
+                        </Border.IsVisible>
+                        <StackPanel Spacing="12" Orientation="Horizontal" VerticalAlignment="Stretch">
+                            <!-- Bottom Portrait (if BottomLeft) -->
+                            <Border Width="200" Background="Transparent" Padding="12" VerticalAlignment="Stretch"
+                                    IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=BottomLeft}">
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Ellipse Width="48" Height="48" Fill="#444455" Stroke="#8E2DE2" StrokeThickness="2"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Joe" FontWeight="Bold" FontSize="12" Foreground="#ffffff"/>
+                                        <TextBlock Text="Stats..." FontSize="10" Foreground="#aaaaaa"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Bottom Room Items -->
+                            <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
+                                    IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
+                                <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                            </Border>
+                            
+                            <!-- Bottom Inventory -->
+                            <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
+                                    IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
+                                <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                            </Border>
+                            
+                            <!-- Bottom Compass -->
+                            <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
+                                    IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
+                                <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#ffffff" FontWeight="Bold"/>
+                            </Border>
+                            
+                            <!-- Bottom Portrait (if BottomRight) -->
+                            <Border Width="200" Background="Transparent" Padding="12" VerticalAlignment="Stretch"
+                                    IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=BottomRight}">
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Ellipse Width="48" Height="48" Fill="#444455" Stroke="#8E2DE2" StrokeThickness="2"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Joe" FontWeight="Bold" FontSize="12" Foreground="#ffffff"/>
+                                        <TextBlock Text="Stats..." FontSize="10" Foreground="#aaaaaa"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                    </StackPanel>
+                    </Grid>
+                    </DockPanel>
+                    </Border>
+                    </Viewbox>
+                    </Border>
+                    </StackPanel>
+                    </Grid>
+                    </StackPanel>
+                    </ScrollViewer>
+                    
+                    <!-- 5b. Status Elements Tab -->
                 <Grid IsVisible="{Binding ActiveView, ConverterParameter=StatusBar, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
                     <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
                         <Grid RowDefinitions="Auto,*,Auto">

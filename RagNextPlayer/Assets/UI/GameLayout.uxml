@@ -38,7 +38,9 @@
             <ui:VisualElement name="floating-player-card" class="glass-card" style="padding: 12px; flex-direction: row; align-items: flex-start; column-gap: 12px; border-radius: 56px 16px 16px 56px; border-width: 1px; border-color: rgba(0, 188, 212, 0.4);">
               <ui:VisualElement style="flex-direction: column; align-items: flex-start; max-width: 180px;">
                 <ui:VisualElement name="player-portrait" class="player-portrait" style="width: 80px; height: 80px; border-radius: 40px; border-width: 2.5px; border-color: #00bcd4; align-self: center;" />
-                <ui:VisualElement name="player-hud-container" style="flex-direction: column; align-items: flex-start; margin-top: 6px; margin-left: 16px; gap: 4px; width: 100%; max-width: 180px;" />
+                <ui:ScrollView name="player-hud-scroll" style="margin-top: 6px; width: 100%; max-width: 180px;" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden">
+                  <ui:VisualElement name="player-hud-container" style="flex-direction: column; align-items: flex-start; margin-left: 16px; gap: 4px; width: 100%;" />
+                </ui:ScrollView>
               </ui:VisualElement>
               <ui:VisualElement name="player-details" style="flex-direction: column; margin-top: 8px;">
                 <ui:Label name="player-name" class="player-name" text="Player" style="font-weight: bold; font-size: 14px; color: #ffffff;" />
@@ -59,6 +61,9 @@
                            horizontal-scroller-visibility="Hidden" style="flex-grow: 1;" />
           </ui:VisualElement>
 
+          <!-- Bottom Compartment for Docked Elements (Placed in one row, next to each other left to right) -->
+          <ui:VisualElement name="hud-bottom-compartment" class="glass-card" picking-mode="Position" style="flex-direction: row; justify-content: space-around; align-items: stretch; height: 220px; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-top: 12px; display: none;" />
+
         </ui:VisualElement>
 
         <!-- Right Compartment: Interactive lists and collapsible compass -->
@@ -66,11 +71,11 @@
           
           <!-- Transparent Sidebar (Items and Inventory tabs) -->
           <ui:VisualElement name="right-sidebar-container" class="right-column glass-card" picking-mode="Position" style="flex-grow: 1; flex-shrink: 1; min-height: 0; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-bottom: 20px;">
-            <ui:VisualElement name="room-legend" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; flex-shrink: 1; min-height: 0; margin-bottom: 0; flex-direction: column;">
-              
+            <!-- Room Items Container -->
+            <ui:VisualElement name="room-items-container" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; flex-shrink: 1; min-height: 0; margin-bottom: 12px; flex-direction: column;">
               <!-- Room Items Section -->
               <ui:Label text="Room Items" class="section-header" style="margin-bottom: 6px; color: #00bcd4; -unity-font-style: bold;" />
-              <ui:ScrollView name="room-items-scroll" style="flex-grow: 1; flex-basis: 0; flex-shrink: 1; min-height: 0; margin-bottom: 12px;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
+              <ui:ScrollView name="room-items-scroll" style="flex-grow: 1; flex-basis: 0; flex-shrink: 1; min-height: 0;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
                 <ui:VisualElement name="characters-section">
                   <ui:VisualElement name="characters-list" class="entity-list" />
                 </ui:VisualElement>
@@ -78,9 +83,12 @@
                   <ui:VisualElement name="objects-list" class="entity-list" />
                 </ui:VisualElement>
               </ui:ScrollView>
+            </ui:VisualElement>
 
-              <ui:VisualElement class="legend-separator" style="margin: 4px 0 8px 0; height: 1px; background-color: rgba(0, 188, 212, 0.2);" />
+            <ui:VisualElement class="legend-separator" style="margin: 4px 0 8px 0; height: 1px; background-color: rgba(0, 188, 212, 0.2);" />
 
+            <!-- Inventory Container -->
+            <ui:VisualElement name="inventory-container" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; flex-shrink: 1; min-height: 0; flex-direction: column;">
               <!-- Inventory Section -->
               <ui:Label text="Inventory" class="section-header" style="margin-bottom: 6px; color: #00bcd4; -unity-font-style: bold;" />
               <ui:ScrollView name="inventory-scroll" style="flex-grow: 1; flex-basis: 0; flex-shrink: 1; min-height: 0;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
@@ -88,7 +96,6 @@
                   <ui:VisualElement name="inventory-list" class="entity-list" />
                 </ui:VisualElement>
               </ui:ScrollView>
-
             </ui:VisualElement>
           </ui:VisualElement>
 
