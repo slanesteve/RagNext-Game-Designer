@@ -429,6 +429,17 @@ namespace RagNextPlayer.Managers
             _promptInputMenu       = _root.Q<VisualElement>("prompt-input-menu");
             _promptInputMessage    = _root.Q<Label>("prompt-input-message");
             _promptTextField       = _root.Q<TextField>("prompt-text-field");
+            if (_promptTextField is not null)
+            {
+                _promptTextField.RegisterCallback<KeyDownEvent>(evt =>
+                {
+                    if (evt.keyCode == UnityEngine.KeyCode.Return || evt.keyCode == UnityEngine.KeyCode.KeypadEnter)
+                    {
+                        SubmitPromptInput();
+                        evt.StopPropagation();
+                    }
+                });
+            }
             _promptSelectionScroll = _root.Q<ScrollView>("prompt-selection-scroll");
             _promptSubmitBtn       = _root.Q<Button>("prompt-submit-btn");
 
@@ -2056,8 +2067,53 @@ namespace RagNextPlayer.Managers
         {
             if (game?.Theme == null || _root == null) return;
 
+            // Fetch default colors from the theme structure
+            string primaryBgStr = game.Theme.PrimaryBgColor;
+            string textMainStr = game.Theme.TextMainColor;
+            string borderAccentStr = game.Theme.BorderAccentColor;
+
+            // Apply preset overrides if the theme.preset variable is set mid-game
+            var presetVar = game.Variables.Find(v => string.Equals(v.Name, "theme.preset", StringComparison.OrdinalIgnoreCase))?.Value;
+            if (!string.IsNullOrEmpty(presetVar))
+            {
+                if (string.Equals(presetVar, "pink", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "wife", StringComparison.OrdinalIgnoreCase))
+                {
+                    primaryBgStr = "#FFF0F5";
+                    textMainStr = "#4A1525";
+                    borderAccentStr = "#FF69B4";
+                }
+                else if (string.Equals(presetVar, "blue", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "husband", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "man", StringComparison.OrdinalIgnoreCase))
+                {
+                    primaryBgStr = "#F0F8FF";
+                    textMainStr = "#0B3C5D";
+                    borderAccentStr = "#328CC1";
+                }
+                else if (string.Equals(presetVar, "dark", StringComparison.OrdinalIgnoreCase))
+                {
+                    primaryBgStr = "#121214";
+                    textMainStr = "#E0E0E0";
+                    borderAccentStr = "#4A4A5A";
+                }
+                else if (string.Equals(presetVar, "glass", StringComparison.OrdinalIgnoreCase))
+                {
+                    primaryBgStr = "#0D0E12";
+                    textMainStr = "#E0E0E8";
+                    borderAccentStr = "#00BCD4";
+                }
+            }
+
+            // Apply fine-grained color overrides if specific theme.color variables are set
+            var bgVar = game.Variables.Find(v => string.Equals(v.Name, "theme.primaryBgColor", StringComparison.OrdinalIgnoreCase))?.Value;
+            if (!string.IsNullOrEmpty(bgVar)) primaryBgStr = bgVar;
+
+            var textVar = game.Variables.Find(v => string.Equals(v.Name, "theme.textMainColor", StringComparison.OrdinalIgnoreCase))?.Value;
+            if (!string.IsNullOrEmpty(textVar)) textMainStr = textVar;
+
+            var borderVar = game.Variables.Find(v => string.Equals(v.Name, "theme.borderAccentColor", StringComparison.OrdinalIgnoreCase))?.Value;
+            if (!string.IsNullOrEmpty(borderVar)) borderAccentStr = borderVar;
+
             // 1. Apply Colors to Root & Panels
-            if (TryParseHtmlColor(game.Theme.PrimaryBgColor, out var primaryBg))
+            if (TryParseHtmlColor(primaryBgStr, out var primaryBg))
             {
                 _root.style.backgroundColor = primaryBg;
 
@@ -2097,7 +2153,7 @@ namespace RagNextPlayer.Managers
                 if (menuContainer != null) menuContainer.style.backgroundColor = glassBg;
             }
 
-            if (TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+            if (TryParseHtmlColor(textMainStr, out var textMain))
             {
                 _root.style.color = textMain;
                 if (_roomTitleLabel != null) _roomTitleLabel.style.color = textMain;
@@ -2114,9 +2170,35 @@ namespace RagNextPlayer.Managers
                 if (promptTitle != null) promptTitle.style.color = textMain;
                 var gameOverTitle = _root.Q<Label>("game-over-title");
                 if (gameOverTitle != null) gameOverTitle.style.color = textMain;
+
+                // Exclude top settings bar buttons (Help, Log, Settings) from inheriting root color
+                // Setting to StyleKeyword.Null forces them to keep their default CSS color and hover classes
+                if (_helpBtn != null) _helpBtn.style.color = StyleKeyword.Null;
+                if (_historyLogBtn != null) _historyLogBtn.style.color = StyleKeyword.Null;
+                if (_settingsBtn != null) _settingsBtn.style.color = StyleKeyword.Null;
+
+                // Navigation (Compass Dial) Title, dot and directional buttons
+                var navTitle = _root.Q<Label>("navigation-title-hud");
+                if (navTitle != null) navTitle.style.color = textMain;
+
+                var centerDot = _root.Q<Label>(className: "compass-center-dot");
+                if (centerDot != null) centerDot.style.color = textMain;
+
+                _root.Query<Button>(className: "compass-rose-btn").ForEach(btn => {
+                    if (!btn.ClassListContains("compass-btn--active"))
+                    {
+                        btn.style.color = textMain;
+                    }
+                });
+                _root.Query<Button>(className: "compass-aux-btn").ForEach(btn => {
+                    if (!btn.ClassListContains("compass-btn--active"))
+                    {
+                        btn.style.color = textMain;
+                    }
+                });
             }
 
-            if (TryParseHtmlColor(game.Theme.BorderAccentColor, out var borderAccent))
+            if (TryParseHtmlColor(borderAccentStr, out var borderAccent))
             {
                 _root.style.borderLeftColor = borderAccent;
                 _root.style.borderRightColor = borderAccent;
@@ -2146,6 +2228,24 @@ namespace RagNextPlayer.Managers
                 ApplyPanelBorder(_promptInputMenu);
                 ApplyPanelBorder(_gameOverMenu);
                 ApplyPanelBorder(_root.Q<VisualElement>("menu-container"));
+
+                // Dynamic bedroom and player portrait thumbnail circular borders
+                if (_playerPortrait != null) ApplyPanelBorder(_playerPortrait);
+                if (_roomActionThumbnailWrapper != null) ApplyPanelBorder(_roomActionThumbnailWrapper);
+
+                // Active compass directional button text should stand out with the border accent color
+                _root.Query<Button>(className: "compass-rose-btn").ForEach(btn => {
+                    if (btn.ClassListContains("compass-btn--active"))
+                    {
+                        btn.style.color = borderAccent;
+                    }
+                });
+                _root.Query<Button>(className: "compass-aux-btn").ForEach(btn => {
+                    if (btn.ClassListContains("compass-btn--active"))
+                    {
+                        btn.style.color = borderAccent;
+                    }
+                });
             }
 
             // 2. Apply Padding & Border Rounding
@@ -2851,13 +2951,23 @@ namespace RagNextPlayer.Managers
 
             // Reset style states
             if (_roomActionsContainer is not null) _roomActionsContainer.style.opacity = 1f;
+            var game = GameManager.Instance?.ActiveGame;
+            Color baseBorderColor = new Color(0f, 188/255f, 212/255f, 0.4f);
+            if (game?.Theme != null && TryParseHtmlColor(game.Theme.BorderAccentColor, out var parsed))
+            {
+                baseBorderColor = parsed;
+            }
+
+            if (_roomActionsContainer is not null) _roomActionsContainer.style.opacity = 1f;
             if (_roomActionThumbnailWrapper is not null)
             {
                 _roomActionThumbnailWrapper.RemoveFromClassList("room-action-thumbnail--pulse");
-                _roomActionThumbnailWrapper.style.borderLeftColor = new Color(0f, 188/255f, 212/255f, 0.4f);
-                _roomActionThumbnailWrapper.style.borderRightColor = new Color(0f, 188/255f, 212/255f, 0.4f);
-                _roomActionThumbnailWrapper.style.borderTopColor = new Color(0f, 188/255f, 212/255f, 0.4f);
-                _roomActionThumbnailWrapper.style.borderBottomColor = new Color(0f, 188/255f, 212/255f, 0.4f);
+                var resetColor = baseBorderColor;
+                resetColor.a = 0.4f;
+                _roomActionThumbnailWrapper.style.borderLeftColor = resetColor;
+                _roomActionThumbnailWrapper.style.borderRightColor = resetColor;
+                _roomActionThumbnailWrapper.style.borderTopColor = resetColor;
+                _roomActionThumbnailWrapper.style.borderBottomColor = resetColor;
             }
 
             bool hasActions = false;
@@ -2888,7 +2998,8 @@ namespace RagNextPlayer.Managers
                     }
                     if (_roomActionThumbnailWrapper is not null)
                     {
-                        Color glowColor = new Color(0f, 188/255f, 212/255f, val + 0.2f);
+                        Color glowColor = baseBorderColor;
+                        glowColor.a = val + 0.2f;
                         _roomActionThumbnailWrapper.style.borderLeftColor = glowColor;
                         _roomActionThumbnailWrapper.style.borderRightColor = glowColor;
                         _roomActionThumbnailWrapper.style.borderTopColor = glowColor;
@@ -5276,7 +5387,7 @@ namespace RagNextPlayer.Managers
                 {
                     _promptTextField.value = string.Empty;
                     _promptTextField.style.display = DisplayStyle.Flex;
-                    _promptTextField.Focus();
+                    _promptTextField.schedule.Execute(() => _promptTextField.Focus()).StartingIn(50);
                 }
                 if (_promptSubmitBtn is not null)
                     _promptSubmitBtn.style.display = DisplayStyle.Flex;
