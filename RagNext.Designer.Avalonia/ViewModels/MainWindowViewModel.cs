@@ -925,14 +925,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 var name = SelectedBuiltInFont;
                 try
                 {
-                    var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                    var resourcesDir = Path.GetFullPath(Path.Combine(baseDir, "../../../../RagNextPlayer/Assets/Resources"));
-                    var fontFilePath = Path.Combine(resourcesDir, $"{name}.ttf");
-                    if (File.Exists(fontFilePath))
-                    {
-                        var fileUri = new Uri($"file:///{fontFilePath.Replace("\\", "/")}");
-                        return new global::Avalonia.Media.FontFamily(fileUri, $"#{name}");
-                    }
+                    return new global::Avalonia.Media.FontFamily($"avares://RagNext/Assets/Fonts/#{name}");
                 }
                 catch (Exception ex)
                 {
@@ -947,6 +940,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.BackgroundAssetId);
             set
             {
+                if (value == null && (CurrentGame == null || !ImageMediaAssets.Any())) return;
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
                     CurrentGame.Theme.BackgroundAssetId = value?.Id.ToString() ?? string.Empty;
@@ -961,6 +955,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.FrameAssetId);
             set
             {
+                if (value == null && (CurrentGame == null || !ImageMediaAssets.Any())) return;
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
                     CurrentGame.Theme.FrameAssetId = value?.Id.ToString() ?? string.Empty;
