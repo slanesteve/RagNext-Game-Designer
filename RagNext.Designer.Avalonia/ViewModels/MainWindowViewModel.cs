@@ -968,31 +968,40 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 var path = GetPresetsDirectory();
                 if (!Directory.Exists(path)) Directory.CreateDirectory(path);
                 
-                var defaultPresetPath = Path.Combine(path, "Default.json");
-                if (!File.Exists(defaultPresetPath))
+                void EnsurePresetFile(string name, string bgColor, string textColor, string borderColor)
                 {
-                    var defaultTheme = new ThemeSettings
+                    var presetPath = Path.Combine(path, $"{name}.json");
+                    if (!File.Exists(presetPath))
                     {
-                        PrimaryBgColor = "#1e1e24",
-                        TextMainColor = "#ffffff",
-                        BorderAccentColor = "#4a4a5a",
-                        FontName = "Outfit",
-                        InventoryDockPosition = "Right",
-                        RoomItemsDockPosition = "Right",
-                        NavigationDockPosition = "Right",
-                        PanelPadding = 12,
-                        BorderRadius = 8,
-                        AspectRatio = 1.333,
-                        TextBoxAlignment = "Left",
-                        TextBoxWidth = 780,
-                        TextBoxHeight = 320,
-                        PortraitAlignment = "TopLeft",
-                        SidebarWidth = 360,
-                        BottomBarHeight = 220
-                    };
-                    var json = System.Text.Json.JsonSerializer.Serialize(defaultTheme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                    File.WriteAllText(defaultPresetPath, json);
+                        var theme = new ThemeSettings
+                        {
+                            PrimaryBgColor = bgColor,
+                            TextMainColor = textColor,
+                            BorderAccentColor = borderColor,
+                            FontName = "Outfit",
+                            InventoryDockPosition = "Right",
+                            RoomItemsDockPosition = "Right",
+                            NavigationDockPosition = "Right",
+                            PanelPadding = 12,
+                            BorderRadius = 8,
+                            AspectRatio = 1.333,
+                            TextBoxAlignment = "Left",
+                            TextBoxWidth = 780,
+                            TextBoxHeight = 320,
+                            PortraitAlignment = "TopLeft",
+                            SidebarWidth = 360,
+                            BottomBarHeight = 220
+                        };
+                        var json = System.Text.Json.JsonSerializer.Serialize(theme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                        File.WriteAllText(presetPath, json);
+                    }
                 }
+
+                EnsurePresetFile("Default", "#1e1e24", "#ffffff", "#4a4a5a");
+                EnsurePresetFile("Pink", "#2d121c", "#fca5a5", "#f43f5e");
+                EnsurePresetFile("Blue", "#0f172a", "#93c5fd", "#3b82f6");
+                EnsurePresetFile("Dark", "#121212", "#e0e0e0", "#333333");
+                EnsurePresetFile("Glass", "rgba(40,40,40,0.55)", "#ffffff", "rgba(255,255,255,0.2)");
 
                 ThemePresets.Clear();
                 foreach (var file in Directory.GetFiles(path, "*.json"))
