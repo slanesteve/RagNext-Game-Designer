@@ -2315,7 +2315,7 @@ namespace RagNextPlayer.Managers
                         string.Equals(a.Id, game.Theme.FontAssetId, StringComparison.OrdinalIgnoreCase));
                     if (fontAsset != null)
                     {
-                        StartCoroutine(LoadAndApplyThemeFontCoroutine(fontAsset.RelativePath));
+                        StartCoroutine(LoadAndApplyThemeFontCoroutine(fontAsset.OriginalFileName));
                     }
                 }
             }
@@ -2346,7 +2346,7 @@ namespace RagNextPlayer.Managers
             CleanupFrameOverlay(_root.Q<VisualElement>("scene-image"));
             CleanupFrameOverlay(_narrativePanel);
             CleanupFrameOverlay(_root.Q<VisualElement>("prompt-input-menu"));
-            CleanupFrameOverlay(_root.Q<VisualElement>("settings-menu"));
+            CleanupFrameOverlay(_root.Q<VisualElement>("menu-container"));
             CleanupFrameOverlay(_root.Q<VisualElement>("game-over-menu"));
             CleanupFrameOverlay(_root.Q<VisualElement>("hud-left-compartment"));
             CleanupFrameOverlay(_root.Q<VisualElement>("hud-left-sidebar-compartment"));
@@ -2375,8 +2375,8 @@ namespace RagNextPlayer.Managers
                     {
                         var promptMenu = _root.Q<VisualElement>("prompt-input-menu");
                         if (promptMenu != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, promptMenu, true));
-                        var settingsMenu = _root.Q<VisualElement>("settings-menu");
-                        if (settingsMenu != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, settingsMenu, true));
+                        var menuContainer = _root.Q<VisualElement>("menu-container");
+                        if (menuContainer != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, menuContainer, true));
                         var gameOverMenu = _root.Q<VisualElement>("game-over-menu");
                         if (gameOverMenu != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, gameOverMenu, true));
                     }
@@ -2487,6 +2487,10 @@ namespace RagNextPlayer.Managers
             {
                 _root.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromFont(loadedFont));
             }
+            else
+            {
+                _root.style.unityFontDefinition = StyleKeyword.Null;
+            }
             yield break;
         }
 
@@ -2530,7 +2534,12 @@ namespace RagNextPlayer.Managers
                 else
                 {
                     element.style.backgroundImage = new StyleBackground(tex);
-                    if (element.name == "scene-image" || element.name == "narrative-panel")
+                    if (element == _root)
+                    {
+                        element.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.Repeat, Repeat.Repeat));
+                        element.style.backgroundSize = StyleKeyword.Null;
+                    }
+                    else if (element.name == "scene-image" || element.name == "narrative-panel")
                     {
                         element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(Length.Percent(100), Length.Percent(100)));
                     }

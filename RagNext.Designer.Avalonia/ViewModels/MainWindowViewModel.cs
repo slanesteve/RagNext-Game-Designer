@@ -992,7 +992,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             TextBoxHeight = 320,
                             PortraitAlignment = "TopLeft",
                             SidebarWidth = 360,
-                            BottomBarHeight = 220
+                            BottomBarHeight = 220,
+                            FontSize = 18,
+                            FrameApplyToGameScreen = true,
+                            FrameApplyToMainText = false,
+                            FrameApplyToPopups = false,
+                            FrameApplyToSidebars = false
                         };
                         var json = System.Text.Json.JsonSerializer.Serialize(theme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
                         File.WriteAllText(presetPath, json);
@@ -1081,6 +1086,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         CurrentGame.Theme.PortraitAlignment = loadedTheme.PortraitAlignment ?? "TopLeft";
                         CurrentGame.Theme.SidebarWidth = loadedTheme.SidebarWidth > 0 ? loadedTheme.SidebarWidth : 360;
                         CurrentGame.Theme.BottomBarHeight = loadedTheme.BottomBarHeight > 0 ? loadedTheme.BottomBarHeight : 220;
+                        CurrentGame.Theme.FontSize = loadedTheme.FontSize > 0 ? loadedTheme.FontSize : 18;
+                        CurrentGame.Theme.FrameApplyToGameScreen = loadedTheme.FrameApplyToGameScreen;
+                        CurrentGame.Theme.FrameApplyToMainText = loadedTheme.FrameApplyToMainText;
+                        CurrentGame.Theme.FrameApplyToPopups = loadedTheme.FrameApplyToPopups;
+                        CurrentGame.Theme.FrameApplyToSidebars = loadedTheme.FrameApplyToSidebars;
 
                         OnPropertyChanged(nameof(SelectedThemeFont));
                         OnPropertyChanged(nameof(SelectedThemeBackground));
@@ -1116,6 +1126,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand DeleteSplashScreenCommand { get; }
         public ICommand SaveThemePresetCommand { get; }
         public ICommand DeleteThemePresetCommand { get; }
+        public ICommand ClearThemeFontCommand { get; }
+        public ICommand ClearThemeBackgroundCommand { get; }
+        public ICommand ClearThemeFrameCommand { get; }
         public ICommand NewGameCommand { get; }
         public ICommand ShowLoadGameCommand { get; }
         public ICommand LoadSelectedGameCommand { get; }
@@ -1282,6 +1295,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             SaveThemePresetCommand = new Command(() => SaveThemePreset());
             DeleteThemePresetCommand = new Command(() => DeleteThemePreset());
+            ClearThemeFontCommand = new Command(() => { SelectedThemeFont = null; });
+            ClearThemeBackgroundCommand = new Command(() => { SelectedThemeBackground = null; });
+            ClearThemeFrameCommand = new Command(() => { SelectedThemeFrame = null; });
 
             AddSplashScreenCommand = new Command(() =>
             {
