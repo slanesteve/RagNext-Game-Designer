@@ -2524,6 +2524,27 @@ namespace RagNextPlayer.Managers
                     compassContainer.style.alignItems = Align.Center; // Match center width stretch
                 }
             }
+            // 8b. Reorder bottom docked children to respect BottomLeft/BottomRight portrait alignment
+            if (bottomCompartment != null && hasBottomDock)
+            {
+                var game = GameManager.Instance?.ActiveGame;
+                if (game != null && game.Theme != null && !string.IsNullOrEmpty(game.Theme.PortraitAlignment) && game.Theme.PortraitAlignment.Contains("Bottom"))
+                {
+                    var profilesContainer = _root.Q<VisualElement>("floating-profiles-container");
+                    if (profilesContainer != null && profilesContainer.parent == bottomCompartment)
+                    {
+                        profilesContainer.RemoveFromHierarchy();
+                        if (game.Theme.PortraitAlignment.Contains("Left"))
+                        {
+                            bottomCompartment.Insert(0, profilesContainer);
+                        }
+                        else
+                        {
+                            bottomCompartment.Add(profilesContainer);
+                        }
+                    }
+                }
+            }
         }
 
 
