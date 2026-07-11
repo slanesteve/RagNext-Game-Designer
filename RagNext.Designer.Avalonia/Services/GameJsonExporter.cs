@@ -204,6 +204,12 @@ namespace RagNext.Designer.Avalonia.Services
         public string? PortraitAlignment { get; set; }
         public double SidebarWidth { get; set; }
         public double BottomBarHeight { get; set; }
+        public string? ActivePreset { get; set; }
+        public double FontSize { get; set; }
+        public bool FrameApplyToGameScreen { get; set; }
+        public bool FrameApplyToMainText { get; set; }
+        public bool FrameApplyToPopups { get; set; }
+        public bool FrameApplyToSidebars { get; set; }
     }
 
     /// <summary>
@@ -248,7 +254,13 @@ namespace RagNext.Designer.Avalonia.Services
                 TextBoxHeight = game.Theme.TextBoxHeight,
                 PortraitAlignment = game.Theme.PortraitAlignment,
                 SidebarWidth = game.Theme.SidebarWidth,
-                BottomBarHeight = game.Theme.BottomBarHeight
+                BottomBarHeight = game.Theme.BottomBarHeight,
+                ActivePreset = game.Theme.ActivePreset,
+                FontSize = game.Theme.FontSize,
+                FrameApplyToGameScreen = game.Theme.FrameApplyToGameScreen,
+                FrameApplyToMainText = game.Theme.FrameApplyToMainText,
+                FrameApplyToPopups = game.Theme.FrameApplyToPopups,
+                FrameApplyToSidebars = game.Theme.FrameApplyToSidebars
             },
             Player     = BuildPlayerDto(game.Player),
             Rooms      = game.Rooms.Select(r => BuildRoomDto(r)).ToList(),

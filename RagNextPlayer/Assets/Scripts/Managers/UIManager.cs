@@ -2310,14 +2310,9 @@ namespace RagNextPlayer.Managers
             {
                 _root.style.fontSize = new Length((float)game.Theme.FontSize);
 
-                if (!string.IsNullOrEmpty(game.Theme.FontAssetId))
+                if (!string.IsNullOrEmpty(game.Theme.FontName))
                 {
-                    var fontAsset = game.MediaAssets.Find(a => 
-                        string.Equals(a.Id, game.Theme.FontAssetId, StringComparison.OrdinalIgnoreCase));
-                    if (fontAsset != null)
-                    {
-                        StartCoroutine(LoadAndApplyThemeFontCoroutine(fontAsset.OriginalFileName));
-                    }
+                    StartCoroutine(LoadAndApplyThemeFontCoroutine(game.Theme.FontName));
                 }
             }
 
@@ -2478,12 +2473,15 @@ namespace RagNextPlayer.Managers
 
         private IEnumerator LoadAndApplyThemeFontCoroutine(string path)
         {
-            var fontName = System.IO.Path.GetFileNameWithoutExtension(path);
-            Font loadedFont = Font.CreateDynamicFontFromOSFont(fontName, 14);
+            if (string.IsNullOrEmpty(path)) yield break;
+            
+            // Prioritize embedded resources, then query local OS system fonts
+            Font loadedFont = Resources.Load<Font>(path);
             if (loadedFont == null)
             {
-                loadedFont = Resources.Load<Font>(fontName);
+                loadedFont = Font.CreateDynamicFontFromOSFont(path, 14);
             }
+            
             if (loadedFont != null)
             {
                 _root.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromFont(loadedFont));
