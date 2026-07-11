@@ -2060,17 +2060,41 @@ namespace RagNextPlayer.Managers
             if (TryParseHtmlColor(game.Theme.PrimaryBgColor, out var primaryBg))
             {
                 _root.style.backgroundColor = primaryBg;
-                if (_narrativePanel != null) _narrativePanel.style.backgroundColor = primaryBg;
-                if (_rightSidebarContainer != null) _rightSidebarContainer.style.backgroundColor = primaryBg;
+
+                // Create a translucent glass background color with 78% opacity
+                var glassBg = primaryBg;
+                if (glassBg.a >= 0.99f)
+                {
+                    glassBg.a = 0.78f;
+                }
+
+                // Top bar should match the set background color
+                var topBar = _root.Q<VisualElement>("top-bar");
+                if (topBar != null) topBar.style.backgroundColor = primaryBg;
+
+                if (_narrativePanel != null) _narrativePanel.style.backgroundColor = glassBg;
+                if (_rightSidebarContainer != null) _rightSidebarContainer.style.backgroundColor = glassBg;
 
                 var leftSidebar = _root.Q<VisualElement>("left-sidebar-container");
-                if (leftSidebar != null) leftSidebar.style.backgroundColor = primaryBg;
+                if (leftSidebar != null) leftSidebar.style.backgroundColor = glassBg;
 
                 var bottomCompartment = _root.Q<VisualElement>("hud-bottom-compartment");
-                if (bottomCompartment != null) bottomCompartment.style.backgroundColor = primaryBg;
+                if (bottomCompartment != null) bottomCompartment.style.backgroundColor = glassBg;
 
                 var playerCard = _root.Q<VisualElement>("floating-player-card");
-                if (playerCard != null) playerCard.style.backgroundColor = primaryBg;
+                if (playerCard != null) playerCard.style.backgroundColor = glassBg;
+
+                // Navigation panel and compass dial overlay
+                if (_compassDialOverlay != null) _compassDialOverlay.style.backgroundColor = glassBg;
+                var navPanel = _root.Q<VisualElement>("navigation-panel");
+                if (navPanel != null) navPanel.style.backgroundColor = glassBg;
+
+                // Popups and prompt menus
+                if (_promptInputMenu != null) _promptInputMenu.style.backgroundColor = glassBg;
+                if (_gameOverMenu != null) _gameOverMenu.style.backgroundColor = glassBg;
+
+                var menuContainer = _root.Q<VisualElement>("menu-container");
+                if (menuContainer != null) menuContainer.style.backgroundColor = glassBg;
             }
 
             if (TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
@@ -2079,6 +2103,14 @@ namespace RagNextPlayer.Managers
                 if (_roomTitleLabel != null) _roomTitleLabel.style.color = textMain;
                 if (_gameInfoLabel != null) _gameInfoLabel.style.color = textMain;
                 if (_narrativePanel != null) _narrativePanel.style.color = textMain;
+
+                // Popups text color styling
+                if (_promptInputMenu != null) _promptInputMenu.style.color = textMain;
+                if (_gameOverMenu != null) _gameOverMenu.style.color = textMain;
+                var promptTitle = _root.Q<Label>("prompt-input-title");
+                if (promptTitle != null) promptTitle.style.color = textMain;
+                var gameOverTitle = _root.Q<Label>("game-over-title");
+                if (gameOverTitle != null) gameOverTitle.style.color = textMain;
             }
 
             if (TryParseHtmlColor(game.Theme.BorderAccentColor, out var borderAccent))
@@ -2088,60 +2120,29 @@ namespace RagNextPlayer.Managers
                 _root.style.borderTopColor = borderAccent;
                 _root.style.borderBottomColor = borderAccent;
 
-                if (_narrativePanel != null)
+                void ApplyPanelBorder(VisualElement el)
                 {
-                    _narrativePanel.style.borderLeftColor = borderAccent;
-                    _narrativePanel.style.borderRightColor = borderAccent;
-                    _narrativePanel.style.borderTopColor = borderAccent;
-                    _narrativePanel.style.borderBottomColor = borderAccent;
-                    _narrativePanel.style.borderLeftWidth = 1f;
-                    _narrativePanel.style.borderRightWidth = 1f;
-                    _narrativePanel.style.borderTopWidth = 1f;
-                    _narrativePanel.style.borderBottomWidth = 1f;
+                    if (el == null) return;
+                    el.style.borderLeftColor = borderAccent;
+                    el.style.borderRightColor = borderAccent;
+                    el.style.borderTopColor = borderAccent;
+                    el.style.borderBottomColor = borderAccent;
+                    el.style.borderLeftWidth = 1f;
+                    el.style.borderRightWidth = 1f;
+                    el.style.borderTopWidth = 1f;
+                    el.style.borderBottomWidth = 1f;
                 }
-                if (_rightSidebarContainer != null)
-                {
-                    _rightSidebarContainer.style.borderLeftColor = borderAccent;
-                    _rightSidebarContainer.style.borderRightColor = borderAccent;
-                    _rightSidebarContainer.style.borderTopColor = borderAccent;
-                    _rightSidebarContainer.style.borderBottomColor = borderAccent;
-                    _rightSidebarContainer.style.borderLeftWidth = 1f;
-                    _rightSidebarContainer.style.borderRightWidth = 1f;
-                    _rightSidebarContainer.style.borderTopWidth = 1f;
-                    _rightSidebarContainer.style.borderBottomWidth = 1f;
-                }
-                var leftSidebar = _root.Q<VisualElement>("left-sidebar-container");
-                if (leftSidebar != null)
-                {
-                    leftSidebar.style.borderLeftColor = borderAccent;
-                    leftSidebar.style.borderRightColor = borderAccent;
-                    leftSidebar.style.borderTopColor = borderAccent;
-                    leftSidebar.style.borderBottomColor = borderAccent;
-                    leftSidebar.style.borderLeftWidth = 1f;
-                    leftSidebar.style.borderRightWidth = 1f;
-                    leftSidebar.style.borderTopWidth = 1f;
-                    leftSidebar.style.borderBottomWidth = 1f;
-                }
-                var bottomCompartment = _root.Q<VisualElement>("hud-bottom-compartment");
-                if (bottomCompartment != null)
-                {
-                    bottomCompartment.style.borderLeftColor = borderAccent;
-                    bottomCompartment.style.borderRightColor = borderAccent;
-                    bottomCompartment.style.borderTopColor = borderAccent;
-                    bottomCompartment.style.borderBottomColor = borderAccent;
-                    bottomCompartment.style.borderLeftWidth = 1f;
-                    bottomCompartment.style.borderRightWidth = 1f;
-                    bottomCompartment.style.borderTopWidth = 1f;
-                    bottomCompartment.style.borderBottomWidth = 1f;
-                }
-                var playerCard = _root.Q<VisualElement>("floating-player-card");
-                if (playerCard != null)
-                {
-                    playerCard.style.borderLeftColor = borderAccent;
-                    playerCard.style.borderRightColor = borderAccent;
-                    playerCard.style.borderTopColor = borderAccent;
-                    playerCard.style.borderBottomColor = borderAccent;
-                }
+
+                ApplyPanelBorder(_narrativePanel);
+                ApplyPanelBorder(_rightSidebarContainer);
+                ApplyPanelBorder(_root.Q<VisualElement>("left-sidebar-container"));
+                ApplyPanelBorder(_root.Q<VisualElement>("hud-bottom-compartment"));
+                ApplyPanelBorder(_root.Q<VisualElement>("floating-player-card"));
+                ApplyPanelBorder(_compassDialOverlay);
+                ApplyPanelBorder(_root.Q<VisualElement>("navigation-panel"));
+                ApplyPanelBorder(_promptInputMenu);
+                ApplyPanelBorder(_gameOverMenu);
+                ApplyPanelBorder(_root.Q<VisualElement>("menu-container"));
             }
 
             // 2. Apply Padding & Border Rounding
@@ -5818,11 +5819,49 @@ namespace RagNextPlayer.Managers
             toast.style.position = Position.Absolute;
             toast.style.bottom = Length.Percent(15);
             toast.style.alignSelf = Align.Center;
-            toast.style.backgroundColor = new Color(0.05f, 0.05f, 0.07f, 0.85f);
-            toast.style.borderLeftColor = new Color(0f, 0.73f, 0.83f, 0.8f); // Cyan accent
-            toast.style.borderRightColor = new Color(0f, 0.73f, 0.83f, 0.8f);
-            toast.style.borderTopColor = new Color(0f, 0.73f, 0.83f, 0.8f);
-            toast.style.borderBottomColor = new Color(0f, 0.73f, 0.83f, 0.8f);
+            // Apply dynamic theme properties or fallback to glassmorphism defaults
+            var game = GameManager.Instance?.ActiveGame;
+            if (game?.Theme != null)
+            {
+                if (TryParseHtmlColor(game.Theme.PrimaryBgColor, out var primaryBg))
+                {
+                    if (primaryBg.a >= 0.99f)
+                    {
+                        primaryBg.a = 0.78f;
+                    }
+                    toast.style.backgroundColor = primaryBg;
+                }
+                else
+                {
+                    toast.style.backgroundColor = new Color(0.05f, 0.05f, 0.07f, 0.85f);
+                }
+
+                if (TryParseHtmlColor(game.Theme.BorderAccentColor, out var borderAccent))
+                {
+                    toast.style.borderLeftColor = borderAccent;
+                    toast.style.borderRightColor = borderAccent;
+                    toast.style.borderTopColor = borderAccent;
+                    toast.style.borderBottomColor = borderAccent;
+                }
+                else
+                {
+                    var fallbackAccent = new Color(0f, 0.73f, 0.83f, 0.8f);
+                    toast.style.borderLeftColor = fallbackAccent;
+                    toast.style.borderRightColor = fallbackAccent;
+                    toast.style.borderTopColor = fallbackAccent;
+                    toast.style.borderBottomColor = fallbackAccent;
+                }
+            }
+            else
+            {
+                toast.style.backgroundColor = new Color(0.05f, 0.05f, 0.07f, 0.85f);
+                var fallbackAccent = new Color(0f, 0.73f, 0.83f, 0.8f);
+                toast.style.borderLeftColor = fallbackAccent;
+                toast.style.borderRightColor = fallbackAccent;
+                toast.style.borderTopColor = fallbackAccent;
+                toast.style.borderBottomColor = fallbackAccent;
+            }
+
             toast.style.borderLeftWidth = 1;
             toast.style.borderRightWidth = 1;
             toast.style.borderTopWidth = 1;
@@ -5839,7 +5878,14 @@ namespace RagNextPlayer.Managers
             toast.style.minWidth = 280;
 
             var label = new Label(text);
-            label.style.color = Color.white;
+            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+            {
+                label.style.color = textMain;
+            }
+            else
+            {
+                label.style.color = Color.white;
+            }
             label.style.fontSize = 14;
             label.style.unityTextAlign = TextAnchor.MiddleCenter;
             label.style.whiteSpace = WhiteSpace.Normal;
