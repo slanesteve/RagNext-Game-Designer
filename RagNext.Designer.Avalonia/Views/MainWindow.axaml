@@ -2293,24 +2293,47 @@
                     <TextBlock Text="🖼️ Assets &amp; Fonts" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
                     
                     <TextBlock Text="Custom Font Asset:" Foreground="{DynamicResource TextMuted}" FontSize="12"/>
-                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontMediaAssets}" 
-                    SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeFont, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Font Asset (TTF/OTF)..."/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ComboBox Grid.Column="0" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontMediaAssets}" 
+                        SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeFont, Mode=TwoWay}"
+                        HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Font Asset (TTF/OTF)..."/>
+                        <Button Grid.Column="1" Content="✕" ToolTip.Tip="Clear Font" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearThemeFontCommand}" Foreground="#f38ba8" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                    </Grid>
                     
+                    <TextBlock Text="Font Size (Pixels):" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Value="{Binding FontSize, Mode=TwoWay}" Minimum="10" Maximum="36" SmallChange="1" LargeChange="2" Grid.Column="0"/>
+                        <TextBlock Text="{Binding FontSize, StringFormat='{}{0:F0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
+
                     <TextBlock Text="HUD Background Image/Texture:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
-                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" 
-                    SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeBackground, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Background Texture..."/>
-                    
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ComboBox Grid.Column="0" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" 
+                        SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeBackground, Mode=TwoWay}"
+                        HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Background Texture..."/>
+                        <Button Grid.Column="1" Content="✕" ToolTip.Tip="Clear Background" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearThemeBackgroundCommand}" Foreground="#f38ba8" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                    </Grid>
+
                     <TextBlock Text="Decorative Frame Image:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
-                    <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" 
-                    SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeFrame, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Frame Border Asset..."/>
-                    
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ComboBox Grid.Column="0" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" 
+                        SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeFrame, Mode=TwoWay}"
+                        HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Frame Border Asset..."/>
+                        <Button Grid.Column="1" Content="✕" ToolTip.Tip="Clear Frame" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearThemeFrameCommand}" Foreground="#f38ba8" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                    </Grid>
+
+                    <TextBlock Text="Apply Decorative Frame To:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <WrapPanel Orientation="Horizontal" Margin="0,2,0,2">
+                        <CheckBox Content="Game Screen" IsChecked="{Binding FrameApplyToGameScreen, Mode=TwoWay}" Margin="0,0,12,0"/>
+                        <CheckBox Content="Main Text" IsChecked="{Binding FrameApplyToMainText, Mode=TwoWay}" Margin="0,0,12,0"/>
+                        <CheckBox Content="Popups" IsChecked="{Binding FrameApplyToPopups, Mode=TwoWay}" Margin="0,0,12,0"/>
+                        <CheckBox Content="Sidebars" IsChecked="{Binding FrameApplyToSidebars, Mode=TwoWay}"/>
+                    </WrapPanel>
+
                     <TextBlock Text="Scene Viewport Aspect Ratio (Width / Height):" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
                     <Grid ColumnDefinitions="*,Auto">
-                    <Slider Value="{Binding AspectRatio, Mode=TwoWay}" Minimum="0.5" Maximum="2.5" SmallChange="0.05" LargeChange="0.1" Grid.Column="0"/>
-                    <TextBlock Text="{Binding AspectRatio, StringFormat='{}{0:F2}'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                        <Slider Value="{Binding AspectRatio, Mode=TwoWay}" Minimum="0.5" Maximum="2.5" SmallChange="0.05" LargeChange="0.1" Grid.Column="0"/>
+                        <TextBlock Text="{Binding AspectRatio, StringFormat='{}{0:F2}'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
                     </Grid>
                     </StackPanel>
                     </Border>

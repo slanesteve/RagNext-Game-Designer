@@ -60,5 +60,20 @@ namespace RagsCore.Models
 
         private double _bottomBarHeight = 220; // pixels
         public double BottomBarHeight { get => _bottomBarHeight; set => SetProperty(ref _bottomBarHeight, value); }
+
+        private double _fontSize = 18; // pixels
+        public double FontSize { get => _fontSize; set => SetProperty(ref _fontSize, value); }
+
+        private bool _frameApplyToGameScreen = true;
+        public bool FrameApplyToGameScreen { get => _frameApplyToGameScreen; set => SetProperty(ref _frameApplyToGameScreen, value); }
+
+        private bool _frameApplyToMainText = false;
+        public bool FrameApplyToMainText { get => _frameApplyToMainText; set => SetProperty(ref _frameApplyToMainText, value); }
+
+        private bool _frameApplyToPopups = false;
+        public bool FrameApplyToPopups { get => _frameApplyToPopups; set => SetProperty(ref _frameApplyToPopups, value); }
+
+        private bool _frameApplyToSidebars = false;
+        public bool FrameApplyToSidebars { get => _frameApplyToSidebars; set => SetProperty(ref _frameApplyToSidebars, value); }
     }
 }

@@ -53,6 +53,11 @@ namespace RagNextPlayer.Runtime.Models
         public string PortraitAlignment { get; set; } = "TopLeft"; // "TopLeft", "TopRight", "BottomLeft", "BottomRight"
         public double SidebarWidth { get; set; } = 360; // pixels
         public double BottomBarHeight { get; set; } = 200; // pixels
+        public double FontSize { get; set; } = 18;
+        public bool FrameApplyToGameScreen { get; set; } = true;
+        public bool FrameApplyToMainText { get; set; } = false;
+        public bool FrameApplyToPopups { get; set; } = false;
+        public bool FrameApplyToSidebars { get; set; } = false;
     }
 
     public class SplashScreenSettingsData

@@ -2304,14 +2304,19 @@ namespace RagNextPlayer.Managers
                     _narrativePanel.style.alignSelf = Align.FlexStart;
             }
 
-            // 4. Apply Custom Font if defined
-            if (!string.IsNullOrEmpty(game.Theme.FontAssetId))
+            // 4. Apply Custom Font & FontSize if defined
+            if (game.Theme != null)
             {
-                var fontAsset = game.MediaAssets.Find(a => 
-                    string.Equals(a.Id, game.Theme.FontAssetId, StringComparison.OrdinalIgnoreCase));
-                if (fontAsset != null)
+                _root.style.fontSize = new Length((float)game.Theme.FontSize);
+
+                if (!string.IsNullOrEmpty(game.Theme.FontAssetId))
                 {
-                    StartCoroutine(LoadAndApplyThemeFontCoroutine(fontAsset.RelativePath));
+                    var fontAsset = game.MediaAssets.Find(a => 
+                        string.Equals(a.Id, game.Theme.FontAssetId, StringComparison.OrdinalIgnoreCase));
+                    if (fontAsset != null)
+                    {
+                        StartCoroutine(LoadAndApplyThemeFontCoroutine(fontAsset.RelativePath));
+                    }
                 }
             }
 
@@ -2325,22 +2330,66 @@ namespace RagNextPlayer.Managers
                     StartCoroutine(LoadThemeImageCoroutine(bgAsset.RelativePath, _root));
                 }
             }
+            else
+            {
+                _root.style.backgroundImage = null;
+            }
 
             // 6. Apply Panel Frame Image if defined
+            // First, cleanup existing overlays in all potential target panels
+            void CleanupFrameOverlay(VisualElement parent)
+            {
+                if (parent == null) return;
+                var existing = parent.Q<VisualElement>("panel-frame-overlay");
+                if (existing != null) existing.RemoveFromHierarchy();
+            }
+            CleanupFrameOverlay(_root.Q<VisualElement>("scene-image"));
+            CleanupFrameOverlay(_narrativePanel);
+            CleanupFrameOverlay(_root.Q<VisualElement>("prompt-input-menu"));
+            CleanupFrameOverlay(_root.Q<VisualElement>("settings-menu"));
+            CleanupFrameOverlay(_root.Q<VisualElement>("game-over-menu"));
+            CleanupFrameOverlay(_root.Q<VisualElement>("hud-left-compartment"));
+            CleanupFrameOverlay(_root.Q<VisualElement>("hud-left-sidebar-compartment"));
+            CleanupFrameOverlay(_root.Q<VisualElement>("hud-right-compartment"));
+            CleanupFrameOverlay(_root.Q<VisualElement>("hud-bottom-compartment"));
+
             if (!string.IsNullOrEmpty(game.Theme.FrameAssetId))
             {
                 var frameAsset = game.MediaAssets.Find(a => 
                     string.Equals(a.Id, game.Theme.FrameAssetId, StringComparison.OrdinalIgnoreCase));
                 if (frameAsset != null)
                 {
-                    var sceneImg = _root.Q<VisualElement>("scene-image");
-                    if (sceneImg != null)
+                    if (game.Theme.FrameApplyToGameScreen)
                     {
-                        StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, sceneImg));
+                        var sceneImg = _root.Q<VisualElement>("scene-image");
+                        if (sceneImg != null)
+                        {
+                            StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, sceneImg, true));
+                        }
                     }
-                    if (_narrativePanel != null)
+                    if (game.Theme.FrameApplyToMainText && _narrativePanel != null)
                     {
-                        StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, _narrativePanel));
+                        StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, _narrativePanel, true));
+                    }
+                    if (game.Theme.FrameApplyToPopups)
+                    {
+                        var promptMenu = _root.Q<VisualElement>("prompt-input-menu");
+                        if (promptMenu != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, promptMenu, true));
+                        var settingsMenu = _root.Q<VisualElement>("settings-menu");
+                        if (settingsMenu != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, settingsMenu, true));
+                        var gameOverMenu = _root.Q<VisualElement>("game-over-menu");
+                        if (gameOverMenu != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, gameOverMenu, true));
+                    }
+                    if (game.Theme.FrameApplyToSidebars)
+                    {
+                        var leftCompSidebar = _root.Q<VisualElement>("hud-left-compartment");
+                        if (leftCompSidebar != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, leftCompSidebar, true));
+                        var leftSidebarComp = _root.Q<VisualElement>("hud-left-sidebar-compartment");
+                        if (leftSidebarComp != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, leftSidebarComp, true));
+                        var rightCompSidebar = _root.Q<VisualElement>("hud-right-compartment");
+                        if (rightCompSidebar != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, rightCompSidebar, true));
+                        var bottomCompSidebar = _root.Q<VisualElement>("hud-bottom-compartment");
+                        if (bottomCompSidebar != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, bottomCompSidebar, true));
                     }
                 }
             }
@@ -2441,7 +2490,31 @@ namespace RagNextPlayer.Managers
             yield break;
         }
 
-        private IEnumerator LoadThemeImageCoroutine(string relativePath, VisualElement element)
+        private void ApplyFrameOverlayToElement(VisualElement element, Texture2D texture)
+        {
+            if (element == null || texture == null) return;
+            var existing = element.Q<VisualElement>("panel-frame-overlay");
+            if (existing != null)
+            {
+                existing.RemoveFromHierarchy();
+            }
+
+            var frameOverlay = new VisualElement();
+            frameOverlay.name = "panel-frame-overlay";
+            frameOverlay.style.position = Position.Absolute;
+            frameOverlay.style.left = 0;
+            frameOverlay.style.right = 0;
+            frameOverlay.style.top = 0;
+            frameOverlay.style.bottom = 0;
+            frameOverlay.pickingMode = PickingMode.Ignore;
+            frameOverlay.style.backgroundImage = new StyleBackground(texture);
+            frameOverlay.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(Length.Percent(100), Length.Percent(100)));
+            
+            element.Add(frameOverlay);
+            frameOverlay.BringToFront();
+        }
+
+        private IEnumerator LoadThemeImageCoroutine(string relativePath, VisualElement element, bool isFrame = false)
         {
             if (element == null || string.IsNullOrWhiteSpace(relativePath)) yield break;
             string url = FormatLocalPathForWeb(relativePath);
@@ -2450,10 +2523,17 @@ namespace RagNextPlayer.Managers
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
                 var tex = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
-                element.style.backgroundImage = new StyleBackground(tex);
-                if (element.name == "scene-image" || element.name == "narrative-panel")
+                if (isFrame)
                 {
-                    element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(Length.Percent(100), Length.Percent(100)));
+                    ApplyFrameOverlayToElement(element, tex);
+                }
+                else
+                {
+                    element.style.backgroundImage = new StyleBackground(tex);
+                    if (element.name == "scene-image" || element.name == "narrative-panel")
+                    {
+                        element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(Length.Percent(100), Length.Percent(100)));
+                    }
                 }
             }
         }
