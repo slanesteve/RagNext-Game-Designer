@@ -2065,12 +2065,24 @@ namespace RagNextPlayer.Managers
             RefreshPlayerPortrait();
         }
 
+        private bool TryParseHtmlColor(string hex, out Color color)
+        {
+            color = Color.white;
+            if (string.IsNullOrEmpty(hex)) return false;
+
+            if (hex.StartsWith("#") && hex.Length == 9)
+            {
+                hex = "#" + hex.Substring(3, 6) + hex.Substring(1, 2);
+            }
+            return ColorUtility.TryParseHtmlString(hex, out color);
+        }
+
         private void ApplyTheme(GameData game)
         {
             if (game?.Theme == null || _root == null) return;
 
             // 1. Apply Colors to Root & Panels
-            if (ColorUtility.TryParseHtmlString(game.Theme.PrimaryBgColor, out var primaryBg))
+            if (TryParseHtmlColor(game.Theme.PrimaryBgColor, out var primaryBg))
             {
                 _root.style.backgroundColor = primaryBg;
                 if (_narrativePanel != null) _narrativePanel.style.backgroundColor = primaryBg;
@@ -2086,7 +2098,7 @@ namespace RagNextPlayer.Managers
                 if (playerCard != null) playerCard.style.backgroundColor = primaryBg;
             }
 
-            if (ColorUtility.TryParseHtmlString(game.Theme.TextMainColor, out var textMain))
+            if (TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
             {
                 _root.style.color = textMain;
                 if (_roomTitleLabel != null) _roomTitleLabel.style.color = textMain;
@@ -2094,7 +2106,7 @@ namespace RagNextPlayer.Managers
                 if (_narrativePanel != null) _narrativePanel.style.color = textMain;
             }
 
-            if (ColorUtility.TryParseHtmlString(game.Theme.BorderAccentColor, out var borderAccent))
+            if (TryParseHtmlColor(game.Theme.BorderAccentColor, out var borderAccent))
             {
                 _root.style.borderLeftColor = borderAccent;
                 _root.style.borderRightColor = borderAccent;
@@ -3251,14 +3263,14 @@ namespace RagNextPlayer.Managers
                     btn.text = resolvedLabel;
 
                     string resolvedBg = game != null ? TemplateResolver.Resolve(hotspot.BackgroundColor, game, room, null) : hotspot.BackgroundColor;
-                    if (ColorUtility.TryParseHtmlString(resolvedBg, out var bgColor))
+                    if (TryParseHtmlColor(resolvedBg, out var bgColor))
                     {
                         resolvedBgColor = bgColor;
                         btn.style.backgroundColor = bgColor;
                     }
 
                     string resolvedColor = game != null ? TemplateResolver.Resolve(hotspot.FontColor, game, room, null) : hotspot.FontColor;
-                    if (ColorUtility.TryParseHtmlString(resolvedColor, out var textColor))
+                    if (TryParseHtmlColor(resolvedColor, out var textColor))
                     {
                         btn.style.color = textColor;
                     }
