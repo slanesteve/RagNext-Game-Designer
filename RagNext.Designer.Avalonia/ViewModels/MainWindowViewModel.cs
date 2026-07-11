@@ -923,15 +923,6 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get
             {
                 var name = SelectedBuiltInFont;
-                try
-                {
-                    var escapedName = Uri.EscapeDataString(name);
-                    return new global::Avalonia.Media.FontFamily($"avares://RagNext/Assets/Fonts/{escapedName}.ttf#{name}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[FontPreview] Failed to load custom font preview: {ex.Message}");
-                }
                 return new global::Avalonia.Media.FontFamily(name);
             }
         }
