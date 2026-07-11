@@ -2107,6 +2107,9 @@ namespace RagNextPlayer.Managers
                 // Popups text color styling
                 if (_promptInputMenu != null) _promptInputMenu.style.color = textMain;
                 if (_gameOverMenu != null) _gameOverMenu.style.color = textMain;
+                if (_promptInputMessage != null) _promptInputMessage.style.color = textMain;
+                if (_gameOverMessage != null) _gameOverMessage.style.color = textMain;
+
                 var promptTitle = _root.Q<Label>("prompt-input-title");
                 if (promptTitle != null) promptTitle.style.color = textMain;
                 var gameOverTitle = _root.Q<Label>("game-over-title");
