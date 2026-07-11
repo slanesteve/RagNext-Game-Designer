@@ -130,6 +130,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             OnPropertyChanged(nameof(VideoMediaAssets));
                             OnPropertyChanged(nameof(ImageMediaAssets));
                             OnPropertyChanged(nameof(AudioMediaAssets));
+                            OnPropertyChanged(nameof(FontMediaAssets));
                         };
 
                         if (value.StatusBarElements != null)
@@ -212,6 +213,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     OnPropertyChanged(nameof(VideoMediaAssets));
                     OnPropertyChanged(nameof(ImageMediaAssets));
                     OnPropertyChanged(nameof(AudioMediaAssets));
+                    OnPropertyChanged(nameof(FontMediaAssets));
                     Dispatcher.UIThread.Post(() =>
                     {
                         OnPropertyChanged(nameof(SelectedSplashImageAsset));
