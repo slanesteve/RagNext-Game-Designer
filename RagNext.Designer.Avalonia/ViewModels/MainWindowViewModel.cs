@@ -1203,6 +1203,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     var loadedTheme = System.Text.Json.JsonSerializer.Deserialize<ThemeSettings>(json);
                     if (loadedTheme != null)
                     {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG-LOAD-PRESET] Loaded preset '{presetName}': BgColor='{loadedTheme.PrimaryBgColor}', TextColor='{loadedTheme.TextMainColor}', BgAsset='{loadedTheme.BackgroundAssetId}', FrameAsset='{loadedTheme.FrameAssetId}'");
                         CurrentGame.Theme.PrimaryBgColor = loadedTheme.PrimaryBgColor;
                         CurrentGame.Theme.TextMainColor = loadedTheme.TextMainColor;
                         CurrentGame.Theme.BorderAccentColor = loadedTheme.BorderAccentColor;
