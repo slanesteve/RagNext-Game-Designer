@@ -167,6 +167,13 @@ namespace RagNext.Designer.Avalonia.ViewModels
             _game = g;
             _doc = await _store.LoadAsync(g);
             RebuildNodes();
+
+            if (MainWindowViewModel.Instance != null)
+            {
+                MainWindowViewModel.Instance.OnPropertyChanged(nameof(MainWindowViewModel.Instance.ImageMediaAssets));
+                MainWindowViewModel.Instance.OnPropertyChanged(nameof(MainWindowViewModel.Instance.SelectedThemeBackground));
+                MainWindowViewModel.Instance.OnPropertyChanged(nameof(MainWindowViewModel.Instance.SelectedThemeFrame));
+            }
         }
 
         private void RebuildNodes()

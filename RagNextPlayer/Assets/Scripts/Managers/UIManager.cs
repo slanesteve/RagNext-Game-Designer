@@ -2484,10 +2484,12 @@ namespace RagNextPlayer.Managers
             
             if (loadedFont != null)
             {
+                _root.style.unityFont = loadedFont;
                 _root.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromFont(loadedFont));
             }
             else
             {
+                _root.style.unityFont = StyleKeyword.Null;
                 _root.style.unityFontDefinition = StyleKeyword.Null;
             }
             yield break;

@@ -897,9 +897,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
         // Theme Customizer properties
         public List<string> BuiltInFonts { get; } = new List<string>
         {
-            "Outfit", "Inter", "Roboto", "Cinzel", "Playfair Display",
-            "Lora", "Orbitron", "Press Start 2P", "VT323", "Caveat",
-            "Pacifico", "Creepster", "Special Elite", "Montserrat", "Merriweather"
+            "Outfit", "Inter", "Roboto", "Cinzel", "PlayFairDisplay",
+            "Lora", "Orbitron", "PressStart2P", "VT323", "Caveat",
+            "Pacifico", "Creepster", "SpecialElite", "Montserrat", "Merriweather"
         };
 
         public string SelectedBuiltInFont
@@ -923,6 +923,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get
             {
                 var name = SelectedBuiltInFont;
+                try
+                {
+                    var familyName = name switch
+                    {
+                        "PlayFairDisplay" => "Playfair Display",
+                        "PressStart2P" => "Press Start 2P",
+                        "SpecialElite" => "Special Elite",
+                        _ => name
+                    };
+                    return new global::Avalonia.Media.FontFamily($"avares://RagNext/Assets/Fonts/{name}.ttf#{familyName}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[FontPreview] Failed to load custom font preview: {ex.Message}");
+                }
                 return new global::Avalonia.Media.FontFamily(name);
             }
         }
@@ -1096,8 +1111,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         CurrentGame.Theme.BorderAccentColor = loadedTheme.BorderAccentColor;
                         CurrentGame.Theme.FontName = loadedTheme.FontName;
                         CurrentGame.Theme.FontAssetId = loadedTheme.FontAssetId;
-                        CurrentGame.Theme.BackgroundAssetId = loadedTheme.BackgroundAssetId;
-                        CurrentGame.Theme.FrameAssetId = loadedTheme.FrameAssetId;
+                        if (!string.IsNullOrEmpty(loadedTheme.BackgroundAssetId))
+                        {
+                            CurrentGame.Theme.BackgroundAssetId = loadedTheme.BackgroundAssetId;
+                        }
+                        if (!string.IsNullOrEmpty(loadedTheme.FrameAssetId))
+                        {
+                            CurrentGame.Theme.FrameAssetId = loadedTheme.FrameAssetId;
+                        }
                         CurrentGame.Theme.InventoryDockPosition = loadedTheme.InventoryDockPosition;
                         CurrentGame.Theme.RoomItemsDockPosition = loadedTheme.RoomItemsDockPosition ?? "Right";
                         CurrentGame.Theme.NavigationDockPosition = loadedTheme.NavigationDockPosition;
