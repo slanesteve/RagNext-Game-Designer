@@ -562,8 +562,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
             OnPropertyChanged(nameof(VideoMediaAssets));
             OnPropertyChanged(nameof(AudioMediaAssets));
             CurrentGame?.Theme?.NotifyThemeProperties();
-            OnPropertyChanged(nameof(SelectedThemeBackground));
-            OnPropertyChanged(nameof(SelectedThemeFrame));
+            
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                OnPropertyChanged(nameof(SelectedThemeBackground));
+                OnPropertyChanged(nameof(SelectedThemeFrame));
+            }, global::Avalonia.Threading.DispatcherPriority.Background);
         }
 
         public Func<string, double, double, double, Task>? PlaySplashVideoPreviewTransition { get; set; }
