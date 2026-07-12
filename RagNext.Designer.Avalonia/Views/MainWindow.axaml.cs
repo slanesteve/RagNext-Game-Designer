@@ -6857,4 +6857,27 @@ namespace RagNext.Designer.Avalonia.Views
             return false;
         }
     }
+
+    public class AssetIdToAssetConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly AssetIdToAssetConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string idStr && !string.IsNullOrWhiteSpace(idStr) && global::RagNext.Designer.Avalonia.ViewModels.MainWindowViewModel.Instance?.CurrentGame != null)
+            {
+                return global::RagNext.Designer.Avalonia.ViewModels.MainWindowViewModel.Instance.CurrentGame.MediaAssets.FirstOrDefault(a => string.Equals(a.Id.ToString(), idStr, StringComparison.OrdinalIgnoreCase));
+            }
+            return null;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is RagsCore.Models.MediaAsset asset)
+            {
+                return asset.Id.ToString();
+            }
+            return null;
+        }
+    }
 }

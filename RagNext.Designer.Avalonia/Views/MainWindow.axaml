@@ -2317,7 +2317,7 @@
                     <TextBlock Text="HUD Background Image/Texture:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
                     <Grid ColumnDefinitions="*,Auto">
                         <ComboBox Grid.Column="0" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" 
-                        SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeBackground, Mode=TwoWay}"
+                        SelectedItem="{Binding BackgroundAssetId, Mode=TwoWay, Converter={x:Static views:AssetIdToAssetConverter.Instance}}"
                         HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Background Texture..."/>
                         <Button Grid.Column="1" Content="✕" ToolTip.Tip="Clear Background" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearThemeBackgroundCommand}" Foreground="#f38ba8" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="4,0,0,0"/>
                     </Grid>
@@ -2325,7 +2325,7 @@
                     <TextBlock Text="Decorative Frame Image:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
                     <Grid ColumnDefinitions="*,Auto">
                         <ComboBox Grid.Column="0" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ImageMediaAssets}" 
-                        SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedThemeFrame, Mode=TwoWay}"
+                        SelectedItem="{Binding FrameAssetId, Mode=TwoWay, Converter={x:Static views:AssetIdToAssetConverter.Instance}}"
                         HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" PlaceholderText="Select Frame Border Asset..."/>
                         <Button Grid.Column="1" Content="✕" ToolTip.Tip="Clear Frame" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearThemeFrameCommand}" Foreground="#f38ba8" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="4,0,0,0"/>
                     </Grid>
