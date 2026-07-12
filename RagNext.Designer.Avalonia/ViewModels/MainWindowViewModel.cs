@@ -579,10 +579,18 @@ namespace RagNext.Designer.Avalonia.ViewModels
             
             global::Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
             {
-                await Task.Delay(500);
-                CurrentGame?.Theme?.NotifyThemeProperties();
-                OnPropertyChanged(nameof(SelectedThemeBackground));
-                OnPropertyChanged(nameof(SelectedThemeFrame));
+                _isLoadingThemePreset = true;
+                try
+                {
+                    await Task.Delay(500);
+                    CurrentGame?.Theme?.NotifyThemeProperties();
+                    OnPropertyChanged(nameof(SelectedThemeBackground));
+                    OnPropertyChanged(nameof(SelectedThemeFrame));
+                }
+                finally
+                {
+                    _isLoadingThemePreset = false;
+                }
             }, global::Avalonia.Threading.DispatcherPriority.Background);
         }
 
