@@ -6882,7 +6882,8 @@ namespace RagNext.Designer.Avalonia.Views
                 System.Diagnostics.Debug.WriteLine($"[DEBUG-CONVERTER] ConvertBack returning: '{asset.Id}'");
                 return asset.Id.ToString();
             }
-            return null;
+            System.Diagnostics.Debug.WriteLine($"[DEBUG-CONVERTER] ConvertBack returning DoNothing to prevent resetting source on detach");
+            return global::Avalonia.Data.BindingOperations.DoNothing;
         }
     }
 }
