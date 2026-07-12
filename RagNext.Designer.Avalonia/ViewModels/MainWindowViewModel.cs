@@ -947,10 +947,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.BackgroundAssetId);
             set
             {
-                if (value == null && (CurrentGame == null || !ImageMediaAssets.Any())) return;
+                if (value == null) return;
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
-                    CurrentGame.Theme.BackgroundAssetId = value?.Id.ToString() ?? string.Empty;
+                    CurrentGame.Theme.BackgroundAssetId = value.Id.ToString();
                     OnPropertyChanged(nameof(SelectedThemeBackground));
                     _ = SaveGameAsync();
                 }
@@ -962,10 +962,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.FrameAssetId);
             set
             {
-                if (value == null && (CurrentGame == null || !ImageMediaAssets.Any())) return;
+                if (value == null) return;
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
-                    CurrentGame.Theme.FrameAssetId = value?.Id.ToString() ?? string.Empty;
+                    CurrentGame.Theme.FrameAssetId = value.Id.ToString();
                     OnPropertyChanged(nameof(SelectedThemeFrame));
                     _ = SaveGameAsync();
                 }
@@ -1344,8 +1344,24 @@ namespace RagNext.Designer.Avalonia.ViewModels
             SaveThemePresetCommand = new Command(() => SaveThemePreset());
             DeleteThemePresetCommand = new Command(() => DeleteThemePreset());
             ClearThemeFontCommand = new Command(() => { SelectedBuiltInFont = "Outfit"; });
-            ClearThemeBackgroundCommand = new Command(() => { SelectedThemeBackground = null; });
-            ClearThemeFrameCommand = new Command(() => { SelectedThemeFrame = null; });
+            ClearThemeBackgroundCommand = new Command(() => 
+            {
+                if (CurrentGame?.Theme != null)
+                {
+                    CurrentGame.Theme.BackgroundAssetId = string.Empty;
+                    OnPropertyChanged(nameof(SelectedThemeBackground));
+                    _ = SaveGameAsync();
+                }
+            });
+            ClearThemeFrameCommand = new Command(() => 
+            {
+                if (CurrentGame?.Theme != null)
+                {
+                    CurrentGame.Theme.FrameAssetId = string.Empty;
+                    OnPropertyChanged(nameof(SelectedThemeFrame));
+                    _ = SaveGameAsync();
+                }
+            });
 
             AddSplashScreenCommand = new Command(() =>
             {
