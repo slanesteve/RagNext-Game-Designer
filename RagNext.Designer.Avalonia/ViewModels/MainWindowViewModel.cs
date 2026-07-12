@@ -1003,6 +1003,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             set
             {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME-SET] SelectedThemeBackground set called. Value: '{value?.Name}'");
                 if (value == null)
                 {
                     OnPropertyChanged(nameof(SelectedThemeBackground));
@@ -1030,6 +1031,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             set
             {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME-SET] SelectedThemeFrame set called. Value: '{value?.Name}'");
                 if (value == null)
                 {
                     OnPropertyChanged(nameof(SelectedThemeFrame));
