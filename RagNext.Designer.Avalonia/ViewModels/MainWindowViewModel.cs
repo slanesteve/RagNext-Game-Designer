@@ -561,6 +561,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             OnPropertyChanged(nameof(ImageMediaAssets));
             OnPropertyChanged(nameof(VideoMediaAssets));
             OnPropertyChanged(nameof(AudioMediaAssets));
+            CurrentGame?.Theme?.NotifyThemeProperties();
             OnPropertyChanged(nameof(SelectedThemeBackground));
             OnPropertyChanged(nameof(SelectedThemeFrame));
         }

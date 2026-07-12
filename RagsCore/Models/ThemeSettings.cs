@@ -41,6 +41,12 @@ namespace RagsCore.Models
             }
         }
 
+        public void NotifyThemeProperties()
+        {
+            OnPropertyChanged(nameof(BackgroundAssetId));
+            OnPropertyChanged(nameof(FrameAssetId));
+        }
+
         private string _inventoryDockPosition = "Right"; // "Bottom", "Left", "Right"
         public string InventoryDockPosition { get => _inventoryDockPosition; set => SetProperty(ref _inventoryDockPosition, value); }
 
