@@ -956,7 +956,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public MediaAsset? SelectedThemeBackground
         {
-            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.BackgroundAssetId);
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => string.Equals(a.Id.ToString(), CurrentGame?.Theme?.BackgroundAssetId, StringComparison.OrdinalIgnoreCase));
             set
             {
                 if (value == null) return;
@@ -971,7 +971,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public MediaAsset? SelectedThemeFrame
         {
-            get => CurrentGame?.MediaAssets.FirstOrDefault(a => a.Id.ToString() == CurrentGame?.Theme?.FrameAssetId);
+            get => CurrentGame?.MediaAssets.FirstOrDefault(a => string.Equals(a.Id.ToString(), CurrentGame?.Theme?.FrameAssetId, StringComparison.OrdinalIgnoreCase));
             set
             {
                 if (value == null) return;
