@@ -536,7 +536,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
         }
 
         public IEnumerable<MediaAsset> VideoMediaAssets => CurrentGame?.MediaAssets.Where(a => a.Kind == MediaKind.Video) ?? Enumerable.Empty<MediaAsset>();
-        public IEnumerable<MediaAsset> ImageMediaAssets => CurrentGame?.MediaAssets.Where(a => a.Kind == MediaKind.Image) ?? Enumerable.Empty<MediaAsset>();
+        public IEnumerable<MediaAsset> ImageMediaAssets
+        {
+            get
+            {
+                var list = CurrentGame?.MediaAssets;
+                if (list != null)
+                {
+                    foreach (var a in list)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME-LIST] Asset Name: '{a.Name}', Kind: {a.Kind}, ID: '{a.Id}'");
+                    }
+                }
+                return list?.Where(a => a.Kind == MediaKind.Image) ?? Enumerable.Empty<MediaAsset>();
+            }
+        }
         public IEnumerable<MediaAsset> AudioMediaAssets => CurrentGame?.MediaAssets.Where(a => a.Kind == MediaKind.Audio) ?? Enumerable.Empty<MediaAsset>();
 
         public Func<string, double, double, double, Task>? PlaySplashVideoPreviewTransition { get; set; }
