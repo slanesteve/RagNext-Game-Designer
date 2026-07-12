@@ -997,7 +997,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 var id = CurrentGame?.Theme?.BackgroundAssetId;
                 var list = CurrentGame?.MediaAssets;
                 var found = list?.FirstOrDefault(a => string.Equals(a.Id.ToString(), id, StringComparison.OrdinalIgnoreCase));
-                System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME-GET] SelectedThemeBackground get. ID: '{id}', Found: '{found?.Name}' (List Count: {list?.Count})");
+                bool inImageAssets = found != null && _imageMediaAssets.Contains(found);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME-GET] SelectedThemeBackground get. ID: '{id}', Found: '{found?.Name}', InImageAssets: {inImageAssets}, List Count: {list?.Count}, ImageAssets Count: {_imageMediaAssets.Count}");
                 return found;
             }
             set
@@ -1023,7 +1024,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 var id = CurrentGame?.Theme?.FrameAssetId;
                 var list = CurrentGame?.MediaAssets;
                 var found = list?.FirstOrDefault(a => string.Equals(a.Id.ToString(), id, StringComparison.OrdinalIgnoreCase));
-                System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME-GET] SelectedThemeFrame get. ID: '{id}', Found: '{found?.Name}' (List Count: {list?.Count})");
+                bool inImageAssets = found != null && _imageMediaAssets.Contains(found);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME-GET] SelectedThemeFrame get. ID: '{id}', Found: '{found?.Name}', InImageAssets: {inImageAssets}, List Count: {list?.Count}, ImageAssets Count: {_imageMediaAssets.Count}");
                 return found;
             }
             set
