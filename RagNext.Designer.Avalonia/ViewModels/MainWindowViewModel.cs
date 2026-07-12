@@ -128,12 +128,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
                         value.MediaAssets.CollectionChanged += (sender, args) =>
                         {
-                            OnPropertyChanged(nameof(VideoMediaAssets));
-                            OnPropertyChanged(nameof(ImageMediaAssets));
-                            OnPropertyChanged(nameof(AudioMediaAssets));
-                            OnPropertyChanged(nameof(SelectedThemeBackground));
-                            OnPropertyChanged(nameof(SelectedThemeFrame));
+                            RefreshMediaAssetFilters();
                         };
+                        RefreshMediaAssetFilters();
 
                         if (value.StatusBarElements != null)
                         {
@@ -535,23 +532,38 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
-        public IEnumerable<MediaAsset> VideoMediaAssets => CurrentGame?.MediaAssets.Where(a => a.Kind == MediaKind.Video) ?? Enumerable.Empty<MediaAsset>();
-        public IEnumerable<MediaAsset> ImageMediaAssets
+        private readonly System.Collections.ObjectModel.ObservableCollection<MediaAsset> _imageMediaAssets = new();
+        public IEnumerable<MediaAsset> ImageMediaAssets => _imageMediaAssets;
+
+        private readonly System.Collections.ObjectModel.ObservableCollection<MediaAsset> _videoMediaAssets = new();
+        public IEnumerable<MediaAsset> VideoMediaAssets => _videoMediaAssets;
+
+        private readonly System.Collections.ObjectModel.ObservableCollection<MediaAsset> _audioMediaAssets = new();
+        public IEnumerable<MediaAsset> AudioMediaAssets => _audioMediaAssets;
+
+        public void RefreshMediaAssetFilters()
         {
-            get
+            _imageMediaAssets.Clear();
+            _videoMediaAssets.Clear();
+            _audioMediaAssets.Clear();
+            if (CurrentGame?.MediaAssets != null)
             {
-                var list = CurrentGame?.MediaAssets;
-                if (list != null)
+                foreach (var a in CurrentGame.MediaAssets)
                 {
-                    foreach (var a in list)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME-LIST] Asset Name: '{a.Name}', Kind: {a.Kind}, ID: '{a.Id}'");
-                    }
+                    if (a.Kind == MediaKind.Image)
+                        _imageMediaAssets.Add(a);
+                    else if (a.Kind == MediaKind.Video)
+                        _videoMediaAssets.Add(a);
+                    else if (a.Kind == MediaKind.Audio)
+                        _audioMediaAssets.Add(a);
                 }
-                return list?.Where(a => a.Kind == MediaKind.Image) ?? Enumerable.Empty<MediaAsset>();
             }
+            OnPropertyChanged(nameof(ImageMediaAssets));
+            OnPropertyChanged(nameof(VideoMediaAssets));
+            OnPropertyChanged(nameof(AudioMediaAssets));
+            OnPropertyChanged(nameof(SelectedThemeBackground));
+            OnPropertyChanged(nameof(SelectedThemeFrame));
         }
-        public IEnumerable<MediaAsset> AudioMediaAssets => CurrentGame?.MediaAssets.Where(a => a.Kind == MediaKind.Audio) ?? Enumerable.Empty<MediaAsset>();
 
         public Func<string, double, double, double, Task>? PlaySplashVideoPreviewTransition { get; set; }
         public System.Action? StopSplashVideoPreview { get; set; }
