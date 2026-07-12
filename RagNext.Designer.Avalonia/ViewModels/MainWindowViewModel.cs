@@ -918,7 +918,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.Theme?.FontName ?? "Outfit";
             set
             {
-                if (value == null) return;
+                if (value == null)
+                {
+                    OnPropertyChanged(nameof(SelectedBuiltInFont));
+                    OnPropertyChanged(nameof(FontPreviewFamilyName));
+                    return;
+                }
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
                     CurrentGame.Theme.FontName = value;
@@ -966,7 +971,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             set
             {
-                if (value == null) return;
+                if (value == null)
+                {
+                    OnPropertyChanged(nameof(SelectedThemeBackground));
+                    return;
+                }
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
                     CurrentGame.Theme.BackgroundAssetId = value.Id.ToString();
@@ -988,7 +997,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             set
             {
-                if (value == null) return;
+                if (value == null)
+                {
+                    OnPropertyChanged(nameof(SelectedThemeFrame));
+                    return;
+                }
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
                     CurrentGame.Theme.FrameAssetId = value.Id.ToString();
