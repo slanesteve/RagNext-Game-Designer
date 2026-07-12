@@ -19,6 +19,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
     {
         public static MainWindowViewModel? Instance { get; private set; }
 
+        private bool _isProjectLoading;
         private bool _isSaving;
         public bool IsSaving
         {
@@ -907,9 +908,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
             get => CurrentGame?.Theme?.FontName ?? "Outfit";
             set
             {
+                if (value == null) return;
                 if (CurrentGame != null && CurrentGame.Theme != null)
                 {
-                    CurrentGame.Theme.FontName = value ?? "Outfit";
+                    CurrentGame.Theme.FontName = value;
                     CurrentGame.Theme.FontAssetId = string.Empty; // Not using imported assets
                     OnPropertyChanged(nameof(SelectedBuiltInFont));
                     OnPropertyChanged(nameof(FontPreviewFamilyName));
@@ -987,8 +989,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     {
                         CurrentGame.Theme.ActivePreset = value;
                     }
-                    LoadThemePreset(value);
-                    _ = SaveGameAsync();
+                    if (!_isProjectLoading)
+                    {
+                        LoadThemePreset(value);
+                        _ = SaveGameAsync();
+                    }
                 }
             }
         }
@@ -1327,6 +1332,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             App.GameChanged += (g) => 
             { 
+                _isProjectLoading = true;
                 CurrentGame = g; 
                 OnPropertyChanged(nameof(Player));
                 OnPropertyChanged(nameof(SplashScreen));
@@ -1336,6 +1342,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 OnPropertyChanged(nameof(SelectedThemeFrame));
                 InitializePresets();
                 Media.Refresh();
+                
+                Dispatcher.UIThread.Post(() => {
+                    _isProjectLoading = false;
+                }, DispatcherPriority.Background);
             };
 
             NavigateCommand = new Command<string>(view => ActiveView = view ?? "Dashboard");
