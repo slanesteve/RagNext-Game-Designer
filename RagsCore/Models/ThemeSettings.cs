@@ -51,6 +51,9 @@ namespace RagsCore.Models
         public Func<string, MediaAsset?>? AssetResolver { get; set; }
 
         [System.Text.Json.Serialization.JsonIgnore]
+        public bool IsBatchUpdating { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
         public MediaAsset? SelectedBackground
         {
             get
@@ -61,6 +64,7 @@ namespace RagsCore.Models
             }
             set
             {
+                if (IsBatchUpdating) return;
                 if (value == null)
                 {
                     BackgroundAssetId = string.Empty;
@@ -81,6 +85,7 @@ namespace RagsCore.Models
             }
             set
             {
+                if (IsBatchUpdating) return;
                 if (value == null)
                 {
                     FrameAssetId = string.Empty;

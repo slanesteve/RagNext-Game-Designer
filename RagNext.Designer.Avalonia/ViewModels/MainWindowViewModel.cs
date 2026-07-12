@@ -1193,6 +1193,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         {
             if (CurrentGame?.Theme == null) return;
             _isLoadingThemePreset = true;
+            CurrentGame.Theme.IsBatchUpdating = true;
             try
             {
                 var file = Path.Combine(GetPresetsDirectory(), $"{presetName}.json");
@@ -1245,6 +1246,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             finally
             {
+                if (CurrentGame?.Theme != null)
+                {
+                    CurrentGame.Theme.IsBatchUpdating = false;
+                }
                 _isLoadingThemePreset = false;
                 _ = SaveGameAsync();
             }
