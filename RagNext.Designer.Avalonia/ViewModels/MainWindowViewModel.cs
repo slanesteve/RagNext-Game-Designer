@@ -1203,14 +1203,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         CurrentGame.Theme.BorderAccentColor = loadedTheme.BorderAccentColor;
                         CurrentGame.Theme.FontName = loadedTheme.FontName;
                         CurrentGame.Theme.FontAssetId = loadedTheme.FontAssetId;
-                        if (!string.IsNullOrEmpty(loadedTheme.BackgroundAssetId))
-                        {
-                            CurrentGame.Theme.BackgroundAssetId = loadedTheme.BackgroundAssetId;
-                        }
-                        if (!string.IsNullOrEmpty(loadedTheme.FrameAssetId))
-                        {
-                            CurrentGame.Theme.FrameAssetId = loadedTheme.FrameAssetId;
-                        }
+                        CurrentGame.Theme.BackgroundAssetId = loadedTheme.BackgroundAssetId ?? string.Empty;
+                        CurrentGame.Theme.FrameAssetId = loadedTheme.FrameAssetId ?? string.Empty;
                         CurrentGame.Theme.InventoryDockPosition = loadedTheme.InventoryDockPosition;
                         CurrentGame.Theme.RoomItemsDockPosition = loadedTheme.RoomItemsDockPosition ?? "Right";
                         CurrentGame.Theme.NavigationDockPosition = loadedTheme.NavigationDockPosition;
@@ -1230,6 +1224,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         CurrentGame.Theme.FrameApplyToSidebars = loadedTheme.FrameApplyToSidebars;
                         CurrentGame.Theme.ActivePreset = presetName;
 
+                        CurrentGame.Theme.NotifyThemeProperties();
                         OnPropertyChanged(nameof(SelectedThemeBackground));
                         OnPropertyChanged(nameof(SelectedThemeFrame));
                         OnPropertyChanged(nameof(SelectedBuiltInFont));
