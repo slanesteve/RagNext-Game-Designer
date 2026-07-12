@@ -346,6 +346,16 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     {
                         RunValidation();
                     }
+                    if (value == "Theme")
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            OnPropertyChanged(nameof(ImageMediaAssets));
+                            OnPropertyChanged(nameof(SelectedThemeBackground));
+                            OnPropertyChanged(nameof(SelectedThemeFrame));
+                            OnPropertyChanged(nameof(SelectedBuiltInFont));
+                        }, DispatcherPriority.Background);
+                    }
                     // Reset editing state on navigation change
                     IsVisualEditing = false;
                     ActiveAction = null;
@@ -2753,7 +2763,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public async Task SaveGameAsync()
         {
-            if (CurrentGame == null) return;
+            if (_isProjectLoading || CurrentGame == null) return;
             AutoSaveActivePreset();
             IsSaving = true;
             SaveStatusText = "Saving changes...";
