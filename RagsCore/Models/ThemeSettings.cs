@@ -27,6 +27,7 @@ namespace RagsCore.Models
             {
                 System.Diagnostics.Debug.WriteLine($"[DEBUG-SETTER] BackgroundAssetId setter called. Value: '{value}'");
                 SetProperty(ref _backgroundAssetId, value); 
+                OnPropertyChanged(nameof(SelectedBackground));
             }
         }
 
@@ -38,6 +39,40 @@ namespace RagsCore.Models
             {
                 System.Diagnostics.Debug.WriteLine($"[DEBUG-SETTER] FrameAssetId setter called. Value: '{value}'");
                 SetProperty(ref _frameAssetId, value); 
+                OnPropertyChanged(nameof(SelectedFrame));
+            }
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public Func<string, MediaAsset?>? AssetResolver { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public MediaAsset? SelectedBackground
+        {
+            get => AssetResolver?.Invoke(BackgroundAssetId);
+            set
+            {
+                if (value == null)
+                {
+                    BackgroundAssetId = string.Empty;
+                    return;
+                }
+                BackgroundAssetId = value.Id.ToString();
+            }
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public MediaAsset? SelectedFrame
+        {
+            get => AssetResolver?.Invoke(FrameAssetId);
+            set
+            {
+                if (value == null)
+                {
+                    FrameAssetId = string.Empty;
+                    return;
+                }
+                FrameAssetId = value.Id.ToString();
             }
         }
 
@@ -45,6 +80,8 @@ namespace RagsCore.Models
         {
             OnPropertyChanged(nameof(BackgroundAssetId));
             OnPropertyChanged(nameof(FrameAssetId));
+            OnPropertyChanged(nameof(SelectedBackground));
+            OnPropertyChanged(nameof(SelectedFrame));
         }
 
         private string _inventoryDockPosition = "Right"; // "Bottom", "Left", "Right"

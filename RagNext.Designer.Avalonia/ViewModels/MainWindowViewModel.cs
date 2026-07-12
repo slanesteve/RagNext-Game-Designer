@@ -103,6 +103,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                                 }
                             }
                         }
+                        if (value.Theme != null)
+                        {
+                            value.Theme.AssetResolver = id => value.MediaAssets.FirstOrDefault(a => string.Equals(a.Id.ToString(), id, StringComparison.OrdinalIgnoreCase));
+                        }
 
                         string baseDir;
                         if (!string.IsNullOrEmpty(Preferences?.LastPublishDirectory))
@@ -159,6 +163,15 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             {
                                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Player PropertyChanged: {args.PropertyName}");
                                 Console.WriteLine($"[DEBUG] Player PropertyChanged: {args.PropertyName}");
+                                _ = SaveGameAsync();
+                            };
+                        }
+
+                        if (value.Theme != null)
+                        {
+                            value.Theme.PropertyChanged += (sender, args) =>
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] Theme PropertyChanged: {args.PropertyName}");
                                 _ = SaveGameAsync();
                             };
                         }
@@ -566,6 +579,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             global::Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
             {
                 await Task.Delay(500);
+                CurrentGame?.Theme?.NotifyThemeProperties();
                 OnPropertyChanged(nameof(SelectedThemeBackground));
                 OnPropertyChanged(nameof(SelectedThemeFrame));
             }, global::Avalonia.Threading.DispatcherPriority.Background);
