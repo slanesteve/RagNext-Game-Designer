@@ -1276,10 +1276,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
             if (string.IsNullOrEmpty(SelectedThemePreset)) return;
             try
             {
-                var file = Path.Combine(GetPresetsDirectory(), $"{SelectedThemePreset}.json");
+                var presetToDelete = SelectedThemePreset;
+                var file = Path.Combine(GetPresetsDirectory(), $"{presetToDelete}.json");
                 if (File.Exists(file)) File.Delete(file);
-                ThemePresets.Remove(SelectedThemePreset);
-                SelectedThemePreset = null;
+                
+                ThemePresets.Remove(presetToDelete);
+                
+                if (CurrentGame?.Theme != null)
+                {
+                    CurrentGame.Theme.ActivePreset = "Default";
+                }
+                SelectedThemePreset = "Default";
             }
             catch (Exception ex)
             {
