@@ -1342,8 +1342,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             App.GameChanged += (g) => 
             { 
-                Console.WriteLine($"[DEBUG-THEME] Loaded BackgroundAssetId: '{g?.Theme?.BackgroundAssetId}', FrameAssetId: '{g?.Theme?.FrameAssetId}'");
-                Console.WriteLine($"[DEBUG-THEME] MediaAssets Count: {g?.MediaAssets?.Count}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME] Loaded BackgroundAssetId: '{g?.Theme?.BackgroundAssetId}', FrameAssetId: '{g?.Theme?.FrameAssetId}'");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME] MediaAssets Count: {g?.MediaAssets?.Count}");
                 _isProjectLoading = true;
                 CurrentGame = g; 
                 OnPropertyChanged(nameof(Player));
