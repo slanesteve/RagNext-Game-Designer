@@ -1073,14 +1073,21 @@ namespace RagNext.Designer.Avalonia.ViewModels
             {
                 if (SetProperty(ref _selectedThemePreset, value) && !string.IsNullOrEmpty(value))
                 {
-                    if (CurrentGame?.Theme != null)
+                    _isLoadingThemePreset = true;
+                    try
                     {
-                        CurrentGame.Theme.ActivePreset = value;
+                        if (CurrentGame?.Theme != null)
+                        {
+                            CurrentGame.Theme.ActivePreset = value;
+                        }
+                        if (!_isProjectLoading)
+                        {
+                            LoadThemePreset(value);
+                        }
                     }
-                    if (!_isProjectLoading)
+                    finally
                     {
-                        LoadThemePreset(value);
-                        _ = SaveGameAsync();
+                        _isLoadingThemePreset = false;
                     }
                 }
             }
