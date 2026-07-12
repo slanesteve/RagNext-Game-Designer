@@ -2071,6 +2071,7 @@ namespace RagNextPlayer.Managers
             string primaryBgStr = game.Theme.PrimaryBgColor;
             string textMainStr = game.Theme.TextMainColor;
             string borderAccentStr = game.Theme.BorderAccentColor;
+            Color glassBg = new Color(0.12f, 0.12f, 0.14f, 0.78f);
 
             // Apply preset overrides if the theme.preset variable is set mid-game
             var presetVar = game.Variables.Find(v => string.Equals(v.Name, "theme.preset", StringComparison.OrdinalIgnoreCase))?.Value;
@@ -2119,7 +2120,7 @@ namespace RagNextPlayer.Managers
                 targetRoot.style.backgroundColor = primaryBg;
 
                 // Create a translucent glass background color with 78% opacity
-                var glassBg = primaryBg;
+                glassBg = primaryBg;
                 if (glassBg.a >= 0.99f)
                 {
                     glassBg.a = 0.78f;
@@ -2316,20 +2317,21 @@ namespace RagNextPlayer.Managers
                 }
             }
 
-            // 5. Apply Background Image Texture if defined
+            // 5. Apply Background Image Texture to all UI Panels if defined
             if (!string.IsNullOrEmpty(game.Theme.BackgroundAssetId))
             {
                 var bgAsset = game.MediaAssets.Find(a => 
                     string.Equals(a.Id, game.Theme.BackgroundAssetId, StringComparison.OrdinalIgnoreCase));
                 if (bgAsset != null)
                 {
-                    StartCoroutine(LoadThemeImageCoroutine(bgAsset.RelativePath, targetRoot));
+                    StartCoroutine(LoadAndApplyThemePanelBackgroundsCoroutine(bgAsset.RelativePath, glassBg));
                 }
             }
             else
             {
-                targetRoot.style.backgroundImage = null;
+                ApplyPanelBackgrounds(null, glassBg);
             }
+            targetRoot.style.backgroundImage = null;
 
             // 6. Apply Panel Frame Image if defined
             // First, cleanup existing overlays in all potential target panels
@@ -2517,6 +2519,53 @@ namespace RagNextPlayer.Managers
             
             element.Add(frameOverlay);
             frameOverlay.BringToFront();
+        }
+
+        private IEnumerator LoadAndApplyThemePanelBackgroundsCoroutine(string relativePath, Color fallbackBg)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath)) yield break;
+            string url = FormatLocalPathForWeb(relativePath);
+            using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url);
+            yield return req.SendWebRequest();
+            if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+            {
+                var tex = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
+                ApplyPanelBackgrounds(tex, fallbackBg);
+            }
+        }
+
+        private void ApplyPanelBackgrounds(Texture2D tex, Color fallbackBg)
+        {
+            var panels = new[]
+            {
+                _narrativePanel,
+                _rightSidebarContainer,
+                _root.Q<VisualElement>("left-sidebar-container"),
+                _root.Q<VisualElement>("hud-bottom-compartment"),
+                _root.Q<VisualElement>("floating-player-card"),
+                _compassDialOverlay,
+                _root.Q<VisualElement>("navigation-panel"),
+                _promptInputMenu,
+                _gameOverMenu,
+                _root.Q<VisualElement>("menu-container")
+            };
+
+            foreach (var panel in panels)
+            {
+                if (panel == null) continue;
+                if (tex != null)
+                {
+                    panel.style.backgroundImage = new StyleBackground(tex);
+                    panel.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.Repeat, Repeat.Repeat));
+                    panel.style.backgroundSize = StyleKeyword.Null;
+                    panel.style.backgroundColor = StyleKeyword.Null;
+                }
+                else
+                {
+                    panel.style.backgroundImage = null;
+                    panel.style.backgroundColor = fallbackBg;
+                }
+            }
         }
 
         private IEnumerator LoadThemeImageCoroutine(string relativePath, VisualElement element, bool isFrame = false)
