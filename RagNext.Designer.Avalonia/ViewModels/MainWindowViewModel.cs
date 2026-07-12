@@ -171,6 +171,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         {
                             value.Theme.PropertyChanged += (sender, args) =>
                             {
+                                if (_isLoadingThemePreset) return;
                                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Theme PropertyChanged: {args.PropertyName}");
                                 _ = SaveGameAsync();
                             };
@@ -1186,9 +1187,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
+        private bool _isLoadingThemePreset = false;
+
         private void LoadThemePreset(string presetName)
         {
             if (CurrentGame?.Theme == null) return;
+            _isLoadingThemePreset = true;
             try
             {
                 var file = Path.Combine(GetPresetsDirectory(), $"{presetName}.json");
@@ -1238,6 +1242,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"[Presets] Failed to load preset: {ex.Message}");
+            }
+            finally
+            {
+                _isLoadingThemePreset = false;
+                _ = SaveGameAsync();
             }
         }
 
