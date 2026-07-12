@@ -1224,11 +1224,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         CurrentGame.Theme.FrameApplyToSidebars = loadedTheme.FrameApplyToSidebars;
                         CurrentGame.Theme.ActivePreset = presetName;
 
-                        CurrentGame.Theme.NotifyThemeProperties();
-                        OnPropertyChanged(nameof(SelectedThemeBackground));
-                        OnPropertyChanged(nameof(SelectedThemeFrame));
-                        OnPropertyChanged(nameof(SelectedBuiltInFont));
-                        OnPropertyChanged(nameof(FontPreviewFamilyName));
+                        global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            CurrentGame?.Theme?.NotifyThemeProperties();
+                            OnPropertyChanged(nameof(SelectedThemeBackground));
+                            OnPropertyChanged(nameof(SelectedThemeFrame));
+                            OnPropertyChanged(nameof(SelectedBuiltInFont));
+                            OnPropertyChanged(nameof(FontPreviewFamilyName));
+                        }, global::Avalonia.Threading.DispatcherPriority.Background);
                     }
                 }
             }

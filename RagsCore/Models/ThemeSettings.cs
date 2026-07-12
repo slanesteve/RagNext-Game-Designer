@@ -25,9 +25,11 @@ namespace RagsCore.Models
             get => _backgroundAssetId; 
             set 
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG-SETTER] BackgroundAssetId setter called. Value: '{value}'");
-                SetProperty(ref _backgroundAssetId, value); 
-                OnPropertyChanged(nameof(SelectedBackground));
+                if (SetProperty(ref _backgroundAssetId, value))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG-SETTER] BackgroundAssetId setter called. Value: '{value}'");
+                    OnPropertyChanged(nameof(SelectedBackground));
+                }
             }
         }
 
@@ -37,9 +39,11 @@ namespace RagsCore.Models
             get => _frameAssetId; 
             set 
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG-SETTER] FrameAssetId setter called. Value: '{value}'");
-                SetProperty(ref _frameAssetId, value); 
-                OnPropertyChanged(nameof(SelectedFrame));
+                if (SetProperty(ref _frameAssetId, value))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG-SETTER] FrameAssetId setter called. Value: '{value}'");
+                    OnPropertyChanged(nameof(SelectedFrame));
+                }
             }
         }
 
