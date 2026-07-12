@@ -47,6 +47,7 @@ namespace RagNext.Designer.Avalonia.Services
         public string? Name { get; set; }
         public string? Description { get; set; }
         public string? Gender { get; set; }
+        public bool ShowGender { get; set; }
         public string? PortraitImagePath { get; set; }
         public string? StartingRoomId { get; set; }
         public List<ExportObjectDto>? Inventory { get; set; }
@@ -210,6 +211,10 @@ namespace RagNext.Designer.Avalonia.Services
         public bool FrameApplyToMainText { get; set; }
         public bool FrameApplyToPopups { get; set; }
         public bool FrameApplyToSidebars { get; set; }
+        public double BorderThickness { get; set; }
+        public string? PlayerStatusBoxShape { get; set; }
+        public string? PlayerPortraitShape { get; set; }
+        public double PortraitSize { get; set; }
     }
 
     /// <summary>
@@ -260,7 +265,11 @@ namespace RagNext.Designer.Avalonia.Services
                 FrameApplyToGameScreen = game.Theme.FrameApplyToGameScreen,
                 FrameApplyToMainText = game.Theme.FrameApplyToMainText,
                 FrameApplyToPopups = game.Theme.FrameApplyToPopups,
-                FrameApplyToSidebars = game.Theme.FrameApplyToSidebars
+                FrameApplyToSidebars = game.Theme.FrameApplyToSidebars,
+                BorderThickness = game.Theme.BorderThickness,
+                PlayerStatusBoxShape = game.Theme.PlayerStatusBoxShape,
+                PlayerPortraitShape = game.Theme.PlayerPortraitShape,
+                PortraitSize = game.Theme.PortraitSize
             },
             Player     = BuildPlayerDto(game.Player),
             Rooms      = game.Rooms.Select(r => BuildRoomDto(r)).ToList(),
@@ -366,6 +375,7 @@ namespace RagNext.Designer.Avalonia.Services
             Name = p.Name,
             Description       = NormalizeNewlines(p.Description),
             Gender = p.Gender,
+            ShowGender = p.ShowGender,
             PortraitImagePath = p.PortraitImagePath,
             StartingRoomId    = p.StartingRoom?.Id.ToString(),
             Inventory         = p.Inventory.Select(o => BuildObjectDto(o)).ToList(),

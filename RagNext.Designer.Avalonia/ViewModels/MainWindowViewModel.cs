@@ -1138,7 +1138,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             FrameApplyToGameScreen = true,
                             FrameApplyToMainText = false,
                             FrameApplyToPopups = false,
-                            FrameApplyToSidebars = false
+                            FrameApplyToSidebars = false,
+                            BorderThickness = 1.5,
+                            PlayerStatusBoxShape = "Default",
+                            PlayerPortraitShape = "Circle",
+                            PortraitSize = 80
                         };
                         var json = System.Text.Json.JsonSerializer.Serialize(theme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
                         File.WriteAllText(presetPath, json);
@@ -1243,6 +1247,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         CurrentGame.Theme.FrameApplyToMainText = loadedTheme.FrameApplyToMainText;
                         CurrentGame.Theme.FrameApplyToPopups = loadedTheme.FrameApplyToPopups;
                         CurrentGame.Theme.FrameApplyToSidebars = loadedTheme.FrameApplyToSidebars;
+                        CurrentGame.Theme.BorderThickness = loadedTheme.BorderThickness > 0 ? loadedTheme.BorderThickness : 1.5;
+                        CurrentGame.Theme.PlayerStatusBoxShape = !string.IsNullOrEmpty(loadedTheme.PlayerStatusBoxShape) ? loadedTheme.PlayerStatusBoxShape : "Default";
+                        CurrentGame.Theme.PlayerPortraitShape = !string.IsNullOrEmpty(loadedTheme.PlayerPortraitShape) ? loadedTheme.PlayerPortraitShape : "Circle";
+                        CurrentGame.Theme.PortraitSize = loadedTheme.PortraitSize > 0 ? loadedTheme.PortraitSize : 80.0;
                         CurrentGame.Theme.ActivePreset = presetName;
 
                         global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>

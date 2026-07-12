@@ -6886,4 +6886,80 @@ namespace RagNext.Designer.Avalonia.Views
             return global::Avalonia.Data.BindingOperations.DoNothing;
         }
     }
+
+    public class PlayerStatusBoxCornerRadiusConverter : global::Avalonia.Data.Converters.IMultiValueConverter
+    {
+        public static readonly PlayerStatusBoxCornerRadiusConverter Instance = new();
+        public object Convert(global::System.Collections.Generic.IList<object?> values, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            double radius = 8.0;
+            string shape = "Default";
+            if (values.Count >= 2)
+            {
+                if (values[0] is string s) shape = s;
+                if (values[1] is double d) radius = d;
+            }
+            if (string.Equals(shape, "Rectangle", StringComparison.OrdinalIgnoreCase))
+            {
+                return new global::Avalonia.CornerRadius(radius);
+            }
+            return new global::Avalonia.CornerRadius(56, 16, 16, 56);
+        }
+    }
+
+    public class PlayerPortraitCornerRadiusConverter : global::Avalonia.Data.Converters.IMultiValueConverter
+    {
+        public static readonly PlayerPortraitCornerRadiusConverter Instance = new();
+        public object Convert(global::System.Collections.Generic.IList<object?> values, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            double size = 80.0;
+            string shape = "Circle";
+            if (values.Count >= 2)
+            {
+                if (values[0] is string s) shape = s;
+                if (values[1] is double d) size = d;
+            }
+            if (string.Equals(shape, "Square", StringComparison.OrdinalIgnoreCase))
+            {
+                return new global::Avalonia.CornerRadius(4);
+            }
+            return new global::Avalonia.CornerRadius(size / 2.0);
+        }
+    }
+
+    public class DoubleToThicknessConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly DoubleToThicknessConverter Instance = new();
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is double d)
+            {
+                return new global::Avalonia.Thickness(d);
+            }
+            if (value is float f)
+            {
+                return new global::Avalonia.Thickness(f);
+            }
+            return new global::Avalonia.Thickness(1.5);
+        }
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class DoubleToCornerRadiusConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly DoubleToCornerRadiusConverter Instance = new();
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is double d)
+            {
+                return new global::Avalonia.CornerRadius(d);
+            }
+            if (value is float f)
+            {
+                return new global::Avalonia.CornerRadius(f);
+            }
+            return new global::Avalonia.CornerRadius(8);
+        }
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
 }

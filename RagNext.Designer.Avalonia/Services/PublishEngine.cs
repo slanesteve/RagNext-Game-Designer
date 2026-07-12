@@ -279,6 +279,23 @@ namespace RagNext.Designer.Avalonia.Services
             }
             Report($"  {copiedCount} media asset(s) copied.");
 
+            // 3. Copy theme presets
+            string srcPresetsDir  = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
+            string destPresetsDir = Path.Combine(streamingAssetsDir, "Presets");
+            int copiedPresets = 0;
+            if (Directory.Exists(srcPresetsDir))
+            {
+                Directory.CreateDirectory(destPresetsDir);
+                foreach (var file in Directory.GetFiles(srcPresetsDir, "*.json"))
+                {
+                    string fileName = Path.GetFileName(file);
+                    string destFile = Path.Combine(destPresetsDir, fileName);
+                    File.Copy(file, destFile, overwrite: true);
+                    copiedPresets++;
+                }
+            }
+            Report($"  {copiedPresets} theme preset(s) copied.");
+
         }
 
         // ── Template Resolution ────────────────────────────────────────────────

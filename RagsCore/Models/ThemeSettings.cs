@@ -156,5 +156,17 @@ namespace RagsCore.Models
 
         private bool _frameApplyToSidebars = false;
         public bool FrameApplyToSidebars { get => _frameApplyToSidebars; set => SetProperty(ref _frameApplyToSidebars, value); }
+
+        private double _borderThickness = 1.5;
+        public double BorderThickness { get => _borderThickness; set => SetProperty(ref _borderThickness, value); }
+
+        private string _playerStatusBoxShape = "Default";
+        public string PlayerStatusBoxShape { get => _playerStatusBoxShape; set => SetProperty(ref _playerStatusBoxShape, value); }
+
+        private string _playerPortraitShape = "Circle";
+        public string PlayerPortraitShape { get => _playerPortraitShape; set => SetProperty(ref _playerPortraitShape, value); }
+
+        private double _portraitSize = 80.0;
+        public double PortraitSize { get => _portraitSize; set => SetProperty(ref _portraitSize, value); }
     }
 }

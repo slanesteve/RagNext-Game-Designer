@@ -82,6 +82,8 @@ namespace RagNextPlayer.Managers
         private Button         _typewriterToggleBtn;
         private Button         _fontSizeToggleBtn;
         private string         _fontSizePref = "Normal";
+        private string         _activeTextMainColor = "#ffffff";
+        private string         _activeBorderAccentColor = "#4a4a5a";
         private Slider         _typewriterSpeedSlider;
         private SliderInt      _volumeSlider;
         private Button         _quitGameBtn; // Obsolete but kept for safety reference if needed
@@ -90,6 +92,7 @@ namespace RagNextPlayer.Managers
         private Label          _scenePlaceholder;
         private VisualElement  _splashScreen;
         public bool IsSplashFinished { get; private set; } = false;
+        private bool _themePresetInitialized = false;
 
         // Game Over modal references
         private VisualElement  _gameOverMenu;
@@ -2040,6 +2043,17 @@ namespace RagNextPlayer.Managers
                 }
             }
 
+            if (!_themePresetInitialized && game.Variables != null)
+            {
+                var presetVarData = game.Variables.Find(v => string.Equals(v.Name, "theme.preset", StringComparison.OrdinalIgnoreCase));
+                if (presetVarData != null)
+                {
+                    presetVarData.Value = game.Theme.ActivePreset;
+                    Debug.Log($"[UIManager] Initializing theme.preset variable to active preset '{game.Theme.ActivePreset}'");
+                }
+                _themePresetInitialized = true;
+            }
+
             // Apply custom theme settings from game configuration
             ApplyTheme(game);
 
@@ -2063,55 +2077,180 @@ namespace RagNextPlayer.Managers
             return ColorUtility.TryParseHtmlString(hex, out color);
         }
 
-        private void ApplyTheme(GameData game)
+        public void ApplyTheme(GameData game)
         {
             if (game?.Theme == null || _root == null) return;
 
-            // Fetch default colors from the theme structure
-            string primaryBgStr = game.Theme.PrimaryBgColor;
-            string textMainStr = game.Theme.TextMainColor;
-            string borderAccentStr = game.Theme.BorderAccentColor;
+            // Retrieve variable helpers
+            string GetThemeVar(string subKey, string defaultValue)
+            {
+                var val = game.Variables.Find(v => string.Equals(v.Name, "theme." + subKey, StringComparison.OrdinalIgnoreCase))?.Value;
+                return !string.IsNullOrEmpty(val) ? val : defaultValue;
+            }
+
+            double GetThemeVarDouble(string subKey, double defaultValue)
+            {
+                var valStr = game.Variables.Find(v => string.Equals(v.Name, "theme." + subKey, StringComparison.OrdinalIgnoreCase))?.Value;
+                if (!string.IsNullOrEmpty(valStr) && double.TryParse(valStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val))
+                    return val;
+                return defaultValue;
+            }
+
+            bool GetThemeVarBool(string subKey, bool defaultValue)
+            {
+                var valStr = game.Variables.Find(v => string.Equals(v.Name, "theme." + subKey, StringComparison.OrdinalIgnoreCase))?.Value;
+                if (!string.IsNullOrEmpty(valStr) && bool.TryParse(valStr, out var val))
+                    return val;
+                return defaultValue;
+            }
+
+            // Load colors and layout properties, allowing variables overrides
+            string primaryBgStr = GetThemeVar("primaryBgColor", game.Theme.PrimaryBgColor);
+            string textMainStr = GetThemeVar("textMainColor", game.Theme.TextMainColor);
+            string borderAccentStr = GetThemeVar("borderAccentColor", game.Theme.BorderAccentColor);
             Color glassBg = new Color(0.12f, 0.12f, 0.14f, 0.78f);
 
+            var leftSidebar = _root.Q<VisualElement>("left-sidebar-container");
+            var bottomComp = _root.Q<VisualElement>("hud-bottom-compartment");
+
+            string fontNameVal = GetThemeVar("fontName", game.Theme.FontName);
+            string backgroundAssetIdVal = GetThemeVar("backgroundAssetId", game.Theme.BackgroundAssetId);
+            string frameAssetIdVal = GetThemeVar("frameAssetId", game.Theme.FrameAssetId);
+
+            string inventoryDock = GetThemeVar("inventoryDockPosition", game.Theme.InventoryDockPosition);
+            string roomItemsDock = GetThemeVar("roomItemsDockPosition", game.Theme.RoomItemsDockPosition);
+            string navigationDock = GetThemeVar("navigationDockPosition", game.Theme.NavigationDockPosition);
+            double panelPaddingVal = GetThemeVarDouble("panelPadding", game.Theme.PanelPadding);
+            double borderRadiusVal = GetThemeVarDouble("borderRadius", game.Theme.BorderRadius);
+            double aspectRatioVal = GetThemeVarDouble("aspectRatio", game.Theme.AspectRatio);
+            string textBoxAlign = GetThemeVar("textBoxAlignment", game.Theme.TextBoxAlignment);
+            double textBoxW = GetThemeVarDouble("textBoxWidth", game.Theme.TextBoxWidth);
+            double textBoxH = GetThemeVarDouble("textBoxHeight", game.Theme.TextBoxHeight);
+            string portraitAlign = GetThemeVar("portraitAlignment", game.Theme.PortraitAlignment);
+            double sidebarW = GetThemeVarDouble("sidebarWidth", game.Theme.SidebarWidth);
+            double bottomBarH = GetThemeVarDouble("bottomBarHeight", game.Theme.BottomBarHeight);
+            double fontSizeVal = GetThemeVarDouble("fontSize", game.Theme.FontSize);
+            double borderThicknessVal = GetThemeVarDouble("borderThickness", game.Theme.BorderThickness);
+            string playerStatusBoxShape = GetThemeVar("playerStatusBoxShape", game.Theme.PlayerStatusBoxShape);
+            string playerPortraitShape = GetThemeVar("playerPortraitShape", game.Theme.PlayerPortraitShape);
+            double portraitSizeVal = GetThemeVarDouble("portraitSize", game.Theme.PortraitSize);
+            bool frameApplyToGameScreen = GetThemeVarBool("frameApplyToGameScreen", game.Theme.FrameApplyToGameScreen);
+            bool frameApplyToMainText = GetThemeVarBool("frameApplyToMainText", game.Theme.FrameApplyToMainText);
+            bool frameApplyToPopups = GetThemeVarBool("frameApplyToPopups", game.Theme.FrameApplyToPopups);
+            bool frameApplyToSidebars = GetThemeVarBool("frameApplyToSidebars", game.Theme.FrameApplyToSidebars);
+
             // Apply preset overrides if the theme.preset variable is set mid-game
-            var presetVar = game.Variables.Find(v => string.Equals(v.Name, "theme.preset", StringComparison.OrdinalIgnoreCase))?.Value;
+            var presetVar = GetThemeVar("preset", game.Theme.ActivePreset);
             if (!string.IsNullOrEmpty(presetVar))
             {
-                if (string.Equals(presetVar, "pink", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "wife", StringComparison.OrdinalIgnoreCase))
+                // Attempt to load preset dynamically from StreamingAssets/Presets/{presetVar}.json
+                string presetPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Presets", presetVar + ".json");
+                ThemeSettingsData customTheme = null;
+                bool fileExists = System.IO.File.Exists(presetPath);
+                Debug.Log($"[UIManager] ApplyTheme presetVar='{presetVar}', path='{presetPath}', exists={fileExists}");
+                if (fileExists)
                 {
-                    primaryBgStr = "#FFF0F5";
-                    textMainStr = "#4A1525";
-                    borderAccentStr = "#FF69B4";
+                    try
+                    {
+                        string json = System.IO.File.ReadAllText(presetPath);
+                        customTheme = Newtonsoft.Json.JsonConvert.DeserializeObject<ThemeSettingsData>(json);
+                        Debug.Log($"[UIManager] ApplyTheme successfully deserialized preset '{presetVar}'. BgColor='{customTheme?.PrimaryBgColor}', Dock='{customTheme?.InventoryDockPosition}'");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[UIManager] Failed to load preset '{presetVar}' from StreamingAssets: {ex.Message}");
+                    }
                 }
-                else if (string.Equals(presetVar, "blue", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "husband", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "man", StringComparison.OrdinalIgnoreCase))
+
+                if (customTheme != null)
                 {
-                    primaryBgStr = "#F0F8FF";
-                    textMainStr = "#0B3C5D";
-                    borderAccentStr = "#328CC1";
+                    primaryBgStr = GetThemeVar("primaryBgColor", customTheme.PrimaryBgColor);
+                    textMainStr = GetThemeVar("textMainColor", customTheme.TextMainColor);
+                    borderAccentStr = GetThemeVar("borderAccentColor", customTheme.BorderAccentColor);
+                    fontNameVal = GetThemeVar("fontName", customTheme.FontName);
+                    backgroundAssetIdVal = GetThemeVar("backgroundAssetId", customTheme.BackgroundAssetId);
+                    frameAssetIdVal = GetThemeVar("frameAssetId", customTheme.FrameAssetId);
+                    inventoryDock = GetThemeVar("inventoryDockPosition", customTheme.InventoryDockPosition);
+                    roomItemsDock = GetThemeVar("roomItemsDockPosition", customTheme.RoomItemsDockPosition);
+                    navigationDock = GetThemeVar("navigationDockPosition", customTheme.NavigationDockPosition);
+                    panelPaddingVal = GetThemeVarDouble("panelPadding", customTheme.PanelPadding);
+                    borderRadiusVal = GetThemeVarDouble("borderRadius", customTheme.BorderRadius);
+                    aspectRatioVal = GetThemeVarDouble("aspectRatio", customTheme.AspectRatio);
+                    textBoxAlign = GetThemeVar("textBoxAlignment", customTheme.TextBoxAlignment);
+                    textBoxW = GetThemeVarDouble("textBoxWidth", customTheme.TextBoxWidth);
+                    textBoxH = GetThemeVarDouble("textBoxHeight", customTheme.TextBoxHeight);
+                    portraitAlign = GetThemeVar("portraitAlignment", customTheme.PortraitAlignment);
+                    sidebarW = GetThemeVarDouble("sidebarWidth", customTheme.SidebarWidth);
+                    bottomBarH = GetThemeVarDouble("bottomBarHeight", customTheme.BottomBarHeight);
+                    fontSizeVal = GetThemeVarDouble("fontSize", customTheme.FontSize);
+                    borderThicknessVal = GetThemeVarDouble("borderThickness", customTheme.BorderThickness);
+                    playerStatusBoxShape = GetThemeVar("playerStatusBoxShape", customTheme.PlayerStatusBoxShape);
+                    playerPortraitShape = GetThemeVar("playerPortraitShape", customTheme.PlayerPortraitShape);
+                    portraitSizeVal = GetThemeVarDouble("portraitSize", customTheme.PortraitSize);
+                    frameApplyToGameScreen = GetThemeVarBool("frameApplyToGameScreen", customTheme.FrameApplyToGameScreen);
+                    frameApplyToMainText = GetThemeVarBool("frameApplyToMainText", customTheme.FrameApplyToMainText);
+                    frameApplyToPopups = GetThemeVarBool("frameApplyToPopups", customTheme.FrameApplyToPopups);
+                    frameApplyToSidebars = GetThemeVarBool("frameApplyToSidebars", customTheme.FrameApplyToSidebars);
                 }
-                else if (string.Equals(presetVar, "dark", StringComparison.OrdinalIgnoreCase))
+                else
                 {
-                    primaryBgStr = "#121214";
-                    textMainStr = "#E0E0E0";
-                    borderAccentStr = "#4A4A5A";
-                }
-                else if (string.Equals(presetVar, "glass", StringComparison.OrdinalIgnoreCase))
-                {
-                    primaryBgStr = "#0D0E12";
-                    textMainStr = "#E0E0E8";
-                    borderAccentStr = "#00BCD4";
+                    // Fallback to hardcoded defaults for standard presets if the file is missing
+                    if (string.Equals(presetVar, "pink", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "wife", StringComparison.OrdinalIgnoreCase))
+                    {
+                        primaryBgStr = "#FFF0F5";
+                        textMainStr = "#4A1525";
+                        borderAccentStr = "#FF69B4";
+                        inventoryDock = "Bottom";
+                        roomItemsDock = "Bottom";
+                        navigationDock = "Bottom";
+                        portraitAlign = "TopLeft";
+                    }
+                    else if (string.Equals(presetVar, "blue", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "husband", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "man", StringComparison.OrdinalIgnoreCase))
+                    {
+                        primaryBgStr = "#F0F8FF";
+                        textMainStr = "#0B3C5D";
+                        borderAccentStr = "#328CC1";
+                        inventoryDock = "Bottom";
+                        roomItemsDock = "Bottom";
+                        navigationDock = "Bottom";
+                        portraitAlign = "TopLeft";
+                    }
+                    else if (string.Equals(presetVar, "dark", StringComparison.OrdinalIgnoreCase))
+                    {
+                        primaryBgStr = "#121214";
+                        textMainStr = "#E0E0E0";
+                        borderAccentStr = "#4A4A5A";
+                        inventoryDock = "Bottom";
+                        roomItemsDock = "Bottom";
+                        navigationDock = "Bottom";
+                        portraitAlign = "TopLeft";
+                    }
+                    else if (string.Equals(presetVar, "glass", StringComparison.OrdinalIgnoreCase))
+                    {
+                        primaryBgStr = "rgba(40,40,40,0.55)";
+                        textMainStr = "#ffffff";
+                        borderAccentStr = "rgba(255,255,255,0.2)";
+                        inventoryDock = "Right";
+                        roomItemsDock = "Right";
+                        navigationDock = "Right";
+                        portraitAlign = "TopLeft";
+                    }
+                    else if (string.Equals(presetVar, "default", StringComparison.OrdinalIgnoreCase))
+                    {
+                        primaryBgStr = "#1e1e24";
+                        textMainStr = "#ffffff";
+                        borderAccentStr = "#4a4a5a";
+                        inventoryDock = "Right";
+                        roomItemsDock = "Right";
+                        navigationDock = "Right";
+                        portraitAlign = "TopLeft";
+                    }
                 }
             }
 
-            // Apply fine-grained color overrides if specific theme.color variables are set
-            var bgVar = game.Variables.Find(v => string.Equals(v.Name, "theme.primaryBgColor", StringComparison.OrdinalIgnoreCase))?.Value;
-            if (!string.IsNullOrEmpty(bgVar)) primaryBgStr = bgVar;
-
-            var textVar = game.Variables.Find(v => string.Equals(v.Name, "theme.textMainColor", StringComparison.OrdinalIgnoreCase))?.Value;
-            if (!string.IsNullOrEmpty(textVar)) textMainStr = textVar;
-
-            var borderVar = game.Variables.Find(v => string.Equals(v.Name, "theme.borderAccentColor", StringComparison.OrdinalIgnoreCase))?.Value;
-            if (!string.IsNullOrEmpty(borderVar)) borderAccentStr = borderVar;
+            // Expose active color properties
+            _activeTextMainColor = textMainStr;
+            _activeBorderAccentColor = borderAccentStr;
 
             // 1. Apply Colors to Root & Panels
             var targetRoot = _root.Q<VisualElement>("root") ?? _root;
@@ -2133,11 +2272,9 @@ namespace RagNextPlayer.Managers
                 if (_narrativePanel != null) _narrativePanel.style.backgroundColor = glassBg;
                 if (_rightSidebarContainer != null) _rightSidebarContainer.style.backgroundColor = glassBg;
 
-                var leftSidebar = _root.Q<VisualElement>("left-sidebar-container");
                 if (leftSidebar != null) leftSidebar.style.backgroundColor = glassBg;
 
-                var bottomCompartment = _root.Q<VisualElement>("hud-bottom-compartment");
-                if (bottomCompartment != null) bottomCompartment.style.backgroundColor = glassBg;
+                if (bottomComp != null) bottomComp.style.backgroundColor = glassBg;
 
                 var playerCard = _root.Q<VisualElement>("floating-player-card");
                 if (playerCard != null) playerCard.style.backgroundColor = glassBg;
@@ -2207,6 +2344,9 @@ namespace RagNextPlayer.Managers
                 _root.style.borderTopColor = borderAccent;
                 _root.style.borderBottomColor = borderAccent;
 
+                float borderWidth = (float)borderThicknessVal;
+                if (borderWidth <= 0) borderWidth = 1.5f;
+
                 void ApplyPanelBorder(VisualElement el)
                 {
                     if (el == null) return;
@@ -2214,10 +2354,10 @@ namespace RagNextPlayer.Managers
                     el.style.borderRightColor = borderAccent;
                     el.style.borderTopColor = borderAccent;
                     el.style.borderBottomColor = borderAccent;
-                    el.style.borderLeftWidth = 1f;
-                    el.style.borderRightWidth = 1f;
-                    el.style.borderTopWidth = 1f;
-                    el.style.borderBottomWidth = 1f;
+                    el.style.borderLeftWidth = borderWidth;
+                    el.style.borderRightWidth = borderWidth;
+                    el.style.borderTopWidth = borderWidth;
+                    el.style.borderBottomWidth = borderWidth;
                 }
 
                 ApplyPanelBorder(_narrativePanel);
@@ -2251,10 +2391,56 @@ namespace RagNextPlayer.Managers
             }
 
             // 2. Apply Padding & Border Rounding
-            float borderRadius = (float)game.Theme.BorderRadius;
-            float panelPadding = (float)game.Theme.PanelPadding;
+            float borderRadius = (float)borderRadiusVal;
+            float panelPadding = (float)panelPaddingVal;
             
             StyleLength radiusLen = new Length(borderRadius, LengthUnit.Pixel);
+
+            // Override player status card shape
+            var hudPlayerCard = _root.Q<VisualElement>("floating-player-card");
+            if (hudPlayerCard != null)
+            {
+                if (string.Equals(playerStatusBoxShape, "Rectangle", StringComparison.OrdinalIgnoreCase))
+                {
+                    hudPlayerCard.style.borderTopLeftRadius = radiusLen;
+                    hudPlayerCard.style.borderBottomLeftRadius = radiusLen;
+                    hudPlayerCard.style.borderTopRightRadius = radiusLen;
+                    hudPlayerCard.style.borderBottomRightRadius = radiusLen;
+                }
+                else
+                {
+                    hudPlayerCard.style.borderTopLeftRadius = 56f;
+                    hudPlayerCard.style.borderBottomLeftRadius = 56f;
+                    hudPlayerCard.style.borderTopRightRadius = 16f;
+                    hudPlayerCard.style.borderBottomRightRadius = 16f;
+                }
+            }
+
+            // Override player portrait size & shape
+            if (_playerPortrait != null)
+            {
+                float portSize = (float)portraitSizeVal;
+                if (portSize <= 0) portSize = 80f;
+                _playerPortrait.style.width = portSize;
+                _playerPortrait.style.height = portSize;
+
+                if (string.Equals(playerPortraitShape, "Square", StringComparison.OrdinalIgnoreCase))
+                {
+                    _playerPortrait.style.borderTopLeftRadius = 4f;
+                    _playerPortrait.style.borderBottomLeftRadius = 4f;
+                    _playerPortrait.style.borderTopRightRadius = 4f;
+                    _playerPortrait.style.borderBottomRightRadius = 4f;
+                }
+                else
+                {
+                    float circleRad = portSize / 2f;
+                    _playerPortrait.style.borderTopLeftRadius = circleRad;
+                    _playerPortrait.style.borderBottomLeftRadius = circleRad;
+                    _playerPortrait.style.borderTopRightRadius = circleRad;
+                    _playerPortrait.style.borderBottomRightRadius = circleRad;
+                }
+            }
+
             if (_narrativePanel != null)
             {
                 _narrativePanel.style.borderTopLeftRadius = radiusLen;
@@ -2277,6 +2463,34 @@ namespace RagNextPlayer.Managers
                 _rightSidebarContainer.style.paddingRight = panelPadding;
                 _rightSidebarContainer.style.paddingTop = panelPadding;
                 _rightSidebarContainer.style.paddingBottom = panelPadding;
+                foreach (var child in _rightSidebarContainer.Children())
+                {
+                    child.style.marginBottom = panelPadding;
+                }
+            }
+
+            if (leftSidebar != null)
+            {
+                leftSidebar.style.paddingLeft = panelPadding;
+                leftSidebar.style.paddingRight = panelPadding;
+                leftSidebar.style.paddingTop = panelPadding;
+                leftSidebar.style.paddingBottom = panelPadding;
+                foreach (var child in leftSidebar.Children())
+                {
+                    child.style.marginBottom = panelPadding;
+                }
+            }
+
+            if (bottomComp != null)
+            {
+                bottomComp.style.paddingLeft = panelPadding;
+                bottomComp.style.paddingRight = panelPadding;
+                bottomComp.style.paddingTop = panelPadding;
+                bottomComp.style.paddingBottom = panelPadding;
+                foreach (var child in bottomComp.Children())
+                {
+                    child.style.marginRight = panelPadding;
+                }
             }
 
             var contentArea = _root.Q<VisualElement>("content-area");
@@ -2291,16 +2505,16 @@ namespace RagNextPlayer.Managers
             // 3. Apply Text Box Size & Alignment
             if (_narrativePanel != null)
             {
-                _narrativePanel.style.width = (float)game.Theme.TextBoxWidth;
-                _narrativePanel.style.height = (float)game.Theme.TextBoxHeight;
+                _narrativePanel.style.width = (float)textBoxW;
+                _narrativePanel.style.height = (float)textBoxH;
                 _narrativePanel.style.maxWidth = StyleKeyword.Null;
                 _narrativePanel.style.maxHeight = StyleKeyword.Null;
                 _narrativePanel.style.minWidth = StyleKeyword.Null;
                 _narrativePanel.style.minHeight = StyleKeyword.Null;
 
-                if (string.Equals(game.Theme.TextBoxAlignment, "Center", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(textBoxAlign, "Center", StringComparison.OrdinalIgnoreCase))
                     _narrativePanel.style.alignSelf = Align.Center;
-                else if (string.Equals(game.Theme.TextBoxAlignment, "Right", StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(textBoxAlign, "Right", StringComparison.OrdinalIgnoreCase))
                     _narrativePanel.style.alignSelf = Align.FlexEnd;
                 else
                     _narrativePanel.style.alignSelf = Align.FlexStart;
@@ -2309,19 +2523,19 @@ namespace RagNextPlayer.Managers
             // 4. Apply Custom Font & FontSize if defined
             if (game.Theme != null)
             {
-                _root.style.fontSize = new Length((float)game.Theme.FontSize);
+                _root.style.fontSize = new Length((float)fontSizeVal);
 
-                if (!string.IsNullOrEmpty(game.Theme.FontName))
+                if (!string.IsNullOrEmpty(fontNameVal))
                 {
-                    StartCoroutine(LoadAndApplyThemeFontCoroutine(game.Theme.FontName));
+                    StartCoroutine(LoadAndApplyThemeFontCoroutine(fontNameVal));
                 }
             }
 
             // 5. Apply Background Image Texture to all UI Panels if defined
-            if (!string.IsNullOrEmpty(game.Theme.BackgroundAssetId))
+            if (!string.IsNullOrEmpty(backgroundAssetIdVal))
             {
                 var bgAsset = game.MediaAssets.Find(a => 
-                    string.Equals(a.Id, game.Theme.BackgroundAssetId, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(a.Id, backgroundAssetIdVal, StringComparison.OrdinalIgnoreCase));
                 if (bgAsset != null)
                 {
                     StartCoroutine(LoadAndApplyThemePanelBackgroundsCoroutine(bgAsset.RelativePath, glassBg));
@@ -2351,13 +2565,13 @@ namespace RagNextPlayer.Managers
             CleanupFrameOverlay(_root.Q<VisualElement>("hud-right-compartment"));
             CleanupFrameOverlay(_root.Q<VisualElement>("hud-bottom-compartment"));
 
-            if (!string.IsNullOrEmpty(game.Theme.FrameAssetId))
+            if (!string.IsNullOrEmpty(frameAssetIdVal))
             {
                 var frameAsset = game.MediaAssets.Find(a => 
-                    string.Equals(a.Id, game.Theme.FrameAssetId, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(a.Id, frameAssetIdVal, StringComparison.OrdinalIgnoreCase));
                 if (frameAsset != null)
                 {
-                    if (game.Theme.FrameApplyToGameScreen)
+                    if (frameApplyToGameScreen)
                     {
                         var sceneImg = _root.Q<VisualElement>("scene-image");
                         if (sceneImg != null)
@@ -2365,11 +2579,11 @@ namespace RagNextPlayer.Managers
                             StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, sceneImg, true));
                         }
                     }
-                    if (game.Theme.FrameApplyToMainText && _narrativePanel != null)
+                    if (frameApplyToMainText && _narrativePanel != null)
                     {
                         StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, _narrativePanel, true));
                     }
-                    if (game.Theme.FrameApplyToPopups)
+                    if (frameApplyToPopups)
                     {
                         var promptMenu = _root.Q<VisualElement>("prompt-input-menu");
                         if (promptMenu != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, promptMenu, true));
@@ -2378,7 +2592,7 @@ namespace RagNextPlayer.Managers
                         var gameOverMenu = _root.Q<VisualElement>("game-over-menu");
                         if (gameOverMenu != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, gameOverMenu, true));
                     }
-                    if (game.Theme.FrameApplyToSidebars)
+                    if (frameApplyToSidebars)
                     {
                         var leftCompSidebar = _root.Q<VisualElement>("hud-left-compartment");
                         if (leftCompSidebar != null) StartCoroutine(LoadThemeImageCoroutine(frameAsset.RelativePath, leftCompSidebar, true));
@@ -2395,9 +2609,9 @@ namespace RagNextPlayer.Managers
             // 7. Apply Player Portrait Panel Alignment
             var profilesContainer = _root.Q<VisualElement>("floating-profiles-container");
             var leftComp = _root.Q<VisualElement>("hud-left-compartment");
-            var bottomComp = _root.Q<VisualElement>("hud-bottom-compartment");
+            bottomComp = _root.Q<VisualElement>("hud-bottom-compartment");
             var hudScroll = _root.Q<ScrollView>("player-hud-scroll");
-            if (profilesContainer != null && leftComp != null && bottomComp != null && !string.IsNullOrEmpty(game.Theme.PortraitAlignment))
+            if (profilesContainer != null && leftComp != null && bottomComp != null && !string.IsNullOrEmpty(portraitAlign))
             {
                 leftComp.style.justifyContent = Justify.FlexEnd;
 
@@ -2411,7 +2625,7 @@ namespace RagNextPlayer.Managers
 
                 var playerCard = _root.Q<VisualElement>("floating-player-card");
 
-                if (game.Theme.PortraitAlignment.Contains("Bottom"))
+                if (portraitAlign.Contains("Bottom"))
                 {
                     if (playerCard != null)
                     {
@@ -2424,7 +2638,7 @@ namespace RagNextPlayer.Managers
                         // Calculate precise remaining height inside player box
                         // bottomBarHeight - bottomCompartmentPadding(28) - playerCardPadding(24) - portraitHeight(80) - margin(6) = bottomBarHeight - 138px
                         // We also give 4px of safety margin to be absolutely safe (142f)
-                        float scrollHeight = (float)game.Theme.BottomBarHeight - 142f;
+                        float scrollHeight = (float)bottomBarH - 142f;
                         if (scrollHeight < 50f) scrollHeight = 50f;
                         hudScroll.style.height = scrollHeight;
                         hudScroll.style.maxHeight = scrollHeight;
@@ -2433,7 +2647,7 @@ namespace RagNextPlayer.Managers
                     profilesContainer.RemoveFromHierarchy();
                     ApplyBottomRowChildStyle(profilesContainer);
 
-                    if (game.Theme.PortraitAlignment.Contains("Left"))
+                    if (portraitAlign.Contains("Left"))
                     {
                         bottomComp.Insert(0, profilesContainer);
                     }
@@ -2456,21 +2670,52 @@ namespace RagNextPlayer.Managers
                         hudScroll.style.maxHeight = StyleKeyword.Null;
                     }
 
+                    if (leftComp != null && profilesContainer.parent != leftComp)
+                    {
+                        profilesContainer.RemoveFromHierarchy();
+                        leftComp.Insert(0, profilesContainer);
+                    }
+
                     profilesContainer.style.position = Position.Absolute;
-                    if (game.Theme.PortraitAlignment.Contains("Right"))
+                    if (portraitAlign.Contains("Right"))
                     {
                         profilesContainer.style.right = 24;
+                        profilesContainer.style.left = StyleKeyword.Null;
                     }
                     else
                     {
                         profilesContainer.style.left = 24;
+                        profilesContainer.style.right = StyleKeyword.Null;
                     }
                     profilesContainer.style.top = 24;
+                    profilesContainer.style.bottom = StyleKeyword.Null;
+                    profilesContainer.BringToFront(); // Ensure it is on top of game screen background
                 }
             }
 
             // 8. Apply Dynamic Docking Layout configurations
-            ApplyDockingLayout(game.Theme.InventoryDockPosition, game.Theme.RoomItemsDockPosition, game.Theme.NavigationDockPosition, (float)game.Theme.SidebarWidth, (float)game.Theme.BottomBarHeight);
+            ApplyDockingLayout(inventoryDock, roomItemsDock, navigationDock, (float)sidebarW, (float)bottomBarH);
+
+            // Style choice buttons in prompts and dialog screens to match theme colors
+            _root.Query<Button>(className: "prompt-choice-btn").ForEach(btn => {
+                if (TryParseHtmlColor(textMainStr, out var btnTextColor))
+                {
+                    btn.style.color = btnTextColor;
+                }
+                if (TryParseHtmlColor(borderAccentStr, out var btnBorderColor))
+                {
+                    btn.style.borderLeftColor = btnBorderColor;
+                    btn.style.borderRightColor = btnBorderColor;
+                    btn.style.borderTopColor = btnBorderColor;
+                    btn.style.borderBottomColor = btnBorderColor;
+                    btn.style.borderLeftWidth = 1f;
+                    btn.style.borderRightWidth = 1f;
+                    btn.style.borderTopWidth = 1f;
+                    btn.style.borderBottomWidth = 1f;
+                }
+            });
+
+            UpdateFontSizeUI();
         }
 
         private IEnumerator LoadAndApplyThemeFontCoroutine(string path)
@@ -2628,6 +2873,9 @@ namespace RagNextPlayer.Managers
             if (element == null) return;
             element.style.width = StyleKeyword.Null;
             element.style.height = StyleKeyword.Null;
+            element.style.flexGrow = StyleKeyword.Null;
+            element.style.flexShrink = StyleKeyword.Null;
+            element.style.flexBasis = StyleKeyword.Null;
             element.style.paddingLeft = StyleKeyword.Null;
             element.style.paddingRight = StyleKeyword.Null;
             element.style.paddingTop = StyleKeyword.Null;
@@ -2897,7 +3145,7 @@ namespace RagNextPlayer.Managers
             if (_roomActionsContainer != null)
                 _roomActionsContainer.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
             if (_roomActionThumbnailWrapper != null)
-                _roomActionThumbnailWrapper.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
+                _roomActionThumbnailWrapper.style.display = DisplayStyle.None;
 
             var bottomCompartment = _root?.Q<VisualElement>("hud-bottom-compartment");
             if (bottomCompartment != null)
@@ -3674,6 +3922,7 @@ namespace RagNextPlayer.Managers
             if (_playerGenderLabel is not null)
             {
                 _playerGenderLabel.text = player.Gender;
+                _playerGenderLabel.style.display = player.ShowGender ? DisplayStyle.Flex : DisplayStyle.None;
                 if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
                 {
                     _playerGenderLabel.style.color = textMain;
@@ -3726,11 +3975,12 @@ namespace RagNextPlayer.Managers
                         {
                             var lbl = new Label();
                             lbl.AddToClassList("status-bar-label");
+                            lbl.style.fontSize = GetScaledFontSize() * 0.85f;
                             lbl.text = TemplateResolver.Resolve(elem.Text, game, room, player);
                             lbl.style.whiteSpace = WhiteSpace.Normal;
                             lbl.style.flexGrow = 1;
                             lbl.style.flexShrink = 1;
-                            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+                            if (TryParseHtmlColor(_activeTextMainColor, out var textMain))
                             {
                                 lbl.style.color = textMain;
                             }
@@ -4238,8 +4488,8 @@ namespace RagNextPlayer.Managers
                 link.text      = entityName;
                 link.focusable = false;
                 link.AddToClassList("narrative-hotlink");
-                var game = GameManager.Instance?.ActiveGame;
-                if (game?.Theme != null && TryParseHtmlColor(game.Theme.BorderAccentColor, out var borderAccent))
+                link.style.fontSize = GetScaledFontSize();
+                if (TryParseHtmlColor(_activeBorderAccentColor, out var borderAccent))
                 {
                     link.style.color = borderAccent;
                 }
@@ -4265,8 +4515,8 @@ namespace RagNextPlayer.Managers
         {
             var lbl = new Label(text);
             lbl.AddToClassList("narrative-text");
-            var game = GameManager.Instance?.ActiveGame;
-            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+            lbl.style.fontSize = GetScaledFontSize();
+            if (TryParseHtmlColor(_activeTextMainColor, out var textMain))
             {
                 lbl.style.color = textMain;
             }
@@ -4347,6 +4597,7 @@ namespace RagNextPlayer.Managers
 
             var plain = new Label();
             plain.AddToClassList("narrative-text");
+            plain.style.fontSize = GetScaledFontSize();
             plain.style.flexGrow = 1f;
             container.Add(plain);
 
@@ -4509,7 +4760,8 @@ namespace RagNextPlayer.Managers
             }
             var lbl = new Label(nameText);
             lbl.AddToClassList("entity-name");
-            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
+            lbl.style.fontSize = GetScaledFontSize() * 0.85f;
+            if (TryParseHtmlColor(_activeTextMainColor, out var textMain))
             {
                 lbl.style.color = textMain;
             }
@@ -4518,7 +4770,8 @@ namespace RagNextPlayer.Managers
             var btn = new Button(() => ShowEntityInteractionMenu(entity, isInventory));
             btn.text = "⋯";
             btn.AddToClassList("entity-action-btn");
-            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMainColor))
+            btn.style.fontSize = GetScaledFontSize() * 0.85f;
+            if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
             {
                 btn.style.color = textMainColor;
             }
@@ -4573,7 +4826,8 @@ namespace RagNextPlayer.Managers
             var lbl = new Label(nameText);
             lbl.AddToClassList("entity-name");
             lbl.AddToClassList("entity-name--nested");
-            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var nestedNameColor))
+            lbl.style.fontSize = GetScaledFontSize() * 0.85f;
+            if (TryParseHtmlColor(_activeTextMainColor, out var nestedNameColor))
             {
                 lbl.style.color = nestedNameColor;
             }
@@ -4582,7 +4836,8 @@ namespace RagNextPlayer.Managers
             var btn = new Button(() => ShowEntityInteractionMenu(entity, isInventory));
             btn.text = "⋯";
             btn.AddToClassList("entity-action-btn");
-            if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMainColor))
+            btn.style.fontSize = GetScaledFontSize() * 0.85f;
+            if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
             {
                 btn.style.color = textMainColor;
             }
@@ -5225,6 +5480,23 @@ namespace RagNextPlayer.Managers
             UpdateFontSizeUI();
         }
 
+        private float GetScaledFontSize()
+        {
+            var game = GameManager.Instance?.ActiveGame;
+            if (game?.Theme != null)
+            {
+                float baseSize = (float)game.Theme.FontSize;
+                if (baseSize <= 0) baseSize = 18f;
+
+                float multiplier = 1.0f;
+                if (_fontSizePref == "Small") multiplier = 0.8f;
+                else if (_fontSizePref == "Large") multiplier = 1.25f;
+
+                return baseSize * multiplier;
+            }
+            return 18f;
+        }
+
         private void UpdateFontSizeUI()
         {
             if (_fontSizeToggleBtn is not null)
@@ -5241,6 +5513,36 @@ namespace RagNextPlayer.Managers
                 if (_fontSizePref == "Small") _root.AddToClassList("font-size-small");
                 else if (_fontSizePref == "Normal") _root.AddToClassList("font-size-normal");
                 else if (_fontSizePref == "Large") _root.AddToClassList("font-size-large");
+
+                // Programmatically apply scale factors to HUD elements based on game.Theme.FontSize
+                var game = GameManager.Instance?.ActiveGame;
+                if (game?.Theme != null)
+                {
+                    float targetSize = GetScaledFontSize();
+
+                    _root.Query<VisualElement>(className: "narrative-text").ForEach(el => el.style.fontSize = targetSize);
+                    _root.Query<VisualElement>(className: "narrative-status").ForEach(el => el.style.fontSize = targetSize);
+                    _root.Query<VisualElement>(className: "narrative-hotlink").ForEach(el => el.style.fontSize = targetSize);
+                    _root.Query<VisualElement>(className: "inventory-item-name").ForEach(el => el.style.fontSize = targetSize * 0.8f);
+                    _root.Query<VisualElement>(className: "entity-name").ForEach(el => el.style.fontSize = targetSize * 0.85f);
+                    _root.Query<VisualElement>(className: "prompt-input-message").ForEach(el => el.style.fontSize = targetSize * 0.8f);
+                    _root.Query<VisualElement>(className: "status-bar-label").ForEach(el => el.style.fontSize = targetSize * 0.85f);
+                    _root.Query<VisualElement>(className: "prompt-choice-btn").ForEach(el => el.style.fontSize = targetSize * 0.85f);
+                    _root.Query<VisualElement>(className: "section-header").ForEach(el => el.style.fontSize = targetSize * 0.75f);
+                    _root.Query<VisualElement>(className: "compass-rose-btn").ForEach(el => el.style.fontSize = targetSize * 0.7f);
+                    _root.Query<VisualElement>(className: "compass-aux-btn").ForEach(el => el.style.fontSize = targetSize * 0.7f);
+
+                    if (_playerNameLabel != null) _playerNameLabel.style.fontSize = targetSize * 0.9f;
+                    if (_playerGenderLabel != null) _playerGenderLabel.style.fontSize = targetSize * 0.75f;
+                    if (_roomTitleLabel != null) _roomTitleLabel.style.fontSize = targetSize * 0.85f;
+
+                    var inputEl = _root.Q<TextField>("prompt-input-field");
+                    if (inputEl != null)
+                    {
+                        var textInput = inputEl.Q("unity-input");
+                        if (textInput != null) textInput.style.fontSize = targetSize;
+                    }
+                }
             }
         }
 
@@ -5594,6 +5896,22 @@ namespace RagNextPlayer.Managers
                     var btn = new Button(() => SubmitPromptSelection(opt));
                     btn.text = opt;
                     btn.AddToClassList("prompt-choice-btn");
+                    btn.style.fontSize = GetScaledFontSize();
+                    if (TryParseHtmlColor(_activeTextMainColor, out var btnTextColor))
+                    {
+                        btn.style.color = btnTextColor;
+                    }
+                    if (TryParseHtmlColor(_activeBorderAccentColor, out var btnBorderColor))
+                    {
+                        btn.style.borderLeftColor = btnBorderColor;
+                        btn.style.borderRightColor = btnBorderColor;
+                        btn.style.borderTopColor = btnBorderColor;
+                        btn.style.borderBottomColor = btnBorderColor;
+                        btn.style.borderLeftWidth = 1f;
+                        btn.style.borderRightWidth = 1f;
+                        btn.style.borderTopWidth = 1f;
+                        btn.style.borderBottomWidth = 1f;
+                    }
                     selScroll.Add(btn);
                 }
             }
@@ -5725,6 +6043,22 @@ namespace RagNextPlayer.Managers
                     }
                 }) { text = resolvedChoiceText };
                 btn.AddToClassList("prompt-choice-btn");
+                btn.style.fontSize = GetScaledFontSize();
+                if (TryParseHtmlColor(_activeTextMainColor, out var btnTextColor))
+                {
+                    btn.style.color = btnTextColor;
+                }
+                if (TryParseHtmlColor(_activeBorderAccentColor, out var btnBorderColor))
+                {
+                    btn.style.borderLeftColor = btnBorderColor;
+                    btn.style.borderRightColor = btnBorderColor;
+                    btn.style.borderTopColor = btnBorderColor;
+                    btn.style.borderBottomColor = btnBorderColor;
+                    btn.style.borderLeftWidth = 1f;
+                    btn.style.borderRightWidth = 1f;
+                    btn.style.borderTopWidth = 1f;
+                    btn.style.borderBottomWidth = 1f;
+                }
                 selScroll.Add(btn);
             }
 

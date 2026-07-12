@@ -214,7 +214,7 @@
                         <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
                             <StackPanel Spacing="16">
                                 <TextBlock Text="👤 Protagonist Identity" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="140,*" RowSpacing="12" Margin="0,10,0,0">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="140,*" RowSpacing="12" Margin="0,10,0,0">
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Protagonist Name:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
                                     <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
@@ -278,8 +278,12 @@
                                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Gender:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
                                     <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Genders}" SelectedItem="{Binding Gender, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}"/>
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Starting Room:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
-                                    <ComboBox x:Name="StartingRoomComboBox" Grid.Row="3" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding StartingRoom, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                                    <!-- Show Gender Option -->
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Show Gender in HUD:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
+                                    <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding ShowGender, Mode=TwoWay}" Foreground="{DynamicResource TextNormal}"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Starting Room:" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
+                                    <ComboBox x:Name="StartingRoomComboBox" Grid.Row="4" Grid.Column="1" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding StartingRoom, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate x:DataType="models:Room">
                                                 <TextBlock Text="{Binding Name}"/>
@@ -2219,6 +2223,18 @@
                     <Slider Value="{Binding PanelPadding, Mode=TwoWay}" Minimum="0" Maximum="40" IsSnapToTickEnabled="True" TickFrequency="1" Grid.Column="0"/>
                     <TextBlock Text="{Binding PanelPadding, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
                     </Grid>
+
+                    <TextBlock Text="Accent/Border Thickness:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <Slider Value="{Binding BorderThickness, Mode=TwoWay}" Minimum="0.5" Maximum="10.0" IsSnapToTickEnabled="True" TickFrequency="0.5" Grid.Column="0"/>
+                    <TextBlock Text="{Binding BorderThickness, StringFormat='{}{0:0.0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
+
+                    <TextBlock Text="Player Portrait Size:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                    <Slider Value="{Binding PortraitSize, Mode=TwoWay}" Minimum="40" Maximum="120" IsSnapToTickEnabled="True" TickFrequency="5" Grid.Column="0"/>
+                    <TextBlock Text="{Binding PortraitSize, StringFormat='{}{0:0}px'}" VerticalAlignment="Center" Margin="8,0,0,0" Width="40" Foreground="{DynamicResource TextNormal}" Grid.Column="1"/>
+                    </Grid>
                     </StackPanel>
                     </Border>
                     
@@ -2246,6 +2262,18 @@
                     <x:String>Right</x:String>
                     <x:String>Left</x:String>
                     <x:String>Bottom</x:String>
+                    </ComboBox>
+
+                    <TextBlock Text="Player Status Card Shape:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <ComboBox SelectedItem="{Binding PlayerStatusBoxShape, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                    <x:String>Default</x:String>
+                    <x:String>Rectangle</x:String>
+                    </ComboBox>
+
+                    <TextBlock Text="Player Portrait Shape:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <ComboBox SelectedItem="{Binding PlayerPortraitShape, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                    <x:String>Circle</x:String>
+                    <x:String>Square</x:String>
                     </ComboBox>
                     
                     <Separator Height="1" Background="{DynamicResource BorderBrush}" Margin="0,8,0,8"/>
@@ -2353,14 +2381,14 @@
                     
                     <Border Background="#0f0f12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
                     <Viewbox Stretch="Uniform" Width="480" Height="380">
-                    <Border Width="1000" Height="800" Background="#111115" BorderBrush="#3f3f50" BorderThickness="2" CornerRadius="{Binding BorderRadius}" ClipToBounds="True">
+                    <Border Width="1000" Height="800" Background="#111115" BorderBrush="#3f3f50" BorderThickness="2" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" ClipToBounds="True">
                         <Border.Styles>
                             <Style Selector="TextBlock">
                                 <Setter Property="FontFamily" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontPreviewFamilyName}"/>
                             </Style>
                         </Border.Styles>
                         <!-- Overall HUD Container layout -->
-                    <DockPanel LastChildFill="True" Margin="{Binding PanelPadding}">
+                    <DockPanel LastChildFill="True" Margin="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}">
                     
                     <!-- Title Bar -->
                     <Border DockPanel.Dock="Top" Height="40" Background="#1c1c24" BorderBrush="#3a3a48" BorderThickness="1.5" Margin="0,0,0,12" CornerRadius="6">
@@ -2377,19 +2405,19 @@
                     </MultiBinding>
                     </StackPanel.IsVisible>
                     <!-- Left Room Items -->
-                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Height="180"
                     IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
                     <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     
                     <!-- Left Inventory -->
-                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Height="180"
                     IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
                     <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     
                     <!-- Left Compass -->
-                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Height="180"
                     IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Left}">
                     <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
@@ -2405,19 +2433,19 @@
                     </MultiBinding>
                     </StackPanel.IsVisible>
                     <!-- Right Room Items -->
-                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Height="180"
                     IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
                     <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     
                     <!-- Right Inventory -->
-                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Height="180"
                     IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
                     <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
                     
                     <!-- Right Compass -->
-                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="1.5" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}" Height="180"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Height="180"
                     IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
                     <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                     </Border>
@@ -2435,21 +2463,35 @@
                     </Border>
                     
                     <!-- Top Player Portrait Panel (Overlay, only visible if aligned to Top!) -->
-                    <Border Width="160" Height="220" Margin="16" Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="2" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}"
+                    <Border Width="160" Height="220" Margin="16" Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}"
                     HorizontalAlignment="{Binding PortraitAlignment, Converter={x:Static views:PortraitHorizontalAlignmentConverter.Instance}}"
                     VerticalAlignment="Top"
                     IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=Top}">
+                    <Border.CornerRadius>
+                        <MultiBinding Converter="{x:Static views:PlayerStatusBoxCornerRadiusConverter.Instance}">
+                            <Binding Path="PlayerStatusBoxShape"/>
+                            <Binding Path="BorderRadius"/>
+                        </MultiBinding>
+                    </Border.CornerRadius>
                     <StackPanel Spacing="8">
-                    <Ellipse Width="80" Height="80" Fill="#444455" Stroke="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" StrokeThickness="3" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Joe" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
-                    <TextBlock Text="Stats panel..." HorizontalAlignment="Center" FontSize="11" Foreground="#aaaaaa"/>
+                    <Border Width="{Binding PortraitSize}" Height="{Binding PortraitSize}" Background="#444455" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" HorizontalAlignment="Center">
+                        <Border.CornerRadius>
+                            <MultiBinding Converter="{x:Static views:PlayerPortraitCornerRadiusConverter.Instance}">
+                                <Binding Path="PlayerPortraitShape"/>
+                                <Binding Path="PortraitSize"/>
+                            </MultiBinding>
+                        </Border.CornerRadius>
+                        <TextBlock Text="👤" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.Name}" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                    <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.Gender}" IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.ShowGender}" HorizontalAlignment="Center" FontSize="11" Foreground="#aaaaaa"/>
                     </StackPanel>
                     </Border>
                     
                     <!-- Bottom Overlays (Narrative Text box + bottom-docked items stacked vertically) -->
                     <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Margin="16" Spacing="12">
                     <!-- Narrative Text Panel -->
-                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="2" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}"
                     HorizontalAlignment="{Binding TextBoxAlignment}"
                     Width="{Binding TextBoxWidth}"
                     Height="{Binding TextBoxHeight}">
@@ -2458,7 +2500,7 @@
                     </Border>
                     
                     <!-- Bottom Dock Stack Compartment (Shared Glass Border) -->
-                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="2" CornerRadius="{Binding BorderRadius}" Padding="{Binding PanelPadding}"
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}"
                             Height="{Binding BottomBarHeight}"
                             HorizontalAlignment="Center">
                         <Border.IsVisible>
@@ -2474,10 +2516,18 @@
                             <Border Width="200" Background="Transparent" Padding="12" VerticalAlignment="Stretch"
                                     IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=BottomLeft}">
                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <Ellipse Width="48" Height="48" Fill="#444455" Stroke="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" StrokeThickness="2"/>
+                                    <Border Width="{Binding PortraitSize}" Height="{Binding PortraitSize}" Background="#444455" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" HorizontalAlignment="Center">
+                                        <Border.CornerRadius>
+                                            <MultiBinding Converter="{x:Static views:PlayerPortraitCornerRadiusConverter.Instance}">
+                                                <Binding Path="PlayerPortraitShape"/>
+                                                <Binding Path="PortraitSize"/>
+                                            </MultiBinding>
+                                        </Border.CornerRadius>
+                                        <TextBlock Text="👤" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
                                     <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="Joe" FontWeight="Bold" FontSize="12" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
-                                        <TextBlock Text="Stats..." FontSize="10" Foreground="#aaaaaa"/>
+                                        <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.Name}" FontWeight="Bold" FontSize="12" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                                        <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.Gender}" IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.ShowGender}" FontSize="10" Foreground="#aaaaaa"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -2504,10 +2554,18 @@
                             <Border Width="200" Background="Transparent" Padding="12" VerticalAlignment="Stretch"
                                     IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=BottomRight}">
                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <Ellipse Width="48" Height="48" Fill="#444455" Stroke="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" StrokeThickness="2"/>
+                                    <Border Width="{Binding PortraitSize}" Height="{Binding PortraitSize}" Background="#444455" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" HorizontalAlignment="Center">
+                                        <Border.CornerRadius>
+                                            <MultiBinding Converter="{x:Static views:PlayerPortraitCornerRadiusConverter.Instance}">
+                                                <Binding Path="PlayerPortraitShape"/>
+                                                <Binding Path="PortraitSize"/>
+                                            </MultiBinding>
+                                        </Border.CornerRadius>
+                                        <TextBlock Text="👤" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
                                     <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="Joe" FontWeight="Bold" FontSize="12" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
-                                        <TextBlock Text="Stats..." FontSize="10" Foreground="#aaaaaa"/>
+                                        <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.Name}" FontWeight="Bold" FontSize="12" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                                        <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.Gender}" IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.ShowGender}" FontSize="10" Foreground="#aaaaaa"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -2636,13 +2694,25 @@
                         <Border Grid.Row="1" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,12,0,0">
                             <StackPanel Spacing="10">
                                 <TextBlock Text="🖥️ Status Preview" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2"/>
-                                <Border Background="#0D0E12" CornerRadius="56 16 16 56" Padding="16" BorderBrush="#00bcd4" BorderThickness="1.5" HorizontalAlignment="Left" MinWidth="300">
+                                <Border Background="#0D0E12" BorderBrush="{Binding CurrentGame.Theme.BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding CurrentGame.Theme.BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" HorizontalAlignment="Left" MinWidth="300">
+                                    <Border.CornerRadius>
+                                        <MultiBinding Converter="{x:Static views:PlayerStatusBoxCornerRadiusConverter.Instance}">
+                                            <Binding Path="CurrentGame.Theme.PlayerStatusBoxShape"/>
+                                            <Binding Path="CurrentGame.Theme.BorderRadius"/>
+                                        </MultiBinding>
+                                    </Border.CornerRadius>
                                     <!-- Horizontal layout like the player's card -->
                                     <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Top">
                                         <!-- Left Column: Portrait and Status elements -->
                                         <StackPanel Orientation="Vertical" Spacing="6" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="180">
                                             <!-- Mock Portrait -->
-                                            <Border CornerRadius="28" Width="56" Height="56" Background="#2A2A38" BorderBrush="#00bcd4" BorderThickness="2" HorizontalAlignment="Center">
+                                            <Border Width="{Binding CurrentGame.Theme.PortraitSize}" Height="{Binding CurrentGame.Theme.PortraitSize}" Background="#2A2A38" BorderBrush="{Binding CurrentGame.Theme.BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding CurrentGame.Theme.BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" HorizontalAlignment="Center">
+                                                <Border.CornerRadius>
+                                                    <MultiBinding Converter="{x:Static views:PlayerPortraitCornerRadiusConverter.Instance}">
+                                                        <Binding Path="CurrentGame.Theme.PlayerPortraitShape"/>
+                                                        <Binding Path="CurrentGame.Theme.PortraitSize"/>
+                                                    </MultiBinding>
+                                                </Border.CornerRadius>
                                                 <TextBlock Text="👤" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             
@@ -2670,11 +2740,11 @@
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
                                         </StackPanel>
-
+ 
                                         <!-- Right Column: Details like Name/Gender -->
                                         <StackPanel Orientation="Vertical" Spacing="2" VerticalAlignment="Top" Margin="0,8,0,0">
-                                            <TextBlock Text="Bilbo" FontWeight="Bold" Foreground="White" FontSize="14"/>
-                                            <TextBlock Text="Male" Foreground="#B0BEC5" FontSize="11"/>
+                                            <TextBlock Text="{Binding CurrentGame.Player.Name}" FontWeight="Bold" Foreground="White" FontSize="14"/>
+                                            <TextBlock Text="{Binding CurrentGame.Player.Gender}" IsVisible="{Binding CurrentGame.Player.ShowGender}" Foreground="#B0BEC5" FontSize="11"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>

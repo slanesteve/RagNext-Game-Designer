@@ -25,6 +25,9 @@ namespace RagsCore.Models
         private string _gender = "Male";
         public string Gender { get => _gender; set => SetProperty(ref _gender, value); }
 
+        private bool _showGender = true;
+        public bool ShowGender { get => _showGender; set => SetProperty(ref _showGender, value); }
+
         private Room? _startingRoom = null;
         public Room? StartingRoom
         {

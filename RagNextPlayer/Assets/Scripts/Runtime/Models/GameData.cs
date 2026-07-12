@@ -59,6 +59,10 @@ namespace RagNextPlayer.Runtime.Models
         public bool FrameApplyToMainText { get; set; } = false;
         public bool FrameApplyToPopups { get; set; } = false;
         public bool FrameApplyToSidebars { get; set; } = false;
+        public double BorderThickness { get; set; } = 1.5;
+        public string PlayerStatusBoxShape { get; set; } = "Default";
+        public string PlayerPortraitShape { get; set; } = "Circle";
+        public double PortraitSize { get; set; } = 80.0;
     }
 
     public class SplashScreenSettingsData
@@ -115,6 +119,7 @@ namespace RagNextPlayer.Runtime.Models
         public string  Name             { get; set; } = "Player";
         public string  Description      { get; set; } = string.Empty;
         public string  Gender           { get; set; } = "Male";
+        public bool    ShowGender       { get; set; } = true;
         public string? PortraitImagePath{ get; set; }
         // StartingRoomId is exported as a string ID (not a nested Room object)
         // to break the circular reference that caused $id/$ref in the old exporter.

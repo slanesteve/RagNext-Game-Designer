@@ -130,6 +130,7 @@ namespace RagNextPlayer.Managers
                         if (!string.IsNullOrEmpty(targetId))
                             GameManager.Instance?.MovePlayerToRoom(targetId);
                     }
+                    CheckAndReapplyTheme(c.Name);
                     UIManager.Instance?.RefreshPlayerPanel();
                     break;
 
@@ -140,6 +141,7 @@ namespace RagNextPlayer.Managers
                         if (!string.IsNullOrEmpty(targetId))
                             GameManager.Instance?.MovePlayerToRoom(targetId);
                     }
+                    CheckAndReapplyTheme(c.Name);
                     UIManager.Instance?.RefreshPlayerPanel();
                     break;
 
@@ -364,6 +366,35 @@ namespace RagNextPlayer.Managers
                 string.Equals(c.Name, resolved, System.StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(c.Name.Replace(" ", ""), resolved, System.StringComparison.OrdinalIgnoreCase));
             return match?.Id ?? resolved;
+        }
+
+        private void CheckAndReapplyTheme(string varName)
+        {
+            if (string.IsNullOrEmpty(varName)) return;
+
+            var cleanName = varName;
+            if (cleanName.StartsWith("{") && cleanName.EndsWith("}"))
+            {
+                cleanName = cleanName.Substring(1, cleanName.Length - 2);
+            }
+
+            if (cleanName.StartsWith("variables.", System.StringComparison.OrdinalIgnoreCase))
+            {
+                cleanName = cleanName.Substring(10);
+            }
+            else if (cleanName.StartsWith("variable.", System.StringComparison.OrdinalIgnoreCase))
+            {
+                cleanName = cleanName.Substring(9);
+            }
+
+            if (cleanName.StartsWith("theme.", System.StringComparison.OrdinalIgnoreCase))
+            {
+                var game = GameManager.Instance?.ActiveGame;
+                if (game != null)
+                {
+                    UIManager.Instance?.ApplyTheme(game);
+                }
+            }
         }
     }
 }
