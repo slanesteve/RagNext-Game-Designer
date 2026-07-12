@@ -563,8 +563,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
             OnPropertyChanged(nameof(AudioMediaAssets));
             CurrentGame?.Theme?.NotifyThemeProperties();
             
-            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
             {
+                await Task.Delay(500);
                 OnPropertyChanged(nameof(SelectedThemeBackground));
                 OnPropertyChanged(nameof(SelectedThemeFrame));
             }, global::Avalonia.Threading.DispatcherPriority.Background);
