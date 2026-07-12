@@ -20,10 +20,26 @@ namespace RagsCore.Models
         public string FontAssetId { get => _fontAssetId; set => SetProperty(ref _fontAssetId, value); }
 
         private string _backgroundAssetId = string.Empty;
-        public string BackgroundAssetId { get => _backgroundAssetId; set => SetProperty(ref _backgroundAssetId, value); }
+        public string BackgroundAssetId 
+        { 
+            get => _backgroundAssetId; 
+            set 
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-SETTER] BackgroundAssetId setter called. Value: '{value}'");
+                SetProperty(ref _backgroundAssetId, value); 
+            }
+        }
 
         private string _frameAssetId = string.Empty;
-        public string FrameAssetId { get => _frameAssetId; set => SetProperty(ref _frameAssetId, value); }
+        public string FrameAssetId 
+        { 
+            get => _frameAssetId; 
+            set 
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-SETTER] FrameAssetId setter called. Value: '{value}'");
+                SetProperty(ref _frameAssetId, value); 
+            }
+        }
 
         private string _inventoryDockPosition = "Right"; // "Bottom", "Left", "Right"
         public string InventoryDockPosition { get => _inventoryDockPosition; set => SetProperty(ref _inventoryDockPosition, value); }

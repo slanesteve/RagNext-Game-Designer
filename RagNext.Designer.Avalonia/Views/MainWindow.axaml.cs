@@ -6864,17 +6864,22 @@ namespace RagNext.Designer.Avalonia.Views
 
         public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG-CONVERTER] Convert called. Value: '{value}'");
             if (value is string idStr && !string.IsNullOrWhiteSpace(idStr) && global::RagNext.Designer.Avalonia.ViewModels.MainWindowViewModel.Instance?.CurrentGame != null)
             {
-                return global::RagNext.Designer.Avalonia.ViewModels.MainWindowViewModel.Instance.CurrentGame.MediaAssets.FirstOrDefault(a => string.Equals(a.Id.ToString(), idStr, StringComparison.OrdinalIgnoreCase));
+                var found = global::RagNext.Designer.Avalonia.ViewModels.MainWindowViewModel.Instance.CurrentGame.MediaAssets.FirstOrDefault(a => string.Equals(a.Id.ToString(), idStr, StringComparison.OrdinalIgnoreCase));
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-CONVERTER] Convert found: '{found?.Name}'");
+                return found;
             }
             return null;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG-CONVERTER] ConvertBack called. Value: '{value}' (Type: {value?.GetType().FullName})");
             if (value is RagsCore.Models.MediaAsset asset)
             {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-CONVERTER] ConvertBack returning: '{asset.Id}'");
                 return asset.Id.ToString();
             }
             return null;
