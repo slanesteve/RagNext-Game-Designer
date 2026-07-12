@@ -53,7 +53,12 @@ namespace RagsCore.Models
         [System.Text.Json.Serialization.JsonIgnore]
         public MediaAsset? SelectedBackground
         {
-            get => AssetResolver?.Invoke(BackgroundAssetId);
+            get
+            {
+                var resolved = AssetResolver?.Invoke(BackgroundAssetId);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-MODEL-GET] SelectedBackground get. ID: '{BackgroundAssetId}', Found: '{resolved?.Name}'");
+                return resolved;
+            }
             set
             {
                 if (value == null)
@@ -68,7 +73,12 @@ namespace RagsCore.Models
         [System.Text.Json.Serialization.JsonIgnore]
         public MediaAsset? SelectedFrame
         {
-            get => AssetResolver?.Invoke(FrameAssetId);
+            get
+            {
+                var resolved = AssetResolver?.Invoke(FrameAssetId);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG-MODEL-GET] SelectedFrame get. ID: '{FrameAssetId}', Found: '{resolved?.Name}'");
+                return resolved;
+            }
             set
             {
                 if (value == null)
