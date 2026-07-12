@@ -21,6 +21,20 @@ namespace RagsCore.Models
         [System.Text.Json.Serialization.JsonIgnore]
         public string IdString => Id.ToString();
 
+        public override bool Equals(object? obj)
+        {
+            if (obj is MediaAsset other)
+            {
+                return Id == other.Id;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
+
         private string _relativePath = string.Empty;
         public string RelativePath 
         { 
