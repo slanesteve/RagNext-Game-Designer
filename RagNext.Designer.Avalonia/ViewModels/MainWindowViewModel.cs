@@ -1460,7 +1460,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 InitializePresets();
                 Media.Refresh();
                 
-                Dispatcher.UIThread.Post(() => {
+                Dispatcher.UIThread.Post(async () => {
+                    await Task.Delay(1500);
                     _isProjectLoading = false;
                 }, DispatcherPriority.Background);
             };
