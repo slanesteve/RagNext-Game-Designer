@@ -846,6 +846,7 @@
     padding: 6px 10px;
     font-size: 13px;
     selection-color: #00A8CC;
+    caret-color: #FFFFFF;
 }
 
 #prompt-text-field .unity-text-field__input:focus {

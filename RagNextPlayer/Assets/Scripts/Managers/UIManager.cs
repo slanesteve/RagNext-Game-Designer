@@ -442,6 +442,39 @@ namespace RagNextPlayer.Managers
                         evt.StopPropagation();
                     }
                 });
+
+                // Apply active theme border color dynamically when focused
+                _promptTextField.RegisterCallback<FocusEvent>(evt =>
+                {
+                    var innerInput = _promptTextField.Q(className: "unity-text-field__input");
+                    if (innerInput != null && TryParseHtmlColor(_activeBorderAccentColor, out var accentColor))
+                    {
+                        innerInput.style.borderLeftColor = accentColor;
+                        innerInput.style.borderRightColor = accentColor;
+                        innerInput.style.borderTopColor = accentColor;
+                        innerInput.style.borderBottomColor = accentColor;
+                        innerInput.style.borderLeftWidth = 1.5f;
+                        innerInput.style.borderRightWidth = 1.5f;
+                        innerInput.style.borderTopWidth = 1.5f;
+                        innerInput.style.borderBottomWidth = 1.5f;
+                    }
+                });
+
+                _promptTextField.RegisterCallback<BlurEvent>(evt =>
+                {
+                    var innerInput = _promptTextField.Q(className: "unity-text-field__input");
+                    if (innerInput != null)
+                    {
+                        innerInput.style.borderLeftColor = StyleKeyword.Null;
+                        innerInput.style.borderRightColor = StyleKeyword.Null;
+                        innerInput.style.borderTopColor = StyleKeyword.Null;
+                        innerInput.style.borderBottomColor = StyleKeyword.Null;
+                        innerInput.style.borderLeftWidth = StyleKeyword.Null;
+                        innerInput.style.borderRightWidth = StyleKeyword.Null;
+                        innerInput.style.borderTopWidth = StyleKeyword.Null;
+                        innerInput.style.borderBottomWidth = StyleKeyword.Null;
+                    }
+                });
             }
             _promptSelectionScroll = _root.Q<ScrollView>("prompt-selection-scroll");
             _promptSubmitBtn       = _root.Q<Button>("prompt-submit-btn");
@@ -5837,7 +5870,15 @@ namespace RagNextPlayer.Managers
                 {
                     _promptTextField.value = string.Empty;
                     _promptTextField.style.display = DisplayStyle.Flex;
-                    _promptTextField.schedule.Execute(() => _promptTextField.Focus()).StartingIn(50);
+                    _promptTextField.schedule.Execute(() => {
+                        _promptTextField.Focus();
+                        var innerInput = _promptTextField.Q(className: "unity-text-field__input");
+                        if (innerInput != null)
+                        {
+                            innerInput.Focus();
+                        }
+                        _promptTextField.SelectAll();
+                    }).StartingIn(100);
                 }
                 if (_promptSubmitBtn is not null)
                     _promptSubmitBtn.style.display = DisplayStyle.Flex;
