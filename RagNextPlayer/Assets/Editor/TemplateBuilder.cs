@@ -13,7 +13,7 @@ public static class TemplateBuilder
         buildPlayerOptions.scenes = new[] { "Assets/Scenes/SampleScene.unity" };
         buildPlayerOptions.locationPathName = Path.Combine(outputDir, "RagNextPlayer.exe");
         buildPlayerOptions.target = BuildTarget.StandaloneWindows64;
-        buildPlayerOptions.options = BuildOptions.None;
+        buildPlayerOptions.options = BuildOptions.CleanBuildPlayer;
 
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
         var summary = report.summary;
