@@ -9,11 +9,23 @@ public static class TemplateBuilder
         string projectRoot = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, ".."));
         string outputDir = Path.Combine(projectRoot, "..", "Templates", "Windows");
         
+        if (Directory.Exists(outputDir))
+        {
+            try
+            {
+                Directory.Delete(outputDir, true);
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogWarning("Could not delete build output directory: " + ex.Message);
+            }
+        }
+
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = new[] { "Assets/Scenes/SampleScene.unity" };
         buildPlayerOptions.locationPathName = Path.Combine(outputDir, "RagNextPlayer.exe");
         buildPlayerOptions.target = BuildTarget.StandaloneWindows64;
-        buildPlayerOptions.options = BuildOptions.CleanBuildPlayer;
+        buildPlayerOptions.options = BuildOptions.None;
 
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
         var summary = report.summary;
