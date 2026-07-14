@@ -33,6 +33,19 @@ public static class TemplateBuilder
         if (summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
         {
             UnityEngine.Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
+
+            // Delete debug and backup folders that shouldn't be packaged/shipped
+            string debugFolder = Path.Combine(outputDir, "RagNextPlayer_BurstDebugInformation_DoNotShip");
+            if (Directory.Exists(debugFolder))
+            {
+                try { Directory.Delete(debugFolder, true); } catch { }
+            }
+
+            string backupFolder = Path.Combine(outputDir, "RagNextPlayer_BackUpThisFolder_ButDontShipItWithYourGame");
+            if (Directory.Exists(backupFolder))
+            {
+                try { Directory.Delete(backupFolder, true); } catch { }
+            }
         }
         else
         {
