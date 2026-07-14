@@ -34,17 +34,21 @@ public static class TemplateBuilder
         {
             UnityEngine.Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
 
-            // Delete debug and backup folders that shouldn't be packaged/shipped
-            string debugFolder = Path.Combine(outputDir, "RagNextPlayer_BurstDebugInformation_DoNotShip");
-            if (Directory.Exists(debugFolder))
+            // Delete debug and backup folders that shouldn't be packaged/shipped (handles arbitrary naming across platforms)
+            try
             {
-                try { Directory.Delete(debugFolder, true); } catch { }
+                foreach (var dir in Directory.GetDirectories(outputDir))
+                {
+                    string dirName = Path.GetFileName(dir);
+                    if (dirName.Contains("BurstDebugInformation_DoNotShip") || dirName.Contains("BackUpThisFolder"))
+                    {
+                        Directory.Delete(dir, true);
+                    }
+                }
             }
-
-            string backupFolder = Path.Combine(outputDir, "RagNextPlayer_BackUpThisFolder_ButDontShipItWithYourGame");
-            if (Directory.Exists(backupFolder))
+            catch (System.Exception ex)
             {
-                try { Directory.Delete(backupFolder, true); } catch { }
+                UnityEngine.Debug.LogWarning("Failed to clean up IL2CPP debug directories: " + ex.Message);
             }
         }
         else
