@@ -148,6 +148,14 @@ Below is the complete reference of script commands supported by the RagNext Game
 | :--- | :--- | :--- |
 | Text | `String` | TextArea |
 
+### General: Wait for Continue
+
+*Suspends action steps execution and shows a custom Continue button overlay prompt to the player.*
+
+| Parameter | Type | UI Input |
+| :--- | :--- | :--- |
+| Button Text | `String` | Text |
+
 ### Prompt Player Input
 
 *Displays an input popup dialog to prompt user text/option entry.*

@@ -194,16 +194,6 @@ Below is the complete reference of conditional branch checks supported by the Ra
 | Comparison | `Operator` | ComboBox |
 | Value | `String` | Text |
 
-### Variable: Comparison To Variable
-
-*Compares the values of two global variables.*
-
-| Parameter | Type | UI Input |
-| :--- | :--- | :--- |
-| Variable A | `Variable` | ComboBox |
-| Comparison | `Operator` | ComboBox |
-| Variable B | `Variable` | ComboBox |
-
 ### Variable: DateTime Part Comparison
 
 *Compares a single component (minute, second, hour, day, month, year) of a datetime variable against a number.*
