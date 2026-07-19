@@ -6072,6 +6072,7 @@ const nodeDescriptions = {
     "general.endGame": "Ends the game and returns the player to the main menu.",
     "general.openContainer": "Allows an object container to receive items.",
     "general.closeContainer": "Closes an object container to prevent item interactions.",
+    "general.waitForContinue": "Suspends script execution and displays a custom Continue button prompt to the player.",
 
     // Media Commands
     "media.displayMultimedia": "Displays an image or background picture on the screen.",
