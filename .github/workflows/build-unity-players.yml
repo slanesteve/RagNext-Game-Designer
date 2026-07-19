@@ -132,6 +132,14 @@ jobs:
           path: build/StandaloneWindows64
           if-no-files-found: error
 
+      - name: Upload Unity Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Unity-Editor-Log
+          path: ${{ env.APPDATA }}\..\Local\Unity\Editor\Editor.log
+          if-no-files-found: warn
+
   commit-templates:
     name: Commit Built Templates to Repository
     needs: [build-linux-containers, build-mac-native, build-windows-native]
