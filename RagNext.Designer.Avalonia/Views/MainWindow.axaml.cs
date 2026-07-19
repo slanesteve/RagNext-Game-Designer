@@ -3871,7 +3871,7 @@ namespace RagNext.Designer.Avalonia.Views
 </head>
 <body>
   <div class=""splash-container"">
-    <video src=""{fileUri}"" autoplay loop playsinline></video>
+    <video src=""{fileUri}"" autoplay playsinline></video>
     <canvas class=""particle-canvas""></canvas>
     <div class=""crt-scanlines""></div>
     <div class=""text-overlay"">{text}</div>
