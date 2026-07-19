@@ -21,17 +21,17 @@ on:
         default: true
 
 jobs:
-  build:
-    name: Build for ${{ matrix.targetPlatform }}
+  # Job 1: Build for Linux, Windows, and WebGL on Linux runner using Docker containers
+  build-linux-containers:
+    name: Build ${{ matrix.targetPlatform }} (Linux Container)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - targetPlatform: StandaloneOSX
-            inputKey: buildOSX
           - targetPlatform: StandaloneLinux64
             inputKey: buildLinux
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-linux-il2cpp-3'
           - targetPlatform: WebGL
             inputKey: buildWebGL
           - targetPlatform: StandaloneWindows64
@@ -50,7 +50,6 @@ jobs:
       - name: Checkout Source Code
         if: ${{ inputs[matrix.inputKey] }}
         uses: actions/checkout@v4
-
 
       # Build using GameCI Action with automated Personal license
       - name: Build Unity Player
@@ -76,9 +75,39 @@ jobs:
           path: build/${{ matrix.targetPlatform }}
           if-no-files-found: error
 
+  # Job 2: Build macOS StandaloneOSX directly on native macOS runner to compile IL2CPP targets
+  build-mac-native:
+    name: Build StandaloneOSX (macOS Native)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Source Code
+        if: ${{ inputs.buildOSX }}
+        uses: actions/checkout@v4
+
+      - name: Build macOS Player
+        if: ${{ inputs.buildOSX }}
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: RagNextPlayer
+          unityVersion: 6000.3.6f1
+          targetPlatform: StandaloneOSX
+          buildName: RagNextPlayer
+
+      - name: Upload macOS Artifact
+        if: ${{ inputs.buildOSX }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnityTemplate-StandaloneOSX
+          path: build/StandaloneOSX
+          if-no-files-found: error
+
   commit-templates:
     name: Commit Built Templates to Repository
-    needs: build
+    needs: [build-linux-containers, build-mac-native]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -194,4 +223,3 @@ jobs:
           else
             echo "No changes in built templates to commit."
           fi
-
