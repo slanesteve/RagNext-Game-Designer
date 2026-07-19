@@ -21,7 +21,7 @@ on:
         default: true
 
 jobs:
-  # Job 1: Build for Linux, Windows, and WebGL on Linux runner using Docker containers
+  # Job 1: Build for Linux and WebGL on Linux runner using Docker containers
   build-linux-containers:
     name: Build ${{ matrix.targetPlatform }} (Linux Container)
     runs-on: ubuntu-latest
@@ -34,9 +34,6 @@ jobs:
             customImage: 'unityci/editor:ubuntu-6000.3.6f1-linux-il2cpp-3'
           - targetPlatform: WebGL
             inputKey: buildWebGL
-          - targetPlatform: StandaloneWindows64
-            inputKey: buildWindows
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-mono-3'
     steps:
       - name: Free Disk Space (Ubuntu)
         if: ${{ inputs[matrix.inputKey] }}
@@ -105,9 +102,39 @@ jobs:
           path: build/StandaloneOSX
           if-no-files-found: error
 
+  # Job 3: Build Windows StandaloneWindows64 directly on native Windows runner to compile IL2CPP targets
+  build-windows-native:
+    name: Build StandaloneWindows64 (Windows Native)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Source Code
+        if: ${{ inputs.buildWindows }}
+        uses: actions/checkout@v4
+
+      - name: Build Windows Player
+        if: ${{ inputs.buildWindows }}
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: RagNextPlayer
+          unityVersion: 6000.3.6f1
+          targetPlatform: StandaloneWindows64
+          buildName: RagNextPlayer
+
+      - name: Upload Windows Artifact
+        if: ${{ inputs.buildWindows }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnityTemplate-StandaloneWindows64
+          path: build/StandaloneWindows64
+          if-no-files-found: error
+
   commit-templates:
     name: Commit Built Templates to Repository
-    needs: [build-linux-containers, build-mac-native]
+    needs: [build-linux-containers, build-mac-native, build-windows-native]
     runs-on: ubuntu-latest
     permissions:
       contents: write
