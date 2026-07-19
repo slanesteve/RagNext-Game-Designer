@@ -132,12 +132,19 @@ jobs:
           path: build/StandaloneWindows64
           if-no-files-found: error
 
+      - name: Copy Unity Build Log
+        if: always()
+        shell: pwsh
+        run: |
+          mkdir -p build/logs
+          cp "$env:LOCALAPPDATA\Unity\Editor\Editor.log" build/logs/Editor.log
+
       - name: Upload Unity Build Log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Windows-Unity-Editor-Log
-          path: ${{ env.APPDATA }}\..\Local\Unity\Editor\Editor.log
+          path: build/logs/Editor.log
           if-no-files-found: warn
 
   commit-templates:
