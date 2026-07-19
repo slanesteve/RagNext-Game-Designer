@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       # Pin Xcode 16.4 — required by .NET 9.0.300 MAUI workload (iOS 18.5 SDK)
       - name: Select Xcode 16.4

@@ -47,6 +47,8 @@ jobs:
       - name: Checkout Source Code
         if: ${{ inputs[matrix.inputKey] }}
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       # Build using GameCI Action with automated Personal license
       - name: Build Unity Player
@@ -80,6 +82,8 @@ jobs:
       - name: Checkout Source Code
         if: ${{ inputs.buildOSX }}
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Build macOS Player
         if: ${{ inputs.buildOSX }}
@@ -110,6 +114,8 @@ jobs:
       - name: Checkout Source Code
         if: ${{ inputs.buildWindows }}
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Build Windows Player
         if: ${{ inputs.buildWindows }}
@@ -158,6 +164,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          lfs: true
 
       - name: Download OSX Artifact
         uses: actions/download-artifact@v4
