@@ -1179,8 +1179,29 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
         }
 
-        private string GetPresetsDirectory() =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
+        private string GetPresetsDirectory()
+        {
+            try
+            {
+                var localAppPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
+                // Verify write access by attempting directory creation
+                if (!Directory.Exists(localAppPath))
+                {
+                    Directory.CreateDirectory(localAppPath);
+                }
+                return localAppPath;
+            }
+            catch
+            {
+                // Fallback for macOS sandbox limits or write-permission errors
+                var fallbackPath = Path.Combine(AppContext.BaseDirectory, "Presets");
+                if (!Directory.Exists(fallbackPath))
+                {
+                    Directory.CreateDirectory(fallbackPath);
+                }
+                return fallbackPath;
+            }
+        }
 
         private void SaveThemePreset()
         {

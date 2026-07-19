@@ -280,20 +280,29 @@ namespace RagNext.Designer.Avalonia.Services
             Report($"  {copiedCount} media asset(s) copied.");
 
             // 3. Copy theme presets
-            string srcPresetsDir  = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
+            string srcPresetsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
+            string fallbackPresetsDir = Path.Combine(AppContext.BaseDirectory, "Presets");
             string destPresetsDir = Path.Combine(streamingAssetsDir, "Presets");
             int copiedPresets = 0;
-            if (Directory.Exists(srcPresetsDir))
+
+            void CopyPresetsFromFolder(string folderPath)
             {
-                Directory.CreateDirectory(destPresetsDir);
-                foreach (var file in Directory.GetFiles(srcPresetsDir, "*.json"))
+                if (Directory.Exists(folderPath))
                 {
-                    string fileName = Path.GetFileName(file);
-                    string destFile = Path.Combine(destPresetsDir, fileName);
-                    File.Copy(file, destFile, overwrite: true);
-                    copiedPresets++;
+                    Directory.CreateDirectory(destPresetsDir);
+                    foreach (var file in Directory.GetFiles(folderPath, "*.json"))
+                    {
+                        string fileName = Path.GetFileName(file);
+                        string destFile = Path.Combine(destPresetsDir, fileName);
+                        File.Copy(file, destFile, overwrite: true);
+                        copiedPresets++;
+                    }
                 }
             }
+
+            CopyPresetsFromFolder(srcPresetsDir);
+            CopyPresetsFromFolder(fallbackPresetsDir);
+
             Report($"  {copiedPresets} theme preset(s) copied.");
 
         }
