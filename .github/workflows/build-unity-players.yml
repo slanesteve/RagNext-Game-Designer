@@ -36,6 +36,7 @@ jobs:
             inputKey: buildWebGL
           - targetPlatform: StandaloneWindows64
             inputKey: buildWindows
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-il2cpp-3'
     steps:
       - name: Free Disk Space (Ubuntu)
         if: ${{ inputs[matrix.inputKey] }}
@@ -64,6 +65,7 @@ jobs:
           unityVersion: 6000.3.6f1
           targetPlatform: ${{ matrix.targetPlatform }}
           buildName: RagNextPlayer
+          customImage: ${{ matrix.customImage || '' }}
 
       # Upload build output as zip artifacts
       - name: Upload Artifact
