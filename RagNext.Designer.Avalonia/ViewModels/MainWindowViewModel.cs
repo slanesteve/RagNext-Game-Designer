@@ -1183,18 +1183,18 @@ namespace RagNext.Designer.Avalonia.ViewModels
         {
             try
             {
-                var localAppPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
-                // Verify write access by attempting directory creation
-                if (!Directory.Exists(localAppPath))
+                // Environment.SpecialFolder.MyDocuments is highly accessible and avoids sandboxed application bundle restrictions on macOS
+                var docPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RagNext", "Themes");
+                if (!Directory.Exists(docPath))
                 {
-                    Directory.CreateDirectory(localAppPath);
+                    Directory.CreateDirectory(docPath);
                 }
-                return localAppPath;
+                return docPath;
             }
             catch
             {
-                // Fallback for macOS sandbox limits or write-permission errors
-                var fallbackPath = Path.Combine(AppContext.BaseDirectory, "Presets");
+                // Fallback to local app data as a backup write path
+                var fallbackPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
                 if (!Directory.Exists(fallbackPath))
                 {
                     Directory.CreateDirectory(fallbackPath);

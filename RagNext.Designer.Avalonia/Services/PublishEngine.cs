@@ -280,6 +280,7 @@ namespace RagNext.Designer.Avalonia.Services
             Report($"  {copiedCount} media asset(s) copied.");
 
             // 3. Copy theme presets
+            string docPresetsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RagNext", "Themes");
             string srcPresetsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
             string fallbackPresetsDir = Path.Combine(AppContext.BaseDirectory, "Presets");
             string destPresetsDir = Path.Combine(streamingAssetsDir, "Presets");
@@ -294,12 +295,17 @@ namespace RagNext.Designer.Avalonia.Services
                     {
                         string fileName = Path.GetFileName(file);
                         string destFile = Path.Combine(destPresetsDir, fileName);
-                        File.Copy(file, destFile, overwrite: true);
-                        copiedPresets++;
+                        // Prevent duplicate copies by checking if it already exists
+                        if (!File.Exists(destFile))
+                        {
+                            File.Copy(file, destFile, overwrite: true);
+                            copiedPresets++;
+                        }
                     }
                 }
             }
 
+            CopyPresetsFromFolder(docPresetsDir);
             CopyPresetsFromFolder(srcPresetsDir);
             CopyPresetsFromFolder(fallbackPresetsDir);
 
