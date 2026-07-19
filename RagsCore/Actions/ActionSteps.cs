@@ -29,7 +29,6 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(ItemNotInObjectCondition), "item.notInObject")]
     [JsonDerivedType(typeof(ItemWornCondition), "item.isWorn")]
     [JsonDerivedType(typeof(ItemCanWearCondition), "item.canWear")]
-    [JsonDerivedType(typeof(VariableComparisonToVariableCondition), "var.compareVar")]
     [JsonDerivedType(typeof(IsRoomExitLockedCondition), "room.isExitLocked")]
     [JsonDerivedType(typeof(CharacterAttributeCheckCondition), "char.attributeCheck")]
     [JsonDerivedType(typeof(ItemAttributeCheckCondition), "item.attributeCheck")]
@@ -64,7 +63,6 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(ObjectMoveInsideObjectCommand), "object.moveInsideObject")]
     [JsonDerivedType(typeof(DisplayTextCommand), "general.displayText")]
     [JsonDerivedType(typeof(AddCommentCommand), "general.addComment")]
-    [JsonDerivedType(typeof(DebugTextCommand), "general.debugText")]
     [JsonDerivedType(typeof(PlaySoundEffectCommand), "media.playSound")]
     [JsonDerivedType(typeof(PlayVideoCommand), "media.playVideo")]
     [JsonDerivedType(typeof(StopSoundEffectCommand), "media.stopSound")]
@@ -129,7 +127,6 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(CharacterMoveToObjectCommand), "char.moveToObject")]
     [JsonDerivedType(typeof(CharacterSetDescriptionCommand), "char.setDescription")]
     [JsonDerivedType(typeof(CharacterSetDisplayNameCommand), "char.setDisplayName")]
-    [JsonDerivedType(typeof(RoomDisplayPictureCommand), "room.displayPicture")]
     [JsonDerivedType(typeof(RoomSetDescriptionCommand), "room.setDescription")]
     [JsonDerivedType(typeof(RoomSetPictureCommand), "room.setPicture")]
     [JsonDerivedType(typeof(SetStatusBarVisibleCommand), "ui.setStatusBarVisible")]
@@ -137,6 +134,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(StopBackgroundMusicCommand), "media.stopBackgroundMusic")]
     [JsonDerivedType(typeof(SwapPlayerCharacterCommand), "player.swapCharacter")]
     [JsonDerivedType(typeof(ShowSplashScreenCommand), "ui.showSplashScreen")]
+    [JsonDerivedType(typeof(WaitForContinueCommand), "general.waitForContinue")]
     public abstract class ActionStep
     {
         public static string NormalizeLegacyDiscriminators(string json)
@@ -155,6 +153,7 @@ namespace RagsCore.Actions
                 if (node != null)
                 {
                     ConvertLegacyAttributes(node);
+                    ConvertLegacyCompareVar(node);
                     json = node.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
                 }
             }
@@ -168,14 +167,14 @@ namespace RagsCore.Actions
                 "var.equals", "player.inRoom", "room.hasObject", "player.sameRoom", "item.heldByPlayer",
                 "var.compare", "char.gender", "char.inRoom", "item.inRoom", "player.gender",
                 "item.heldByChar", "item.inObject", "item.notHeldByPlayer", "item.notInObject", "item.isWorn", "item.canWear",
-                "var.compareVar", "room.isExitLocked", "char.attributeCheck", "item.attributeCheck",
+                "room.isExitLocked", "char.attributeCheck", "item.attributeCheck",
                 "player.attributeCheck", "room.attributeCheck", "timer.isActive", "date.partCompare",
                 "date.isPast", "date.isFuture", "date.compareVars", "date.diffCompare", "date.compareConst",
                 "date.isValid", "status.isVisible", "var.set", "player.moveTo", "room.addObject", "room.removeObject",
                 "status.show", "status.hide", "status.setText", "status.setImage",
                 "object.displayDescription", "player.displayDescription", "char.displayDescription",
                 "room.displayDescription", "object.moveToCharacter", "object.moveToInventory",
-                "object.moveInsideObject", "general.displayText", "general.addComment", "general.debugText",
+                "object.moveInsideObject", "general.displayText", "general.addComment",
                 "media.playSound", "media.playVideo", "media.stopSound", "player.setName",
                 "player.setDescription", "player.setGender", "char.setGender", "var.setRandom",
                 "char.moveToRoom", "char.moveToRandomAdjacent", "char.moveAlongPatrolPath", "media.displayMultimedia", "char.displayPortrait", "char.setPortraitMedia",
@@ -190,16 +189,16 @@ namespace RagsCore.Actions
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear", "item.remove",
                 "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
-                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.displayPicture", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen"
+                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen", "general.waitForContinue"
             };
 
-            // Convert unrecognized/unknown $type values to general.debugText to prevent crashes
+            // Convert unrecognized/unknown $type values to general.addComment to prevent crashes
             json = System.Text.RegularExpressions.Regex.Replace(json, @"""\$type""\s*:\s*""([^""]+)""", m =>
             {
                 var val = m.Groups[1].Value;
                 if (!validDiscriminators.Contains(val))
                 {
-                    return @"""$type"": ""general.debugText"", ""Message"": ""Unrecognized command/condition: " + val + @"""";
+                    return @"""$type"": ""general.addComment"", ""CommentText"": ""Unrecognized command/condition: " + val + @"""";
                 }
                 return m.Value;
             });
@@ -250,6 +249,56 @@ namespace RagsCore.Actions
                     if (item != null)
                     {
                         ConvertLegacyAttributes(item);
+                    }
+                }
+            }
+        }
+
+        private static void ConvertLegacyCompareVar(JsonNode node)
+        {
+            if (node is JsonObject obj)
+            {
+                if (obj.TryGetPropertyValue("$type", out var typeVal) && typeVal != null)
+                {
+                    var valStr = typeVal.ToString();
+                    if (string.Equals(valStr, "var.compareVar", StringComparison.OrdinalIgnoreCase))
+                    {
+                        obj["$type"] = "var.compare";
+                        
+                        if (obj.TryGetPropertyValue("NameA", out var nameA))
+                        {
+                            obj["Name"] = nameA?.ToString();
+                            obj.Remove("NameA");
+                        }
+                        
+                        if (obj.TryGetPropertyValue("NameB", out var nameB))
+                        {
+                            var nameBStr = nameB?.ToString();
+                            if (!string.IsNullOrEmpty(nameBStr))
+                            {
+                                obj["Value"] = $"{{variables.{nameBStr}}}";
+                            }
+                            obj.Remove("NameB");
+                        }
+                    }
+                }
+
+                var keys = new List<string>(obj.Select(kvp => kvp.Key));
+                foreach (var key in keys)
+                {
+                    if (obj[key] is JsonNode child)
+                    {
+                        ConvertLegacyCompareVar(child);
+                    }
+                }
+            }
+            else if (node is JsonArray arr)
+            {
+                foreach (var child in arr)
+                {
+                    if (child != null)
+                    {
+                        ConvertLegacyCompareVar(child);
                     }
                 }
             }
@@ -550,11 +599,21 @@ namespace RagsCore.Actions
         }
     }
 
+    public sealed class WaitForContinueCommand : GameCommand
+    {
+        public string ButtonText { get; set; } = "Continue";
+        public override string TypeName => "General: Wait for Continue";
+        public override void Execute(ActionContext ctx)
+        {
+            // Handled client side
+        }
+    }
+
     public sealed class ScreenShakeCommand : GameCommand
     {
         public float Intensity { get; set; } = 0.3f;
         public float Duration { get; set; } = 1.0f;
-        public override string TypeName => "Player: Screen Shake";
+        public override string TypeName => "General: Screen Shake";
         public override void Execute(ActionContext ctx)
         {
             // State command handled on client side in CommandEffectRouter
@@ -646,15 +705,6 @@ namespace RagsCore.Actions
         }
     }
 
-    public sealed class DebugTextCommand : GameCommand
-    {
-        public string Message { get; set; } = string.Empty;
-        public override string TypeName => "Debug Text";
-        public override void Execute(ActionContext ctx)
-        {
-            // Debug Text is a comment/log. No runtime execution needed.
-        }
-    }
 
     /// <summary>Sets a specific character's action active or inactive (Bug #5 enhanced).</summary>
     public sealed class CharacterSetActionActiveCommand : GameCommand
@@ -1850,39 +1900,6 @@ namespace RagsCore.Actions
         }
     }
 
-    public sealed class VariableComparisonToVariableCondition : Condition
-    {
-        public string NameA { get; set; } = string.Empty;
-        public string Comparison { get; set; } = "=";
-        public string NameB { get; set; } = string.Empty;
-        public override string TypeName => "Variable: Comparison To Variable";
-        public override bool Evaluate(ActionContext ctx)
-        {
-            var valA = ctx.GetVariable(NameA)?.Value ?? string.Empty;
-            var valB = ctx.GetVariable(NameB)?.Value ?? string.Empty;
-
-            if (double.TryParse(valA, out double numA) && double.TryParse(valB, out double numB))
-            {
-                return Comparison switch
-                {
-                    "=" => numA == numB,
-                    "!=" => numA != numB,
-                    ">" => numA > numB,
-                    ">=" => numA >= numB,
-                    "<" => numA < numB,
-                    "<=" => numA <= numB,
-                    _ => false
-                };
-            }
-
-            return Comparison switch
-            {
-                "=" => string.Equals(valA, valB, StringComparison.OrdinalIgnoreCase),
-                "!=" => !string.Equals(valA, valB, StringComparison.OrdinalIgnoreCase),
-                _ => false
-            };
-        }
-    }
 
     /// <summary>
     /// Sets (or clears) a specific directional exit on a room at runtime.
@@ -2366,7 +2383,6 @@ namespace RagsCore.Actions
     {
         public string PromptName { get; set; } = string.Empty;
         public string ChoiceText { get; set; } = string.Empty;
-        public string VariableName { get; set; } = string.Empty;
         public override string TypeName => "Action: Add Custom Choice";
         public override void Execute(ActionContext ctx)
         {
@@ -3090,14 +3106,6 @@ namespace RagsCore.Actions
         }
     }
 
-    public sealed class RoomDisplayPictureCommand : GameCommand
-    {
-        public string RoomId { get; set; } = string.Empty;
-        public override string TypeName => "Room: Display Picture";
-        public override void Execute(ActionContext ctx)
-        {
-        }
-    }
 
     public sealed class RoomSetDescriptionCommand : GameCommand
     {
@@ -3156,6 +3164,10 @@ namespace RagsCore.Actions
     public sealed class SetBackgroundMusicCommand : GameCommand
     {
         public string MusicFile { get; set; } = string.Empty;
+        public int Volume { get; set; } = 100;
+        public bool Loop { get; set; } = true;
+        public double StartTime { get; set; } = 0;
+        public double EndTime { get; set; } = 0;
         public override string TypeName => "Media: Set Background Music";
         public override void Execute(ActionContext ctx)
         {

@@ -113,7 +113,7 @@ namespace RagNextPlayer.Tests
         [Test]
         public void Execute_CustomChoicesCommands_AppendsAndClears()
         {
-            var addChoice = new AddCustomChoiceCommandData { PromptName = "Gate", ChoiceText = "Open", VariableName = "gate_open" };
+            var addChoice = new AddCustomChoiceCommandData { PromptName = "Gate", ChoiceText = "Open" };
             ActionExecutor.ExecuteCommand(addChoice, _ctx);
             Assert.AreEqual(1, _game.CustomChoices.Count);
             Assert.AreEqual("Gate", _game.CustomChoices[0].PromptName);

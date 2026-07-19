@@ -45,7 +45,6 @@ namespace RagNextPlayer.Runtime.Models
                 // ── Conditions ─────────────────────────────────────────────
                 "var.equals"        => typeof(VariableEqualsConditionData),
                 "var.compare"       => typeof(VariableComparisonConditionData),
-                "var.compareVar"    => typeof(VariableComparisonToVariableConditionData),
                 "player.inRoom"     => typeof(PlayerInRoomConditionData),
                 "room.hasObject"    => typeof(RoomHasObjectConditionData),
                 "item.inRoom"       => typeof(ItemInRoomConditionData),
@@ -113,6 +112,7 @@ namespace RagNextPlayer.Runtime.Models
                 "media.stopBackgroundMusic" => typeof(StopBackgroundMusicCommandData),
                 "media.displayMultimedia"=> typeof(DisplayMultimediaCommandData),
                 "general.endGame"        => typeof(EndGameCommandData),
+                "general.waitForContinue"=> typeof(WaitForContinueCommandData),
                 "general.promptInput"    => typeof(PromptPlayerInputCommandData),
                 "general.openContainer"  => typeof(OpenContainerCommandData),
                 "general.closeContainer" => typeof(CloseContainerCommandData),
@@ -122,7 +122,6 @@ namespace RagNextPlayer.Runtime.Models
                 "char.damage"            => typeof(DamageCharacterCommandData),
                 "char.setState"          => typeof(SetCharacterStateCommandData),
                 "general.triggerTurnTick"=> typeof(TriggerTurnTickCommandData),
-                "general.debugText"      => typeof(DebugTextCommandData),
                 "char.setActionActive"   => typeof(CharacterSetActionActiveCommandData),
                 // Bug #5: Scoped entity variants.
                 "item.setActionActive"   => typeof(ItemSetActionActiveCommandData),
@@ -166,7 +165,6 @@ namespace RagNextPlayer.Runtime.Models
                 "char.moveToObject"         => typeof(CharacterMoveToObjectCommandData),
                 "char.setDescription"       => typeof(CharacterSetDescriptionCommandData),
                 "char.setDisplayName"       => typeof(CharacterSetDisplayNameCommandData),
-                "room.displayPicture"       => typeof(RoomDisplayPictureCommandData),
                 "room.setDescription"       => typeof(RoomSetDescriptionCommandData),
                 "room.setPicture"           => typeof(RoomSetPictureCommandData),
                 "ui.setStatusBarVisible"    => typeof(SetStatusBarVisibleCommandData),

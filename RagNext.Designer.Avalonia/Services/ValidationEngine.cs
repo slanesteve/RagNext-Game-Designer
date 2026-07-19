@@ -172,6 +172,14 @@ namespace RagNext.Designer.Avalonia.Services
                 refs.Add($"{path}: Command 'Close Container' references this Object.");
             else if (step is CallFunctionCommand cfc && cfc.FunctionId == idStr)
                 refs.Add($"{path}: Command 'Call Function' references this Function.");
+            else if (step is SetBackgroundMusicCommand sbmc && sbmc.MusicFile == idStr)
+                refs.Add($"{path}: Command 'Set Background Music' references this Music File.");
+            else if (step is PlaySoundEffectCommand psec && psec.SoundId == idStr)
+                refs.Add($"{path}: Command 'Play Sound Effect' references this Sound File.");
+            else if (step is StopSoundEffectCommand ssec && ssec.SoundId == idStr)
+                refs.Add($"{path}: Command 'Stop Sound Effect' references this Sound File.");
+            else if (step is PlayVideoCommand pvc && pvc.VideoId == idStr)
+                refs.Add($"{path}: Command 'Play Video' references this Video File.");
 
             // Generic scan of all string properties on the action step for text template references (like {objects.deletethis.description})
             if (!string.IsNullOrEmpty(normName))

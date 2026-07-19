@@ -236,7 +236,9 @@ namespace RagNextPlayer.Managers
                 case SetBackgroundMusicCommandData c:
                     {
                         var musicId = ctx.Resolve(c.MusicFile);
-                        AudioManager.Instance?.PlayMusic(musicId);
+                        float vol = (float)(c.Volume / 100.0);
+                        float endTime = (float)(c.EndTime > 0 ? c.EndTime : 0f);
+                        AudioManager.Instance?.PlayMusic(musicId, vol, c.Loop, (float)c.StartTime, endTime);
                     }
                     break;
 
@@ -247,6 +249,10 @@ namespace RagNextPlayer.Managers
                 case EndGameCommandData c:
                     GameManager.Instance?.EndGame();
                     UIManager.Instance?.ShowGameOverScreen(ctx.Resolve(c.FinalMessage));
+                    break;
+
+                case WaitForContinueCommandData c:
+                    UIManager.Instance?.ShowContinuePrompt(ctx.Resolve(c.ButtonText));
                     break;
 
                 case PromptPlayerInputCommandData c:
@@ -273,16 +279,6 @@ namespace RagNextPlayer.Managers
                 case AddCustomChoiceCommandData:
                 case ClearCustomChoiceCommandData:
                 case RemoveCustomChoiceCommandData:
-                    break;
-                case RoomDisplayPictureCommandData cDispPicture:
-                    {
-                        var displayRoomId = ResolveRoomId(cDispPicture.RoomId, ctx);
-                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, displayRoomId, System.StringComparison.OrdinalIgnoreCase));
-                        if (room != null && !string.IsNullOrEmpty(room.PortraitImagePath))
-                        {
-                            UIManager.Instance?.DisplaySceneImage(room.PortraitImagePath);
-                        }
-                    }
                     break;
 
                 case PlayerMoveToCharacterCommandData:

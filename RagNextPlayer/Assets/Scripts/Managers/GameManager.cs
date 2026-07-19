@@ -65,7 +65,10 @@ namespace RagNextPlayer.Managers
             if (CurrentState != GameState.Playing) return;
 
             // Handle Keyboard Navigation for Room Exits
-            HandleKeyboardNavigation();
+            if (UIManager.Instance == null || !UIManager.Instance.IsInputFocused())
+            {
+                HandleKeyboardNavigation();
+            }
 
             // Tick active background timers
             if (ActiveGame.Timers != null)
@@ -146,6 +149,13 @@ namespace RagNextPlayer.Managers
         public void RestartGame()
         {
             AudioManager.Instance?.StopAllSounds();
+            if (ActiveGame != null && ActiveGame.Player != null)
+            {
+                ActiveGame.Player.Inventory?.Clear();
+                ActiveGame.Player.Attributes?.Clear();
+            }
+            // Clear current room so no stale exit actions fire during the fresh load
+            CurrentRoom = null;
             _ = LoadGameAsync();
         }
         
@@ -183,15 +193,15 @@ namespace RagNextPlayer.Managers
             CurrentState = GameState.Playing;
             OnGameLoaded?.Invoke(ActiveGame);
             
+            // Execute all OnGameStart actions globally (fired before transitioning so startup prints appear at the top)
+            FireStartupTriggers();
+
             // Navigate to the starting room
             var startId = ActiveGame.Player.StartingRoomId
                           ?? (ActiveGame.Rooms.Count > 0 ? ActiveGame.Rooms[0].Id : null);
 
             if (startId is not null)
                 await TransitionToRoomAsync(startId);
-
-            // Execute all OnGameStart actions globally
-            FireStartupTriggers();
         }
 
         private void FireStartupTriggers()
@@ -1092,6 +1102,10 @@ namespace RagNextPlayer.Managers
         {
             if (!HasSaveFile(slot)) return;
             AudioManager.Instance?.StopAllSounds();
+            // Clear CurrentRoom so TransitionToRoomAsync doesn't hit the same-room
+            // interception guard and skip OnRoomEntered — which would leave entity
+            // lists empty after the load clears them in OnGameLoaded.
+            CurrentRoom = null;
             try
             {
                 var path = GetSaveFilePath(slot);
@@ -1118,6 +1132,10 @@ namespace RagNextPlayer.Managers
                         Debug.LogError("[GameManager] Failed to load fresh game data for state overlay.");
                         return;
                     }
+
+                    // Mirror the startup-path helpers so room objects and the room variable are
+                    // always in a consistent state when restoring a save slot.
+                    PopulateRoomObjectIdsFromDescription(freshGame);
 
                     // 1. Restore Variables
                     foreach (var varState in saveState.Variables)

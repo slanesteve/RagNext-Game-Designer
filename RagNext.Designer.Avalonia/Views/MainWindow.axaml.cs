@@ -446,7 +446,8 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                     else if (ev.PropertyName == nameof(MainWindowViewModel.SplashBackgroundPath) ||
                              ev.PropertyName == nameof(MainWindowViewModel.IsSplashVideoMode) ||
-                             ev.PropertyName == nameof(MainWindowViewModel.IsSplashVideoPreviewVisible))
+                             ev.PropertyName == nameof(MainWindowViewModel.IsSplashVideoPreviewVisible) ||
+                             ev.PropertyName == nameof(MainWindowViewModel.SelectedSplashScreen))
                     {
                         UpdateSplashVideoPreview(vm);
                     }
@@ -686,8 +687,57 @@ namespace RagNext.Designer.Avalonia.Views
                     });
                 }
 
+                var promptNamesSet = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (vm.CurrentGame.Player != null && vm.CurrentGame.Player.Actions != null)
+                {
+                    foreach (var act in vm.CurrentGame.Player.Actions)
+                    {
+                        ExtractPromptNames(act.Steps, promptNamesSet);
+                    }
+                }
+                if (vm.CurrentGame.Rooms != null)
+                {
+                    foreach (var rm in vm.CurrentGame.Rooms)
+                    {
+                        if (rm.Actions != null)
+                        {
+                            foreach (var act in rm.Actions)
+                            {
+                                ExtractPromptNames(act.Steps, promptNamesSet);
+                            }
+                        }
+                    }
+                }
+                if (vm.CurrentGame.Objects != null)
+                {
+                    foreach (var obj in vm.CurrentGame.Objects)
+                    {
+                        if (obj.Actions != null)
+                        {
+                            foreach (var act in obj.Actions)
+                            {
+                                ExtractPromptNames(act.Steps, promptNamesSet);
+                            }
+                        }
+                    }
+                }
+                if (vm.CurrentGame.Characters != null)
+                {
+                    foreach (var ch in vm.CurrentGame.Characters)
+                    {
+                        if (ch.Actions != null)
+                        {
+                            foreach (var act in ch.Actions)
+                            {
+                                ExtractPromptNames(act.Steps, promptNamesSet);
+                            }
+                        }
+                    }
+                }
+
                 var catalogsObj = new CatalogsDto
                 {
+                    PromptNames = promptNamesSet.OrderBy(n => n).ToList(),
                     Rooms = vm.CurrentGame.Rooms.Select(r => new CatalogEntityDto
                     {
                         Id = r.Id.ToString(), Name = r.Name,
@@ -1718,6 +1768,34 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private static void ExtractPromptNames(System.Collections.Generic.IEnumerable<RagsCore.Actions.ActionStep> steps, System.Collections.Generic.HashSet<string> promptNames)
+        {
+            if (steps == null) return;
+            foreach (var step in steps)
+            {
+                if (step is RagsCore.Actions.PromptPlayerInputCommand pic && !string.IsNullOrWhiteSpace(pic.PromptName))
+                {
+                    promptNames.Add(pic.PromptName);
+                }
+                
+                if (step is RagsCore.Actions.Condition cond)
+                {
+                    ExtractPromptNames(cond.TrueBranch, promptNames);
+                    ExtractPromptNames(cond.FalseBranch, promptNames);
+                }
+                else if (step is RagsCore.Actions.SwitchCommand sw)
+                {
+                    if (sw.Cases != null)
+                    {
+                        foreach (var caseList in sw.Cases.Values)
+                        {
+                            ExtractPromptNames(caseList, promptNames);
+                        }
+                    }
+                }
+            }
+        }
+
         private static void CleanSwitchCases(ActionStep step)
         {
             if (step is SwitchCommand switchCmd)
@@ -2251,7 +2329,7 @@ namespace RagNext.Designer.Avalonia.Views
                 ["Out"]   = "In",
             };
 
-        private record ExitControl(ComboBox Picker, CheckBox OneWay, CheckBox Locked, string Direction);
+        private record ExitControl(ComboBox Picker, ComboBox RealPicker, CheckBox OneWay, CheckBox Locked, string Direction);
         private System.Collections.Generic.List<ExitControl>? _exitControls;
         private bool _suppressExitEvents;
         private bool _isClearingExit;
@@ -2386,18 +2464,18 @@ namespace RagNext.Designer.Avalonia.Views
 
             _exitControls ??= new System.Collections.Generic.List<ExitControl>
             {
-                new(NorthPicker, NorthOneWay, NorthLocked, "North"),
-                new(SouthPicker, SouthOneWay, SouthLocked, "South"),
-                new(EastPicker,  EastOneWay,  EastLocked,  "East"),
-                new(WestPicker,  WestOneWay,  WestLocked,  "West"),
-                new(NorthWestPicker, NorthWestOneWay, NorthWestLocked, "NorthWest"),
-                new(NorthEastPicker, NorthEastOneWay, NorthEastLocked, "NorthEast"),
-                new(SouthWestPicker, SouthWestOneWay, SouthWestLocked, "SouthWest"),
-                new(SouthEastPicker, SouthEastOneWay, SouthEastLocked, "SouthEast"),
-                new(UpPicker,    UpOneWay,    UpLocked,    "Up"),
-                new(DownPicker,  DownOneWay,  DownLocked,  "Down"),
-                new(InPicker,    InOneWay,    InLocked,    "In"),
-                new(OutPicker,   OutOneWay,   OutLocked,   "Out"),
+                new(NorthPicker, NorthRealPicker, NorthOneWay, NorthLocked, "North"),
+                new(SouthPicker, SouthRealPicker, SouthOneWay, SouthLocked, "South"),
+                new(EastPicker,  EastRealPicker,  EastOneWay,  EastLocked,  "East"),
+                new(WestPicker,  WestRealPicker,  WestOneWay,  WestLocked,  "West"),
+                new(NorthWestPicker, NorthWestRealPicker, NorthWestOneWay, NorthWestLocked, "NorthWest"),
+                new(NorthEastPicker, NorthEastRealPicker, NorthEastOneWay, NorthEastLocked, "NorthEast"),
+                new(SouthWestPicker, SouthWestRealPicker, SouthWestOneWay, SouthWestLocked, "SouthWest"),
+                new(SouthEastPicker, SouthEastRealPicker, SouthEastOneWay, SouthEastLocked, "SouthEast"),
+                new(UpPicker,    UpRealPicker,    UpOneWay,    UpLocked,    "Up"),
+                new(DownPicker,  DownRealPicker,  DownOneWay,  DownLocked,  "Down"),
+                new(InPicker,    InRealPicker,    InOneWay,    InLocked,    "In"),
+                new(OutPicker,   OutRealPicker,   OutOneWay,   OutLocked,   "Out"),
             };
 
             _suppressExitEvents = true;
@@ -2405,16 +2483,17 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 foreach (var ec in _exitControls)
                 {
-                    ec.Picker.SelectionChanged -= OnExitPickerChanged;
+                    ec.RealPicker.SelectionChanged -= OnExitPickerChanged;
                     ec.OneWay.IsCheckedChanged -= OnExitOneWayChanged;
                     ec.Locked.IsCheckedChanged -= OnExitLockedChanged;
 
-                    ec.Picker.ItemsSource = allRooms;
+                    ec.RealPicker.ItemsSource = allRooms;
 
                     if (room.Exits.TryGetValue(ec.Direction, out var destId))
                     {
                         var destRoom = allRooms.FirstOrDefault(r => r.Id == destId);
-                        ec.Picker.SelectedItem = destRoom;
+                        ec.RealPicker.SelectedItem = destRoom;
+                        ec.Picker.SelectedItem = destRoom; // Keep the hidden picker in sync
 
                         if (_opposites.TryGetValue(ec.Direction, out var opposite))
                         {
@@ -2432,12 +2511,13 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                     else
                     {
+                        ec.RealPicker.SelectedItem = null;
                         ec.Picker.SelectedItem = null;
                         ec.OneWay.IsChecked    = false;
                         ec.Locked.IsChecked    = false;
                     }
 
-                    ec.Picker.SelectionChanged += OnExitPickerChanged;
+                    ec.RealPicker.SelectionChanged += OnExitPickerChanged;
                     ec.OneWay.IsCheckedChanged += OnExitOneWayChanged;
                     ec.Locked.IsCheckedChanged += OnExitLockedChanged;
                 }
@@ -2445,6 +2525,24 @@ namespace RagNext.Designer.Avalonia.Views
             finally
             {
                 _suppressExitEvents = false;
+            }
+        }
+
+        private void OnAddExitClick(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string direction && App.CurrentGame != null)
+            {
+                if (RoomsList.SelectedItem is Room room)
+                {
+                    var defaultRoom = App.CurrentGame.Rooms.FirstOrDefault(r => r.Id != room.Id) ?? App.CurrentGame.Rooms.FirstOrDefault();
+                    if (defaultRoom != null)
+                    {
+                        room.Exits[direction] = defaultRoom.Id;
+                        LoadExits(room);
+                        var vm = DataContext as ViewModels.MainWindowViewModel;
+                        if (vm != null) _ = vm.SaveGameAsync();
+                    }
+                }
             }
         }
 
@@ -2460,6 +2558,7 @@ namespace RagNext.Designer.Avalonia.Views
                 _isClearingExit = true;
                 try
                 {
+                    ec.RealPicker.SelectedItem = null;
                     ec.Picker.SelectedItem = null;
                 }
                 finally
@@ -2477,7 +2576,7 @@ namespace RagNext.Designer.Avalonia.Views
 
             if (!picker.IsDropDownOpen && !picker.IsFocused && !_isClearingExit) return;
 
-            var ec = _exitControls?.FirstOrDefault(x => x.Picker == picker);
+            var ec = _exitControls?.FirstOrDefault(x => x.RealPicker == picker);
             if (ec is null) return;
 
             var game = App.CurrentGame;
@@ -2492,6 +2591,7 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     room.Exits.Remove(ec.Direction);
                     room.LockedExits.Remove(ec.Direction);
+                    ec.Picker.SelectedItem = null;
                     ec.OneWay.IsChecked = false;
                     ec.Locked.IsChecked = false;
 
@@ -2510,6 +2610,7 @@ namespace RagNext.Designer.Avalonia.Views
                 else
                 {
                     room.Exits[ec.Direction] = destRoom.Id;
+                    ec.Picker.SelectedItem = destRoom; // Sync the hidden picker
 
                     if (destRoom.Id != room.Id)
                     {
@@ -2558,7 +2659,7 @@ namespace RagNext.Designer.Avalonia.Views
             var ec = _exitControls?.FirstOrDefault(x => x.OneWay == cb);
             if (ec is null) return;
 
-            var destRoom = ec.Picker.SelectedItem as Room;
+            var destRoom = ec.RealPicker.SelectedItem as Room;
             if (destRoom is null) return;
             if (!_opposites.TryGetValue(ec.Direction, out var opposite)) return;
 
@@ -2652,7 +2753,7 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        public void OnRoomObjectCheckedChanged(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        public async void OnRoomObjectCheckedChanged(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
         {
             if (_isSyncingRoomObjects) return;
             if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
@@ -2662,6 +2763,34 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 if (!room.ObjectIds.Contains(item.Id))
                 {
+                    // Check if item is already assigned elsewhere
+                    if (DataContext is MainWindowViewModel vm && vm.CurrentGame != null)
+                    {
+                        var existingLocation = MainWindowViewModel.FindItemAssignment(vm.CurrentGame, item.Id);
+                        if (existingLocation != null)
+                        {
+                            bool proceed = true;
+                            if (MainWindowViewModel.ShowConfirmDialogAsync != null)
+                            {
+                                proceed = await MainWindowViewModel.ShowConfirmDialogAsync(
+                                    "Item Already Assigned",
+                                    $"\"{ item.Name }\" is currently assigned to { existingLocation }.\n\n" +
+                                    $"Move it to Room \"{ room.Name }\"? The previous assignment will be removed automatically.");
+                            }
+                            if (!proceed)
+                            {
+                                // Revert the checkbox without triggering another event
+                                _isSyncingRoomObjects = true;
+                                try { cb.IsChecked = false; }
+                                finally { _isSyncingRoomObjects = false; }
+                                return;
+                            }
+
+                            // Remove from all previous locations, then refresh checkboxes so UI is consistent
+                            MainWindowViewModel.RemoveItemFromAllLocations(vm.CurrentGame, item.Id);
+                            RefreshRoomObjectCheckBoxes(room);
+                        }
+                    }
                     room.ObjectIds.Add(item.Id);
                 }
             }
@@ -2671,9 +2800,9 @@ namespace RagNext.Designer.Avalonia.Views
             }
 
             // Save changes automatically
-            if (DataContext is MainWindowViewModel vm)
+            if (DataContext is MainWindowViewModel vm2)
             {
-                vm.SaveGameCommand.Execute(null);
+                vm2.SaveGameCommand.Execute(null);
             }
         }
 
@@ -3368,49 +3497,6 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
-        private bool _isSyncingContainedObjects = false;
-
-        public void OnContainedObjectCheckBoxLoaded(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
-            if (ObjectsList.SelectedItem is not GameObject container) return;
-
-            _isSyncingContainedObjects = true;
-            try
-            {
-                cb.IsEnabled = item.Id != container.Id;
-                cb.IsChecked = container.ContainedObjectIds.Contains(item.Id);
-            }
-            finally
-            {
-                _isSyncingContainedObjects = false;
-            }
-        }
-
-        public void OnContainedObjectCheckedChanged(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            if (_isSyncingContainedObjects) return;
-            if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
-            if (ObjectsList.SelectedItem is not GameObject container) return;
-
-            if (cb.IsChecked == true)
-            {
-                if (!container.ContainedObjectIds.Contains(item.Id))
-                {
-                    container.ContainedObjectIds.Add(item.Id);
-                }
-            }
-            else
-            {
-                container.ContainedObjectIds.Remove(item.Id);
-            }
-
-            // Save changes automatically
-            if (DataContext is MainWindowViewModel vm)
-            {
-                vm.SaveGameCommand.Execute(null);
-            }
-        }
 
         private void UpdateSplashVideoPreview(MainWindowViewModel vm)
         {
@@ -3817,7 +3903,7 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                     else
                     {
-                        // Direct JS insertion for real-time text updates
+                        // Direct JS insertion for real-time text and video updates
                         string jsUpdate = $@"
                             (function() {{
                                 var overlay = document.querySelector('.text-overlay');
@@ -3828,6 +3914,12 @@ namespace RagNext.Designer.Avalonia.Views
                                     overlay.style.color = '{fontColor}';
                                     overlay.style.fontSize = '{fontSize}px';
                                     overlay.style.fontFamily = `'{fontName}', 'Outfit', sans-serif`;
+                                }}
+                                var video = document.querySelector('video');
+                                if (video && video.getAttribute('src') !== '{fileUri}') {{
+                                    video.src = '{fileUri}';
+                                    video.currentTime = 0;
+                                    video.play();
                                 }}
                             }})();";
                         _ = SplashPreviewWebView.InvokeScript(jsUpdate);
@@ -5173,8 +5265,6 @@ namespace RagNext.Designer.Avalonia.Views
                 case "variablesetnumericrandomly": return "var.setRandom";
                 case "variablecomparison": return "var.compare";
                 case "variablecompare": return "var.compare";
-                case "variablecomparisontovariable": return "var.compareVar";
-                case "variablecomparetovariable": return "var.compareVar";
                 case "variableequals": return "var.equals";
                 case "variabledatetimepartcomparison": return "date.partCompare";
                 case "datetimeispast": return "date.isPast";
@@ -6129,18 +6219,20 @@ namespace RagNext.Designer.Avalonia.Views
             cancelBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
             cancelBtn.Bind(Button.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
 
-            okBtn.Click += (s, e) => { tcs.SetResult(input.Text ?? ""); dialog.Close(); };
-            cancelBtn.Click += (s, e) => { tcs.SetResult(""); dialog.Close(); };
+            okBtn.Click += (s, e) => { tcs.TrySetResult(input.Text ?? ""); dialog.Close(); };
+            cancelBtn.Click += (s, e) => { tcs.TrySetResult(""); dialog.Close(); };
 
             input.KeyDown += (s, e) =>
             {
                 if (e.Key == global::Avalonia.Input.Key.Enter)
                 {
                     e.Handled = true;
-                    tcs.SetResult(input.Text ?? "");
+                    tcs.TrySetResult(input.Text ?? "");
                     dialog.Close();
                 }
             };
+
+            dialog.Closed += (s, e) => { tcs.TrySetResult(""); };
 
             buttons.Children.Add(okBtn);
             buttons.Children.Add(cancelBtn);
@@ -6180,8 +6272,10 @@ namespace RagNext.Designer.Avalonia.Views
             noBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
             noBtn.Bind(Button.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
 
-            yesBtn.Click += (s, e) => { tcs.SetResult(true); dialog.Close(); };
-            noBtn.Click += (s, e) => { tcs.SetResult(false); dialog.Close(); };
+            yesBtn.Click += (s, e) => { tcs.TrySetResult(true); dialog.Close(); };
+            noBtn.Click += (s, e) => { tcs.TrySetResult(false); dialog.Close(); };
+
+            dialog.Closed += (s, e) => { tcs.TrySetResult(false); };
 
             buttons.Children.Add(yesBtn);
             buttons.Children.Add(noBtn);
@@ -6226,9 +6320,11 @@ namespace RagNext.Designer.Avalonia.Views
             cancelBtn.Bind(Button.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
             cancelBtn.Bind(Button.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
 
-            yesBtn.Click += (s, e) => { tcs.SetResult("Yes"); dialog.Close(); };
-            noBtn.Click += (s, e) => { tcs.SetResult("No"); dialog.Close(); };
-            cancelBtn.Click += (s, e) => { tcs.SetResult("Cancel"); dialog.Close(); };
+            yesBtn.Click += (s, e) => { tcs.TrySetResult("Yes"); dialog.Close(); };
+            noBtn.Click += (s, e) => { tcs.TrySetResult("No"); dialog.Close(); };
+            cancelBtn.Click += (s, e) => { tcs.TrySetResult("Cancel"); dialog.Close(); };
+
+            dialog.Closed += (s, e) => { tcs.TrySetResult("Cancel"); };
 
             buttons.Children.Add(yesBtn);
             buttons.Children.Add(noBtn);
@@ -6265,7 +6361,9 @@ namespace RagNext.Designer.Avalonia.Views
             var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
             var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White, IsDefault = true };
 
-            okBtn.Click += (s, e) => { tcs.SetResult(); dialog.Close(); };
+            okBtn.Click += (s, e) => { tcs.TrySetResult(); dialog.Close(); };
+
+            dialog.Closed += (s, e) => { tcs.TrySetResult(); };
 
             buttons.Children.Add(okBtn);
             stack.Children.Add(buttons);
@@ -6382,6 +6480,25 @@ namespace RagNext.Designer.Avalonia.Views
                         // Fall through
                     }
                 }
+            }
+            return null;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class GuidToGameObjectConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly GuidToGameObjectConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is Guid guid && App.CurrentGame != null)
+            {
+                return App.CurrentGame.Objects.FirstOrDefault(o => o.Id == guid);
             }
             return null;
         }
@@ -6529,6 +6646,31 @@ namespace RagNext.Designer.Avalonia.Views
         }
     }
 
+    public class HotspotOuterBackgroundConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly HotspotOuterBackgroundConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is RagsCore.Models.ScreenHotspot hotspot)
+            {
+                if (string.Equals(hotspot.StyleType, "ImageButton", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(hotspot.StyleType, "Invisible", StringComparison.OrdinalIgnoreCase))
+                {
+                    return global::Avalonia.Media.Brushes.Transparent;
+                }
+
+                if (global::Avalonia.Media.Color.TryParse(hotspot.BackgroundColor, out var color))
+                {
+                    return new global::Avalonia.Media.SolidColorBrush(color);
+                }
+            }
+            return global::Avalonia.Media.Brushes.Transparent;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
     public class HotspotFontSizeScaleConverter : global::Avalonia.Data.Converters.IValueConverter
     {
         public static readonly HotspotFontSizeScaleConverter Instance = new();
@@ -6537,15 +6679,15 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (value is double val)
             {
-                return val / 5.0;
+                return val / 8.0;
             }
             if (value is int ival)
             {
-                return ival / 5.0;
+                return ival / 8.0;
             }
             if (value is float fval)
             {
-                return fval / 5.0;
+                return fval / 8.0;
             }
             return 3.0;
         }

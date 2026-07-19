@@ -542,228 +542,427 @@
                                             </Border>
 
                                             <!-- Collapsible Exits & Navigation -->
-                                            <Expander Header="Exits &amp; Navigation" Background="{DynamicResource InputBg}" Margin="0,8,0,0">
-                                                <StackPanel Spacing="10" Margin="10">
-                                                    <TextBlock Text="Select target rooms and toggles for exits directions:" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                    
-                                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" RowSpacing="12" ColumnSpacing="16">
-                                                        <!-- North -->
-                                                        <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="North →" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="North" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                            <Expander Header="Exits &amp; Navigation" Background="{DynamicResource InputBg}" Margin="0,8,0,0" IsExpanded="True">
+                                                <Expander.Styles>
+                                                    <Style Selector="Border.exit-card">
+                                                        <Setter Property="Background" Value="#151522"/>
+                                                        <Setter Property="BorderBrush" Value="rgba(255, 255, 255, 0.08)"/>
+                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                        <Setter Property="CornerRadius" Value="8"/>
+                                                        <Setter Property="Padding" Value="8,6"/>
+                                                        <Setter Property="Margin" Value="4"/>
+                                                        <Setter Property="Width" Value="152"/>
+                                                        <Setter Property="Height" Value="90"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                    </Style>
+                                                    <Style Selector="Button.delete-exit-btn">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="Foreground" Value="#EF4444"/>
+                                                        <Setter Property="FontSize" Value="10"/>
+                                                        <Setter Property="FontWeight" Value="Bold"/>
+                                                        <Setter Property="Padding" Value="4,0"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    </Style>
+                                                    <Style Selector="Button.add-exit-btn">
+                                                        <Setter Property="Background" Value="#252535"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+                                                        <Setter Property="CornerRadius" Value="16"/>
+                                                        <Setter Property="Padding" Value="10,6"/>
+                                                        <Setter Property="BorderBrush" Value="rgba(255, 255, 255, 0.06)"/>
+                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                        <Setter Property="Width" Value="75"/>
+                                                        <Setter Property="Height" Value="32"/>
+                                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    </Style>
+                                                    <Style Selector="Button.add-exit-btn:hover">
+                                                        <Setter Property="Background" Value="#32324A"/>
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                        <Setter Property="BorderBrush" Value="#8E2DE2"/>
+                                                    </Style>
+                                                </Expander.Styles>
 
-                                                        <!-- South -->
-                                                        <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="South ←" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="South" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                <Grid ColumnDefinitions="*, Auto" Margin="4">
+                                                    <!-- Compass Rose Grid (North, South, East, West, NW, NE, SW, SE) -->
+                                                    <Grid Grid.Column="0" RowDefinitions="*,*,*" ColumnDefinitions="*,*,*" Width="500" Height="320" HorizontalAlignment="Center" Margin="0,0,16,0">
+                                                        <!-- Grid Background Lines / aesthetics -->
+                                                        <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="3" BorderBrush="rgba(255,255,255,0.03)" BorderThickness="1" Background="rgba(0,0,0,0.05)" CornerRadius="12"/>
 
-                                                        <!-- East -->
-                                                        <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="East →" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="EastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="East" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="EastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="EastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <!-- North-West Cell (0,0) -->
+                                                        <Panel Grid.Row="0" Grid.Column="0">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthWestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="Northwest ↖" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="NorthWest" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="NorthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #NorthWestRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="NorthWestRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="NorthWestOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="NorthWestLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="NorthWest" Classes="add-exit-btn" IsVisible="{Binding #NorthWestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="↖" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="NW" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
 
-                                                        <!-- West -->
-                                                        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="West ←" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="WestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="West" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="WestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="WestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <!-- North Cell (0,1) -->
+                                                        <Panel Grid.Row="0" Grid.Column="1">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="North ↑" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="North" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="NorthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #NorthRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="NorthRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="NorthOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="NorthLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="North" Classes="add-exit-btn" IsVisible="{Binding #NorthPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="↑" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="N" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
 
-                                                        <!-- Northwest -->
-                                                        <Grid Grid.Row="2" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Northwest ↖" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="NorthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthWestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <!-- North-East Cell (0,2) -->
+                                                        <Panel Grid.Row="0" Grid.Column="2">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthEastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="Northeast ↗" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="NorthEast" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="NorthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #NorthEastRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="NorthEastRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="NorthEastOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="NorthEastLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="NorthEast" Classes="add-exit-btn" IsVisible="{Binding #NorthEastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="↗" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="NE" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
 
-                                                        <!-- Northeast -->
-                                                        <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Northeast ↗" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="NorthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="NorthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="NorthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="NorthEastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <!-- West Cell (1,0) -->
+                                                        <Panel Grid.Row="1" Grid.Column="0">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #WestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="West ←" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="West" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="WestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #WestRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="WestRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="WestOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="WestLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="West" Classes="add-exit-btn" IsVisible="{Binding #WestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="←" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="W" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
 
-                                                        <!-- Southwest -->
-                                                        <Grid Grid.Row="3" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Southwest ↙" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="SouthWest" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthWestOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthWestLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <!-- Center Cell (Current Room Label) (1,1) -->
+                                                        <Border Grid.Row="1" Grid.Column="1" Width="100" Height="100" CornerRadius="50" Background="#1E1E2F" BorderBrush="#8E2DE2" BorderThickness="3" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 4 16 0 rgba(0,0,0,0.4)">
+                                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="2" Margin="4">
+                                                                <TextBlock Text="Current Room" FontSize="8" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center"/>
+                                                                <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                            </StackPanel>
+                                                        </Border>
 
-                                                        <!-- Southeast -->
-                                                        <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Southeast ↘" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="SouthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="SouthEast" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="SouthEastOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="SouthEastLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <!-- East Cell (1,2) -->
+                                                        <Panel Grid.Row="1" Grid.Column="2">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #EastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="East →" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="East" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="EastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #EastRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="EastRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="EastOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="EastLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="East" Classes="add-exit-btn" IsVisible="{Binding #EastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="→" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="E" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
+
+                                                        <!-- South-West Cell (2,0) -->
+                                                        <Panel Grid.Row="2" Grid.Column="0">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthWestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="Southwest ↙" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="SouthWest" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="SouthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #SouthWestRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="SouthWestRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="SouthWestOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="SouthWestLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="SouthWest" Classes="add-exit-btn" IsVisible="{Binding #SouthWestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="↙" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="SW" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
+
+                                                        <!-- South Cell (2,1) -->
+                                                        <Panel Grid.Row="2" Grid.Column="1">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="South ↓" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="South" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="SouthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #SouthRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="SouthRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="SouthOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="SouthLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="South" Classes="add-exit-btn" IsVisible="{Binding #SouthPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="↓" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="S" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
+
+                                                        <!-- South-East Cell (2,2) -->
+                                                        <Panel Grid.Row="2" Grid.Column="2">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthEastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="Southeast ↘" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="SouthEast" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="SouthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #SouthEastRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="SouthEastRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="SouthEastOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="SouthEastLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="SouthEast" Classes="add-exit-btn" IsVisible="{Binding #SouthEastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="↘" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="SE" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
+                                                    </Grid>
+
+                                                    <!-- Vertical Exits (Up, Down, In, Out) Side Column -->
+                                                    <StackPanel Grid.Column="1" Spacing="10" Width="170" VerticalAlignment="Center">
+                                                        <TextBlock Text="Vertical Exits:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="4,0,0,4"/>
 
                                                         <!-- Up -->
-                                                        <Grid Grid.Row="4" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Up ▲" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Up" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="UpOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="UpLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <Panel>
+                                                            <Border Classes="exit-card" IsVisible="{Binding #UpPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="160" Height="90" Margin="0">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="Up ▲" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Up" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #UpRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="UpRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="UpOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="UpLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="160" Height="32" IsVisible="{Binding #UpPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="▲" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="Up" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
 
                                                         <!-- Down -->
-                                                        <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Down ▼" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Down" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="DownOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="DownLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <Panel>
+                                                            <Border Classes="exit-card" IsVisible="{Binding #DownPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="160" Height="90" Margin="0">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="Down ▼" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Down" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #DownRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="DownRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="DownOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="DownLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="160" Height="32" IsVisible="{Binding #DownPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="▼" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="Down" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
 
                                                         <!-- In -->
-                                                        <Grid Grid.Row="5" Grid.Column="0" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="In ↵" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="In" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="InOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="InLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
+                                                        <Panel>
+                                                            <Border Classes="exit-card" IsVisible="{Binding #InPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="160" Height="90" Margin="0">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="In ↵" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="In" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #InRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="InRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="InOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="InLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="160" Height="32" IsVisible="{Binding #InPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="↵" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="In" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
 
                                                         <!-- Out -->
-                                                        <Grid Grid.Row="5" Grid.Column="1" ColumnDefinitions="*, Auto, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Out ↳" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                                            <ComboBox Grid.Row="1" Grid.Column="0" x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="32">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="models:Room">
-                                                                        <TextBlock Text="{Binding Name}"/>
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                                <ToolTip.Tip>
-                                                                    <Binding Path="SelectedItem.Name" RelativeSource="{RelativeSource Self}" x:CompileBindings="False"/>
-                                                                </ToolTip.Tip>
-                                                            </ComboBox>
-                                                            <Button Grid.Row="1" Grid.Column="1" Content="×" Click="OnClearExitClick" Tag="Out" Margin="4,0,0,0" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource ToolbarBtnBg}" Foreground="Red" FontWeight="Bold" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" FontSize="14" Width="28" HorizontalContentAlignment="Center"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="OutOneWay" Content="One Way" Margin="8,0,0,0" FontSize="11"/>
-                                                            <CheckBox Grid.Row="1" Grid.Column="3" x:Name="OutLocked" Content="Locked" Margin="8,0,0,0" FontSize="11"/>
-                                                        </Grid>
-                                                    </Grid>
-                                                </StackPanel>
+                                                        <Panel>
+                                                            <Border Classes="exit-card" IsVisible="{Binding #OutPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="160" Height="90" Margin="0">
+                                                                <StackPanel Spacing="4">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0" Text="Out ↳" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                                                        <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Out" Classes="delete-exit-btn"/>
+                                                                    </Grid>
+                                                                    <ComboBox x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #OutRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
+                                                                    <ComboBox x:Name="OutRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                        <ComboBox.ItemTemplate>
+                                                                            <DataTemplate x:DataType="models:Room">
+                                                                                <TextBlock Text="{Binding Name}"/>
+                                                                            </DataTemplate>
+                                                                        </ComboBox.ItemTemplate>
+                                                                    </ComboBox>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="OutOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="OutLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Button Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="160" Height="32" IsVisible="{Binding #OutPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <TextBlock Text="↳" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="Out" FontSize="9" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Panel>
+                                                    </StackPanel>
+                                                </Grid>
                                             </Expander>
 
                                             <!-- VFX & Ambient Effects -->
@@ -837,13 +1036,37 @@
                                             </Expander>
 
                                             <!-- Collapsible Room Objects -->
-                                            <Expander Header="Room Objects" Background="{DynamicResource InputBg}">
-                                                <StackPanel Spacing="10" Margin="10">
-                                                    <TextBlock Text="Select Objects starting in this Room:" FontSize="11" Foreground="{DynamicResource TextMuted}" FontWeight="Bold"/>
-                                                    <ListBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Objects.Objects}" Height="150" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                            <Expander Header="Room Objects" Background="{DynamicResource InputBg}" IsExpanded="True">
+                                                <StackPanel Spacing="12" Margin="10">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="Objects starting in this Room" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextNormal}"/>
+                                                            <TextBlock Text="Items that are physically placed in this room at startup" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1" Content="➕ Add Item" 
+                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerAddInventoryCommand}" 
+                                                                CommandParameter="{Binding}" 
+                                                                Background="#8E2DE2" Foreground="White" CornerRadius="4" Padding="10,6" FontSize="12"/>
+                                                    </Grid>
+                                                    <ListBox ItemsSource="{Binding ObjectIds}" Height="120" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
                                                         <ListBox.ItemTemplate>
-                                                            <DataTemplate x:DataType="models:GameObject">
-                                                                <CheckBox Content="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontSize="12" IsCheckedChanged="OnRoomObjectCheckedChanged" Loaded="OnRoomObjectCheckBoxLoaded" Unloaded="OnRoomObjectCheckBoxUnloaded"/>
+                                                            <DataTemplate x:DataType="x:Guid">
+                                                                <Grid DataContext="{Binding Converter={x:Static views:GuidToGameObjectConverter.Instance}}" x:DataType="models:GameObject" ColumnDefinitions="*,Auto" Height="36">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                                        <TextBlock Text="📦" FontSize="14" VerticalAlignment="Center"/>
+                                                                        <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                    </StackPanel>
+                                                                    <Button Grid.Column="1" Content="🗑️ Remove" 
+                                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveInventoryItemCommand}"
+                                                                            Background="Transparent" Foreground="#E74C3C" FontSize="11">
+                                                                        <Button.CommandParameter>
+                                                                            <MultiBinding Converter="{x:Static vm:MainWindowViewModel.MakeTupleConverter}">
+                                                                                <Binding Path="$parent[Expander].DataContext"/>
+                                                                                <Binding Path="."/>
+                                                                            </MultiBinding>
+                                                                        </Button.CommandParameter>
+                                                                    </Button>
+                                                                </Grid>
                                                             </DataTemplate>
                                                         </ListBox.ItemTemplate>
                                                     </ListBox>
@@ -964,7 +1187,6 @@
                                                             <ComboBox.Items>
                                                                 <sys:String>Invisible</sys:String>
                                                                 <sys:String>TextButton</sys:String>
-                                                                <sys:String>IconButton</sys:String>
                                                                 <sys:String>ImageButton</sys:String>
                                                                 <sys:String>CustomBorder</sys:String>
                                                             </ComboBox.Items>
@@ -1010,7 +1232,7 @@
                                                     <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                                         <Canvas Width="100" Height="56.25" Background="#14141F">
                                                             <!-- Backdrop Image in Preview -->
-                                                            <Image Source="{Binding InteractiveScreenSettings.BackdropAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Width="100" Height="56.25" Stretch="UniformToFill"/>
+                                                            <Image Source="{Binding InteractiveScreenSettings.BackdropAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Width="100" Height="56.25" Stretch="Uniform"/>
                                                             <TextBlock Text="Interactive Screen Canvas Preview (16:9)" FontSize="4" Foreground="Gray" Canvas.Left="4" Canvas.Top="4" IsVisible="False"/>
                                                             
                                                              <ItemsControl ItemsSource="{Binding InteractiveScreenSettings.Hotspots}">
@@ -1027,11 +1249,11 @@
                                                                  </ItemsControl.Styles>
                                                                  <ItemsControl.ItemTemplate>
                                                                      <DataTemplate x:DataType="models:ScreenHotspot">
-                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
+                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding, Converter={x:Static views:HotspotOuterBackgroundConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
                                                                              <Grid>
                                                                                  <!-- Button background icon/image -->
-                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="UniformToFill"/>
-                                                                                 <TextBlock Text="{Binding DisplayName}" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="Uniform"/>
+                                                                                 <Border Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Padding="1,0.5" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding DisplayName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"><TextBlock Text="{Binding DisplayName}" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border>
                                                                              </Grid>
                                                                          </Border>
                                                                      </DataTemplate>
@@ -1459,18 +1681,48 @@
                                                 <StackPanel Spacing="12" Margin="10">
                                                     <CheckBox IsChecked="{Binding IsContainer, Mode=TwoWay}" Content="Is Container" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
                                                     
+                                                    <!-- Initially Open — visible only when IsContainer is true -->
+                                                    <CheckBox IsChecked="{Binding ContainerOpen, Mode=TwoWay}" Content="Initially Open (Container starts open when game begins)"
+                                                              Foreground="{DynamicResource TextNormal}" FontSize="12"
+                                                              IsVisible="{Binding IsContainer}" Margin="0,2,0,0"/>
+
                                                     <!-- Contained items sub-grid visible only if IsContainer is true -->
                                                     <StackPanel Spacing="8" IsVisible="{Binding IsContainer}" Margin="0,8,0,0">
-                                                        <TextBlock Text="Contained Objects:" FontSize="11" Foreground="{DynamicResource TextMuted}" FontWeight="Bold"/>
-                                                        <ListBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Objects.Objects}" Height="120" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                                        <Grid ColumnDefinitions="*,Auto">
+                                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                                <TextBlock Text="Contained Objects:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextNormal}"/>
+                                                                <TextBlock Text="Objects placed inside this container" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                                            </StackPanel>
+                                                            <Button Grid.Column="1" Content="➕ Add Item" 
+                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerAddInventoryCommand}" 
+                                                                    CommandParameter="{Binding}" 
+                                                                    Background="#8E2DE2" Foreground="White" CornerRadius="4" Padding="10,6" FontSize="12"/>
+                                                        </Grid>
+                                                        <ListBox ItemsSource="{Binding ContainedObjectIds}" Height="120" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
                                                             <ListBox.ItemTemplate>
-                                                                <DataTemplate x:DataType="models:GameObject">
-                                                                    <CheckBox Content="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontSize="12" IsCheckedChanged="OnContainedObjectCheckedChanged" Loaded="OnContainedObjectCheckBoxLoaded"/>
+                                                                <DataTemplate x:DataType="x:Guid">
+                                                                    <Grid DataContext="{Binding Converter={x:Static views:GuidToGameObjectConverter.Instance}}" x:DataType="models:GameObject" ColumnDefinitions="*,Auto" Height="36">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                                            <TextBlock Text="📦" FontSize="14" VerticalAlignment="Center"/>
+                                                                            <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                        </StackPanel>
+                                                                        <Button Grid.Column="1" Content="🗑️ Remove" 
+                                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveInventoryItemCommand}"
+                                                                                Background="Transparent" Foreground="#E74C3C" FontSize="11">
+                                                                            <Button.CommandParameter>
+                                                                                <MultiBinding Converter="{x:Static vm:MainWindowViewModel.MakeTupleConverter}">
+                                                                                    <Binding Path="$parent[Expander].DataContext"/>
+                                                                                    <Binding Path="."/>
+                                                                                </MultiBinding>
+                                                                            </Button.CommandParameter>
+                                                                        </Button>
+                                                                    </Grid>
                                                                 </DataTemplate>
                                                             </ListBox.ItemTemplate>
                                                         </ListBox>
                                                     </StackPanel>
                                                 </StackPanel>
+
                                             </Expander>
 
                                             <!-- Actions & Events -->
@@ -1587,7 +1839,6 @@
                                                             <ComboBox.Items>
                                                                 <sys:String>Invisible</sys:String>
                                                                 <sys:String>TextButton</sys:String>
-                                                                <sys:String>IconButton</sys:String>
                                                                 <sys:String>ImageButton</sys:String>
                                                                 <sys:String>CustomBorder</sys:String>
                                                             </ComboBox.Items>
@@ -1598,10 +1849,16 @@
                                                             <TextBox Text="{Binding LabelText, Mode=TwoWay}" Watermark="Label (supports {var.name})" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                             
                                                             <TextBlock Text="Background Color (HTML Hex):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                            <TextBox Text="{Binding BackgroundColor, Mode=TwoWay}" Watermark="#1A1A1A or {var.color}" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBox Text="{Binding BackgroundColor, Mode=TwoWay}" Watermark="#1A1A1A or {var.color}" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                                <ColorPicker Grid.Column="1" Color="{Binding BackgroundColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0"/>
+                                                            </Grid>
 
                                                             <TextBlock Text="Font Color (HTML Hex):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                            <TextBox Text="{Binding FontColor, Mode=TwoWay}" Watermark="#FFFFFF or {var.color}" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBox Text="{Binding FontColor, Mode=TwoWay}" Watermark="#FFFFFF or {var.color}" FontSize="11" Background="{DynamicResource CardBg}"/>
+                                                                <ColorPicker Grid.Column="1" Color="{Binding FontColor, Mode=TwoWay, Converter={x:Static views:HexToColorConverter.Instance}}" Margin="8,0,0,0"/>
+                                                            </Grid>
 
                                                              <TextBlock Text="Font Size:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                              <TextBox Text="{Binding FontSize, Mode=TwoWay}" FontSize="11" Background="{DynamicResource CardBg}"/>
@@ -1627,7 +1884,7 @@
                                                     <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                                         <Canvas Width="100" Height="56.25" Background="#14141F">
                                                             <!-- Backdrop Image in Preview -->
-                                                            <Image Source="{Binding InteractiveScreenSettings.BackdropAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Width="100" Height="56.25" Stretch="UniformToFill"/>
+                                                            <Image Source="{Binding InteractiveScreenSettings.BackdropAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Width="100" Height="56.25" Stretch="Uniform"/>
                                                             <TextBlock Text="Interactive Screen Canvas Preview (16:9)" FontSize="4" Foreground="Gray" Canvas.Left="4" Canvas.Top="4" IsVisible="False"/>
                                                             
                                                              <ItemsControl ItemsSource="{Binding InteractiveScreenSettings.Hotspots}">
@@ -1644,11 +1901,11 @@
                                                                  </ItemsControl.Styles>
                                                                  <ItemsControl.ItemTemplate>
                                                                      <DataTemplate x:DataType="models:ScreenHotspot">
-                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
+                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding, Converter={x:Static views:HotspotOuterBackgroundConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
                                                                              <Grid>
                                                                                  <!-- Button background icon/image -->
-                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="UniformToFill"/>
-                                                                                 <TextBlock Text="{Binding DisplayName}" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="Uniform"/>
+                                                                                 <Border Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Padding="1,0.5" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding DisplayName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"><TextBlock Text="{Binding DisplayName}" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border>
                                                                              </Grid>
                                                                          </Border>
                                                                      </DataTemplate>
@@ -1677,13 +1934,19 @@
                             <ListBox Grid.Row="1" ItemsSource="{Binding Variables.Variables}" Background="Transparent" x:Name="VarsList">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:GameVariable">
-                                        <TextBlock Text="{Binding Name}"/>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="🔒" FontSize="10" Margin="4,0,0,0"
+                                                       VerticalAlignment="Center" ToolTip.Tip="System-reserved variable — cannot be deleted"
+                                                       IsVisible="{Binding IsSystemVariable}"/>
+                                        </Grid>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
                             <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
                                 <Button Grid.Column="0" Content="+ Define Variable" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.AddVariableCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteVariableCommand}" CommandParameter="{Binding #VarsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                                <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteVariableCommand}" CommandParameter="{Binding #VarsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"
+                                        ToolTip.Tip="System-reserved variables cannot be deleted"/>
                             </Grid>
                         </Grid>
                     </Border>
@@ -1692,9 +1955,19 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Spacing="16" DataContext="{Binding #VarsList.SelectedItem}" x:DataType="models:GameVariable" Margin="0,0,12,0">
                                 <TextBlock Text="Edit Variable" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
-                                
+
+                                <!-- System Variable Notice -->
+                                <Border Background="#1A2244" BorderBrush="#AAAAFF" BorderThickness="1" CornerRadius="4" Padding="10"
+                                        IsVisible="{Binding IsSystemVariable}">
+                                    <StackPanel Spacing="4" Orientation="Horizontal">
+                                        <TextBlock Text="🔒" VerticalAlignment="Center"/>
+                                        <TextBlock Text="System-reserved variable. Name and type cannot be changed. You may update its value." FontSize="11" Foreground="#AAAAFF" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
                                 <TextBlock Text="Name:" Foreground="{DynamicResource TextMuted}"/>
-                                <TextBox Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                                <TextBox Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"
+                                         IsReadOnly="{Binding IsSystemVariable}"/>
                                 
                                 <TextBlock Text="Type Hint:" Foreground="{DynamicResource TextMuted}"/>
                                 <ComboBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.VariableTypes}"
@@ -2989,8 +3262,8 @@
                         <Border Background="{DynamicResource InputBg}" BorderBrush="#232333" BorderThickness="1" CornerRadius="8" Padding="20">
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Build Output Logs" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
-                                <ScrollViewer Height="200" Background="#0C0C12" Padding="12" CornerRadius="4">
-                                    <TextBlock Text="{Binding PublishLogs}" FontFamily="Consolas, Monospace" FontSize="11" Foreground="#00FF00" TextWrapping="Wrap"/>
+                                <ScrollViewer Height="200" Background="#0C0C12" CornerRadius="4">
+                                    <TextBlock Text="{Binding PublishLogs}" Margin="12,12,12,24" FontFamily="Consolas, Monospace" FontSize="11" Foreground="#00FF00" TextWrapping="Wrap"/>
                                 </ScrollViewer>
                             </StackPanel>
                         </Border>
@@ -3761,3 +4034,4 @@
         </Style>
     </Window.Styles>
 </Window>
+

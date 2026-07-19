@@ -208,7 +208,6 @@ namespace RagNextPlayer.Runtime.Models
     // ── Concrete Conditions ───────────────────────────────────────────────────
     public class VariableEqualsConditionData              : ConditionData { public string Name { get; set; } = string.Empty; public string? Value { get; set; } public bool CaseInsensitive { get; set; } }
     public class VariableComparisonConditionData          : ConditionData { public string Name { get; set; } = string.Empty; public string Comparison { get; set; } = "="; public string? Value { get; set; } }
-    public class VariableComparisonToVariableConditionData: ConditionData { public string NameA { get; set; } = string.Empty; public string Comparison { get; set; } = "="; public string NameB { get; set; } = string.Empty; }
     public class PlayerInRoomConditionData                : ConditionData { public string RoomId { get; set; } = string.Empty; }
     public class RoomHasObjectConditionData               : ConditionData { public string RoomId { get; set; } = string.Empty; public string ObjectId { get; set; } = string.Empty; }
     public class ItemInRoomConditionData                  : ConditionData { public string ItemId { get; set; } = string.Empty; public string RoomId { get; set; } = string.Empty; }
@@ -267,10 +266,11 @@ namespace RagNextPlayer.Runtime.Models
     public class PlaySoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; public double StartTime { get; set; } = 0.0; public double EndTime { get; set; } = 0.0; }
     public class PlayVideoCommandData                : CommandData { public string VideoId { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = false; public double StartTime { get; set; } = 0.0; public double EndTime { get; set; } = 0.0; }
     public class StopSoundEffectCommandData          : CommandData { public string SoundId { get; set; } = string.Empty; public bool StopAllLooping { get; set; } = false; }
-    public class SetBackgroundMusicCommandData       : CommandData { public string MusicFile { get; set; } = string.Empty; }
+    public class SetBackgroundMusicCommandData       : CommandData { public string MusicFile { get; set; } = string.Empty; public double Volume { get; set; } = 100.0; public bool Loop { get; set; } = true; public double StartTime { get; set; } = 0.0; public double EndTime { get; set; } = 0.0; }
     public class StopBackgroundMusicCommandData      : CommandData { }
     public class DisplayMultimediaCommandData        : CommandData { public string MediaId { get; set; } = string.Empty; }
     public class EndGameCommandData                  : CommandData { public string FinalMessage { get; set; } = string.Empty; }
+    public class WaitForContinueCommandData          : CommandData { public string ButtonText { get; set; } = "Continue"; }
     public class PromptPlayerInputCommandData        : CommandData { public string PromptName { get; set; } = string.Empty; public string PromptText { get; set; } = string.Empty; public string InputType { get; set; } = "Text"; public string CustomOptions { get; set; } = string.Empty; public string StoreVariableName { get; set; } = string.Empty; }
     public class OpenContainerCommandData            : CommandData { public string ObjectId { get; set; } = string.Empty; }
     public class WearItemCommandData                 : CommandData { public string ItemId { get; set; } = string.Empty; }
@@ -282,7 +282,6 @@ namespace RagNextPlayer.Runtime.Models
     public class DamageCharacterCommandData         : CommandData { public string CharacterId { get; set; } = string.Empty; public int Amount { get; set; } }
     public class SetCharacterStateCommandData        : CommandData { public string CharacterId { get; set; } = string.Empty; public string State { get; set; } = "Alive"; }
     public class TriggerTurnTickCommandData         : CommandData { }
-    public class DebugTextCommandData               : CommandData { public string Message { get; set; } = string.Empty; }
     public class CharacterSetActionActiveCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
     // Bug #5: Scoped entity variants for set-action-active commands.
     public class ItemSetActionActiveCommandData     : CommandData { public string ItemId      { get; set; } = string.Empty; public string ActionName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
@@ -301,14 +300,12 @@ namespace RagNextPlayer.Runtime.Models
     {
         public string PromptName { get; set; } = string.Empty;
         public string ChoiceText { get; set; } = string.Empty;
-        public string VariableName { get; set; } = string.Empty;
     }
 
     public class AddCustomChoiceCommandData : CommandData
     {
         public string PromptName { get; set; } = string.Empty;
         public string ChoiceText { get; set; } = string.Empty;
-        public string VariableName { get; set; } = string.Empty;
     }
 
     public class ClearCustomChoiceCommandData : CommandData
@@ -340,7 +337,6 @@ namespace RagNextPlayer.Runtime.Models
     public class CharacterMoveToObjectCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string ObjectId { get; set; } = string.Empty; }
     public class CharacterSetDescriptionCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string Description { get; set; } = string.Empty; }
     public class CharacterSetDisplayNameCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string Name { get; set; } = string.Empty; }
-    public class RoomDisplayPictureCommandData : CommandData { public string RoomId { get; set; } = string.Empty; }
     public class RoomSetDescriptionCommandData : CommandData { public string RoomId { get; set; } = string.Empty; public string Description { get; set; } = string.Empty; }
     public class RoomSetPictureCommandData : CommandData { public string RoomId { get; set; } = string.Empty; public string Picture { get; set; } = string.Empty; }
     public class SetStatusBarVisibleCommandData : CommandData { public bool Visible { get; set; } }

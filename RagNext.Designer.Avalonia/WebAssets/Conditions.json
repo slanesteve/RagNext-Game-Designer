@@ -301,27 +301,6 @@
       ]
     },
     {
-      "name": "Variable: Comparison To Variable",
-      "category": "Variable",
-      "inputs": [
-        {
-          "label": "Variable A",
-          "controlType": "ComboBox",
-          "dataType": "Variable"
-        },
-        {
-          "label": "Comparison",
-          "controlType": "ComboBox",
-          "dataType": "Operator"
-        },
-        {
-          "label": "Variable B",
-          "controlType": "ComboBox",
-          "dataType": "Variable"
-        }
-      ]
-    },
-    {
       "name": "Variable: DateTime Part Comparison",
       "category": "Variable",
       "inputs": [

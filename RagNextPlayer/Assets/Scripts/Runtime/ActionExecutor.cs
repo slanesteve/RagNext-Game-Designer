@@ -334,10 +334,64 @@ namespace RagNextPlayer.Runtime
                                 _sink?.OnCommandExecuted(cmd, _ctx);
                             }
 
-                            if (cmd is PromptPlayerInputCommandData)
+                            if (cmd is PromptPlayerInputCommandData || cmd is WaitForContinueCommandData)
                             {
                                 IsSuspended = true;
                                 break;
+                            }
+                            else if (cmd is ScreenShakeCommandData)
+                            {
+                                if (TransitionVFXManager.Instance != null)
+                                {
+                                    IsSuspended = true;
+                                    System.Action? onShakeComplete = null;
+                                    onShakeComplete = () => {
+                                        TransitionVFXManager.Instance.OnScreenShakeCompleted -= onShakeComplete;
+                                        Resume();
+                                    };
+                                    TransitionVFXManager.Instance.OnScreenShakeCompleted += onShakeComplete;
+                                    break;
+                                }
+                            }
+                            else if (cmd is PlayVideoCommandData videoCmd && !videoCmd.Loop)
+                            {
+                                if (UIManager.Instance != null)
+                                {
+                                    IsSuspended = true;
+                                    System.Action? onVideoComplete = null;
+                                    onVideoComplete = () => {
+                                        UIManager.Instance.OnVideoPlaybackCompleted -= onVideoComplete;
+                                        Resume();
+                                    };
+                                    UIManager.Instance.OnVideoPlaybackCompleted += onVideoComplete;
+                                    break;
+                                }
+                            }
+                            else if (cmd is DisplayTextCommandData)
+                            {
+                                if (UIManager.Instance != null && UIManager.Instance.IsTypewriterRunning)
+                                {
+                                    IsSuspended = true;
+                                    System.Action? onTextComplete = null;
+                                    onTextComplete = () => {
+                                        UIManager.Instance.OnTypewriterCompleted -= onTextComplete;
+                                        Resume();
+                                    };
+                                    UIManager.Instance.OnTypewriterCompleted += onTextComplete;
+                                    break;
+                                }
+                            }
+                            else if (cmd is ShowSplashScreenCommandData)
+                            {
+                                if (UIManager.Instance != null)
+                                {
+                                    IsSuspended = true;
+                                    UIManager.Instance.PlayCustomSplashScreen(
+                                        new SplashScreenSettingsData { Name = ((ShowSplashScreenCommandData)cmd).SplashScreenName }, // fallback stub will fetch correct data
+                                        () => Resume()
+                                    );
+                                    break;
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -827,7 +881,8 @@ namespace RagNextPlayer.Runtime
                 case MovePlayerToRoomCommandData c:
                     {
                         var resolved = ctx.Resolve(c.RoomId);
-                        ctx.SetVariable("player.currentRoomId", resolved);
+                        var targetRoomId = FindContainingRoomId(resolved, ctx);
+                        ctx.SetVariable("player.currentRoomId", targetRoomId);
                     }
                     break;
 
@@ -1153,8 +1208,7 @@ namespace RagNextPlayer.Runtime
                     {
                         var promptName = ctx.Resolve(c.PromptName);
                         var choiceText = ctx.Resolve(c.ChoiceText);
-                        var varName = ctx.Resolve(c.VariableName);
-                        ctx.Game.CustomChoices.Add(new RuntimeCustomChoice { PromptName = promptName, ChoiceText = choiceText, VariableName = varName });
+                        ctx.Game.CustomChoices.Add(new RuntimeCustomChoice { PromptName = promptName, ChoiceText = choiceText });
                     }
                     break;
 
@@ -1297,9 +1351,6 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
-                case DebugTextCommandData:
-                    // Comment/log node, no execution needed.
-                    break;
 
                 case ItemSetActionActiveCommandData c:
                     {
@@ -1858,9 +1909,6 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
-                case RoomDisplayPictureCommandData c:
-                    break;
-
                 case RoomSetDescriptionCommandData c:
                     {
                         var roomId = ResolveRoomId(c.RoomId, ctx);
@@ -2023,15 +2071,9 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
-                case ShowSplashScreenCommandData c:
-                    {
-                        var resolvedName = ctx.Resolve(c.SplashScreenName);
-                        var splash = ctx.Game.SplashScreens?.Find(s => string.Equals(s.Name, resolvedName, StringComparison.OrdinalIgnoreCase));
-                        if (splash != null && UIManager.Instance != null)
-                        {
-                            UIManager.Instance.PlayCustomSplashScreen(splash);
-                        }
-                    }
+                // Routed directly via sink during ExecuteNext
+                case ShowSplashScreenCommandData:
+                case WaitForContinueCommandData:
                     break;
 
                 case SwapPlayerCharacterCommandData c:
@@ -2175,9 +2217,6 @@ namespace RagNextPlayer.Runtime
                         ctx.Resolve(c.Value) ?? "",
                         c.Comparison),
 
-                VariableComparisonToVariableConditionData c =>
-                    CompareValues(ctx.GetVariable(c.NameA)?.Value ?? "", ctx.GetVariable(c.NameB)?.Value ?? "", c.Comparison),
-
                 PlayerInRoomConditionData c =>
                     string.Equals(ctx.CurrentRoom?.Id, ctx.Resolve(c.RoomId), StringComparison.OrdinalIgnoreCase),
 
@@ -2201,12 +2240,12 @@ namespace RagNextPlayer.Runtime
 
                 PlayerInSameRoomAsConditionData c =>
                     string.Equals(
-                        ctx.GetVariable($"char.{ResolveCharacterId(c.CharacterId, ctx)}.currentRoomId")?.Value,
+                        GetCharacterCurrentRoomId(ResolveCharacterId(c.CharacterId, ctx), ctx),
                         ctx.CurrentRoom?.Id, StringComparison.OrdinalIgnoreCase),
 
                 CharacterInRoomConditionData c =>
                     string.Equals(
-                        ctx.GetVariable($"char.{ResolveCharacterId(c.CharacterId, ctx)}.currentRoomId")?.Value,
+                        GetCharacterCurrentRoomId(ResolveCharacterId(c.CharacterId, ctx), ctx),
                         ResolveRoomId(c.RoomId, ctx), StringComparison.OrdinalIgnoreCase),
 
                 CharacterGenderConditionData c =>
@@ -2270,6 +2309,14 @@ namespace RagNextPlayer.Runtime
                 DateTimeCompareConstantConditionData or
                 DateTimeIsValidConditionData =>
                     EvaluateDateTimeCondition(cond, ctx),
+
+                ItemInObjectConditionData c =>
+                    ctx.Game.Objects.Find(o => string.Equals(o.Id, ctx.Resolve(c.ContainerObjectId), StringComparison.OrdinalIgnoreCase))
+                        ?.ContainedObjectIds.Contains(ctx.Resolve(c.ItemId)) ?? false,
+
+                ItemNotInObjectConditionData c =>
+                    !(ctx.Game.Objects.Find(o => string.Equals(o.Id, ctx.Resolve(c.ObjectId), StringComparison.OrdinalIgnoreCase))
+                        ?.ContainedObjectIds.Contains(ctx.Resolve(c.ItemId)) ?? false),
 
                 _ => false
             };
@@ -2547,6 +2594,74 @@ namespace RagNextPlayer.Runtime
                 string.Equals(r.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(r.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
             return match?.Id ?? resolved;
+        }
+
+        private static string GetCharacterCurrentRoomId(string charId, GameExecutionContext ctx)
+        {
+            var dynamicRoom = ctx.GetVariable($"char.{charId}.currentRoomId")?.Value;
+            if (!string.IsNullOrEmpty(dynamicRoom))
+            {
+                return dynamicRoom;
+            }
+            var ch = ctx.Game.Characters.Find(c => string.Equals(c.Id, charId, StringComparison.OrdinalIgnoreCase));
+            return ch?.StartingRoomId ?? string.Empty;
+        }
+
+        private static string FindContainingRoomId(string targetId, GameExecutionContext ctx)
+        {
+            if (ctx.Game.Rooms.Exists(r => r.Id == targetId))
+            {
+                return targetId;
+            }
+
+            var targetRoomId = targetId;
+            var roomFound = ctx.Game.Rooms.Exists(r => r.Id == targetRoomId);
+            var visited = new System.Collections.Generic.HashSet<string>();
+            while (!roomFound && !string.IsNullOrEmpty(targetRoomId) && visited.Add(targetRoomId))
+            {
+                var parentObj = ctx.Game.Objects.Find(o => o.Id == targetRoomId);
+                if (parentObj != null)
+                {
+                    parentObj.Properties.TryGetValue("ParentContainerId", out var parentId);
+                    if (!string.IsNullOrEmpty(parentId))
+                    {
+                        targetRoomId = parentId;
+                        roomFound = ctx.Game.Rooms.Exists(r => r.Id == targetRoomId);
+                        continue;
+                    }
+                }
+
+                var containingChar = ctx.Game.Characters.Find(ch => ch.Inventory.Exists(item => item.Id == targetRoomId));
+                if (containingChar != null)
+                {
+                    targetRoomId = GetCharacterCurrentRoomId(containingChar.Id, ctx);
+                    roomFound = ctx.Game.Rooms.Exists(r => r.Id == targetRoomId);
+                    continue;
+                }
+
+                if (ctx.Game.Player != null && ctx.Game.Player.Inventory.Exists(item => item.Id == targetRoomId))
+                {
+                    var playerRoomVar = ctx.GetVariable("player.currentRoomId")?.Value;
+                    if (!string.IsNullOrEmpty(playerRoomVar))
+                    {
+                        targetRoomId = playerRoomVar;
+                        roomFound = true;
+                    }
+                    break;
+                }
+
+                var containingRoom = ctx.Game.Rooms.Find(r => r.ObjectIds.Contains(targetRoomId));
+                if (containingRoom != null)
+                {
+                    targetRoomId = containingRoom.Id;
+                    roomFound = true;
+                    break;
+                }
+
+                break;
+            }
+
+            return roomFound ? targetRoomId : targetId;
         }
 
         private static void MoveCharacterToRoomHelper(string charId, string targetRoomId, GameExecutionContext ctx)

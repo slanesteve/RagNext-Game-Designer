@@ -13,11 +13,6 @@
           "label": "Choice Text",
           "controlType": "Text",
           "dataType": "String"
-        },
-        {
-          "label": "Target Variable",
-          "controlType": "ComboBox",
-          "dataType": "Variable"
         }
       ]
     },
@@ -252,23 +247,23 @@
       ]
     },
     {
-      "name": "Debug Text",
-      "category": "General",
-      "inputs": [
-        {
-          "label": "Message",
-          "controlType": "TextArea",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
       "name": "Display Text",
       "category": "General",
       "inputs": [
         {
           "label": "Text",
           "controlType": "TextArea",
+          "dataType": "String"
+        }
+      ]
+    },
+    {
+      "name": "Wait for Continue",
+      "category": "General",
+      "inputs": [
+        {
+          "label": "Button Text",
+          "controlType": "Text",
           "dataType": "String"
         }
       ]
@@ -292,6 +287,26 @@
           "label": "Music File",
           "controlType": "ComboBox",
           "dataType": "Media"
+        },
+        {
+          "label": "Volume",
+          "controlType": "Number",
+          "dataType": "Number"
+        },
+        {
+          "label": "Loop",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        },
+        {
+          "label": "Start Time",
+          "controlType": "Number",
+          "dataType": "Number"
+        },
+        {
+          "label": "End Time",
+          "controlType": "Number",
+          "dataType": "Number"
         }
       ]
     },
@@ -519,8 +534,8 @@
       ]
     },
     {
-      "name": "Player: Screen Shake",
-      "category": "Player",
+      "name": "General: Screen Shake",
+      "category": "General",
       "inputs": [
         {
           "label": "Transition Intensity",
@@ -618,17 +633,6 @@
     },
     {
       "name": "Room: Display Description",
-      "category": "Room",
-      "inputs": [
-        {
-          "label": "Room",
-          "controlType": "ComboBox",
-          "dataType": "Room"
-        }
-      ]
-    },
-    {
-      "name": "Room: Display Picture",
       "category": "Room",
       "inputs": [
         {

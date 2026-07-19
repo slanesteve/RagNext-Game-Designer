@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace RagsCore.Models
@@ -109,5 +110,33 @@ namespace RagsCore.Models
 
         public ObservableCollection<CustomAttribute> Attributes { get; set; } = new();
         internal ObservableCollection<Action> Actions { get; set; } = new();
+
+        /// <summary>
+        /// Names (case-insensitive) that are reserved for engine/theme use and must not be deleted.
+        /// </summary>
+        private static readonly HashSet<string> _reservedNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "theme.preset",
+            "theme.primarybgcolor",
+            "theme.textmaincolor",
+            "theme.borderaccentcolor",
+        };
+
+        /// <summary>
+        /// Returns true if the given variable name is a system-reserved name that should not be deleted.
+        /// </summary>
+        public static bool IsSystemReservedName(string? name)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            // Any variable starting with "theme." is treated as system-reserved.
+            if (name.StartsWith("theme.", StringComparison.OrdinalIgnoreCase)) return true;
+            return _reservedNames.Contains(name);
+        }
+
+        /// <summary>
+        /// Non-serialized flag. True when this variable is engine-reserved and should not be deleted.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public bool IsSystemVariable => IsSystemReservedName(Name);
     }
 }

@@ -42,6 +42,11 @@ namespace RagNextPlayer.Managers
         private readonly Dictionary<AudioSource, string> _sourceIds = new();
         private readonly Dictionary<AudioSource, bool> _sourceLooping = new();
         public string? CurrentMusicId { get; private set; }
+        private float _musicVolume = 1f;
+        private bool _musicLoop = true;
+        private float _musicStartTime = 0f;
+        private float _musicEndTime = 0f;
+        private Coroutine _musicEndCoroutine;
 
         public void PlaySound(string soundId, float volume = 1f, bool loop = false, float startTime = 0f, float endTime = 0f)
         {
@@ -174,11 +179,16 @@ namespace RagNextPlayer.Managers
             StopMusic();
         }
 
-        public void PlayMusic(string soundId)
+
+        public void PlayMusic(string soundId, float volume = 1f, bool loop = true, float startTime = 0f, float endTime = 0f)
         {
             if (string.IsNullOrWhiteSpace(soundId)) return;
             CurrentMusicId = soundId;
             string path = soundId;
+            _musicVolume = volume;
+            _musicLoop = loop;
+            _musicStartTime = startTime;
+            _musicEndTime = endTime;
             var game = GameManager.Instance?.ActiveGame;
             if (game != null)
             {
@@ -205,10 +215,35 @@ namespace RagNextPlayer.Managers
         {
             if (_musicSource == null) return;
             if (_musicSource.clip == clip && _musicSource.isPlaying) return;
+            if (_musicEndCoroutine != null) { StopCoroutine(_musicEndCoroutine); _musicEndCoroutine = null; }
             _musicSource.clip = clip;
-            _musicSource.volume = 0.5f;
-            _musicSource.loop = true;
+            _musicSource.volume = _musicVolume;
+            _musicSource.loop = _musicLoop;
+            _musicSource.time = Mathf.Clamp(_musicStartTime, 0f, clip.length - 0.1f);
             _musicSource.Play();
+            if (_musicEndTime > 0f && _musicEndTime > _musicStartTime)
+            {
+                _musicEndCoroutine = StartCoroutine(MusicEndRoutine(_musicStartTime, _musicEndTime));
+            }
+        }
+
+        private System.Collections.IEnumerator MusicEndRoutine(float startTime, float endTime)
+        {
+            float duration = endTime - startTime;
+            yield return new WaitForSeconds(duration);
+            if (_musicSource != null && _musicSource.isPlaying)
+            {
+                if (_musicLoop)
+                {
+                    // Loop back to start point
+                    _musicSource.time = Mathf.Clamp(startTime, 0f, _musicSource.clip.length - 0.1f);
+                    _musicEndCoroutine = StartCoroutine(MusicEndRoutine(startTime, endTime));
+                }
+                else
+                {
+                    _musicSource.Stop();
+                }
+            }
         }
 
         private System.Collections.IEnumerator LoadAndPlayMusicRoutine(string path)

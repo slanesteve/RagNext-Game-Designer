@@ -93,6 +93,12 @@ namespace RagNextPlayer.Managers
         private VisualElement  _splashScreen;
         public bool IsSplashFinished { get; private set; } = false;
         private bool _themePresetInitialized = false;
+        private Font _activeThemeFont;
+
+        public event Action? OnVideoPlaybackCompleted;
+        public event Action? OnTypewriterCompleted;
+        public bool IsTypewriterRunning => _typewriterQueueCoroutine != null || _revealCoroutine != null;
+        public bool IsVideoPlaying => _videoPlayer != null && _videoPlayer.isPlaying;
 
         // Game Over modal references
         private VisualElement  _gameOverMenu;
@@ -335,6 +341,12 @@ namespace RagNextPlayer.Managers
 
             _compassToggleBtn = _root.Q<Button>("compass-toggle-btn");
             _compassDialOverlay = _root.Q<VisualElement>("compass-dial-overlay");
+            if (_compassDialOverlay is not null)
+            {
+                _compassDialOverlay.style.display = DisplayStyle.Flex;
+                _compassDialOverlay.style.opacity = 1f;
+                _compassDialOverlay.transform.scale = UnityEngine.Vector3.one;
+            }
             if (_compassToggleBtn is not null)
             {
                 _compassToggleBtn.clicked += ToggleCompassDial;
@@ -443,20 +455,38 @@ namespace RagNextPlayer.Managers
                     }
                 });
 
+                _promptTextField.schedule.Execute(() => {
+                    var innerInput = _promptTextField.Q(className: "unity-text-field__input");
+                    if (innerInput != null)
+                    {
+                        innerInput.RegisterCallback<KeyDownEvent>(evt =>
+                        {
+                            if (evt.keyCode == UnityEngine.KeyCode.Return || evt.keyCode == UnityEngine.KeyCode.KeypadEnter)
+                            {
+                                SubmitPromptInput();
+                                evt.StopPropagation();
+                            }
+                        });
+                    }
+                });
+
                 // Apply active theme border color dynamically when focused
                 _promptTextField.RegisterCallback<FocusEvent>(evt =>
                 {
                     var innerInput = _promptTextField.Q(className: "unity-text-field__input");
-                    if (innerInput != null && TryParseHtmlColor(_activeBorderAccentColor, out var accentColor))
+                    if (innerInput != null)
                     {
-                        innerInput.style.borderLeftColor = accentColor;
-                        innerInput.style.borderRightColor = accentColor;
-                        innerInput.style.borderTopColor = accentColor;
-                        innerInput.style.borderBottomColor = accentColor;
-                        innerInput.style.borderLeftWidth = 1.5f;
-                        innerInput.style.borderRightWidth = 1.5f;
-                        innerInput.style.borderTopWidth = 1.5f;
-                        innerInput.style.borderBottomWidth = 1.5f;
+                        if (TryParseHtmlColor(_activeBorderAccentColor, out var accentColor))
+                        {
+                            innerInput.style.borderLeftColor = accentColor;
+                            innerInput.style.borderRightColor = accentColor;
+                            innerInput.style.borderTopColor = accentColor;
+                            innerInput.style.borderBottomColor = accentColor;
+                            innerInput.style.borderLeftWidth = 1.5f;
+                            innerInput.style.borderRightWidth = 1.5f;
+                            innerInput.style.borderTopWidth = 1.5f;
+                            innerInput.style.borderBottomWidth = 1.5f;
+                        }
                     }
                 });
 
@@ -585,6 +615,18 @@ namespace RagNextPlayer.Managers
                 onComplete?.Invoke();
                 return;
             }
+
+            // If a stub settings object was passed containing only the name (e.g. from ActionExecutor), resolve the full asset configuration
+            var game = GameManager.Instance?.ActiveGame;
+            if (game != null && game.SplashScreens != null && !string.IsNullOrEmpty(settings.Name))
+            {
+                var fullSettings = game.SplashScreens.Find(s => string.Equals(s.Name, settings.Name, StringComparison.OrdinalIgnoreCase));
+                if (fullSettings != null)
+                {
+                    settings = fullSettings;
+                }
+            }
+
             StartCoroutine(PlayCustomSplashScreenRoutine(settings, onComplete));
         }
 
@@ -1239,7 +1281,26 @@ namespace RagNextPlayer.Managers
                     InitTransitionEffects(settings, titleLabel, ref splitCyan, ref splitMagenta, ref crtScanlines, ref particleContainer, particles);
                     _splashScreen.style.opacity = 0f;
                     if (titleLabel != null) titleLabel.style.opacity = 0f;
-                    _videoPlayer.Play();
+                    
+                    // Yield-prepare the video before starting playback to prevent stutter
+                    bool videoPrepared = false;
+                    UnityEngine.Video.VideoPlayer.EventHandler? splashPrepareHandler = null;
+                    splashPrepareHandler = (vp) => {
+                        videoPrepared = true;
+                        _videoPlayer.prepareCompleted -= splashPrepareHandler;
+                    };
+                    _videoPlayer.prepareCompleted += splashPrepareHandler;
+                    _videoPlayer.Prepare();
+                    
+                    while (!videoPrepared && _videoPlayer != null)
+                    {
+                        yield return null;
+                    }
+                    
+                    if (_videoPlayer != null)
+                    {
+                        _videoPlayer.Play();
+                    }
 
                     // Smooth cinematic Fade In over FadeInDuration
                     float elapsedIn = 0f;
@@ -2047,6 +2108,10 @@ namespace RagNextPlayer.Managers
 
         public void OnGameLoaded(GameData game)
         {
+            // Reset the theme-initialized flag so every load (including restart and slot loads)
+            // always re-syncs the theme.preset variable from the active preset.
+            _themePresetInitialized = false;
+
             if (_gameInfoLabel is not null)
                 _gameInfoLabel.text = $"by {game.Author}  ·  v{game.Version}";
 
@@ -2090,9 +2155,20 @@ namespace RagNextPlayer.Managers
             // Apply custom theme settings from game configuration
             ApplyTheme(game);
 
-            // Clear narrative history on game load to restore pristine log state
-            _narrativeScroll?.Clear();
+            // If we are restarting or reloading an active session (i.e. GameManager had a CurrentRoom set prior to load), clear the old text.
+            if (GameManager.Instance != null && GameManager.Instance.CurrentRoom != null)
+            {
+                _narrativeScroll?.Clear();
+                _historyLog.Clear();
+            }
+
             _firstRoomRendered = false;
+
+            // Explicitly clear the inventory and entity list containers so stale items
+            // from a previous session are never visible before OnRoomEntered fires.
+            _inventoryListContainer?.Clear();
+            _objectsListContainer?.Clear();
+            _charactersListContainer?.Clear();
 
             RefreshPlayerPanel();
             RefreshPlayerPortrait();
@@ -2748,6 +2824,18 @@ namespace RagNextPlayer.Managers
                 }
             });
 
+            if (_promptTextField != null)
+            {
+                var innerInput = _promptTextField.Q(className: "unity-text-field__input");
+                if (innerInput != null)
+                {
+                    if (TryParseHtmlColor(textMainStr, out var caretClr))
+                    {
+                        innerInput.style.color = caretClr;
+                    }
+                }
+            }
+
             UpdateFontSizeUI();
         }
 
@@ -2762,6 +2850,7 @@ namespace RagNextPlayer.Managers
                 loadedFont = Font.CreateDynamicFontFromOSFont(path, 14);
             }
             
+            _activeThemeFont = loadedFont;
             if (loadedFont != null)
             {
                 _root.style.unityFont = loadedFont;
@@ -3315,6 +3404,18 @@ namespace RagNextPlayer.Managers
         {
             if (TransitionVFXManager.Instance == null) return;
 
+            // Block ambient VFX overlays while a full-screen scene video is actively playing
+            if (IsVideoPlaying)
+            {
+                Debug.Log("[UIManager] Suppressing room ambient effects during video playback.");
+                TransitionVFXManager.Instance.SetAmbientOverlay("Embers", false);
+                TransitionVFXManager.Instance.SetAmbientOverlay("Rain", false);
+                TransitionVFXManager.Instance.SetAmbientOverlay("Snow", false);
+                TransitionVFXManager.Instance.SetAmbientOverlay("Sand", false);
+                TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", false);
+                return;
+            }
+
             if (room.Attributes != null)
             {
                 if (room.Attributes.TryGetValue("Weather", out var weatherVal))
@@ -3719,7 +3820,7 @@ namespace RagNextPlayer.Managers
             sceneImage.style.height = Length.Percent(100);
             sceneImage.style.maxWidth = Length.Percent(100);
             sceneImage.style.maxHeight = Length.Percent(100);
-            sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+            sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
 
             // Optional custom backdrop
             if (!string.IsNullOrEmpty(settings.BackdropAssetId))
@@ -3770,22 +3871,50 @@ namespace RagNextPlayer.Managers
                     // Resolve variable templates for visuals
                     var game = GameManager.Instance?.ActiveGame;
                     string resolvedLabel = game != null ? TemplateResolver.Resolve(hotspot.LabelText, game, room, null) : hotspot.LabelText;
-                    btn.text = resolvedLabel;
+
+                    var labelTextElement = new Label(resolvedLabel);
+                    labelTextElement.name = "hotspot-label";
+                    labelTextElement.style.unityTextAlign = TextAnchor.MiddleCenter;
+                    labelTextElement.style.whiteSpace = WhiteSpace.Normal;
+                    labelTextElement.pickingMode = PickingMode.Ignore;
+
+                    // Add padding and rounded corners to the text badge
+                    labelTextElement.style.paddingLeft = 8;
+                    labelTextElement.style.paddingRight = 8;
+                    labelTextElement.style.paddingTop = 4;
+                    labelTextElement.style.paddingBottom = 4;
+                    labelTextElement.style.borderTopLeftRadius = 4;
+                    labelTextElement.style.borderTopRightRadius = 4;
+                    labelTextElement.style.borderBottomLeftRadius = 4;
+                    labelTextElement.style.borderBottomRightRadius = 4;
 
                     string resolvedBg = game != null ? TemplateResolver.Resolve(hotspot.BackgroundColor, game, room, null) : hotspot.BackgroundColor;
                     if (TryParseHtmlColor(resolvedBg, out var bgColor))
                     {
                         resolvedBgColor = bgColor;
-                        btn.style.backgroundColor = bgColor;
+                        if (hotspot.StyleType == "ImageButton")
+                        {
+                            btn.style.backgroundColor = Color.clear;
+                        }
+                        else
+                        {
+                            btn.style.backgroundColor = bgColor;
+                        }
+                        labelTextElement.style.backgroundColor = bgColor;
                     }
 
                     string resolvedColor = game != null ? TemplateResolver.Resolve(hotspot.FontColor, game, room, null) : hotspot.FontColor;
                     if (TryParseHtmlColor(resolvedColor, out var textColor))
                     {
-                        btn.style.color = textColor;
+                        labelTextElement.style.color = textColor;
                     }
 
-                    btn.style.fontSize = (float)hotspot.FontSize;
+                    UnityEngine.Debug.Log($"[UIManager] Hotspot '{hotspot.Id}' ({resolvedLabel}) FontSize: {hotspot.FontSize}");
+                    var fs = new StyleLength((float)hotspot.FontSize);
+                    labelTextElement.style.fontSize = fs;
+                    btn.style.fontSize = fs;
+                    btn.Add(labelTextElement);
+                    labelTextElement.BringToFront();
                     btn.style.borderLeftWidth = 1;
                     btn.style.borderRightWidth = 1;
                     btn.style.borderTopWidth = 1;
@@ -3808,7 +3937,18 @@ namespace RagNextPlayer.Managers
                         
                         if (asset != null)
                         {
-                            LoadAndDisplayImageForElement(asset.RelativePath, btn);
+                            var bgImgElement = new VisualElement();
+                            bgImgElement.name = "hotspot-bg-image";
+                            bgImgElement.style.position = Position.Absolute;
+                            bgImgElement.style.left = 0;
+                            bgImgElement.style.right = 0;
+                            bgImgElement.style.top = 0;
+                            bgImgElement.style.bottom = 0;
+                            bgImgElement.pickingMode = PickingMode.Ignore;
+                            btn.Add(bgImgElement);
+                            bgImgElement.SendToBack();
+
+                            LoadAndDisplayImageForElement(asset.RelativePath, bgImgElement);
                         }
                     }
                 }
@@ -4127,6 +4267,11 @@ namespace RagNextPlayer.Managers
             {
                 overlay.parent.Remove(overlay);
             }
+            OnVideoPlaybackCompleted?.Invoke();
+            if (GameManager.Instance?.CurrentRoom != null)
+            {
+                TriggerRoomAmbientEffects(GameManager.Instance.CurrentRoom);
+            }
         }
 
         private double _targetStartTime;
@@ -4194,7 +4339,7 @@ namespace RagNextPlayer.Managers
                     overlay.style.top = 0;
                     overlay.style.bottom = 0;
                     overlay.style.backgroundColor = Color.black;
-                    overlay.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                    overlay.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
 
                     // Add close button
                     var closeBtn = new Button();
@@ -4255,7 +4400,7 @@ namespace RagNextPlayer.Managers
             if (targetMediaContainer is not null)
             {
                 targetMediaContainer.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
-                targetMediaContainer.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                targetMediaContainer.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                 if (!isInteractive && _scenePlaceholder is not null)
                 {
                     _scenePlaceholder.style.display = DisplayStyle.None;
@@ -4314,9 +4459,14 @@ namespace RagNextPlayer.Managers
                 {
                     Debug.Log($"[MonitorVideoPlaybackCoroutine] Video reached target end time ({endTime}s). Stopping playback.");
                     _videoPlayer.Stop();
-                    yield break;
+                    break;
                 }
                 yield return null;
+            }
+            OnVideoPlaybackCompleted?.Invoke();
+            if (GameManager.Instance?.CurrentRoom != null)
+            {
+                TriggerRoomAmbientEffects(GameManager.Instance.CurrentRoom);
             }
         }
 
@@ -4435,10 +4585,13 @@ namespace RagNextPlayer.Managers
                 _historyLog.Add(new System.Tuple<string, string>(roomName, resolved));
             }
 
-            // Clear narrative scroll to show current action/room text only
+            // Clear narrative scroll to show current action/room text only (prevent clearing if startup prints were loaded first)
             if (!_hasClearedForCurrentAction)
             {
-                _narrativeScroll.Clear();
+                if (_narrativeScroll.childCount == 0)
+                {
+                    _narrativeScroll.Clear();
+                }
             }
 
             // Room name header
@@ -4453,6 +4606,10 @@ namespace RagNextPlayer.Managers
             BuildNarrativeBody(resolved);
 
             if (_typewriterEnabled)
+            {
+                ScrollNarrativeToBottom();
+            }
+            else
             {
                 ScrollNarrativeToBottom();
             }
@@ -4618,6 +4775,7 @@ namespace RagNextPlayer.Managers
             }
 
             _typewriterQueueCoroutine = null;
+            OnTypewriterCompleted?.Invoke();
         }
 
         private IEnumerator TypewriterRevealRoutine(VisualElement element, string fullText)
@@ -4671,6 +4829,16 @@ namespace RagNextPlayer.Managers
                     kvp.Value.AddToClassList("compass-btn--inactive");
                     kvp.Value.SetEnabled(false);
                     kvp.Value.clickable = null;
+                    if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
+                    {
+                        var dimColor = textMainColor;
+                        dimColor.a = 0.35f;
+                        kvp.Value.style.color = dimColor;
+                    }
+                    else
+                    {
+                        kvp.Value.style.color = new Color(1f, 1f, 1f, 0.35f);
+                    }
                 }
                 foreach (var kvp in _compassButtonsHud)
                 {
@@ -4679,6 +4847,16 @@ namespace RagNextPlayer.Managers
                     kvp.Value.AddToClassList("compass-btn--inactive");
                     kvp.Value.SetEnabled(false);
                     kvp.Value.clickable = null;
+                    if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
+                    {
+                        var dimColor = textMainColor;
+                        dimColor.a = 0.35f;
+                        kvp.Value.style.color = dimColor;
+                    }
+                    else
+                    {
+                        kvp.Value.style.color = new Color(1f, 1f, 1f, 0.35f);
+                    }
                 }
                 return;
             }
@@ -4693,6 +4871,16 @@ namespace RagNextPlayer.Managers
                     kvp.Value.AddToClassList("compass-btn--inactive");
                     kvp.Value.SetEnabled(false);
                     kvp.Value.clickable = null;
+                    if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
+                    {
+                        var dimColor = textMainColor;
+                        dimColor.a = 0.35f;
+                        kvp.Value.style.color = dimColor;
+                    }
+                    else
+                    {
+                        kvp.Value.style.color = new Color(1f, 1f, 1f, 0.35f);
+                    }
                     PrimeTween.Tween.StopAll(kvp.Value);
                     PrimeTween.Tween.Custom(kvp.Value.transform.scale.x, 0.9f, duration: 0.15f, onValueChange: val => {
                         kvp.Value.transform.scale = new Vector3(val, val, 1f);
@@ -4709,6 +4897,16 @@ namespace RagNextPlayer.Managers
                     kvp.Value.AddToClassList("compass-btn--inactive");
                     kvp.Value.SetEnabled(false);
                     kvp.Value.clickable = null;
+                    if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
+                    {
+                        var dimColor = textMainColor;
+                        dimColor.a = 0.35f;
+                        kvp.Value.style.color = dimColor;
+                    }
+                    else
+                    {
+                        kvp.Value.style.color = new Color(1f, 1f, 1f, 0.35f);
+                    }
                     PrimeTween.Tween.StopAll(kvp.Value);
                     PrimeTween.Tween.Custom(kvp.Value.transform.scale.x, 0.9f, duration: 0.15f, onValueChange: val => {
                         kvp.Value.transform.scale = new Vector3(val, val, 1f);
@@ -4733,6 +4931,14 @@ namespace RagNextPlayer.Managers
                         btn.AddToClassList("compass-btn--active");
                         btn.SetEnabled(true);
                         btn.clickable = new Clickable(() => OnCompassExitClicked(targetRoomId));
+                        if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
+                        {
+                            btn.style.color = textMainColor;
+                        }
+                        else
+                        {
+                            btn.style.color = Color.white;
+                        }
 
                         PrimeTween.Tween.StopAll(btn);
                         PrimeTween.Tween.Custom(0.8f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
@@ -4749,6 +4955,14 @@ namespace RagNextPlayer.Managers
                         btnHud.AddToClassList("compass-btn--active");
                         btnHud.SetEnabled(true);
                         btnHud.clickable = new Clickable(() => OnCompassExitClicked(targetRoomId));
+                        if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
+                        {
+                            btnHud.style.color = textMainColor;
+                        }
+                        else
+                        {
+                            btnHud.style.color = Color.white;
+                        }
 
                         PrimeTween.Tween.StopAll(btnHud);
                         PrimeTween.Tween.Custom(0.8f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
@@ -4829,9 +5043,29 @@ namespace RagNextPlayer.Managers
             var arrow = new Label("↳");
             arrow.AddToClassList("entity-nested-arrow");
             var gameData = GameManager.Instance?.ActiveGame;
-            if (gameData?.Theme != null && TryParseHtmlColor(gameData.Theme.TextMainColor, out var textMain))
+            if (gameData?.Theme != null)
             {
-                arrow.style.color = textMain;
+                if (TryParseHtmlColor(gameData.Theme.TextMainColor, out var textMain))
+                {
+                    arrow.style.color = textMain;
+                }
+                if (TryParseHtmlColor(gameData.Theme.PrimaryBgColor, out var primaryBg))
+                {
+                    Color nestedBg = primaryBg;
+                    nestedBg.a = primaryBg.a > 0.8f ? 0.35f : 0.2f;
+                    row.style.backgroundColor = nestedBg;
+                }
+                if (TryParseHtmlColor(gameData.Theme.BorderAccentColor, out var borderAccent))
+                {
+                    row.style.borderLeftColor = borderAccent;
+                    row.style.borderRightColor = borderAccent;
+                    row.style.borderTopColor = borderAccent;
+                    row.style.borderBottomColor = borderAccent;
+                    row.style.borderLeftWidth = 0.5f;
+                    row.style.borderRightWidth = 0.5f;
+                    row.style.borderTopWidth = 0.5f;
+                    row.style.borderBottomWidth = 0.5f;
+                }
             }
             row.Add(arrow);
 
@@ -4972,7 +5206,7 @@ namespace RagNextPlayer.Managers
             if (elem is not null)
             {
                 elem.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
-                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                 if (_scenePlaceholder is not null)
                 {
                     _scenePlaceholder.style.display = DisplayStyle.None;
@@ -5040,6 +5274,7 @@ namespace RagNextPlayer.Managers
                 if (targetElement is not null)
                 {
                     targetElement.style.backgroundImage = new StyleBackground(tex);
+                    targetElement.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                 }
             }
         }
@@ -5093,6 +5328,13 @@ namespace RagNextPlayer.Managers
             string formattedUrl = FormatLocalPathForWeb(url);
             using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(formattedUrl);
 
+            var elem = _root?.Q<VisualElement>(elementName);
+            if (elem is not null && elementName == "scene-image")
+            {
+                // Set initial placeholder/loading style (opacity 0) to avoid layout flashing
+                elem.style.opacity = 0f;
+            }
+
             yield return req.SendWebRequest();
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
@@ -5102,7 +5344,7 @@ namespace RagNextPlayer.Managers
                 }
 
                 var tex  = UnityEngine.Networking.DownloadHandlerTexture.GetContent(req);
-                var elem = _root?.Q<VisualElement>(elementName);
+                elem = _root?.Q<VisualElement>(elementName);
                 if (elem is not null)
                 {
                     elem.style.backgroundImage = new StyleBackground(tex);
@@ -5114,23 +5356,37 @@ namespace RagNextPlayer.Managers
                             if (_activeScreenSettings != null && _activeScreenSettings.Enabled)
                             {
                                 elem.style.aspectRatio = 16f / 9f;
-                                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                             }
                             else
                             {
-                                elem.style.unityBackgroundScaleMode = aspect > 1.2f ? ScaleMode.ScaleAndCrop : ScaleMode.ScaleToFit;
+                                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                             }
                         }
                         if (_scenePlaceholder is not null)
                         {
                             _scenePlaceholder.style.display = DisplayStyle.None;
                         }
+
+                        // Animate opacity back up to 1 over 0.25 seconds for a clean fade-in transition
+                        float elapsed = 0f;
+                        while (elapsed < 0.25f && elem != null)
+                        {
+                            elapsed += Time.deltaTime;
+                            elem.style.opacity = Mathf.Lerp(0f, 1f, elapsed / 0.25f);
+                            yield return null;
+                        }
+                        if (elem != null) elem.style.opacity = 1f;
                     }
                     Debug.Log($"[UIManager] Successfully applied texture to '{elementName}'");
                 }
             }
             else
             {
+                if (elem != null && elementName == "scene-image")
+                {
+                    elem.style.opacity = 1f;
+                }
                 Debug.LogError($"[UIManager] Failed to load texture for '{elementName}' from URL '{url}': {req.error}");
             }
         }
@@ -5870,6 +6126,14 @@ namespace RagNextPlayer.Managers
                 {
                     _promptTextField.value = string.Empty;
                     _promptTextField.style.display = DisplayStyle.Flex;
+                    if (TryParseHtmlColor(_activeTextMainColor, out var caretClr))
+                    {
+                        var innerInput = _promptTextField.Q(className: "unity-text-field__input");
+                        if (innerInput != null)
+                        {
+                            innerInput.style.color = caretClr;
+                        }
+                    }
                     _promptTextField.schedule.Execute(() => {
                         _promptTextField.Focus();
                         var innerInput = _promptTextField.Q(className: "unity-text-field__input");
@@ -5972,6 +6236,78 @@ namespace RagNextPlayer.Managers
             }
         }
 
+        public void ShowContinuePrompt(string buttonText)
+        {
+            if (_promptInputMessage is not null)
+                _promptInputMessage.text = string.Empty; // Keep modal message body clean or default to empty
+
+            var textContainer = _root.Q<VisualElement>("prompt-text-container");
+            var selScroll = _promptSelectionScroll;
+
+            if (textContainer is null || selScroll is null) return;
+
+            textContainer.style.display = DisplayStyle.None;
+            selScroll.style.display     = DisplayStyle.Flex;
+            selScroll.Clear();
+
+            if (_promptTextField is not null)
+                _promptTextField.style.display = DisplayStyle.None;
+
+            if (_promptSubmitBtn is not null)
+                _promptSubmitBtn.style.display = DisplayStyle.None;
+
+            var btn = new Button(() => {
+                ActionExecutor.ResumeSuspended();
+
+                if (_promptInputMenu is null) return;
+                _promptMenuCloseTween = PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
+                    _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
+                }).OnComplete(() => {
+                    _promptInputMenu.style.display = DisplayStyle.None;
+                });
+            });
+
+            btn.text = string.IsNullOrEmpty(buttonText) ? "Continue" : buttonText;
+            btn.AddToClassList("prompt-choice-btn");
+            btn.style.fontSize = GetScaledFontSize();
+            
+            // Custom primary accent styling for the main Continue button
+            if (TryParseHtmlColor(_activeTextMainColor, out var btnTextColor))
+            {
+                btn.style.color = btnTextColor;
+            }
+            if (TryParseHtmlColor(_activeBorderAccentColor, out var btnBorderColor))
+            {
+                btn.style.borderLeftColor = btnBorderColor;
+                btn.style.borderRightColor = btnBorderColor;
+                btn.style.borderTopColor = btnBorderColor;
+                btn.style.borderBottomColor = btnBorderColor;
+                btn.style.borderLeftWidth = 1.5f;
+                btn.style.borderRightWidth = 1.5f;
+                btn.style.borderTopWidth = 1.5f;
+                btn.style.borderBottomWidth = 1.5f;
+                btn.style.borderTopLeftRadius = 6f;
+                btn.style.borderTopRightRadius = 6f;
+                btn.style.borderBottomLeftRadius = 6f;
+                btn.style.borderBottomRightRadius = 6f;
+            }
+            selScroll.Add(btn);
+
+            if (_promptInputMenu is not null)
+            {
+                if (_promptMenuCloseTween.isAlive)
+                {
+                    _promptMenuCloseTween.Stop();
+                }
+                _promptInputMenu.style.display = DisplayStyle.Flex;
+                _promptInputMenu.BringToFront();
+                _promptInputMenu.transform.scale = Vector3.zero;
+                PrimeTween.Tween.Custom(0.0f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                    _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
+                });
+            }
+        }
+
         private void SubmitPromptSelection(string value)
         {
             UnityEngine.Debug.Log($"[UIManager] SubmitPromptSelection called. value: '{value}', _promptTargetVarName: '{_promptTargetVarName}', ActiveRunner is {(ActionExecutor.ActiveRunner != null ? "NOT null" : "null")}");
@@ -5989,23 +6325,6 @@ namespace RagNextPlayer.Managers
                 targetVar.Value = value;
             }
 
-            var game = GameManager.Instance?.ActiveGame;
-            if (game is not null && game.CustomChoices is not null)
-            {
-                var customChoice = game.CustomChoices.Find(c => string.Equals(c.PromptName, _promptName, System.StringComparison.OrdinalIgnoreCase) && string.Equals(c.ChoiceText, value, System.StringComparison.OrdinalIgnoreCase));
-                if (customChoice is not null && !string.IsNullOrWhiteSpace(customChoice.VariableName))
-                {
-                    var customVar = vars.Find(v => string.Equals(v.Name, customChoice.VariableName, System.StringComparison.OrdinalIgnoreCase));
-                    if (customVar is null)
-                    {
-                        vars.Add(new GameVariableData { Name = customChoice.VariableName, Value = value });
-                    }
-                    else
-                    {
-                        customVar.Value = value;
-                    }
-                }
-            }
 
             var currentRoom = GameManager.Instance.CurrentRoom;
             if (currentRoom is not null)
@@ -6583,6 +6902,19 @@ namespace RagNextPlayer.Managers
             toast.style.minWidth = 280;
 
             var label = new Label(text);
+            if (_activeThemeFont != null)
+            {
+                label.style.unityFont = _activeThemeFont;
+                label.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromFont(_activeThemeFont));
+            }
+            if (game?.Theme != null)
+            {
+                label.style.fontSize = (float)game.Theme.FontSize;
+            }
+            else
+            {
+                label.style.fontSize = 14;
+            }
             if (game?.Theme != null && TryParseHtmlColor(game.Theme.TextMainColor, out var textMain))
             {
                 label.style.color = textMain;
@@ -6591,7 +6923,6 @@ namespace RagNextPlayer.Managers
             {
                 label.style.color = Color.white;
             }
-            label.style.fontSize = 14;
             label.style.unityTextAlign = TextAnchor.MiddleCenter;
             label.style.whiteSpace = WhiteSpace.Normal;
             toast.Add(label);
@@ -6653,6 +6984,15 @@ namespace RagNextPlayer.Managers
                 }
                 toast.parent?.Remove(toast);
             }
+        }
+
+        public bool IsInputFocused()
+        {
+            if (_promptInputMenu != null && _promptInputMenu.style.display == DisplayStyle.Flex) return true;
+            if (_root == null || _root.focusController == null) return false;
+            var focused = _root.focusController.focusedElement;
+            if (focused == null) return false;
+            return focused is TextField || focused.GetType().Name.Contains("TextField") || focused.GetType().Name.Contains("TextInput");
         }
     }
 }

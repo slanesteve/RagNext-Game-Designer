@@ -16,6 +16,8 @@ namespace RagNextPlayer.Managers
 
         public RenderTexture VFXRenderTexture => _vfxRT;
         
+        public event Action? OnScreenShakeCompleted;
+        
         // Transition Emitters (Heavy)
         private ParticleSystem _smokePS;
         private ParticleSystem _sandPS;
@@ -639,6 +641,8 @@ namespace RagNextPlayer.Managers
             if (_vfxCamera != null) _vfxCamera.transform.localPosition = _vfxCamOriginalPos;
             if (uiRoot != null) uiRoot.transform.position = originalUIPos;
             _shakeCoroutine = null;
+
+            OnScreenShakeCompleted?.Invoke();
         }
     }
 }

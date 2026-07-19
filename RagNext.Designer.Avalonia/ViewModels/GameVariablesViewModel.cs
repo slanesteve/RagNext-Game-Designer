@@ -47,6 +47,16 @@ namespace RagNext.Designer.Avalonia.ViewModels
             DeleteVariableCommand = new Command<GameVariable>(async (v) =>
             {
                 if (v is null) return;
+                if (v.IsSystemVariable)
+                {
+                    if (MainWindowViewModel.ShowAlertDialogAsync != null)
+                    {
+                        await MainWindowViewModel.ShowAlertDialogAsync(
+                            "System Variable",
+                            $"'{v.Name}' is a system-reserved variable required by the theme engine and cannot be deleted.\n\nYou may edit its value, but it cannot be removed.");
+                    }
+                    return;
+                }
                 if (App.CurrentGame?.Variables is not null)
                 {
                     App.CurrentGame.Variables.Remove(v);
@@ -54,6 +64,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     OnPropertyChanged(nameof(Variables));
                 }
             });
+
 
             SortCommand = new Command(async () =>
             {

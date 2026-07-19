@@ -20,6 +20,7 @@ let activeActionName = "Visual Action Node";
 let activeActionTrigger = "UserClicked";
 let activeActionInitallyActive = true;
 let activeActionDirectionFilter = "All";
+let isLoadingGraph = false;
 
 function getArray(val) {
     if (!val) return [];
@@ -121,7 +122,7 @@ const fallbackDiscriminators = {
     "playermoveinventorytocharacter": "player.moveInventoryToChar",
     "playermoveinventorytoroom": "player.moveInventoryToRoom",
     "playermovetoroom": "player.moveTo",
-    "playerscreenshake": "player.screenShake",
+    "generalscreenshake": "player.screenShake",
     "playermovetocharacter": "player.moveToChar",
     "playermovetoobject": "player.moveToObject",
     "playerswapcharacter": "player.swapCharacter",
@@ -155,6 +156,7 @@ const fallbackDiscriminators = {
     "variableappendtext": "variable.appendText",
     "variableappendline": "variable.appendLine",
     "promptplayerinput": "general.promptInput",
+    "waitforcontinue": "general.waitForContinue",
     "variablesetnumericrandomly": "var.setRandom",
     "endthegame": "general.endGame",
     "itemopencontainer": "general.openContainer",
@@ -226,6 +228,7 @@ const propertyMappings = {
     "Transition Style": ["TransitionStyle", "transitionStyle"],
     "Transition Duration": ["Duration", "duration", "TransitionDuration", "transitionDuration"],
     "Transition Intensity": ["Intensity", "intensity"],
+    "Button Text": ["ButtonText", "buttonText"],
     "Sound File": ["SoundId", "soundId"],
     "Video File": ["VideoId", "videoId"],
     "Array Variable": ["ArrayVariableName", "arrayVariableName"],
@@ -242,7 +245,10 @@ const propertyMappings = {
     "Index Variable": ["IndexVariable", "indexVariable"],
     "Ping Pong": ["PingPong", "pingPong"],
     "Loop Source": ["LoopSource", "loopSource"],
-    "Filter Type": ["FilterType", "filterType"]
+    "Filter Type": ["FilterType", "filterType"],
+    "Comment Text": ["CommentText", "commentText"],
+    "Target Character": ["CharacterId", "characterId"],
+    "Music File": ["MusicFile", "musicFile"]
 };
 
 function getPropertyValue(nodeData, label) {
@@ -1326,6 +1332,31 @@ function createBaseNode(id, type, title, x, y) {
     return nodeObj;
 }
 
+function autoLinkNodeIfPossible(newNode) {
+    if (isLoadingGraph) return;
+
+    const allOutputPins = Array.from(document.querySelectorAll('.pin.output'));
+    const unconnectedOutputPins = allOutputPins.filter(pinEl => {
+        if (pinEl.id.startsWith(newNode.id)) return false;
+        return !connections.some(c => c.fromPinId === pinEl.id);
+    });
+
+    if (unconnectedOutputPins.length === 1) {
+        const fromPin = unconnectedOutputPins[0];
+        const toPinId = `${newNode.id}_in`;
+        const toPin = document.getElementById(toPinId);
+        if (toPin) {
+            connections.push({
+                fromPinId: fromPin.id,
+                toPinId: toPinId,
+                type: 'exec'
+            });
+            redrawConnections();
+            triggerAutoSave();
+        }
+    }
+}
+
 function makeDraggable(el) {
     let startPositions = [];
 
@@ -1642,6 +1673,7 @@ function addNewDialogueNode(x = null, y = null) {
     };
     node.bodyElement.appendChild(btn);
 
+    autoLinkNodeIfPossible(node);
     return node;
 }
 
@@ -1757,6 +1789,7 @@ function addNewSwitchNode(x = null, y = null) {
     };
     node.bodyElement.appendChild(btn);
 
+    autoLinkNodeIfPossible(node);
     return node;
 }
 
@@ -2076,7 +2109,7 @@ function addNewCommandNode(x = null, y = null) {
     populateSelectWithOptions(select, AVAILABLE_COMMANDS);
     select.addEventListener('change', () => { 
         node.data.commandType = select.value; 
-        if (select.value === 'media.playSound' || select.value === 'media.playVideo') {
+        if (select.value === 'media.playSound' || select.value === 'media.playVideo' || select.value === 'media.setBackgroundMusic') {
             node.data["Start Time"] = "0.00";
             node.data["StartTime"] = "0.00";
             node.data["End Time"] = "";
@@ -2114,6 +2147,7 @@ function addNewCommandNode(x = null, y = null) {
         refreshCommandFields(node);
     }
 
+    autoLinkNodeIfPossible(node);
     return node;
 }
 
@@ -2183,6 +2217,7 @@ function addNewConditionNode(x = null, y = null) {
         refreshCommandFields(node);
     }
 
+    autoLinkNodeIfPossible(node);
     return node;
 }
 
@@ -2682,7 +2717,11 @@ function refreshCommandFields(node) {
             else if (inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Item') {
                 optionsList = catalogs.GameObjects || [];
                 if (inputSchema.label === 'Container Object' || inputSchema.label === 'ContainerObject') {
-                    optionsList = optionsList.filter(o => o.IsContainer || o.isContainer);
+                    optionsList = optionsList.filter(o => {
+                        const isCont = o.IsContainer || o.isContainer;
+                        const idVal = o.Id !== undefined ? o.Id : o.id;
+                        return isCont || String(idVal) === String(initialVal);
+                    });
                 }
             }
             else if (inputSchema.dataType === 'Character') optionsList = catalogs.Characters || [];
@@ -2717,6 +2756,11 @@ function refreshCommandFields(node) {
             else if (inputSchema.dataType === 'SplashScreen') optionsList = catalogs.SplashScreens || [];
             else if (inputSchema.dataType === 'PromptName') {
                 optionsList = [];
+                if (catalogs.PromptNames) {
+                    catalogs.PromptNames.forEach(pName => {
+                        optionsList.push({ Id: pName, Name: pName });
+                    });
+                }
                 nodes.forEach(n => {
                     if (n.type === 'command' && n.data && n.data.commandType === 'general.promptInput') {
                         const pName = getPropertyValue(n.data, "Prompt Name") || n.data.PromptName;
@@ -3487,12 +3531,13 @@ function refreshCommandFields(node) {
         node.inputs.push({ label: inputSchema.label, element: inputElement });
     });
 
-    if (type === 'media.playSound' || type === 'media.playVideo') {
-        const isSound = (type === 'media.playSound');
+    if (type === 'media.playSound' || type === 'media.playVideo' || type === 'media.setBackgroundMusic') {
+        const isSound = (type === 'media.playSound' || type === 'media.setBackgroundMusic');
         
         // Helper to grab media ID directly from UI elements to bypass data mapping delays
         const getActiveMediaId = () => {
-            const inputObj = node.inputs.find(inp => inp.label === (isSound ? "Sound File" : "Video File"));
+            const mediaLabel = isSound ? (type === 'media.setBackgroundMusic' ? "Music File" : "Sound File") : "Video File";
+            const inputObj = node.inputs.find(inp => inp.label === mediaLabel);
             if (inputObj && inputObj.element) {
                 const selectEl = inputObj.element.querySelector('select');
                 const textEl = inputObj.element.querySelector('input[type="text"]');
@@ -3502,10 +3547,11 @@ function refreshCommandFields(node) {
                     return textEl.value;
                 }
             }
-            return isSound ? getPropertyValue(node.data, "Sound File") : getPropertyValue(node.data, "Video File");
+            return isSound ? (type === 'media.setBackgroundMusic' ? getPropertyValue(node.data, "Music File") : getPropertyValue(node.data, "Sound File")) : getPropertyValue(node.data, "Video File");
         };
 
         const soundId = getActiveMediaId();
+        const hasEndTime = node.inputs.some(inp => inp.label === "End Time");
 
         // Create container for Visual Waveform or timeline
         const timelineWrapper = document.createElement('div');
@@ -3618,7 +3664,7 @@ function refreshCommandFields(node) {
 
         function updateMarkersFromData() {
             let startVal = parseFloat(getPropertyValue(node.data, "Start Time")) || 0;
-            let endVal = parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration;
+            let endVal = hasEndTime ? (parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration) : clipDuration;
             
             if (startVal < 0) startVal = 0;
             if (endVal > clipDuration || endVal <= 0) endVal = clipDuration;
@@ -3628,8 +3674,14 @@ function refreshCommandFields(node) {
             const endPct = (endVal / clipDuration) * 100;
 
             startMarker.style.left = `calc(${startPct}% - 3px)`;
-            endMarker.style.left = `calc(${endPct}% - 3px)`;
-            durationText.innerHTML = `<span>Start: ${startVal.toFixed(1)}s</span><span>End: ${endVal.toFixed(1)}s</span>`;
+            if (hasEndTime) {
+                endMarker.style.display = 'block';
+                endMarker.style.left = `calc(${endPct}% - 3px)`;
+                durationText.innerHTML = `<span>Start: ${startVal.toFixed(1)}s</span><span>End: ${endVal.toFixed(1)}s</span>`;
+            } else {
+                endMarker.style.display = 'none';
+                durationText.innerHTML = `<span>Start: ${startVal.toFixed(1)}s</span><span>Duration: ${clipDuration.toFixed(1)}s</span>`;
+            }
         }
 
         // Drag markers behavior
@@ -3653,11 +3705,11 @@ function refreshCommandFields(node) {
                 const seconds = pct * clipDuration;
 
                 if (isStart) {
-                    let endVal = parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration;
+                    let endVal = hasEndTime ? (parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration) : clipDuration;
                     if (seconds > endVal) return;
                     node.data["Start Time"] = seconds.toFixed(2);
                     node.data["StartTime"] = seconds.toFixed(2);
-                } else {
+                } else if (hasEndTime) {
                     let startVal = parseFloat(getPropertyValue(node.data, "Start Time")) || 0;
                     if (seconds < startVal) return;
                     node.data["End Time"] = seconds.toFixed(2);
@@ -3830,7 +3882,7 @@ function refreshCommandFields(node) {
                 playheadTime = mediaElement.currentTime;
                 drawTimeline();
 
-                let endVal = parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration;
+                let endVal = hasEndTime ? (parseFloat(getPropertyValue(node.data, "End Time")) || clipDuration) : clipDuration;
                 if (mediaElement.currentTime >= endVal) {
                     stopPlayback();
                     return;
@@ -3936,10 +3988,10 @@ function refreshCommandFields(node) {
 }
 
 // Node Position Context shortcuts
-function addNewDialogueNodeAtCursor() { addNewDialogueNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
-function addNewCommandNodeAtCursor() { addNewCommandNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
-function addNewConditionNodeAtCursor() { addNewConditionNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
-function addNewSwitchNodeAtCursor() { addNewSwitchNode(contextCursorX, contextCursorY); triggerAutoSave(); hideContextMenu(); }
+function addNewDialogueNodeAtCursor() { const node = addNewDialogueNode(contextCursorX, contextCursorY); if (node) autoLinkNodeIfPossible(node); triggerAutoSave(); hideContextMenu(); }
+function addNewCommandNodeAtCursor() { const node = addNewCommandNode(contextCursorX, contextCursorY); if (node) autoLinkNodeIfPossible(node); triggerAutoSave(); hideContextMenu(); }
+function addNewConditionNodeAtCursor() { const node = addNewConditionNode(contextCursorX, contextCursorY); if (node) autoLinkNodeIfPossible(node); triggerAutoSave(); hideContextMenu(); }
+function addNewSwitchNodeAtCursor() { const node = addNewSwitchNode(contextCursorX, contextCursorY); if (node) autoLinkNodeIfPossible(node); triggerAutoSave(); hideContextMenu(); }
 
 function deleteNode(id) {
     if (id === 'start') return;
@@ -4202,8 +4254,10 @@ function buildNodeJsonWithoutNextRaw(node) {
                 // Map to primary C# property name
                 const aliases = propertyMappings[inp.label] || [];
                 let primaryCsharpProp = aliases[0] || inp.label;
-
-                if (node.data.conditionType && node.data.conditionType.startsWith('date.')) {
+                
+                if (inp.label === 'Container Object' && (node.data.conditionType === 'item.inObject' || node.data.conditionType === 'item.notInObject')) {
+                    primaryCsharpProp = 'ContainerObjectId';
+                } else if (node.data.conditionType && node.data.conditionType.startsWith('date.')) {
                     if (inp.label === 'Variable') {
                         primaryCsharpProp = 'VariableName';
                     } else if (inp.label === 'Variable A') {
@@ -4228,6 +4282,7 @@ function buildNodeJsonWithoutNextRaw(node) {
 
 // C# Hook to populate existing JSON action trees and databases
 window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogsDb, typesMap) {
+    isLoadingGraph = true;
     try {
         // Cache parameters for AI revert
         lastActionJson = actionJson;
@@ -4393,6 +4448,8 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
     } catch (err) {
         console.error("Visual editor load failed: ", err);
         alert("Visual action editor failed to load:\n\nError: " + err.message + "\n\nStack:\n" + err.stack);
+    } finally {
+        isLoadingGraph = false;
     }
 };
 

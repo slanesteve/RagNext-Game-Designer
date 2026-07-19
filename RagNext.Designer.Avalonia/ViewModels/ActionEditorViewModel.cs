@@ -97,6 +97,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "object.moveInsideObject" => new ObjectMoveInsideObjectCommand(),
             "player.swapCharacter" => new SwapPlayerCharacterCommand(),
             "ui.showSplashScreen" => new ShowSplashScreenCommand(),
+            "general.waitForContinue" => new WaitForContinueCommand(),
             "item.showInteractiveScreen" => new ShowInteractiveScreenCommand(),
             _ => throw new NotSupportedException(key)
         };

@@ -1445,6 +1445,69 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand DeleteTimerCommand => Timers.DeleteTimerCommand;
         public ICommand DeleteFunctionCommand => Functions.DeleteFunctionCommand;
 
+        /// <summary>
+        /// Returns a human-readable description of where the given item is already assigned,
+        /// or null if it is not currently assigned anywhere.
+        /// Checks: room ObjectIds, player inventory, character inventories, container ContainedObjectIds.
+        /// </summary>
+        public static string? FindItemAssignment(Game game, Guid itemId)
+        {
+            // Check rooms
+            foreach (var room in game.Rooms)
+            {
+                if (room.ObjectIds.Contains(itemId))
+                    return $"Room \"{ room.Name }\"";
+            }
+            // Check player inventory
+            if (game.Player.Inventory.Any(o => o.Id == itemId))
+                return "Player Inventory";
+            // Check character inventories
+            foreach (var character in game.Characters)
+            {
+                if (character.Inventory.Any(o => o.Id == itemId))
+                    return $"Character \"{ character.Name }\"'s Inventory";
+            }
+            // Check container objects
+            foreach (var obj in game.Objects)
+            {
+                if (obj.IsContainer && obj.ContainedObjectIds.Contains(itemId))
+                    return $"Container \"{ obj.Name }\"";
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Removes the given item from every location it currently occupies:
+        /// all room ObjectIds, player inventory, all character inventories, and all container ContainedObjectIds.
+        /// Call this before adding an item to a new location to prevent duplicates.
+        /// </summary>
+        public static void RemoveItemFromAllLocations(Game game, Guid itemId)
+        {
+            // Remove from all rooms
+            foreach (var room in game.Rooms)
+                room.ObjectIds.Remove(itemId);
+
+            // Remove from player inventory (match by Id)
+            var fromPlayer = game.Player.Inventory.FirstOrDefault(o => o.Id == itemId);
+            if (fromPlayer != null)
+                game.Player.Inventory.Remove(fromPlayer);
+
+            // Remove from all character inventories
+            foreach (var character in game.Characters)
+            {
+                var fromChar = character.Inventory.FirstOrDefault(o => o.Id == itemId);
+                if (fromChar != null)
+                    character.Inventory.Remove(fromChar);
+            }
+
+            // Remove from all containers
+            foreach (var obj in game.Objects)
+            {
+                if (obj.IsContainer)
+                    obj.ContainedObjectIds.Remove(itemId);
+            }
+        }
+
         public MainWindowViewModel()
         {
             Instance = this;
@@ -2293,6 +2356,38 @@ namespace RagNext.Designer.Avalonia.ViewModels
             SelectInventoryItemCommand = new Command<GameObject>(async item =>
             {
                 if (item == null || InventoryTarget == null) return;
+
+                // Check if this item is already assigned elsewhere
+                if (CurrentGame != null)
+                {
+                    var existingLocation = FindItemAssignment(CurrentGame, item.Id);
+                    bool alreadyInTarget =
+                        (InventoryTarget is Player p0 && p0.Inventory.Contains(item)) ||
+                        (InventoryTarget is Character c0 && c0.Inventory.Contains(item)) ||
+                        (InventoryTarget is Room r0 && r0.ObjectIds.Contains(item.Id)) ||
+                        (InventoryTarget is GameObject go0 && go0.ContainedObjectIds.Contains(item.Id));
+
+                    if (existingLocation != null && !alreadyInTarget)
+                    {
+                        var targetName = InventoryTarget is Player ? "Player Inventory" :
+                                         InventoryTarget is Character ch ? $"\"{ ch.Name }\"'s Inventory" :
+                                         InventoryTarget is Room rm ? $"Room \"{ rm.Name }\"" :
+                                         InventoryTarget is GameObject gobj ? $"Container \"{ gobj.Name }\"" : "Target";
+                        bool proceed = true;
+                        if (ShowConfirmDialogAsync != null)
+                        {
+                            proceed = await ShowConfirmDialogAsync(
+                                "Item Already Assigned",
+                                $"\"{ item.Name }\" is currently assigned to { existingLocation }.\n\n" +
+                                $"Move it to { targetName }? The previous assignment will be removed automatically.");
+                        }
+                        if (!proceed) return;
+
+                        // Remove from all previous locations before adding to new target
+                        RemoveItemFromAllLocations(CurrentGame, item.Id);
+                    }
+                }
+
                 if (InventoryTarget is Player p && !p.Inventory.Contains(item))
                 {
                     p.Inventory.Add(item);
@@ -2300,6 +2395,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 else if (InventoryTarget is Character c && !c.Inventory.Contains(item))
                 {
                     c.Inventory.Add(item);
+                }
+                else if (InventoryTarget is Room r && !r.ObjectIds.Contains(item.Id))
+                {
+                    r.ObjectIds.Add(item.Id);
+                }
+                else if (InventoryTarget is GameObject go && !go.ContainedObjectIds.Contains(item.Id))
+                {
+                    go.ContainedObjectIds.Add(item.Id);
                 }
                 ShowInventorySelectorOverlay = false;
                 await SaveGameAsync();
@@ -2309,32 +2412,44 @@ namespace RagNext.Designer.Avalonia.ViewModels
             {
                 if (parameter == null) return;
 
-                // parameter is a tuple or we can inspect elements
+                object? owner = null;
+                GameObject? item = null;
+
+                // Support both generic Tuple and IList collections from multi-bindings
                 if (parameter is global::System.Collections.IList list && list.Count == 2)
                 {
-                    var owner = list[0];
-                    var item = list[1] as GameObject;
-                    if (item == null) return;
+                    owner = list[0];
+                    item = list[1] as GameObject;
+                }
+                else if (parameter is Tuple<object, object> tuple)
+                {
+                    owner = tuple.Item1;
+                    item = tuple.Item2 as GameObject;
+                }
 
+                if (owner != null && item != null)
+                {
                     if (owner is Player p) p.Inventory.Remove(item);
                     else if (owner is Character c) c.Inventory.Remove(item);
+                    else if (owner is Room r) r.ObjectIds.Remove(item.Id);
+                    else if (owner is GameObject go) go.ContainedObjectIds.Remove(item.Id);
                     await SaveGameAsync();
                 }
-                else if (parameter is GameObject item)
+                else if (parameter is GameObject itemObj)
                 {
                     if (CurrentGame != null)
                     {
-                        if (CurrentGame.Player.Inventory.Contains(item))
+                        if (CurrentGame.Player.Inventory.Contains(itemObj))
                         {
-                            CurrentGame.Player.Inventory.Remove(item);
+                            CurrentGame.Player.Inventory.Remove(itemObj);
                         }
                         else
                         {
                             foreach (var c in CurrentGame.Characters)
                             {
-                                if (c.Inventory.Contains(item))
+                                if (c.Inventory.Contains(itemObj))
                                 {
-                                    c.Inventory.Remove(item);
+                                    c.Inventory.Remove(itemObj);
                                     break;
                                 }
                             }
@@ -2780,8 +2895,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
                 Game? importedGame;
                 using (var s = gameEntry.Open())
+                using (var sr = new System.IO.StreamReader(s, System.Text.Encoding.UTF8))
                 {
-                    importedGame = await JsonSerializer.DeserializeAsync(s, RagsCore.RagsJsonContext.CustomDefault.Game);
+                    var rawJson = await sr.ReadToEndAsync();
+                    var normalizedJson = RagsCore.Actions.ActionStep.NormalizeLegacyDiscriminators(rawJson);
+                    importedGame = JsonSerializer.Deserialize(normalizedJson, RagsCore.RagsJsonContext.CustomDefault.Game);
                 }
 
                 if (importedGame == null)
@@ -3030,8 +3148,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
                 Game? importedGame;
                 using (var s = gameEntry.Open())
+                using (var sr = new System.IO.StreamReader(s, System.Text.Encoding.UTF8))
                 {
-                    importedGame = await JsonSerializer.DeserializeAsync(s, RagsCore.RagsJsonContext.CustomDefault.Game);
+                    var rawJson = await sr.ReadToEndAsync();
+                    var normalizedJson = RagsCore.Actions.ActionStep.NormalizeLegacyDiscriminators(rawJson);
+                    importedGame = JsonSerializer.Deserialize(normalizedJson, RagsCore.RagsJsonContext.CustomDefault.Game);
                 }
 
                 if (importedGame == null)
