@@ -16,6 +16,7 @@ namespace RagNext.Designer.Avalonia.Services
     [JsonSerializable(typeof(AppSettings))]
     [JsonSerializable(typeof(List<string>))]
     [JsonSerializable(typeof(List<ActionLibraryViewModel.ActionTemplate>))]
+    [JsonSerializable(typeof(RagsCore.Models.ThemeSettings))]
     [JsonSerializable(typeof(ExportGameDto))]
     [JsonSerializable(typeof(ExportPlayerDto))]
     [JsonSerializable(typeof(ExportRoomDto))]

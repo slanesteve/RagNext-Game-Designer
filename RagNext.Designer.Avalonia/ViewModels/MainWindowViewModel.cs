@@ -1144,7 +1144,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             PlayerPortraitShape = "Circle",
                             PortraitSize = 80
                         };
-                        var json = System.Text.Json.JsonSerializer.Serialize(theme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                        var json = System.Text.Json.JsonSerializer.Serialize(theme, Services.DesignerJsonContext.Default.ThemeSettings);
                         File.WriteAllText(presetPath, json);
                     }
                 }
@@ -1212,7 +1212,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
                 var presetPath = Path.Combine(dir, $"{NewPresetName.Trim()}.json");
-                var json = System.Text.Json.JsonSerializer.Serialize(CurrentGame.Theme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                var json = System.Text.Json.JsonSerializer.Serialize(CurrentGame.Theme, Services.DesignerJsonContext.Default.ThemeSettings);
                 File.WriteAllText(presetPath, json);
 
                 if (!ThemePresets.Contains(NewPresetName.Trim()))
@@ -1240,7 +1240,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (File.Exists(file))
                 {
                     var json = File.ReadAllText(file);
-                    var loadedTheme = System.Text.Json.JsonSerializer.Deserialize<ThemeSettings>(json);
+                    var loadedTheme = System.Text.Json.JsonSerializer.Deserialize(json, Services.DesignerJsonContext.Default.ThemeSettings);
                     if (loadedTheme != null)
                     {
                         System.Diagnostics.Debug.WriteLine($"[DEBUG-LOAD-PRESET] Loaded preset '{presetName}': BgColor='{loadedTheme.PrimaryBgColor}', TextColor='{loadedTheme.TextMainColor}', BgAsset='{loadedTheme.BackgroundAssetId}', FrameAsset='{loadedTheme.FrameAssetId}'");
@@ -3012,7 +3012,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
             {
                 var dir = GetPresetsDirectory();
                 var presetPath = Path.Combine(dir, $"{active.Trim()}.json");
-                var json = System.Text.Json.JsonSerializer.Serialize(CurrentGame.Theme, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                var json = System.Text.Json.JsonSerializer.Serialize(CurrentGame.Theme, Services.DesignerJsonContext.Default.ThemeSettings);
                 File.WriteAllText(presetPath, json);
             }
             catch (Exception ex)
