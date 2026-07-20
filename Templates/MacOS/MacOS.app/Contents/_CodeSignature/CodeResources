@@ -30,11 +30,11 @@
 		</data>
 		<key>Resources/Data/boot.config</key>
 		<data>
-		Zcka0mL2GwaHJCZFjYMulC1jUCY=
+		NAlCloAzbRKoGZ9kF/e4AtUb1yU=
 		</data>
 		<key>Resources/Data/globalgamemanagers</key>
 		<data>
-		qla1Y5eWJRdBDZ90J8lxO3v6sKA=
+		/peVrWyezy4CceW4bp+fSXVpcek=
 		</data>
 		<key>Resources/Data/globalgamemanagers.assets</key>
 		<data>
@@ -107,10 +107,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			ufhcNqaw+BeaAxJesIU+eC6r6Ss=
+			RKGCO/r2z/PC8KmTrZbCuh80CxQ=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b9f85c36a6b0f8179a03125eb0853e782eabe92b" or cdhash H"8340d28368e0e3fc9b4a306e2a3a916d4b8aa085"</string>
+			<string>cdhash H"44a1823bfaf6cff3c2f0a993ad96c2ba1f340b14" or cdhash H"8086ff66db6671167ba2edbce0ac8ff6bd489a47"</string>
 		</dict>
 		<key>Frameworks/UnityPlayer.dylib</key>
 		<dict>
@@ -125,10 +125,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			tnfIxZBe+vz5/h//rMbUYn4Ax+g=
+			YQnNKFw8SvaxUjV/z94afpVi4BI=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b677c8c5905efafcf9fe1fffacc6d4627e00c7e8" or cdhash H"774fc4c8d85d0d61b77b1677796091092899094c"</string>
+			<string>cdhash H"6109cd285c3c4af6b152357fcfde1a7e9562e012" or cdhash H"f90994c486d20aca88472ed21370c46a279f435c"</string>
 		</dict>
 		<key>Resources/Data/Resources/unity default resources</key>
 		<dict>
@@ -176,14 +176,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			7Gez4n2ljxj1y8msvtq45S1QKMQ7jcdHPNail+iCktA=
+			x6q6KLj/eJgYZhDd3GbIG8TRr15NTrgksoT8I+s60p8=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZHQESfEM6EldAlGLfElMR/CQ42HnjbWyCrHh5LQqDPA=
+			97SToSKTY4rUXuyVup6Z6ImaOPAaB/vVZOQafGxhgvI=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers.assets</key>
