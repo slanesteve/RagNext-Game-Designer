@@ -2843,7 +2843,16 @@ namespace RagNextPlayer.Managers
         {
             if (string.IsNullOrEmpty(path)) yield break;
             
-            // Prioritize embedded resources, then query local OS system fonts
+            // 1. Try loading direct TextCore FontAsset first (best for Unity 6 / UI Toolkit + macOS sandboxing)
+            var fontAsset = Resources.Load<UnityEngine.TextCore.Text.FontAsset>(path);
+            if (fontAsset != null)
+            {
+                _root.style.unityFontDefinition = new StyleFontDefinition(fontAsset);
+                _root.style.unityFont = StyleKeyword.Null;
+                yield break;
+            }
+
+            // 2. Fallback to standard dynamic Font asset
             Font loadedFont = Resources.Load<Font>(path);
             if (loadedFont == null)
             {
@@ -2858,6 +2867,7 @@ namespace RagNextPlayer.Managers
             }
             else
             {
+                // Safe default fallback to prevent giant font sizing issues if all else fails
                 _root.style.unityFont = StyleKeyword.Null;
                 _root.style.unityFontDefinition = StyleKeyword.Null;
             }
