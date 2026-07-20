@@ -156,6 +156,7 @@ jobs:
   commit-templates:
     name: Commit Built Templates to Repository
     needs: [build-linux-containers, build-mac-native, build-windows-native]
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -265,6 +266,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config lfs.push.verify false
           git add Templates/
           if ! git diff-index --quiet HEAD; then
             git commit -m "chore: automated update of built player templates"
