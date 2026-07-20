@@ -275,7 +275,9 @@ jobs:
           git add Templates/
           if ! git diff-index --quiet HEAD; then
             git commit -m "chore: automated update of built player templates"
-            git push
+            # Pull any commits pushed during the build run to prevent conflicts
+            git pull --rebase origin master
+            git push origin master
           else
             echo "No changes in built templates to commit."
           fi
