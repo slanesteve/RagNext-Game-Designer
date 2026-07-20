@@ -139,14 +139,19 @@ jobs:
           if-no-files-found: error
 
       - name: Copy Unity Build Log
-        if: always()
+        if: always() && inputs.buildWindows
         shell: pwsh
         run: |
           mkdir -p build/logs
-          cp "$env:LOCALAPPDATA\Unity\Editor\Editor.log" build/logs/Editor.log
+          $logPath = "$env:LOCALAPPDATA\Unity\Editor\Editor.log"
+          if (Test-Path $logPath) {
+              cp $logPath build/logs/Editor.log
+          } else {
+              Write-Output "Unity Editor.log not found."
+          }
 
       - name: Upload Unity Build Log
-        if: always()
+        if: always() && inputs.buildWindows
         uses: actions/upload-artifact@v4
         with:
           name: Windows-Unity-Editor-Log
