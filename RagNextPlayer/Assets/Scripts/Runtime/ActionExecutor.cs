@@ -1939,6 +1939,42 @@ namespace RagNextPlayer.Runtime
                     }
                     break;
 
+                case SetHotspotActiveCommandData c:
+                    {
+                        var targetIdOrName = ctx.Resolve(c.HotspotIdOrName);
+                        if (string.IsNullOrWhiteSpace(targetIdOrName)) break;
+
+                        foreach (var rm in ctx.Game.Rooms)
+                        {
+                            if (rm.InteractiveScreenSettings?.Hotspots != null)
+                            {
+                                foreach (var h in rm.InteractiveScreenSettings.Hotspots)
+                                {
+                                    if (string.Equals(h.Id, targetIdOrName, StringComparison.OrdinalIgnoreCase) ||
+                                        string.Equals(h.Name, targetIdOrName, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        h.IsActive = c.Active;
+                                    }
+                                }
+                            }
+                        }
+                        foreach (var obj in ctx.Game.Objects)
+                        {
+                            if (obj.InteractiveScreenSettings?.Hotspots != null)
+                            {
+                                foreach (var h in obj.InteractiveScreenSettings.Hotspots)
+                                {
+                                    if (string.Equals(h.Id, targetIdOrName, StringComparison.OrdinalIgnoreCase) ||
+                                        string.Equals(h.Name, targetIdOrName, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        h.IsActive = c.Active;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
                 case CharacterSetGenderCommandData c:
                     {
                         var charId = ResolveCharacterId(c.CharacterId, ctx);

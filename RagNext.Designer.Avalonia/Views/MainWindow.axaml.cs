@@ -434,14 +434,6 @@ namespace RagNext.Designer.Avalonia.Views
                             if (ObjectDetailsScrollViewer != null) ObjectDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
                         }, global::Avalonia.Threading.DispatcherPriority.Background);
 
-                        global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                        {
-                            if (PlayerDetailsScrollViewer != null) PlayerDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
-                            if (RoomDetailsScrollViewer != null) RoomDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
-                            if (CharDetailsScrollViewer != null) CharDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
-                            if (ObjectDetailsScrollViewer != null) ObjectDetailsScrollViewer.Offset = new global::Avalonia.Vector(0, 0);
-                        }, global::Avalonia.Threading.DispatcherPriority.Loaded);
-
                         UpdateSplashVideoPreview(vm);
                     }
                     else if (ev.PropertyName == nameof(MainWindowViewModel.SplashBackgroundPath) ||
@@ -735,9 +727,46 @@ namespace RagNext.Designer.Avalonia.Views
                     }
                 }
 
+                var hotspotsList = new System.Collections.Generic.List<CatalogEntityDto>();
+                if (vm.CurrentGame.Rooms != null)
+                {
+                    foreach (var r in vm.CurrentGame.Rooms)
+                    {
+                        if (r.InteractiveScreenSettings != null && r.InteractiveScreenSettings.Enabled && r.InteractiveScreenSettings.Hotspots != null)
+                        {
+                            foreach (var h in r.InteractiveScreenSettings.Hotspots)
+                            {
+                                hotspotsList.Add(new CatalogEntityDto 
+                                { 
+                                    Id = h.Id, 
+                                    Name = string.IsNullOrWhiteSpace(h.Name) ? h.Id : $"{h.Name} (Room: {r.Name})" 
+                                });
+                            }
+                        }
+                    }
+                }
+                if (vm.CurrentGame.Objects != null)
+                {
+                    foreach (var o in vm.CurrentGame.Objects)
+                    {
+                        if (o.InteractiveScreenSettings != null && o.InteractiveScreenSettings.Enabled && o.InteractiveScreenSettings.Hotspots != null)
+                        {
+                            foreach (var h in o.InteractiveScreenSettings.Hotspots)
+                            {
+                                hotspotsList.Add(new CatalogEntityDto 
+                                { 
+                                    Id = h.Id, 
+                                    Name = string.IsNullOrWhiteSpace(h.Name) ? h.Id : $"{h.Name} (Object: {o.Name})" 
+                                });
+                            }
+                        }
+                    }
+                }
+
                 var catalogsObj = new CatalogsDto
                 {
                     PromptNames = promptNamesSet.OrderBy(n => n).ToList(),
+                    Hotspots = hotspotsList.OrderBy(h => h.Name).ToList(),
                     Rooms = vm.CurrentGame.Rooms.Select(r => new CatalogEntityDto
                     {
                         Id = r.Id.ToString(), Name = r.Name,
@@ -5925,42 +5954,54 @@ namespace RagNext.Designer.Avalonia.Views
             try
             {
                 using var client = new HttpClient();
-                if (!string.IsNullOrWhiteSpace(apiKey))
+                string content = null;
+
+                if (string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase))
                 {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                    var systemPrompt = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes.";
+                    var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
+                    content = await CallGeminiAsync(client, endpoint, apiKey, model, systemPrompt, finalPrompt, 0.7);
                 }
-
-                var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
-                var requestBody = new AICoAuthorRequest
+                else
                 {
-                    model = model,
-                    messages = new[]
+                    if (!string.IsNullOrWhiteSpace(apiKey))
                     {
-                        new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
-                        new AICoAuthorMessage { role = "user", content = finalPrompt }
-                    },
-                    temperature = 0.7
-                };
-
-                var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
-                var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
-                var url = GetAiUrl(endpoint, port, provider);
-                var response = await client.PostAsync(url, requestContent);
-                var responseJson = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
-                }
-
-                using var doc = JsonDocument.Parse(responseJson);
-                if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
-                {
-                    var content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
-                    if (!string.IsNullOrEmpty(content))
-                    {
-                        vm.ComposeText = content;
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
                     }
+
+                    var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
+                    var requestBody = new AICoAuthorRequest
+                    {
+                        model = model,
+                        messages = new[]
+                        {
+                            new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                            new AICoAuthorMessage { role = "user", content = finalPrompt }
+                        },
+                        temperature = 0.7
+                    };
+
+                    var requestJson = JsonSerializer.Serialize(requestBody, RagNext.Designer.Avalonia.Services.DesignerJsonContext.Default.AICoAuthorRequest);
+                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+                    var url = GetAiUrl(endpoint, port, provider);
+                    var response = await client.PostAsync(url, requestContent);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"AI provider error: {response.StatusCode} - {responseJson}");
+                    }
+
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                    {
+                        content = choices[0].GetProperty("message").GetProperty("content").GetString()?.Trim();
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(content))
+                {
+                    vm.ComposeText = content;
                 }
             }
             catch (Exception ex)
@@ -6193,8 +6234,8 @@ namespace RagNext.Designer.Avalonia.Views
             var dialog = new Window
             {
                 Title = title,
-                Width = 400,
-                Height = 180,
+                Width = 500,
+                Height = 240,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Padding = new global::Avalonia.Thickness(20)
             };
@@ -6202,11 +6243,18 @@ namespace RagNext.Designer.Avalonia.Views
             dialog.Bind(global::Avalonia.Controls.Window.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
 
             var stack = new StackPanel { Spacing = 12 };
-            var msgBlock = new TextBlock { Text = message };
+            var msgBlock = new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap };
             msgBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
             stack.Children.Add(msgBlock);
 
-            var input = new TextBox { PlaceholderText = "Enter value..." };
+            var input = new TextBox 
+            { 
+                PlaceholderText = "Enter instructions...",
+                AcceptsReturn = true,
+                TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                Height = 80,
+                VerticalContentAlignment = global::Avalonia.Layout.VerticalAlignment.Top
+            };
             input.Bind(TextBox.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("InputBg"));
             input.Bind(TextBox.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
             input.Bind(TextBox.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
@@ -6224,7 +6272,7 @@ namespace RagNext.Designer.Avalonia.Views
 
             input.KeyDown += (s, e) =>
             {
-                if (e.Key == global::Avalonia.Input.Key.Enter)
+                if (e.Key == global::Avalonia.Input.Key.Enter && e.KeyModifiers.HasFlag(global::Avalonia.Input.KeyModifiers.Control))
                 {
                     e.Handled = true;
                     tcs.TrySetResult(input.Text ?? "");

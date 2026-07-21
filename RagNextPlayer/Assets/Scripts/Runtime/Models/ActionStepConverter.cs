@@ -168,6 +168,7 @@ namespace RagNextPlayer.Runtime.Models
                 "room.setDescription"       => typeof(RoomSetDescriptionCommandData),
                 "room.setPicture"           => typeof(RoomSetPictureCommandData),
                 "ui.setStatusBarVisible"    => typeof(SetStatusBarVisibleCommandData),
+                "ui.setHotspotActive"       => typeof(SetHotspotActiveCommandData),
                 "char.setGender"            => typeof(CharacterSetGenderCommandData),
                 "player.moveInventoryToChar" => typeof(PlayerMoveInventoryToCharacterCommandData),
                 "player.moveInventoryToRoom" => typeof(PlayerMoveInventoryToRoomCommandData),

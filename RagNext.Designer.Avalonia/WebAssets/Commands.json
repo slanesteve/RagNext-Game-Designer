@@ -750,6 +750,22 @@
       ]
     },
     {
+      "name": "UI: Set Hotspot Active State",
+      "category": "UI",
+      "inputs": [
+        {
+          "label": "Hotspot Id or Name",
+          "controlType": "ComboBox",
+          "dataType": "Hotspot"
+        },
+        {
+          "label": "Active",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+    {
       "name": "UI: Show Splash Screen",
       "category": "UI",
       "inputs": [

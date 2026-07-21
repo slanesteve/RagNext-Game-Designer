@@ -130,6 +130,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(RoomSetDescriptionCommand), "room.setDescription")]
     [JsonDerivedType(typeof(RoomSetPictureCommand), "room.setPicture")]
     [JsonDerivedType(typeof(SetStatusBarVisibleCommand), "ui.setStatusBarVisible")]
+    [JsonDerivedType(typeof(SetHotspotActiveCommand), "ui.setHotspotActive")]
     [JsonDerivedType(typeof(SetBackgroundMusicCommand), "media.setBackgroundMusic")]
     [JsonDerivedType(typeof(StopBackgroundMusicCommand), "media.stopBackgroundMusic")]
     [JsonDerivedType(typeof(SwapPlayerCharacterCommand), "player.swapCharacter")]
@@ -189,7 +190,7 @@ namespace RagsCore.Actions
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear", "item.remove",
                 "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
-                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen", "general.waitForContinue"
+                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "ui.setHotspotActive", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen", "general.waitForContinue"
             };
 
             // Convert unrecognized/unknown $type values to general.addComment to prevent crashes
@@ -3177,6 +3178,16 @@ namespace RagsCore.Actions
     public sealed class StopBackgroundMusicCommand : GameCommand
     {
         public override string TypeName => "Media: Stop Background Music";
+        public override void Execute(ActionContext ctx)
+        {
+        }
+    }
+
+    public sealed class SetHotspotActiveCommand : GameCommand
+    {
+        public string HotspotIdOrName { get; set; } = string.Empty;
+        public bool Active { get; set; } = true;
+        public override string TypeName => "UI: Set Hotspot Active State";
         public override void Execute(ActionContext ctx)
         {
         }

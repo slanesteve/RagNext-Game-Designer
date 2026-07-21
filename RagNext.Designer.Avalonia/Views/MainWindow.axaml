@@ -34,8 +34,8 @@
             
             <!-- Top Action Header -->
             <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Height="54" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="16,0">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="*,Auto,*">
+                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Left">
                         <!-- Branding Box -->
                         <Border CornerRadius="4" Width="28" Height="28">
                             <Border.Background>
@@ -71,7 +71,7 @@
                     </StackPanel>
 
                     <!-- Quick Tools -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding HasGame}">
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Right" IsVisible="{Binding HasGame}">
                         <!-- Save Status Indicator -->
                         <Border Background="{DynamicResource ToolbarBtnBg}" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" CornerRadius="4" Padding="8,5" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6">
@@ -545,47 +545,47 @@
                                             <Expander Header="Exits &amp; Navigation" Background="{DynamicResource InputBg}" Margin="0,8,0,0" IsExpanded="True">
                                                 <Expander.Styles>
                                                     <Style Selector="Border.exit-card">
-                                                        <Setter Property="Background" Value="#151522"/>
-                                                        <Setter Property="BorderBrush" Value="rgba(255, 255, 255, 0.08)"/>
-                                                        <Setter Property="BorderThickness" Value="1"/>
-                                                        <Setter Property="CornerRadius" Value="8"/>
-                                                        <Setter Property="Padding" Value="8,6"/>
-                                                        <Setter Property="Margin" Value="4"/>
-                                                        <Setter Property="Width" Value="152"/>
-                                                        <Setter Property="Height" Value="90"/>
-                                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                                    </Style>
-                                                    <Style Selector="Button.delete-exit-btn">
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Setter Property="Foreground" Value="#EF4444"/>
-                                                        <Setter Property="FontSize" Value="10"/>
-                                                        <Setter Property="FontWeight" Value="Bold"/>
-                                                        <Setter Property="Padding" Value="4,0"/>
-                                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                                    </Style>
-                                                    <Style Selector="Button.add-exit-btn">
-                                                        <Setter Property="Background" Value="#252535"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-                                                        <Setter Property="CornerRadius" Value="16"/>
-                                                        <Setter Property="Padding" Value="10,6"/>
-                                                        <Setter Property="BorderBrush" Value="rgba(255, 255, 255, 0.06)"/>
-                                                        <Setter Property="BorderThickness" Value="1"/>
-                                                        <Setter Property="Width" Value="75"/>
-                                                        <Setter Property="Height" Value="32"/>
-                                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                                    </Style>
-                                                    <Style Selector="Button.add-exit-btn:hover">
-                                                        <Setter Property="Background" Value="#32324A"/>
-                                                        <Setter Property="Foreground" Value="White"/>
-                                                        <Setter Property="BorderBrush" Value="#8E2DE2"/>
-                                                    </Style>
+                                                         <Setter Property="Background" Value="#151522"/>
+                                                         <Setter Property="BorderBrush" Value="rgba(255, 255, 255, 0.08)"/>
+                                                         <Setter Property="BorderThickness" Value="1"/>
+                                                         <Setter Property="CornerRadius" Value="8"/>
+                                                         <Setter Property="Padding" Value="6,4"/>
+                                                         <Setter Property="Margin" Value="2"/>
+                                                         <Setter Property="Width" Value="136"/>
+                                                         <Setter Property="Height" Value="90"/>
+                                                         <Setter Property="VerticalAlignment" Value="Center"/>
+                                                         <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                     </Style>
+                                                     <Style Selector="Button.delete-exit-btn">
+                                                         <Setter Property="Background" Value="Transparent"/>
+                                                         <Setter Property="Foreground" Value="#EF4444"/>
+                                                         <Setter Property="FontSize" Value="10"/>
+                                                         <Setter Property="FontWeight" Value="Bold"/>
+                                                         <Setter Property="Padding" Value="4,0"/>
+                                                         <Setter Property="VerticalAlignment" Value="Center"/>
+                                                     </Style>
+                                                     <Style Selector="Button.add-exit-btn">
+                                                         <Setter Property="Background" Value="#252535"/>
+                                                         <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+                                                         <Setter Property="CornerRadius" Value="14"/>
+                                                         <Setter Property="Padding" Value="8,4"/>
+                                                         <Setter Property="BorderBrush" Value="rgba(255, 255, 255, 0.06)"/>
+                                                         <Setter Property="BorderThickness" Value="1"/>
+                                                         <Setter Property="Width" Value="68"/>
+                                                         <Setter Property="Height" Value="28"/>
+                                                         <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                         <Setter Property="VerticalAlignment" Value="Center"/>
+                                                     </Style>
+                                                     <Style Selector="Button.add-exit-btn:hover">
+                                                         <Setter Property="Background" Value="#32324A"/>
+                                                         <Setter Property="Foreground" Value="White"/>
+                                                         <Setter Property="BorderBrush" Value="#8E2DE2"/>
+                                                     </Style>
                                                 </Expander.Styles>
 
                                                 <Grid ColumnDefinitions="*, Auto" Margin="4">
                                                     <!-- Compass Rose Grid (North, South, East, West, NW, NE, SW, SE) -->
-                                                    <Grid Grid.Column="0" RowDefinitions="*,*,*" ColumnDefinitions="*,*,*" Width="500" Height="320" HorizontalAlignment="Center" Margin="0,0,16,0">
+                                                    <Grid Grid.Column="0" RowDefinitions="*,*,*" ColumnDefinitions="*,*,*" Width="440" Height="310" HorizontalAlignment="Center" Margin="0,0,12,0">
                                                         <!-- Grid Background Lines / aesthetics -->
                                                         <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="3" BorderBrush="rgba(255,255,255,0.03)" BorderThickness="1" Background="rgba(0,0,0,0.05)" CornerRadius="12"/>
 
@@ -839,32 +839,32 @@
                                                     </Grid>
 
                                                     <!-- Vertical Exits (Up, Down, In, Out) Side Column -->
-                                                    <StackPanel Grid.Column="1" Spacing="10" Width="170" VerticalAlignment="Center">
-                                                        <TextBlock Text="Vertical Exits:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="4,0,0,4"/>
+                                                    <StackPanel Grid.Column="1" Spacing="6" Width="140" VerticalAlignment="Center">
+                                                        <TextBlock Text="Vertical Exits:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="4,0,0,2"/>
 
                                                         <!-- Up -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #UpPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="160" Height="90" Margin="0">
-                                                                <StackPanel Spacing="4">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #UpPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                                <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Up ▲" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Up" Classes="delete-exit-btn"/>
                                                                     </Grid>
                                                                     <ComboBox x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #UpRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
-                                                                    <ComboBox x:Name="UpRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                    <ComboBox x:Name="UpRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="24" FontSize="9">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
                                                                                 <TextBlock Text="{Binding Name}"/>
                                                                             </DataTemplate>
                                                                         </ComboBox.ItemTemplate>
                                                                     </ComboBox>
-                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-                                                                        <CheckBox x:Name="UpOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
-                                                                        <CheckBox x:Name="UpLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="2" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="UpOneWay" Content="1-Way" FontSize="8" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="UpLocked" Content="Lock" FontSize="8" Margin="2,0,0,0" Padding="2,0,0,0"/>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="160" Height="32" IsVisible="{Binding #UpPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #UpPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="▲" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Up" FontSize="9" VerticalAlignment="Center"/>
@@ -874,27 +874,27 @@
 
                                                         <!-- Down -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #DownPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="160" Height="90" Margin="0">
-                                                                <StackPanel Spacing="4">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #DownPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                                <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Down ▼" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Down" Classes="delete-exit-btn"/>
                                                                     </Grid>
                                                                     <ComboBox x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #DownRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
-                                                                    <ComboBox x:Name="DownRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                    <ComboBox x:Name="DownRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="24" FontSize="9">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
                                                                                 <TextBlock Text="{Binding Name}"/>
                                                                             </DataTemplate>
                                                                         </ComboBox.ItemTemplate>
                                                                     </ComboBox>
-                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-                                                                        <CheckBox x:Name="DownOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
-                                                                        <CheckBox x:Name="DownLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="2" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="DownOneWay" Content="1-Way" FontSize="8" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="DownLocked" Content="Lock" FontSize="8" Margin="2,0,0,0" Padding="2,0,0,0"/>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="160" Height="32" IsVisible="{Binding #DownPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #DownPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="▼" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Down" FontSize="9" VerticalAlignment="Center"/>
@@ -904,27 +904,27 @@
 
                                                         <!-- In -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #InPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="160" Height="90" Margin="0">
-                                                                <StackPanel Spacing="4">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #InPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                                <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="In ↵" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="In" Classes="delete-exit-btn"/>
                                                                     </Grid>
                                                                     <ComboBox x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #InRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
-                                                                    <ComboBox x:Name="InRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                    <ComboBox x:Name="InRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="24" FontSize="9">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
                                                                                 <TextBlock Text="{Binding Name}"/>
                                                                             </DataTemplate>
                                                                         </ComboBox.ItemTemplate>
                                                                     </ComboBox>
-                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-                                                                        <CheckBox x:Name="InOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
-                                                                        <CheckBox x:Name="InLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="2" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="InOneWay" Content="1-Way" FontSize="8" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="InLocked" Content="Lock" FontSize="8" Margin="2,0,0,0" Padding="2,0,0,0"/>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="160" Height="32" IsVisible="{Binding #InPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #InPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↵" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="In" FontSize="9" VerticalAlignment="Center"/>
@@ -934,27 +934,27 @@
 
                                                         <!-- Out -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #OutPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="160" Height="90" Margin="0">
-                                                                <StackPanel Spacing="4">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #OutPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                                <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Out ↳" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Out" Classes="delete-exit-btn"/>
                                                                     </Grid>
                                                                     <ComboBox x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #OutRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
-                                                                    <ComboBox x:Name="OutRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
+                                                                    <ComboBox x:Name="OutRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="24" FontSize="9">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
                                                                                 <TextBlock Text="{Binding Name}"/>
                                                                             </DataTemplate>
                                                                         </ComboBox.ItemTemplate>
                                                                     </ComboBox>
-                                                                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-                                                                        <CheckBox x:Name="OutOneWay" Content="One Way" FontSize="9" Margin="0" Padding="2,0,0,0"/>
-                                                                        <CheckBox x:Name="OutLocked" Content="Locked" FontSize="9" Margin="4,0,0,0" Padding="2,0,0,0"/>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="2" HorizontalAlignment="Center">
+                                                                        <CheckBox x:Name="OutOneWay" Content="1-Way" FontSize="8" Margin="0" Padding="2,0,0,0"/>
+                                                                        <CheckBox x:Name="OutLocked" Content="Lock" FontSize="8" Margin="2,0,0,0" Padding="2,0,0,0"/>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="160" Height="32" IsVisible="{Binding #OutPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #OutPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↳" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Out" FontSize="9" VerticalAlignment="Center"/>
@@ -1151,7 +1151,7 @@
                                                         
                                                         <TextBlock Text="Button Name (Designer Only):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                         <TextBox Text="{Binding Name, Mode=TwoWay}" Watermark="Button Name" FontSize="11" Background="{DynamicResource CardBg}"/>
-                                                        
+                                                        <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}" Content="Initially Active" FontSize="11"/>
                                                         <TextBlock Text="Linked Action:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                         <ComboBox SelectedItem="{Binding LinkedActionId, Mode=TwoWay, Converter={x:Static views:ActionToIdStringConverter.Instance}}" ItemsSource="{Binding $parent[TabControl].DataContext.Actions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
                                                             <ComboBox.ItemTemplate>
@@ -1803,7 +1803,7 @@
                                                         
                                                         <TextBlock Text="Button Name (Designer Only):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                         <TextBox Text="{Binding Name, Mode=TwoWay}" Watermark="Button Name" FontSize="11" Background="{DynamicResource CardBg}"/>
-                                                        
+                                                        <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}" Content="Initially Active" FontSize="11"/>
                                                         <TextBlock Text="Linked Action:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                         <ComboBox SelectedItem="{Binding LinkedActionId, Mode=TwoWay, Converter={x:Static views:ActionToIdStringConverter.Instance}}" ItemsSource="{Binding $parent[TabControl].DataContext.Actions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
                                                             <ComboBox.ItemTemplate>

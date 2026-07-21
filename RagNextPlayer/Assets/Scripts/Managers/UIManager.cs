@@ -3768,7 +3768,7 @@ namespace RagNextPlayer.Managers
 
         public void RefreshActiveInteractiveScreen()
         {
-            if (_activeScreenSettings != null && _activeScreenSettings.Enabled && _activeScreenRoom != null)
+            if (_activeScreenSettings != null && _activeScreenSettings.Enabled)
             {
                 RenderInteractiveScreen(_activeScreenSettings, _activeScreenRoom);
             }
@@ -3849,6 +3849,7 @@ namespace RagNextPlayer.Managers
             // Create hotspots
             foreach (var hotspot in settings.Hotspots)
             {
+                if (!hotspot.IsActive) continue;
                 var btn = new Button();
                 btn.name = hotspot.Id;
                 btn.AddToClassList("screen-hotspot");
@@ -3884,6 +3885,10 @@ namespace RagNextPlayer.Managers
 
                     var labelTextElement = new Label(resolvedLabel);
                     labelTextElement.name = "hotspot-label";
+                    if (string.IsNullOrWhiteSpace(resolvedLabel))
+                    {
+                        labelTextElement.style.display = DisplayStyle.None;
+                    }
                     labelTextElement.style.unityTextAlign = TextAnchor.MiddleCenter;
                     labelTextElement.style.whiteSpace = WhiteSpace.Normal;
                     labelTextElement.pickingMode = PickingMode.Ignore;

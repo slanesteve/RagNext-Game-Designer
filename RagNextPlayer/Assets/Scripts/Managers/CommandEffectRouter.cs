@@ -339,6 +339,10 @@ namespace RagNextPlayer.Managers
                     UIManager.Instance?.RefreshPlayerPanel();
                     break;
 
+                case SetHotspotActiveCommandData:
+                    UIManager.Instance?.RefreshActiveInteractiveScreen();
+                    break;
+
             }
         }
 

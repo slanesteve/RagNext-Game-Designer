@@ -61,5 +61,8 @@ namespace RagsCore.Models
 
         private string _linkedActionId = string.Empty;
         public string LinkedActionId { get => _linkedActionId; set => SetProperty(ref _linkedActionId, value); }
+
+        private bool _isActive = true;
+        public bool IsActive { get => _isActive; set => SetProperty(ref _isActive, value); }
     }
 }

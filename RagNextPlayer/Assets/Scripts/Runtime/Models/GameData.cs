@@ -110,6 +110,7 @@ namespace RagNextPlayer.Runtime.Models
         public string BackgroundColor { get; set; } = "#1A1A1A";
         public string ImageAssetId { get; set; } = string.Empty;
         public string LinkedActionId { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
     }
 
     // ── Player ────────────────────────────────────────────────────────────────
@@ -340,6 +341,7 @@ namespace RagNextPlayer.Runtime.Models
     public class RoomSetDescriptionCommandData : CommandData { public string RoomId { get; set; } = string.Empty; public string Description { get; set; } = string.Empty; }
     public class RoomSetPictureCommandData : CommandData { public string RoomId { get; set; } = string.Empty; public string Picture { get; set; } = string.Empty; }
     public class SetStatusBarVisibleCommandData : CommandData { public bool Visible { get; set; } }
+    public class SetHotspotActiveCommandData : CommandData { public string HotspotIdOrName { get; set; } = string.Empty; public bool Active { get; set; } = true; }
     public class CharacterSetGenderCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; public string Gender { get; set; } = "Male"; }
     public class PlayerMoveInventoryToCharacterCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }
     public class PlayerMoveInventoryToRoomCommandData : CommandData { public string RoomId { get; set; } = string.Empty; }

@@ -182,6 +182,7 @@ namespace RagNext.Designer.Avalonia.Services
         public string? BackgroundColor { get; set; }
         public string? ImageAssetId { get; set; }
         public string? LinkedActionId { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 
     public class ExportThemeSettingsDto
@@ -442,7 +443,8 @@ namespace RagNext.Designer.Avalonia.Services
                     FontSize = h.FontSize,
                     BackgroundColor = h.BackgroundColor,
                     ImageAssetId = h.ImageAssetId,
-                    LinkedActionId = h.LinkedActionId
+                    LinkedActionId = h.LinkedActionId,
+                    IsActive = h.IsActive
                 }).ToList()
             };
         }

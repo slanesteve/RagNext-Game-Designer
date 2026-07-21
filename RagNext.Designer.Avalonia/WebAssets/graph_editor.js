@@ -141,6 +141,7 @@ const fallbackDiscriminators = {
     "roomlockexit": "room.lockExit",
     "roomunlockexit": "room.unlockExit",
     "statusbarsetvisibleinvisible": "ui.setStatusBarVisible",
+    "uisethotspotactivestate": "ui.setHotspotActive",
     "timersetattribute": "timer.setAttribute",
     "timersettimertoactiveinactive": "timer.setTimerActive",
     "variableset": "var.set",
@@ -229,6 +230,7 @@ const propertyMappings = {
     "Transition Intensity": ["Intensity", "intensity"],
     "Button Text": ["ButtonText", "buttonText"],
     "Sound File": ["SoundId", "soundId"],
+    "Hotspot Id or Name": ["HotspotIdOrName", "hotspotIdOrName"],
     "Video File": ["VideoId", "videoId"],
     "Array Variable": ["ArrayVariableName", "arrayVariableName"],
     "Row Index": ["RowIndex", "rowIndex"],
@@ -2713,6 +2715,7 @@ function refreshCommandFields(node) {
 
             let optionsList = [];
             if (inputSchema.dataType === 'Room') optionsList = catalogs.Rooms || [];
+            else if (inputSchema.dataType === 'Hotspot') optionsList = catalogs.Hotspots || [];
             else if (inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Item') {
                 optionsList = catalogs.GameObjects || [];
                 if (inputSchema.label === 'Container Object' || inputSchema.label === 'ContainerObject') {
@@ -5796,24 +5799,24 @@ let currentAddAttributeCtx = null;
 window.openAddAttributeModal = function(node, select, inputSchema) {
     let targetType = "";
     let targetId = "";
-    const cmdType = node.data.commandType || "";
+    const cmdType = (node.data.commandType || node.data.conditionType || "").toLowerCase();
 
-    if (cmdType.startsWith("char.") || cmdType.startsWith("character.")) {
+    if (cmdType.startsWith("char.") || cmdType.startsWith("character.") || cmdType.includes("character")) {
         targetType = "Character";
         targetId = getPropertyValue(node.data, "Character");
-    } else if (cmdType.startsWith("item.")) {
+    } else if (cmdType.startsWith("item.") || cmdType.includes("item") || cmdType.includes("object")) {
         targetType = "GameObject";
         targetId = getPropertyValue(node.data, "Item") || getPropertyValue(node.data, "Object");
-    } else if (cmdType.startsWith("room.")) {
+    } else if (cmdType.startsWith("room.") || cmdType.includes("room")) {
         targetType = "Room";
         targetId = getPropertyValue(node.data, "Room");
-    } else if (cmdType.startsWith("player.")) {
+    } else if (cmdType.startsWith("player.") || cmdType.includes("player")) {
         targetType = "Player";
         targetId = "Player";
     }
 
     if (targetType !== "Player" && !targetId) {
-        alert(`Please select a ${targetType} first.`);
+        alert(`Please select a ${targetType || "target"} first.`);
         const prevVal = node.data[inputSchema.label] || "";
         select.value = prevVal;
         return;
@@ -6134,6 +6137,7 @@ const nodeDescriptions = {
 
     // UI & Status Elements
     "ui.setStatusBarVisible": "Shows or hides the status bar display.",
+    "ui.setHotspotActive": "Enables or disables an interactive screen hotspot.",
     "ui.showSplashScreen": "Triggers showing a named splash screen in-game.",
     "status.show": "Displays a status bar element.",
     "status.hide": "Hides a status bar element.",

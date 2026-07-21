@@ -41,6 +41,8 @@ namespace RagNextPlayer.Managers
         private readonly Dictionary<AudioSource, string> _sourcePaths = new();
         private readonly Dictionary<AudioSource, string> _sourceIds = new();
         private readonly Dictionary<AudioSource, bool> _sourceLooping = new();
+        private readonly Dictionary<string, (Coroutine coroutine, bool loop)> _loadingCoroutines = new(StringComparer.OrdinalIgnoreCase);
+        private Coroutine _loadingMusicCoroutine;
         public string? CurrentMusicId { get; private set; }
         private float _musicVolume = 1f;
         private bool _musicLoop = true;
@@ -72,7 +74,12 @@ namespace RagNextPlayer.Managers
             }
             else
             {
-                StartCoroutine(LoadAndPlayAudioRoutine(path, soundId, volume, loop, startTime, endTime));
+                if (_loadingCoroutines.TryGetValue(soundId, out var existing))
+                {
+                    StopCoroutine(existing.coroutine);
+                }
+                var coroutine = StartCoroutine(LoadAndPlayAudioRoutine(path, soundId, volume, loop, startTime, endTime));
+                _loadingCoroutines[soundId] = (coroutine, loop);
             }
         }
 
@@ -131,6 +138,12 @@ namespace RagNextPlayer.Managers
         {
             if (string.IsNullOrWhiteSpace(soundId)) return;
 
+            if (_loadingCoroutines.TryGetValue(soundId, out var existing) && existing.coroutine != null)
+            {
+                StopCoroutine(existing.coroutine);
+                _loadingCoroutines.Remove(soundId);
+            }
+
             string path = soundId;
             var game = GameManager.Instance?.ActiveGame;
             if (game != null)
@@ -146,7 +159,17 @@ namespace RagNextPlayer.Managers
 
             foreach (var src in _pool)
             {
-                if (src.isPlaying && _sourcePaths.TryGetValue(src, out var p) && string.Equals(p, path, StringComparison.OrdinalIgnoreCase))
+                bool isMatch = false;
+                if (_sourcePaths.TryGetValue(src, out var p) && string.Equals(p, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    isMatch = true;
+                }
+                else if (_sourceIds.TryGetValue(src, out var id) && string.Equals(id, soundId, StringComparison.OrdinalIgnoreCase))
+                {
+                    isMatch = true;
+                }
+
+                if (isMatch)
                 {
                     src.Stop();
                     src.clip = null;
@@ -157,6 +180,17 @@ namespace RagNextPlayer.Managers
 
         public void StopAllLoopingSounds()
         {
+            var keysToCancel = new List<string>();
+            foreach (var kvp in _loadingCoroutines)
+            {
+                if (kvp.Value.loop)
+                {
+                    if (kvp.Value.coroutine != null) StopCoroutine(kvp.Value.coroutine);
+                    keysToCancel.Add(kvp.Key);
+                }
+            }
+            foreach (var key in keysToCancel) _loadingCoroutines.Remove(key);
+
             foreach (var src in _pool)
             {
                 if (src.isPlaying && src.loop)
@@ -170,6 +204,12 @@ namespace RagNextPlayer.Managers
 
         public void StopAllSounds()
         {
+            foreach (var kvp in _loadingCoroutines)
+            {
+                if (kvp.Value.coroutine != null) StopCoroutine(kvp.Value.coroutine);
+            }
+            _loadingCoroutines.Clear();
+
             foreach (var src in _pool)
             {
                 src.Stop();
@@ -203,11 +243,20 @@ namespace RagNextPlayer.Managers
 
             if (_cache.TryGetValue(path, out var clip))
             {
+                if (_loadingMusicCoroutine != null)
+                {
+                    StopCoroutine(_loadingMusicCoroutine);
+                    _loadingMusicCoroutine = null;
+                }
                 PlayMusicClip(clip);
             }
             else
             {
-                StartCoroutine(LoadAndPlayMusicRoutine(path));
+                if (_loadingMusicCoroutine != null)
+                {
+                    StopCoroutine(_loadingMusicCoroutine);
+                }
+                _loadingMusicCoroutine = StartCoroutine(LoadAndPlayMusicRoutine(path));
             }
         }
 
@@ -248,41 +297,53 @@ namespace RagNextPlayer.Managers
 
         private System.Collections.IEnumerator LoadAndPlayMusicRoutine(string path)
         {
-            string url = FormatLocalPathForWeb(path);
-            if (string.IsNullOrEmpty(url)) yield break;
-
-            AudioType audioType = AudioType.UNKNOWN;
-            string ext = Path.GetExtension(path).ToLower();
-            if (ext == ".mp3") audioType = AudioType.MPEG;
-            else if (ext == ".wav") audioType = AudioType.WAV;
-            else if (ext == ".ogg") audioType = AudioType.OGGVORBIS;
-
-            using var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType);
-            yield return req.SendWebRequest();
-
-            if (req.result == UnityWebRequest.Result.Success)
+            try
             {
-                var clip = DownloadHandlerAudioClip.GetContent(req);
-                if (clip != null)
+                string url = FormatLocalPathForWeb(path);
+                if (string.IsNullOrEmpty(url)) yield break;
+
+                AudioType audioType = AudioType.UNKNOWN;
+                string ext = Path.GetExtension(path).ToLower();
+                if (ext == ".mp3") audioType = AudioType.MPEG;
+                else if (ext == ".wav") audioType = AudioType.WAV;
+                else if (ext == ".ogg") audioType = AudioType.OGGVORBIS;
+
+                using var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType);
+                yield return req.SendWebRequest();
+
+                if (req.result == UnityWebRequest.Result.Success)
                 {
-                    _cache[path] = clip;
-                    PlayMusicClip(clip);
+                    var clip = DownloadHandlerAudioClip.GetContent(req);
+                    if (clip != null)
+                    {
+                        _cache[path] = clip;
+                        PlayMusicClip(clip);
+                    }
+                }
+                else
+                {
+                    var clip = Resources.Load<AudioClip>($"Audio/{path}");
+                    if (clip != null)
+                    {
+                        _cache[path] = clip;
+                        PlayMusicClip(clip);
+                    }
                 }
             }
-            else
+            finally
             {
-                var clip = Resources.Load<AudioClip>($"Audio/{path}");
-                if (clip != null)
-                {
-                    _cache[path] = clip;
-                    PlayMusicClip(clip);
-                }
+                _loadingMusicCoroutine = null;
             }
         }
 
         public void StopMusic()
         {
             CurrentMusicId = null;
+            if (_loadingMusicCoroutine != null)
+            {
+                StopCoroutine(_loadingMusicCoroutine);
+                _loadingMusicCoroutine = null;
+            }
             if (_musicSource != null && _musicSource.isPlaying)
             {
                 _musicSource.Stop();
@@ -310,41 +371,51 @@ namespace RagNextPlayer.Managers
 
         private System.Collections.IEnumerator LoadAndPlayAudioRoutine(string path, string soundId, float volume, bool loop, float startTime = 0f, float endTime = 0f)
         {
-            string url = FormatLocalPathForWeb(path);
-            if (string.IsNullOrEmpty(url)) yield break;
-
-            AudioType audioType = AudioType.UNKNOWN;
-            string ext = Path.GetExtension(path).ToLower();
-            if (ext == ".mp3") audioType = AudioType.MPEG;
-            else if (ext == ".wav") audioType = AudioType.WAV;
-            else if (ext == ".ogg") audioType = AudioType.OGGVORBIS;
-
-            Debug.Log($"[AudioManager] Loading dynamic audio clip from URL: '{url}'");
-            using var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType);
-            yield return req.SendWebRequest();
-
-            if (req.result == UnityWebRequest.Result.Success)
+            try
             {
-                var clip = DownloadHandlerAudioClip.GetContent(req);
-                if (clip != null)
+                string url = FormatLocalPathForWeb(path);
+                if (string.IsNullOrEmpty(url)) yield break;
+
+                AudioType audioType = AudioType.UNKNOWN;
+                string ext = Path.GetExtension(path).ToLower();
+                if (ext == ".mp3") audioType = AudioType.MPEG;
+                else if (ext == ".wav") audioType = AudioType.WAV;
+                else if (ext == ".ogg") audioType = AudioType.OGGVORBIS;
+
+                Debug.Log($"[AudioManager] Loading dynamic audio clip from URL: '{url}'");
+                using var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType);
+                yield return req.SendWebRequest();
+
+                if (req.result == UnityWebRequest.Result.Success)
                 {
-                    _cache[path] = clip;
-                    PlayClip(clip, volume, loop, path, soundId, startTime, endTime);
-                    Debug.Log($"[AudioManager] Successfully loaded and played dynamic audio clip: '{path}'");
-                }
-            }
-            else
-            {
-                // Fallback to static Resources
-                var clip = Resources.Load<AudioClip>($"Audio/{path}");
-                if (clip != null)
-                {
-                    _cache[path] = clip;
-                    PlayClip(clip, volume, loop, path, soundId, startTime, endTime);
+                    var clip = DownloadHandlerAudioClip.GetContent(req);
+                    if (clip != null)
+                    {
+                        _cache[path] = clip;
+                        PlayClip(clip, volume, loop, path, soundId, startTime, endTime);
+                        Debug.Log($"[AudioManager] Successfully loaded and played dynamic audio clip: '{path}'");
+                    }
                 }
                 else
                 {
-                    Debug.LogError($"[AudioManager] Failed to load audio clip from URL '{url}': {req.error}");
+                    // Fallback to static Resources
+                    var clip = Resources.Load<AudioClip>($"Audio/{path}");
+                    if (clip != null)
+                    {
+                        _cache[path] = clip;
+                        PlayClip(clip, volume, loop, path, soundId, startTime, endTime);
+                    }
+                    else
+                    {
+                        Debug.LogError($"[AudioManager] Failed to load audio clip from URL '{url}': {req.error}");
+                    }
+                }
+            }
+            finally
+            {
+                if (_loadingCoroutines.TryGetValue(soundId, out var existing))
+                {
+                    _loadingCoroutines.Remove(soundId);
                 }
             }
         }

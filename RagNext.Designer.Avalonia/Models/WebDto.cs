@@ -52,6 +52,7 @@ namespace RagNext.Designer.Avalonia.Views
         public List<CatalogActionDto>? PlayerActions { get; set; }
         public List<CatalogEntityDto>? StatusBarElements { get; set; }
         public List<CatalogEntityDto>? SplashScreens { get; set; }
+        public List<CatalogEntityDto>? Hotspots { get; set; }
         public List<string>? ThemePresets { get; set; }
         public List<string>? PromptNames { get; set; }
     }
