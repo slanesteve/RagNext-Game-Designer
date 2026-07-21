@@ -963,7 +963,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         // Theme Customizer properties
         public List<string> BuiltInFonts { get; } = new List<string>
         {
-            "Outfit", "Inter", "Roboto", "Cinzel", "PlayFairDisplay",
+            "Outfit", "Inter", "Roboto", "Cinzel", "PlayfairDisplay",
             "Lora", "Orbitron", "PressStart2P", "VT323", "Caveat",
             "Pacifico", "Creepster", "SpecialElite", "Montserrat", "Merriweather"
         };
@@ -999,7 +999,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     var familyName = name switch
                     {
-                        "PlayFairDisplay" => "Playfair Display",
+                        "PlayfairDisplay" => "Playfair Display",
                         "PressStart2P" => "Press Start 2P",
                         "SpecialElite" => "Special Elite",
                         _ => name
