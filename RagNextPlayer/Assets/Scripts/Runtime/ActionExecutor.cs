@@ -264,16 +264,22 @@ namespace RagNextPlayer.Runtime
         private Stack<IEnumerator<ActionStepData>> _scopes = new();
         private GameExecutionContext _ctx;
         private IGameEventSink? _sink;
-        
+        private System.Threading.Tasks.TaskCompletionSource<bool> _tcs = new(System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public System.Threading.Tasks.Task CompletionTask => _tcs.Task;
+        public void CompleteTask() => _tcs.TrySetResult(true);
         public bool IsSuspended { get; private set; }
         public string ActionName { get; }
         
         public ActionRunner(ActionData action, GameExecutionContext ctx, IGameEventSink? sink)
         {
+            ActionName = action?.Name ?? string.Empty;
             _ctx = ctx;
             _sink = sink;
-            ActionName = action?.Name ?? "";
-            _scopes.Push(action.Nodes.GetEnumerator());
+            if (action?.Nodes != null)
+            {
+                _scopes.Push(action.Nodes.GetEnumerator());
+            }
             ActionExecutor.RegisterRunner(this);
         }
         
@@ -334,7 +340,7 @@ namespace RagNextPlayer.Runtime
                                 _sink?.OnCommandExecuted(cmd, _ctx);
                             }
 
-                            if (cmd is PromptPlayerInputCommandData || cmd is WaitForContinueCommandData)
+                            if (cmd is PromptPlayerInputCommandData || cmd is WaitForContinueCommandData || cmd is StartDialogueCommandData)
                             {
                                 IsSuspended = true;
                                 break;
@@ -658,7 +664,31 @@ namespace RagNextPlayer.Runtime
         private static readonly System.Collections.Generic.List<ActionRunner> _runners = new();
         private static int _executionDepth = 0;
 
+        public static string EvaluateAttributeValue(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return value;
+
+            if (!double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _))
+            {
+                try
+                {
+                    var tokens = value.Split(new[] { '+', '-', '*', '/', '%', '^' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (tokens.Length > 1 && System.Linq.Enumerable.All(tokens, t => double.TryParse(t.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _)))
+                    {
+                        double numVal = MathEvaluator.Evaluate(value);
+                        return numVal.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                }
+                catch
+                {
+                    // Fallback to original string if not a valid mathematical formula
+                }
+            }
+            return value;
+        }
+
         public static ActionRunner? ActiveRunner { get; set; }
+        public static bool IsSuspended => _runners.Exists(r => r.IsSuspended);
 
         public static void RegisterRunner(ActionRunner runner)
         {
@@ -673,6 +703,7 @@ namespace RagNextPlayer.Runtime
             {
                 ActiveRunner = _runners.Count > 0 ? _runners[_runners.Count - 1] : null;
             }
+            runner.CompleteTask();
         }
 
         public static void ResumeSuspended()
@@ -691,13 +722,13 @@ namespace RagNextPlayer.Runtime
             ActiveRunner?.Resume();
         }
 
-        public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null, bool isUserInteraction = true, bool forceExecute = false)
+        public static System.Threading.Tasks.Task ExecuteAsync(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null, bool isUserInteraction = true, bool forceExecute = false)
         {
-            if (action is null || ctx is null) return;
+            if (action is null || ctx is null) return System.Threading.Tasks.Task.CompletedTask;
             if (!action.InitallyActive && !forceExecute)
             {
                 Debug.Log($"[ActionExecutor] Skip executing inactive action: '{action.Name}' ({action.Id}).");
-                return;
+                return System.Threading.Tasks.Task.CompletedTask;
             }
             
             _executionDepth++;
@@ -711,11 +742,17 @@ namespace RagNextPlayer.Runtime
                 Debug.Log($"[ActionExecutor] Execute called for action: '{action.Name}' ({action.Id}).");
                 var runner = new ActionRunner(action, ctx, sink);
                 runner.ExecuteNext();
+                return runner.CompletionTask;
             }
             finally
             {
                 _executionDepth--;
             }
+        }
+
+        public static void Execute(ActionData action, GameExecutionContext ctx, IGameEventSink? sink = null, bool isUserInteraction = true, bool forceExecute = false)
+        {
+            _ = ExecuteAsync(action, ctx, sink, isUserInteraction, forceExecute);
         }
 
         // ── Command Dispatch ──────────────────────────────────────────────────
@@ -730,7 +767,7 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case SetVariableCommandData c:
-                    ctx.SetVariable(c.Name, ctx.Resolve(c.Value));
+                    ctx.SetVariable(c.Name, ActionExecutor.EvaluateAttributeValue(ctx.Resolve(c.Value)));
                     break;
 
                 case EvaluateFormulaCommandData c:
@@ -895,10 +932,9 @@ namespace RagNextPlayer.Runtime
 
                 case AddObjectToRoomCommandData c:
                     {
-                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var room = FindRoomData(c.RoomId, ctx);
                         var resolvedObj  = ctx.Resolve(c.ObjectId);
                         RemoveObjectFromEverywhere(resolvedObj, ctx);
-                        var room = ctx.Game.Rooms.Find(r => r.Id == resolvedRoom);
                         if (room is not null && !room.ObjectIds.Contains(resolvedObj))
                         {
                             room.ObjectIds.Add(resolvedObj);
@@ -925,20 +961,17 @@ namespace RagNextPlayer.Runtime
 
                 case RemoveObjectFromRoomCommandData c:
                     {
-                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var room = FindRoomData(c.RoomId, ctx);
                         var resolvedObj  = ctx.Resolve(c.ObjectId);
-                        var room = ctx.Game.Rooms.Find(r => r.Id == resolvedRoom);
                         room?.ObjectIds.Remove(resolvedObj);
                     }
                     break;
 
                 case SetRoomExitCommandData c:
                     {
-                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var room = FindRoomData(c.RoomId, ctx);
                         var resolvedDir  = ctx.Resolve(c.Direction);
                         var resolvedDest = ctx.Resolve(c.DestinationRoomId);
-                        var rId = string.IsNullOrWhiteSpace(resolvedRoom) ? ctx.CurrentRoom?.Id : resolvedRoom;
-                        var room = ctx.Game.Rooms.Find(r => r.Id == rId);
                         if (room is null || string.IsNullOrWhiteSpace(resolvedDir)) break;
                         if (string.IsNullOrWhiteSpace(resolvedDest))
                             room.Exits.Remove(resolvedDir);
@@ -949,20 +982,16 @@ namespace RagNextPlayer.Runtime
 
                 case DisableRoomExitCommandData c:
                     {
-                        var resolvedRoom = ctx.Resolve(c.RoomId);
+                        var room = FindRoomData(c.RoomId, ctx);
                         var resolvedDir  = ctx.Resolve(c.Direction);
-                        var rId = string.IsNullOrWhiteSpace(resolvedRoom) ? ctx.CurrentRoom?.Id : resolvedRoom;
-                        var room = ctx.Game.Rooms.Find(r => r.Id == rId);
                         room?.Exits.Remove(resolvedDir);
                     }
                     break;
 
                 case LockRoomExitCommandData c:
                     {
-                        var resolvedRoom = string.IsNullOrWhiteSpace(c.RoomId) ? "" : ResolveRoomId(c.RoomId, ctx);
+                        var room = FindRoomData(c.RoomId, ctx);
                         var resolvedDir  = ctx.Resolve(c.Direction);
-                        var rId = string.IsNullOrWhiteSpace(resolvedRoom) ? ctx.CurrentRoom?.Id : resolvedRoom;
-                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, rId, StringComparison.OrdinalIgnoreCase));
                         if (room is not null && !string.IsNullOrWhiteSpace(resolvedDir))
                         {
                             room.LockedExits[resolvedDir] = true;
@@ -972,10 +1001,8 @@ namespace RagNextPlayer.Runtime
 
                 case UnlockRoomExitCommandData c:
                     {
-                        var resolvedRoom = string.IsNullOrWhiteSpace(c.RoomId) ? "" : ResolveRoomId(c.RoomId, ctx);
+                        var room = FindRoomData(c.RoomId, ctx);
                         var resolvedDir  = ctx.Resolve(c.Direction);
-                        var rId = string.IsNullOrWhiteSpace(resolvedRoom) ? ctx.CurrentRoom?.Id : resolvedRoom;
-                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, rId, StringComparison.OrdinalIgnoreCase));
                         if (room is not null && !string.IsNullOrWhiteSpace(resolvedDir))
                         {
                             room.LockedExits[resolvedDir] = false;
@@ -1228,6 +1255,7 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case StartDialogueCommandData c:
+                    ctx.SetVariable("system.prompt.active", "true");
                     break;
 
                 case OpenContainerCommandData c:
@@ -1426,10 +1454,8 @@ namespace RagNextPlayer.Runtime
 
                 case RoomSetActionActiveCommandData c:
                     {
-                        var resolvedRoom = ctx.Resolve(c.RoomId);
                         var actionName = ctx.Resolve(c.ActionName);
-                        UnityEngine.Debug.Log($"[ActionExecutor] RoomSetActionActive: RoomId='{c.RoomId}' (resolved='{resolvedRoom}'), ActionName='{c.ActionName}' (resolved='{actionName}'), c.Active={c.Active}");
-                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, resolvedRoom, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase));
+                        var room = FindRoomData(c.RoomId, ctx);
                         if (room != null && room.Actions != null)
                         {
                             foreach (var act in room.Actions)
@@ -1674,7 +1700,7 @@ namespace RagNextPlayer.Runtime
                 case SetCharacterAttributeCommandData c:
                     {
                         var resolvedChar = ResolveCharacterId(c.CharacterId, ctx);
-                        var resolvedVal = ctx.Resolve(c.Value);
+                        var resolvedVal = ActionExecutor.EvaluateAttributeValue(ctx.Resolve(c.Value));
                         var character = ctx.Game.Characters.Find(ch => string.Equals(ch.Id, resolvedChar, StringComparison.OrdinalIgnoreCase));
                         if (character == null)
                         {
@@ -1690,7 +1716,7 @@ namespace RagNextPlayer.Runtime
 
                 case SetPlayerAttributeCommandData c:
                     {
-                        var resolvedVal = ctx.Resolve(c.Value);
+                        var resolvedVal = ActionExecutor.EvaluateAttributeValue(ctx.Resolve(c.Value));
                         ctx.Player.Attributes[c.AttributeName] = resolvedVal;
                         ctx.SetVariable($"player.{c.AttributeName}", resolvedVal);
                     }
@@ -1699,7 +1725,7 @@ namespace RagNextPlayer.Runtime
                 case SetTimerAttributeCommandData c:
                     {
                         var resolvedTimer = ctx.Resolve(c.TimerId);
-                        var resolvedVal = ctx.Resolve(c.Value);
+                        var resolvedVal = ActionExecutor.EvaluateAttributeValue(ctx.Resolve(c.Value));
                         var timer = ctx.Game.Timers.Find(t => string.Equals(t.Name, resolvedTimer, StringComparison.OrdinalIgnoreCase) || string.Equals(t.Id, resolvedTimer, StringComparison.OrdinalIgnoreCase));
                         if (timer is not null)
                         {
@@ -1712,7 +1738,7 @@ namespace RagNextPlayer.Runtime
                 case SetItemAttributeCommandData c:
                     {
                         var resolvedItem = ctx.Resolve(c.ItemId);
-                        var resolvedVal = ctx.Resolve(c.Value);
+                        var resolvedVal = ActionExecutor.EvaluateAttributeValue(ctx.Resolve(c.Value));
                         var obj = ctx.Game.Objects.Find(o => string.Equals(o.Id, resolvedItem, StringComparison.OrdinalIgnoreCase));
                         if (obj is not null)
                         {
@@ -1724,13 +1750,17 @@ namespace RagNextPlayer.Runtime
 
                 case SetRoomAttributeCommandData c:
                     {
-                        var resolvedRoom = ctx.Resolve(c.RoomId);
-                        var resolvedVal = ctx.Resolve(c.Value);
-                        var room = ctx.Game.Rooms.Find(r => string.Equals(r.Id, resolvedRoom, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Name, resolvedRoom, StringComparison.OrdinalIgnoreCase));
+                        var room = FindRoomData(c.RoomId, ctx);
                         if (room is not null)
                         {
-                            room.Attributes[c.AttributeName] = resolvedVal;
-                            ctx.SetVariable($"room.{resolvedRoom}.{c.AttributeName}", resolvedVal);
+                            var resolvedVal = ActionExecutor.EvaluateAttributeValue(ctx.Resolve(c.Value));
+                            var attrName = ctx.Resolve(c.AttributeName);
+                            room.Attributes[attrName] = resolvedVal;
+                            ctx.SetVariable($"room.{room.Id}.{attrName}", resolvedVal);
+                            if (!string.IsNullOrEmpty(room.Name) && !string.Equals(room.Id, room.Name, StringComparison.OrdinalIgnoreCase))
+                            {
+                                ctx.SetVariable($"room.{room.Name}.{attrName}", resolvedVal);
+                            }
                         }
                     }
                     break;
@@ -2257,11 +2287,11 @@ namespace RagNextPlayer.Runtime
                     string.Equals(ctx.CurrentRoom?.Id, ctx.Resolve(c.RoomId), StringComparison.OrdinalIgnoreCase),
 
                 RoomHasObjectConditionData c =>
-                    ctx.Game.Rooms.Find(r => r.Id == ctx.Resolve(c.RoomId))
+                    FindRoomData(c.RoomId, ctx)
                         ?.ObjectIds.Contains(ctx.Resolve(c.ObjectId)) ?? false,
 
                 ItemInRoomConditionData c =>
-                    ctx.Game.Rooms.Find(r => r.Id == ctx.Resolve(c.RoomId))
+                    FindRoomData(c.RoomId, ctx)
                         ?.ObjectIds.Contains(ctx.Resolve(c.ItemId)) ?? false,
 
                 ItemHeldByPlayerConditionData c =>
@@ -2317,7 +2347,7 @@ namespace RagNextPlayer.Runtime
 
                 RoomAttributeCheckConditionData c =>
                     EvaluateAttribute(
-                        ctx.Game.Rooms.Find(r => string.Equals(r.Id, ctx.Resolve(c.RoomId), StringComparison.OrdinalIgnoreCase)),
+                        FindRoomData(c.RoomId, ctx),
                         ctx.Resolve(c.AttributeName),
                         ctx.Resolve(c.ExpectedValue)),
 
@@ -2471,15 +2501,42 @@ namespace RagNextPlayer.Runtime
             else if (entity is PlayerData pl) attributes = pl.Attributes;
             else if (entity is RoomData rm) attributes = rm.Attributes;
 
-            if (attributes is null) return false;
-            foreach (var kvp in attributes)
+            string actualValue = "false";
+            bool found = false;
+            if (attributes != null)
             {
-                if (string.Equals(kvp.Key, attributeName, StringComparison.OrdinalIgnoreCase))
+                foreach (var kvp in attributes)
                 {
-                    return string.Equals(kvp.Value, expectedValue, StringComparison.OrdinalIgnoreCase);
+                    if (string.Equals(kvp.Key, attributeName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        actualValue = kvp.Value ?? string.Empty;
+                        found = true;
+                        break;
+                    }
                 }
             }
-            return string.IsNullOrEmpty(expectedValue);
+
+            if (!found && string.IsNullOrEmpty(expectedValue)) return true;
+
+            // Lenient boolean comparison: "true"/"1"/"yes" vs "false"/"0"/"no"
+            if (IsBooleanTrue(actualValue) && IsBooleanTrue(expectedValue)) return true;
+            if (IsBooleanFalse(actualValue) && IsBooleanFalse(expectedValue)) return true;
+
+            return string.Equals(actualValue, expectedValue, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsBooleanTrue(string val)
+        {
+            if (string.IsNullOrWhiteSpace(val)) return false;
+            val = val.Trim();
+            return string.Equals(val, "true", StringComparison.OrdinalIgnoreCase) || val == "1" || string.Equals(val, "yes", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsBooleanFalse(string val)
+        {
+            if (string.IsNullOrWhiteSpace(val)) return true;
+            val = val.Trim();
+            return string.Equals(val, "false", StringComparison.OrdinalIgnoreCase) || val == "0" || string.Equals(val, "no", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void RemoveObjectFromEverywhere(string oId, GameExecutionContext ctx)
@@ -2623,13 +2680,25 @@ namespace RagNextPlayer.Runtime
 
         private static string ResolveRoomId(string input, GameExecutionContext ctx)
         {
+            if (string.IsNullOrWhiteSpace(input)) return ctx.CurrentRoom?.Id ?? "";
             var resolved = ctx.Resolve(input);
+            if (string.IsNullOrWhiteSpace(resolved)) return ctx.CurrentRoom?.Id ?? "";
             if (Guid.TryParse(resolved, out _)) return resolved;
-            if (string.IsNullOrEmpty(resolved)) return resolved;
             var match = ctx.Game.Rooms.Find(r => 
+                string.Equals(r.Id, resolved, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(r.Name, resolved, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(r.Name.Replace(" ", ""), resolved, StringComparison.OrdinalIgnoreCase));
             return match?.Id ?? resolved;
+        }
+
+        private static RoomData? FindRoomData(string? input, GameExecutionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return ctx.CurrentRoom;
+            var roomId = ResolveRoomId(input, ctx);
+            if (string.IsNullOrEmpty(roomId)) return ctx.CurrentRoom;
+            return ctx.Game.Rooms.Find(r => string.Equals(r.Id, roomId, StringComparison.OrdinalIgnoreCase))
+                ?? ctx.Game.Rooms.Find(r => string.Equals(r.Name, input, StringComparison.OrdinalIgnoreCase))
+                ?? ctx.CurrentRoom;
         }
 
         private static string GetCharacterCurrentRoomId(string charId, GameExecutionContext ctx)
@@ -2645,9 +2714,10 @@ namespace RagNextPlayer.Runtime
 
         private static string FindContainingRoomId(string targetId, GameExecutionContext ctx)
         {
-            if (ctx.Game.Rooms.Exists(r => r.Id == targetId))
+            var resolvedRoomId = ResolveRoomId(targetId, ctx);
+            if (ctx.Game.Rooms.Exists(r => string.Equals(r.Id, resolvedRoomId, StringComparison.OrdinalIgnoreCase)))
             {
-                return targetId;
+                return resolvedRoomId;
             }
 
             var targetRoomId = targetId;

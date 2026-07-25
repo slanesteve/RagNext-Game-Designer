@@ -35,7 +35,39 @@ namespace RagsCore.Models
         }
 
         private string _directionFilter = "All";
-        public string DirectionFilter { get => _directionFilter; set => SetProperty(ref _directionFilter, value); }
+        public string DirectionFilter
+        {
+            get => _directionFilter;
+            set
+            {
+                if (string.IsNullOrEmpty(value)) return;
+                var norm = NormalizeDirection(value);
+                if (_directionFilter != norm)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Action '{Name}' ({Id})] DirectionFilter changed from '{_directionFilter}' to '{norm}' (input='{value}')");
+                    SetProperty(ref _directionFilter, norm);
+                }
+            }
+        }
+
+        public static string NormalizeDirection(string? dir)
+        {
+            if (string.IsNullOrWhiteSpace(dir)) return "All";
+            dir = dir.Trim();
+            if (string.Equals(dir, "North", StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "N", StringComparison.OrdinalIgnoreCase)) return "N";
+            if (string.Equals(dir, "South", StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "S", StringComparison.OrdinalIgnoreCase)) return "S";
+            if (string.Equals(dir, "East", StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "E", StringComparison.OrdinalIgnoreCase)) return "E";
+            if (string.Equals(dir, "West", StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "W", StringComparison.OrdinalIgnoreCase)) return "W";
+            if (string.Equals(dir, "NorthWest", StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "NW", StringComparison.OrdinalIgnoreCase)) return "NW";
+            if (string.Equals(dir, "NorthEast", StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "NE", StringComparison.OrdinalIgnoreCase)) return "NE";
+            if (string.Equals(dir, "SouthWest", StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "SW", StringComparison.OrdinalIgnoreCase)) return "SW";
+            if (string.Equals(dir, "SouthEast", StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "SE", StringComparison.OrdinalIgnoreCase)) return "SE";
+            if (string.Equals(dir, "Up", StringComparison.OrdinalIgnoreCase)) return "Up";
+            if (string.Equals(dir, "Down", StringComparison.OrdinalIgnoreCase)) return "Down";
+            if (string.Equals(dir, "In", StringComparison.OrdinalIgnoreCase)) return "In";
+            if (string.Equals(dir, "Out", StringComparison.OrdinalIgnoreCase)) return "Out";
+            return dir;
+        }
 
         [System.Text.Json.Serialization.JsonIgnore]
         public bool IsDirectionFilterVisible => 

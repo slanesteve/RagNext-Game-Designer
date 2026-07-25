@@ -216,6 +216,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             };
                         }
                         SelectedSplashScreen = value.SplashScreen;
+                        HookAllGameActions(value);
                     }
                     OnPropertyChanged(nameof(SplashBackgroundPath));
                     OnPropertyChanged(nameof(IsSplashVideoMode));
@@ -1104,6 +1105,13 @@ namespace RagNext.Designer.Avalonia.ViewModels
         private string _newPresetName = string.Empty;
         public string NewPresetName { get => _newPresetName; set => SetProperty(ref _newPresetName, value); }
 
+        private bool _isPopupPreviewMode = false;
+        public bool IsPopupPreviewMode
+        {
+            get => _isPopupPreviewMode;
+            set => SetProperty(ref _isPopupPreviewMode, value);
+        }
+
         public void InitializePresets()
         {
             try
@@ -1111,10 +1119,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 var path = GetPresetsDirectory();
                 if (!Directory.Exists(path)) Directory.CreateDirectory(path);
                 
-                void EnsurePresetFile(string name, string bgColor, string textColor, string borderColor)
+                void EnsurePresetFile(string name, string bgColor, string textColor, string borderColor, bool overwrite = false)
                 {
                     var presetPath = Path.Combine(path, $"{name}.json");
-                    if (!File.Exists(presetPath))
+                    if (!File.Exists(presetPath) || overwrite)
                     {
                         var theme = new ThemeSettings
                         {
@@ -1126,7 +1134,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             RoomItemsDockPosition = "Right",
                             NavigationDockPosition = "Right",
                             PanelPadding = 12,
-                            BorderRadius = 8,
+                            BorderRadius = 12,
                             AspectRatio = 1.333,
                             TextBoxAlignment = "Left",
                             TextBoxWidth = 780,
@@ -1149,11 +1157,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     }
                 }
 
-                EnsurePresetFile("Default", "#1e1e24", "#ffffff", "#4a4a5a");
-                EnsurePresetFile("Pink", "#2d121c", "#fca5a5", "#f43f5e");
-                EnsurePresetFile("Blue", "#0f172a", "#93c5fd", "#3b82f6");
-                EnsurePresetFile("Dark", "#121212", "#e0e0e0", "#333333");
-                EnsurePresetFile("Glass", "rgba(40,40,40,0.55)", "#ffffff", "rgba(255,255,255,0.2)");
+                EnsurePresetFile("Default", "#181A24", "#F8FAFC", "#38BDF8", overwrite: true);
+                EnsurePresetFile("Dark", "#0F172A", "#F1F5F9", "#818CF8", overwrite: true);
+                EnsurePresetFile("Glass", "rgba(20,24,36,0.75)", "#FFFFFF", "rgba(56,189,248,0.35)", overwrite: true);
+                EnsurePresetFile("Blue", "#0B192C", "#E0F2FE", "#00A8CC", overwrite: true);
+                EnsurePresetFile("Pink", "#2A081A", "#FFE4E6", "#F43F5E", overwrite: true);
+                EnsurePresetFile("Cyberpunk", "#0D0D15", "#FEE500", "#FF0055", overwrite: true);
 
                 ThemePresets.Clear();
                 foreach (var file in Directory.GetFiles(path, "*.json"))
@@ -1332,6 +1341,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand ClearThemeFontCommand { get; }
         public ICommand ClearThemeBackgroundCommand { get; }
         public ICommand ClearThemeFrameCommand { get; }
+        public ICommand TogglePopupPreviewModeCommand { get; }
         public ICommand NewGameCommand { get; }
         public ICommand ShowLoadGameCommand { get; }
         public ICommand LoadSelectedGameCommand { get; }
@@ -1413,10 +1423,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         };
         public ActionTrigger[] ObjectTriggers => _objectTriggers;
 
-        private static readonly string[] _directionFilters = new[] 
-        { 
-            "All", "N", "S", "E", "W", "NW", "NE", "SW", "SE", "Up", "Down", "In", "Out" 
-        };
+        private static readonly string[] _directionFilters = new[] { "All", "N", "S", "E", "W", "NW", "NE", "SW", "SE", "North", "South", "East", "West", "NorthWest", "NorthEast", "SouthWest", "SouthEast", "Up", "Down", "In", "Out" };
         public string[] DirectionFilters => _directionFilters;
         public ICommand OpenComposeCommand { get; }
         public ICommand CloseComposeCommand { get; }
@@ -1587,6 +1594,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     CurrentGame.Theme.FrameAssetId = string.Empty;
                     OnPropertyChanged(nameof(SelectedThemeFrame));
                     _ = SaveGameAsync();
+                }
+            });
+
+            TogglePopupPreviewModeCommand = new Command<string>(param =>
+            {
+                if (bool.TryParse(param, out var isPopup))
+                {
+                    IsPopupPreviewMode = isPopup;
                 }
             });
 
@@ -3345,6 +3360,100 @@ namespace RagNext.Designer.Avalonia.ViewModels
             var invalid = Path.GetInvalidFileNameChars();
             var sanitized = new string(title.Where(c => !invalid.Contains(c) && !char.IsWhiteSpace(c)).ToArray());
             return string.IsNullOrEmpty(sanitized) ? "RagNextProject" : sanitized;
+        }
+        private void HookAction(RagsCore.Models.Action action)
+        {
+            if (action == null) return;
+            action.PropertyChanged -= OnActionPropertyChangedAutoSave;
+            action.PropertyChanged += OnActionPropertyChangedAutoSave;
+        }
+
+        private void OnActionPropertyChangedAutoSave(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (_isProjectLoading) return;
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Action PropertyChanged: {e.PropertyName} on '{(sender is RagsCore.Models.Action a ? a.Name : "action")}'");
+            _ = SaveGameAsync();
+        }
+
+        private void HookAllGameActions(Game game)
+        {
+            if (game == null) return;
+
+            if (game.Player?.Actions != null)
+            {
+                foreach (var a in game.Player.Actions) HookAction(a);
+                game.Player.Actions.CollectionChanged += (s, e) =>
+                {
+                    if (e.NewItems != null) foreach (RagsCore.Models.Action a in e.NewItems) HookAction(a);
+                    _ = SaveGameAsync();
+                };
+            }
+
+            if (game.Rooms != null)
+            {
+                void HookRoomActions(Room r)
+                {
+                    if (r?.Actions != null)
+                    {
+                        foreach (var a in r.Actions) HookAction(a);
+                        r.Actions.CollectionChanged += (s, e) =>
+                        {
+                            if (e.NewItems != null) foreach (RagsCore.Models.Action a in e.NewItems) HookAction(a);
+                            _ = SaveGameAsync();
+                        };
+                    }
+                }
+                foreach (var r in game.Rooms) HookRoomActions(r);
+                game.Rooms.CollectionChanged += (s, e) =>
+                {
+                    if (e.NewItems != null) foreach (Room r in e.NewItems) HookRoomActions(r);
+                    _ = SaveGameAsync();
+                };
+            }
+
+            if (game.Characters != null)
+            {
+                void HookCharacterActions(Character c)
+                {
+                    if (c?.Actions != null)
+                    {
+                        foreach (var a in c.Actions) HookAction(a);
+                        c.Actions.CollectionChanged += (s, e) =>
+                        {
+                            if (e.NewItems != null) foreach (RagsCore.Models.Action a in e.NewItems) HookAction(a);
+                            _ = SaveGameAsync();
+                        };
+                    }
+                }
+                foreach (var c in game.Characters) HookCharacterActions(c);
+                game.Characters.CollectionChanged += (s, e) =>
+                {
+                    if (e.NewItems != null) foreach (Character c in e.NewItems) HookCharacterActions(c);
+                    _ = SaveGameAsync();
+                };
+            }
+
+            if (game.Objects != null)
+            {
+                void HookObjectActions(GameObject o)
+                {
+                    if (o?.Actions != null)
+                    {
+                        foreach (var a in o.Actions) HookAction(a);
+                        o.Actions.CollectionChanged += (s, e) =>
+                        {
+                            if (e.NewItems != null) foreach (RagsCore.Models.Action a in e.NewItems) HookAction(a);
+                            _ = SaveGameAsync();
+                        };
+                    }
+                }
+                foreach (var o in game.Objects) HookObjectActions(o);
+                game.Objects.CollectionChanged += (s, e) =>
+                {
+                    if (e.NewItems != null) foreach (GameObject o in e.NewItems) HookObjectActions(o);
+                    _ = SaveGameAsync();
+                };
+            }
         }
 
         public static global::Avalonia.Data.Converters.IMultiValueConverter MakeTupleConverter { get; } = new FuncMultiValueConverter<object, Tuple<object, object>>(parts =>

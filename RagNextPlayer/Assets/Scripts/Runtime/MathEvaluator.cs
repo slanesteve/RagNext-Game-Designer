@@ -183,10 +183,52 @@ namespace RagNextPlayer.Runtime
                 {
                     return Math.Round(args[0]);
                 }
+                else if (funcName == "floor" && args.Count == 1)
+                {
+                    return Math.Floor(args[0]);
+                }
+                else if (funcName == "ceil" && args.Count == 1)
+                {
+                    return Math.Ceiling(args[0]);
+                }
+                else if (funcName == "clamp" && args.Count == 3)
+                {
+                    double val = args[0];
+                    double min = args[1];
+                    double max = args[2];
+                    return Math.Clamp(val, min, max);
+                }
+                else if (funcName == "sqrt" && args.Count == 1)
+                {
+                    return Math.Sqrt(args[0]);
+                }
+                else if (funcName == "pow" && args.Count == 2)
+                {
+                    return Math.Pow(args[0], args[1]);
+                }
+                else if (funcName == "log" && args.Count == 1)
+                {
+                    return Math.Log(args[0]);
+                }
+                else if (funcName == "sin" && args.Count == 1)
+                {
+                    return Math.Sin(args[0]);
+                }
+                else if (funcName == "cos" && args.Count == 1)
+                {
+                    return Math.Cos(args[0]);
+                }
+                else if (funcName == "tan" && args.Count == 1)
+                {
+                    return Math.Tan(args[0]);
+                }
                 throw new ArgumentException($"Unknown function '{funcName}' or invalid argument count.");
             }
 
             index++;
+            if (string.Equals(token, "pi", StringComparison.OrdinalIgnoreCase)) return Math.PI;
+            if (string.Equals(token, "e", StringComparison.OrdinalIgnoreCase)) return Math.E;
+
             if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out double value))
             {
                 return value;

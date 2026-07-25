@@ -603,6 +603,7 @@ namespace RagNext.Designer.Avalonia.Views
             try
             {
                 var activeAction = vm.ActiveAction;
+                System.Diagnostics.Debug.WriteLine($"[LoadGraphData] Action Name='{activeAction.Name}', Trigger='{activeAction.Trigger}', DirectionFilter='{activeAction.DirectionFilter}'");
                 string actionJson = JsonSerializer.Serialize(activeAction, RagsCore.RagsJsonContext.CustomDefault.Action);
 
                 // Load available commands & conditions catalogs to feed the web catalog
@@ -1775,6 +1776,7 @@ namespace RagNext.Designer.Avalonia.Views
                 if (imported != null)
                 {
                     var target = vm.ActiveAction;
+                    System.Diagnostics.Debug.WriteLine($"[SyncGraphData] Target Action Name='{target.Name}', Imported DirectionFilter='{imported.DirectionFilter}', Target Old DirectionFilter='{target.DirectionFilter}'");
                     target.Name = imported.Name;
                     target.Trigger = imported.Trigger;
                     target.InitallyActive = imported.InitallyActive;
@@ -2955,6 +2957,7 @@ namespace RagNext.Designer.Avalonia.Views
         private System.Collections.Generic.List<MediaLibraryViewModel.Node>? _draggedNodes;
         private bool _selectionPreservedOnPressed;
         private MediaLibraryViewModel.Node? _pressedNode;
+        private bool _isDragInProgress;
 
         private void OnMediaItemPointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -2982,6 +2985,9 @@ namespace RagNext.Designer.Avalonia.Views
 
         private async void OnMediaItemPointerMoved(object? sender, PointerEventArgs e)
         {
+            if (_isDragInProgress)
+                return;
+
             if (_dragStartPoint.HasValue && _dragPressedEventArgs != null && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             {
                 var currentPos = e.GetPosition(this);
@@ -3024,7 +3030,23 @@ namespace RagNext.Designer.Avalonia.Views
                             data.Add(item);
                         }
 
-                        await DragDrop.DoDragDropAsync(dragPressedArgs, data, DragDropEffects.Move | DragDropEffects.Copy | DragDropEffects.Link);
+                        _isDragInProgress = true;
+                        try
+                        {
+                            await DragDrop.DoDragDropAsync(dragPressedArgs, data, DragDropEffects.Move | DragDropEffects.Copy | DragDropEffects.Link);
+                        }
+                        catch (System.Runtime.InteropServices.COMException)
+                        {
+                            // Silently swallow COM exception when Windows OLE drag session is already active during system lag
+                        }
+                        catch (Exception)
+                        {
+                            // Catch any general drag drop initialization exceptions
+                        }
+                        finally
+                        {
+                            _isDragInProgress = false;
+                        }
                     }
                 }
             }
@@ -6234,31 +6256,45 @@ namespace RagNext.Designer.Avalonia.Views
             var dialog = new Window
             {
                 Title = title,
-                Width = 500,
-                Height = 240,
+                Width = 540,
+                Height = 360,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Padding = new global::Avalonia.Thickness(20)
             };
             dialog.Bind(global::Avalonia.Controls.Window.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("MainBg"));
             dialog.Bind(global::Avalonia.Controls.Window.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
 
-            var stack = new StackPanel { Spacing = 12 };
+            var mainGrid = new Grid();
+            mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Message & Input scroll area
+            mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Fixed button row
+
+            var contentStack = new StackPanel { Spacing = 12, Margin = new global::Avalonia.Thickness(0, 0, 8, 12) };
+
             var msgBlock = new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap };
             msgBlock.Bind(TextBlock.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextMuted"));
-            stack.Children.Add(msgBlock);
+            contentStack.Children.Add(msgBlock);
 
             var input = new TextBox 
             { 
                 PlaceholderText = "Enter instructions...",
                 AcceptsReturn = true,
                 TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
-                Height = 80,
+                Height = 70,
                 VerticalContentAlignment = global::Avalonia.Layout.VerticalAlignment.Top
             };
             input.Bind(TextBox.BackgroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("InputBg"));
             input.Bind(TextBox.ForegroundProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("TextNormal"));
             input.Bind(TextBox.BorderBrushProperty, new global::Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("BorderBrush"));
-            stack.Children.Add(input);
+            contentStack.Children.Add(input);
+
+            var scrollViewer = new ScrollViewer 
+            { 
+                Content = contentStack,
+                VerticalScrollBarVisibility = global::Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = global::Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled
+            };
+            Grid.SetRow(scrollViewer, 0);
+            mainGrid.Children.Add(scrollViewer);
 
             var buttons = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Right, Spacing = 10 };
             var okBtn = new Button { Content = "OK", Width = 80, Background = global::Avalonia.Media.Brush.Parse("#8E2DE2"), Foreground = global::Avalonia.Media.Brushes.White, IsDefault = true };
@@ -6284,9 +6320,10 @@ namespace RagNext.Designer.Avalonia.Views
 
             buttons.Children.Add(okBtn);
             buttons.Children.Add(cancelBtn);
-            stack.Children.Add(buttons);
+            Grid.SetRow(buttons, 1);
+            mainGrid.Children.Add(buttons);
 
-            dialog.Content = stack;
+            dialog.Content = mainGrid;
             dialog.ShowDialog(parent);
             return tcs.Task;
         }

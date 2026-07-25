@@ -12,6 +12,28 @@ namespace RagsCore.Models
 
         public static void SetAttribute(string name, string? value, ObservableCollection<CustomAttribute> Attributes)
         {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                // Try evaluating math expressions (e.g. "10 + 1", "{player.attribute.Strength} + 1")
+                // If it's a numeric formula, update value to result string. If it's literal non-numeric text, catch and keep original text.
+                if (!double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _))
+                {
+                    try
+                    {
+                        var tokens = value.Split(new[] { '+', '-', '*', '/', '%', '^' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (tokens.Length > 1 && tokens.All(t => double.TryParse(t.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _)))
+                        {
+                            double numVal = RagsCore.Services.MathEvaluator.Evaluate(value);
+                            value = numVal.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        }
+                    }
+                    catch
+                    {
+                        // Fallback to original string if not a valid mathematical formula
+                    }
+                }
+            }
+
             var attr = Attributes.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
             if (attr is null) Attributes.Add(new CustomAttribute { Name = name, Value = value });
             else attr.Value = value;

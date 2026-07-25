@@ -221,5 +221,47 @@ namespace RagNext.Tests
             Assert.Equal("TextButton", hotspot.StyleType);
             Assert.Equal("Click Me", hotspot.LabelText);
         }
+
+        [Fact]
+        public void Action_DirectionFilter_Serialization_Test()
+        {
+            var game = new Game();
+            var room = new Room { Name = "TestRoom" };
+            var action = new RagsCore.Models.Action
+            {
+                Name = "OnExitSouth",
+                Trigger = ActionTrigger.OnPlayerExit,
+                DirectionFilter = "S"
+            };
+            room.Actions.Add(action);
+            game.Rooms.Add(room);
+
+            // Serialize game
+            var gameJson = System.Text.Json.JsonSerializer.Serialize(game, RagsCore.RagsJsonContext.CustomDefault.Game);
+            Assert.Contains("\"DirectionFilter\": \"S\"", gameJson);
+
+            // Deserialize game
+            var deserializedGame = System.Text.Json.JsonSerializer.Deserialize(gameJson, RagsCore.RagsJsonContext.CustomDefault.Game);
+            Assert.NotNull(deserializedGame);
+            Assert.Single(deserializedGame.Rooms);
+            Assert.Single(deserializedGame.Rooms[0].Actions);
+            Assert.Equal("S", deserializedGame.Rooms[0].Actions[0].DirectionFilter);
+        }
+
+        [Fact]
+        public void RoomAttributeCheck_ByNameAndId_ShouldResolveCorrectly()
+        {
+            var roomGuid = Guid.NewGuid();
+            var room = new Room
+            {
+                Id = roomGuid,
+                Name = "Street"
+            };
+            room.Attributes.Add(new CustomAttribute { Name = "enterfirst", Value = "true" });
+
+            Assert.Equal("Street", room.Name);
+            Assert.Equal(roomGuid.ToString(), room.Id.ToString());
+            Assert.Equal("true", room.Attributes[0].Value);
+        }
     }
 }

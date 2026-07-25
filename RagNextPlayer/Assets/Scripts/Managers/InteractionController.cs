@@ -201,7 +201,7 @@ namespace RagNextPlayer.Managers
                     UIManager.Instance?.AppendNarrativeText($"\nThe exit to the {name} is locked.");
                     return;
                 }
-                GameManager.Instance?.MovePlayerToRoom(exitId);
+                GameManager.Instance?.MovePlayerToRoom(exitId, name);
                 return;
             }
 
@@ -334,8 +334,11 @@ namespace RagNextPlayer.Managers
             if (_menuPanel is null) return;
             _menuPanel.Clear();
 
+            float fontSize = UIManager.Instance != null ? UIManager.Instance.GetScaledFontSize() : 18f;
+
             var titleLbl = new Label(title);
             titleLbl.AddToClassList("interaction-menu-title");
+            titleLbl.style.fontSize = fontSize * 1.05f;
             _menuPanel.Add(titleLbl);
 
             var grid = new VisualElement();
@@ -346,6 +349,9 @@ namespace RagNextPlayer.Managers
                 var btn = new Button(handler);
                 btn.text = label;
                 btn.AddToClassList("interaction-menu-btn");
+                btn.style.fontSize = fontSize * 0.95f;
+                btn.style.whiteSpace = WhiteSpace.Normal;
+                btn.style.flexShrink = 0;
                 btn.clicked += HideMenu;
                 RegisterMenuBtnWiggle(btn);
                 grid.Add(btn);
@@ -354,6 +360,7 @@ namespace RagNextPlayer.Managers
 
             var cancelBtn = new Button(HideMenu) { text = "✕ Cancel" };
             cancelBtn.AddToClassList("interaction-menu-cancel");
+            cancelBtn.style.fontSize = fontSize * 0.85f;
             RegisterMenuBtnWiggle(cancelBtn);
             _menuPanel.Add(cancelBtn);
         }

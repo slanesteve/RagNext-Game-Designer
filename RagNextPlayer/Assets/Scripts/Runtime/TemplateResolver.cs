@@ -60,7 +60,15 @@ namespace RagNextPlayer.Runtime
                 return $"<{tag}={correctedColor}>";
             }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-            return resolved;
+            return CleanEncodingArtifacts(resolved);
+        }
+
+        public static string CleanEncodingArtifacts(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+            return text.Replace("Âc", "'")
+                       .Replace("Â", "")
+                       .Replace("\u00C2", "");
         }
 
         // ── Core resolver ──────────────────────────────────────────────────────

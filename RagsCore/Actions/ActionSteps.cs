@@ -477,7 +477,36 @@ namespace RagsCore.Actions
         public string Name { get; set; } = string.Empty;
         public string? Value { get; set; }
         public override string TypeName => "Variable: Set";
-        public override void Execute(ActionContext ctx) => ctx.SetVariable(Name, Value);
+        public override void Execute(ActionContext ctx)
+        {
+            if (string.IsNullOrWhiteSpace(Name)) return;
+            var resolvedVal = RagsCore.Services.TemplateResolver.Resolve(Value, ctx);
+            if (!string.IsNullOrWhiteSpace(resolvedVal))
+            {
+                if (!double.TryParse(resolvedVal, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _))
+                {
+                    try
+                    {
+                        var tokens = resolvedVal.Split(new[] { '+', '-', '*', '/', '%', '^' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (tokens.Length > 1 && tokens.All(t => double.TryParse(t.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _)))
+                        {
+                            double numVal = RagsCore.Services.MathEvaluator.Evaluate(resolvedVal);
+                            resolvedVal = numVal.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        }
+                        else if (resolvedVal.Trim().StartsWith("random(", StringComparison.OrdinalIgnoreCase) || resolvedVal.Trim().StartsWith("rand(", StringComparison.OrdinalIgnoreCase))
+                        {
+                            double numVal = RagsCore.Services.MathEvaluator.Evaluate(resolvedVal);
+                            resolvedVal = numVal.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        }
+                    }
+                    catch
+                    {
+                        // Fallback to resolvedVal literal string if math evaluation fails
+                    }
+                }
+            }
+            ctx.SetVariable(Name, resolvedVal);
+        }
     }
 
     public sealed class MovePlayerToRoomCommand : GameCommand

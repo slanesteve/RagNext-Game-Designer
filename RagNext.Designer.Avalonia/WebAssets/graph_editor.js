@@ -1477,10 +1477,40 @@ function addPin(node, direction, type, name, pinId) {
     node.bodyElement.appendChild(row);
 }
 
+function isSameDirection(d1, d2) {
+    if (!d1 || !d2) return false;
+    const a = String(d1).trim().toLowerCase();
+    const b = String(d2).trim().toLowerCase();
+    if (a === b) return true;
+    if ((a === 'n' || a === 'north') && (b === 'n' || b === 'north')) return true;
+    if ((a === 's' || a === 'south') && (b === 's' || b === 'south')) return true;
+    if ((a === 'e' || a === 'east') && (b === 'e' || b === 'east')) return true;
+    if ((a === 'w' || a === 'west') && (b === 'w' || b === 'west')) return true;
+    if ((a === 'nw' || a === 'northwest') && (b === 'nw' || b === 'northwest')) return true;
+    if ((a === 'ne' || a === 'northeast') && (b === 'ne' || b === 'northeast')) return true;
+    if ((a === 'sw' || a === 'southwest') && (b === 'sw' || b === 'southwest')) return true;
+    if ((a === 'se' || a === 'southeast') && (b === 'se' || b === 'southeast')) return true;
+    return false;
+}
+
 // Create the permanently fixed Start node
 function createStartNode() {
     let startNode = nodes.find(n => n.id === 'start');
-    if (startNode) return startNode;
+    if (startNode) {
+        if (startNode._nameInp) startNode._nameInp.value = activeActionName;
+        if (startNode._triggerSelect) startNode._triggerSelect.value = activeActionTrigger;
+        if (startNode._dirSelect) {
+            for (let i = 0; i < startNode._dirSelect.options.length; i++) {
+                if (isSameDirection(startNode._dirSelect.options[i].value, activeActionDirectionFilter || "All")) {
+                    startNode._dirSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        if (startNode._activeChk) startNode._activeChk.checked = activeActionInitallyActive;
+        if (typeof startNode._updateDirVisibility === 'function') startNode._updateDirVisibility();
+        return startNode;
+    }
 
     const node = createBaseNode('start', 'start', '🚀 Action Start', 50, 150);
     
@@ -1575,13 +1605,14 @@ function createStartNode() {
         const opt = document.createElement('option');
         opt.value = d;
         opt.innerText = d;
-        if (d === activeActionDirectionFilter) {
+        if (isSameDirection(d, activeActionDirectionFilter || "All")) {
             opt.selected = true;
         }
         dirSelect.appendChild(opt);
     });
 
     dirSelect.addEventListener('change', () => {
+        console.log("[graph_editor] dirSelect changed from", activeActionDirectionFilter, "to", dirSelect.value);
         activeActionDirectionFilter = dirSelect.value;
         triggerAutoSave();
     });
@@ -1624,6 +1655,12 @@ function createStartNode() {
     activeLabel.innerText = "Initially Active";
     activeLabel.style.fontSize = "10px";
     activeLabel.style.color = "var(--text-muted)";
+
+    node._nameInp = nameInp;
+    node._triggerSelect = triggerSelect;
+    node._dirSelect = dirSelect;
+    node._activeChk = activeChk;
+    node._updateDirVisibility = updateDirVisibility;
 
     activeRow.appendChild(activeChk);
     activeRow.appendChild(activeLabel);
@@ -2362,9 +2399,44 @@ function refreshCommandFields(node) {
         row.style.gap = '2px';
 
         const label = document.createElement('label');
-        label.innerText = inputSchema.label + ":";
         label.style.fontSize = '10px';
         label.style.color = 'var(--text-muted)';
+        label.style.display = 'flex';
+        label.style.justifyContent = 'space-between';
+        label.style.alignItems = 'center';
+
+        const labelTextSpan = document.createElement('span');
+        labelTextSpan.innerText = inputSchema.label + ":";
+        label.appendChild(labelTextSpan);
+
+        const lowerFieldLabel = (inputSchema.label || '').toLowerCase();
+        const schemaName = ((schema && schema.name) || node.title || node.name || '').toLowerCase();
+        const isFormulaField = lowerFieldLabel === 'formula' || 
+            (lowerFieldLabel === 'value' && (type.endsWith('.setAttribute') || type === 'var.set' || schemaName.includes('set attribute') || schemaName.includes('variable: set')));
+
+        if (isFormulaField) {
+            const formulaInfoBtn = document.createElement('span');
+            formulaInfoBtn.className = 'formula-info-btn';
+            formulaInfoBtn.innerHTML = '🧪 Formula';
+            formulaInfoBtn.title = "Formulas & Math Supported!\n\nOperators: +, -, *, /, %, ^, ()\nFunctions: random(min,max), min(a,b), max(a,b), abs(x), round(x)\n\nExamples:\n• {player.attribute.Strength} + 1\n• min(100, {var.Health} + 25)\n• random(1, 20) + {player.attribute.Mind}\n\n(Click to open full Scripting Guide)";
+            formulaInfoBtn.style.fontSize = '9px';
+            formulaInfoBtn.style.color = '#a855f7';
+            formulaInfoBtn.style.background = 'rgba(168, 85, 247, 0.15)';
+            formulaInfoBtn.style.border = '1px solid rgba(168, 85, 247, 0.3)';
+            formulaInfoBtn.style.borderRadius = '4px';
+            formulaInfoBtn.style.padding = '1px 5px';
+            formulaInfoBtn.style.cursor = 'pointer';
+            formulaInfoBtn.style.marginLeft = 'auto';
+
+            formulaInfoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const sidebar = document.getElementById('help-sidebar');
+                if (sidebar) sidebar.classList.remove('hide');
+                switchHelpTab('syntax');
+            });
+            label.appendChild(formulaInfoBtn);
+        }
         row.appendChild(label);
 
         let initialVal = getPropertyValue(node.data, inputSchema.label);
@@ -3029,7 +3101,6 @@ function refreshCommandFields(node) {
                     node.data["StartTime"] = "0.00";
                     node.data["End Time"] = "";
                     node.data["EndTime"] = "";
-                    refreshCommandFields(node);
                 }
                 triggerAutoSave();
             });
@@ -3463,7 +3534,17 @@ function refreshCommandFields(node) {
                 label.style.margin = '0';
             } else {
                 inputElement.type = inputSchema.dataType === 'Integer' || inputSchema.dataType === 'Number' ? 'number' : 'text';
-                inputElement.placeholder = `Enter ${inputSchema.label}...`;
+                const lowerLabel = (inputSchema.label || '').toLowerCase();
+                const nodeName = (node.title || node.name || '').toLowerCase();
+                if (lowerLabel === 'value' && nodeName.includes('set attribute')) {
+                    inputElement.placeholder = "e.g. {player.attribute.Strength} + 1, 10, or Text";
+                } else if (lowerLabel === 'value' && (nodeName.includes('variable: set') || nodeName === 'variable: set')) {
+                    inputElement.placeholder = "e.g. {var.Health} + 5, random(1, 6), or Text";
+                } else if (lowerLabel === 'formula') {
+                    inputElement.placeholder = "e.g. {var.Health} + 5 or random(1, 6)";
+                } else {
+                    inputElement.placeholder = `Enter ${inputSchema.label}...`;
+                }
                 inputElement.value = initialVal;
                 inputElement.style.width = "100%";
                 inputElement.addEventListener('input', () => {
@@ -4381,6 +4462,7 @@ window.loadActionGraph = function(actionJson, commandsDb, conditionsDb, catalogs
                                      ((actionJson?.initallyActive !== undefined) ? actionJson.initallyActive : 
                                      ((actionJson?.initiallyActive !== undefined) ? actionJson.initiallyActive : true));
         activeActionDirectionFilter = actionJson?.DirectionFilter || actionJson?.directionFilter || "All";
+        console.log("[graph_editor] loadActionGraph received activeActionDirectionFilter:", activeActionDirectionFilter, "actionJson:", actionJson);
 
         const titleEl = document.getElementById("editor-title");
         if (titleEl) {
@@ -5182,12 +5264,23 @@ function renderAutocompleteItems(query) {
         popup.appendChild(div);
     });
 
-    const rect = activeAutocomplete.targetInput.getBoundingClientRect();
+    const input = activeAutocomplete.targetInput;
+    if (!input || input.offsetParent === null) {
+        popup.style.display = 'none';
+        return;
+    }
+
+    const rect = input.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0 || rect.top < 0 || rect.left < 0) {
+        popup.style.display = 'none';
+        return;
+    }
+
     popup.style.left = `${rect.left}px`;
     
     const popupHeight = Math.min(220, filtered.length * 48 + 8);
     if (rect.bottom + popupHeight > window.innerHeight) {
-        popup.style.top = `${rect.top - popupHeight - 4}px`;
+        popup.style.top = `${Math.max(10, rect.top - popupHeight - 4)}px`;
     } else {
         popup.style.top = `${rect.bottom + 4}px`;
     }
@@ -5195,7 +5288,7 @@ function renderAutocompleteItems(query) {
     popup.style.display = 'block';
     
     // Explicitly restore focus to target input to prevent typing lockout
-    activeAutocomplete.targetInput.focus();
+    input.focus();
 }
 
 function applyAutocompleteChoice(item) {
@@ -5224,6 +5317,9 @@ function applyAutocompleteChoice(item) {
 document.addEventListener('input', (e) => {
     const target = e.target;
     if (target.tagName !== 'TEXTAREA' && (target.tagName !== 'INPUT' || target.type !== 'text')) {
+        return;
+    }
+    if (target.offsetParent === null || target.style.display === 'none') {
         return;
     }
 

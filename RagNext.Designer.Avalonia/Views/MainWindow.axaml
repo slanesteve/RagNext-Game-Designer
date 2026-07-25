@@ -389,7 +389,7 @@
                         <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
                             <StackPanel Spacing="16">
                                 <TextBlock Text="📜 Global Player Action Scripts" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
-                                <Grid ColumnDefinitions="*, *" Height="220">
+                                <Grid ColumnDefinitions="*, *" Height="290">
                                     <Grid Grid.Column="0" RowDefinitions="*, Auto" Margin="0,0,8,0">
                                         <ListBox Grid.Row="0" ItemsSource="{Binding Actions}" SelectedIndex="0" x:Name="PlayerActionsList" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                             <ListBox.ItemTemplate>
@@ -1075,7 +1075,7 @@
 
                                             <!-- Actions & Events -->
                                             <TextBlock Text="Actions &amp; Events" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2" Margin="0,16,0,0"/>
-                                            <Grid ColumnDefinitions="*, *" Height="220">
+                                            <Grid ColumnDefinitions="*, *" Height="290">
                                                 <Grid Grid.Column="0" RowDefinitions="*, Auto" Margin="0,0,8,0">
                                                     <ListBox Grid.Row="0" ItemsSource="{Binding Actions}" SelectedIndex="0" x:Name="RoomActionsList" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                                         <ListBox.ItemTemplate>
@@ -1474,7 +1474,7 @@
                                 </Expander>
 
                                 <TextBlock Text="Actions &amp; Events" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2" Margin="0,16,0,0"/>
-                                <Grid ColumnDefinitions="*, *" Height="220">
+                                <Grid ColumnDefinitions="*, *" Height="290">
                                     <Grid Grid.Column="0" RowDefinitions="*, Auto" Margin="0,0,8,0">
                                         <ListBox Grid.Row="0" ItemsSource="{Binding Actions}" SelectedIndex="0" x:Name="CharacterActionsList" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                             <ListBox.ItemTemplate>
@@ -1727,7 +1727,7 @@
 
                                             <!-- Actions & Events -->
                                             <TextBlock Text="Actions &amp; Events" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2" Margin="0,16,0,0"/>
-                                            <Grid ColumnDefinitions="*, *" Height="220">
+                                            <Grid ColumnDefinitions="*, *" Height="290">
                                                 <Grid Grid.Column="0" RowDefinitions="*, Auto" Margin="0,0,8,0">
                                                     <ListBox Grid.Row="0" ItemsSource="{Binding Actions}" SelectedIndex="0" x:Name="ObjectActionsList" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                                         <ListBox.ItemTemplate>
@@ -2648,13 +2648,35 @@
                     </Border>
                     </StackPanel>
                     
-                    <!-- Right Column: Live Mockup HUD Preview -->
-                    <StackPanel Grid.Column="1" Spacing="20" VerticalAlignment="Top">
-                    <TextBlock Text="HUD Layout Preview" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextNormal}"/>
+                    <!-- Right Column: Live Mockup HUD & Popups Preview -->
+                    <StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Top">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                        <TextBlock Text="Live Preview Window" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextNormal}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                            <Button Content="🖥️ HUD Layout"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TogglePopupPreviewModeCommand}"
+                                    CommandParameter="false"
+                                    Classes="subtle"
+                                    Padding="10,6"
+                                    CornerRadius="6"
+                                    ToolTip.Tip="Preview Main Game HUD Layout"/>
+                            <Button Content="💬 Popups &amp; Dialogs"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TogglePopupPreviewModeCommand}"
+                                    CommandParameter="true"
+                                    Classes="subtle"
+                                    Padding="10,6"
+                                    CornerRadius="6"
+                                    ToolTip.Tip="Preview In-Game Player Input &amp; Dialogue Popups"/>
+                        </StackPanel>
+                    </Grid>
                     
                     <Border Background="#0f0f12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
                     <Viewbox Stretch="Uniform" Width="480" Height="380">
-                    <Border Width="1000" Height="800" Background="#111115" BorderBrush="#3f3f50" BorderThickness="2" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" ClipToBounds="True">
+                    <Grid Width="1000" Height="800">
+                    
+                    <!-- 1. STANDARD HUD LAYOUT PREVIEW -->
+                    <Border Width="1000" Height="800" Background="#111115" BorderBrush="#3f3f50" BorderThickness="2" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" ClipToBounds="True"
+                            IsVisible="{Binding !$parent[Window].((vm:MainWindowViewModel)DataContext).IsPopupPreviewMode}">
                         <Border.Styles>
                             <Style Selector="TextBlock">
                                 <Setter Property="FontFamily" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontPreviewFamilyName}"/>
@@ -2726,16 +2748,15 @@
                     
                     <!-- Main Content Area: Viewport extending all the way to the bottom with overlapping elements -->
                     <Grid>
-                    <!-- Scene Image Background (extends all the way to the bottom!) -->
+                    <!-- Scene Image Background -->
                     <Border BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="2.5" CornerRadius="6" Background="#1c1c24" ClipToBounds="True">
                     <Grid>
-                    <!-- Custom frame texture simulation -->
                     <Border BorderBrush="#ffaa00" BorderThickness="5" IsVisible="{Binding FrameAssetId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Opacity="0.5"/>
                     <TextBlock Text="🖼️ Scene Background Viewport" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Foreground="#555566"/>
                     </Grid>
                     </Border>
                     
-                    <!-- Top Player Portrait Panel (Overlay, only visible if aligned to Top!) -->
+                    <!-- Top Player Portrait Panel -->
                     <Border Width="160" Height="220" Margin="16" Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}"
                     HorizontalAlignment="{Binding PortraitAlignment, Converter={x:Static views:PortraitHorizontalAlignmentConverter.Instance}}"
                     VerticalAlignment="Top"
@@ -2761,9 +2782,8 @@
                     </StackPanel>
                     </Border>
                     
-                    <!-- Bottom Overlays (Narrative Text box + bottom-docked items stacked vertically) -->
+                    <!-- Bottom Overlays -->
                     <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Margin="16" Spacing="12">
-                    <!-- Narrative Text Panel -->
                     <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}"
                     HorizontalAlignment="{Binding TextBoxAlignment}"
                     Width="{Binding TextBoxWidth}"
@@ -2772,7 +2792,6 @@
                     Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontSize="13" TextWrapping="Wrap"/>
                     </Border>
                     
-                    <!-- Bottom Dock Stack Compartment (Shared Glass Border) -->
                     <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}"
                             Height="{Binding BottomBarHeight}"
                             HorizontalAlignment="Center">
@@ -2785,7 +2804,6 @@
                             </MultiBinding>
                         </Border.IsVisible>
                         <StackPanel Spacing="12" Orientation="Horizontal" VerticalAlignment="Stretch">
-                            <!-- Bottom Portrait (if BottomLeft) -->
                             <Border Width="200" Background="Transparent" Padding="12" VerticalAlignment="Stretch"
                                     IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=BottomLeft}">
                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -2805,25 +2823,21 @@
                                 </StackPanel>
                             </Border>
                             
-                            <!-- Bottom Room Items -->
                             <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
                                     IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
                                 <TextBlock Text="👥 Room Items" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                             </Border>
                             
-                            <!-- Bottom Inventory -->
                             <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
                                     IsVisible="{Binding InventoryDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
                                 <TextBlock Text="👝 Inventory" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                             </Border>
                             
-                            <!-- Bottom Compass -->
                             <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
                                     IsVisible="{Binding NavigationDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
                                 <TextBlock Text="🧭 Navigation" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                             </Border>
                             
-                            <!-- Bottom Portrait (if BottomRight) -->
                             <Border Width="200" Background="Transparent" Padding="12" VerticalAlignment="Stretch"
                                     IsVisible="{Binding PortraitAlignment, Converter={x:Static views:PortraitPositionConverter.Instance}, ConverterParameter=BottomRight}">
                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -2848,6 +2862,68 @@
                     </Grid>
                     </DockPanel>
                     </Border>
+
+                    <!-- 2. IN-GAME POPUPS & DIALOGS LIVE PREVIEW -->
+                    <Border Width="1000" Height="800" Background="#111115" BorderBrush="#3f3f50" BorderThickness="2" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" ClipToBounds="True"
+                            IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsPopupPreviewMode}">
+                        <Border.Styles>
+                            <Style Selector="TextBlock">
+                                <Setter Property="FontFamily" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).FontPreviewFamilyName}"/>
+                            </Style>
+                        </Border.Styles>
+                        <Grid>
+                            <!-- In-Game Scene Background simulation -->
+                            <Border Background="#181a24" BorderBrush="#2e3240" BorderThickness="1">
+                                <Grid>
+                                    <TextBlock Text="🖼️ In-Game Scene Background Viewport" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22" Foreground="#333344" FontWeight="Bold"/>
+                                    <TextBlock Text="Interactive Room Artwork / Character Presentation" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,50,0,0" FontSize="14" Foreground="#282a38"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Dark Modal Scrim Backdrop (Simulating 75% Dark Scrim) -->
+                            <Border Background="#06080e" Opacity="0.75" />
+
+                            <!-- Live Responsive Popup Modal Card -->
+                            <Border Width="750" 
+                                    HorizontalAlignment="Center" 
+                                    VerticalAlignment="Center" 
+                                    Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" 
+                                    BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" 
+                                    BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" 
+                                    CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" 
+                                    Padding="32">
+                                <StackPanel Spacing="16">
+                                    <!-- Header Title -->
+                                    <TextBlock Text="Input Required" 
+                                               HorizontalAlignment="Center" 
+                                               FontSize="18" 
+                                               FontWeight="Bold" 
+                                               Foreground="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                                    <!-- Body Message -->
+                                    <TextBlock Text="Do you want to use the heavy iron key to unlock the ancient dungeon entrance?" 
+                                               HorizontalAlignment="Center" 
+                                               TextAlignment="Center" 
+                                               TextWrapping="Wrap" 
+                                               FontSize="14" 
+                                               Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                                    
+                                    <!-- Option Choice Buttons -->
+                                    <StackPanel Spacing="10" Margin="0,8,0,0">
+                                        <!-- Primary Accent Button with Multiline Text -->
+                                        <Border Background="#1e2230" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="1.5" CornerRadius="8" Padding="16,12">
+                                            <TextBlock Text="✔ Yes, insert the heavy iron key into the lock and turn it clockwise until the lock mechanism clicks" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                        </Border>
+                                        <!-- Secondary Button -->
+                                        <Border Background="#1e2230" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="16,12">
+                                            <TextBlock Text="✖ No, keep the iron key in your inventory and inspect the surroundings" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontSize="13" TextWrapping="Wrap"/>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    </Grid>
                     </Viewbox>
                     </Border>
                     </StackPanel>

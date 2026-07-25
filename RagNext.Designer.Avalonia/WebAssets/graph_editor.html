@@ -155,12 +155,16 @@
             <div class="modal-body" style="gap: 12px;">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 11px; color: var(--text-muted);">Attribute Name</label>
-                    <input type="text" id="new-attribute-name" style="width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--node-border); border-radius: 6px; color: #fff; padding: 8px 10px; outline: none; font-size: 13px;" placeholder="e.g. Strength">
+                    <input type="text" id="new-attribute-name" style="width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--node-border); border-radius: 6px; color: #fff; padding: 8px 10px; outline: none; font-size: 13px;" placeholder="e.g. Strength" onkeydown="if(event.key==='Enter') submitAddAttribute()">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 11px; color: var(--text-muted);">Attribute Value</label>
-                    <input type="text" id="new-attribute-value" style="width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--node-border); border-radius: 6px; color: #fff; padding: 8px 10px; outline: none; font-size: 13px;" placeholder="e.g. 10">
+                    <input type="text" id="new-attribute-value" style="width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--node-border); border-radius: 6px; color: #fff; padding: 8px 10px; outline: none; font-size: 13px;" placeholder="e.g. 10" onkeydown="if(event.key==='Enter') submitAddAttribute()">
                 </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                <button class="btn" onclick="closeAddAttributeModal()">Cancel</button>
+                <button class="btn primary" onclick="submitAddAttribute()">Add Attribute</button>
             </div>
         </div>
     </div>
@@ -223,6 +227,67 @@
                     <div class="token-item">
                         <span class="token-badge">{variables.VarName}</span>
                         <span class="token-desc">Value of game variable 'VarName'.</span>
+                    </div>
+                </div>
+                <div class="help-section" style="margin-top: 16px;">
+                    <h4 style="margin-bottom: 8px;">🧮 Formulas &amp; Math Functions</h4>
+                    <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">
+                        Formula fields support numbers, entity attributes, operators (<code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>^</code>), parentheses <code>()</code>, and built-in functions:
+                    </p>
+
+                    <div class="token-item">
+                        <span class="token-badge">random(min, max)</span>
+                        <span class="token-desc">Generates a random integer between min &amp; max inclusive. e.g. <code>random(1, 6)</code></span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">min(a, b, ...)</span>
+                        <span class="token-desc">Returns smallest value. e.g. <code>min(100, {player.attribute.Health} + 20)</code></span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">max(a, b, ...)</span>
+                        <span class="token-desc">Returns largest value. e.g. <code>max(0, {player.attribute.Health} - 15)</code></span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">abs(x)</span>
+                        <span class="token-desc">Absolute (positive) value. e.g. <code>abs(-5)</code> &rarr; 5</span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">round(x)</span>
+                        <span class="token-desc">Rounds decimal to nearest whole integer. e.g. <code>round(4.7)</code> &rarr; 5</span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">floor(x) / ceil(x)</span>
+                        <span class="token-desc">Round down to integer (<code>floor(4.9)</code> &rarr; 4) or round up (<code>ceil(4.1)</code> &rarr; 5).</span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">clamp(val, min, max)</span>
+                        <span class="token-desc">Clamps val within min and max boundaries. e.g. <code>clamp({var.Stamina}, 0, 100)</code></span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">sqrt(x) / pow(b, e)</span>
+                        <span class="token-desc">Square root (<code>sqrt(16)</code> &rarr; 4) &amp; Power (<code>pow(2, 3)</code> &rarr; 8).</span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">sin, cos, tan, log</span>
+                        <span class="token-desc">Trigonometric &amp; logarithmic functions. e.g. <code>sin(pi / 2)</code> &rarr; 1</span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">pi / e</span>
+                        <span class="token-desc">Constants: &pi; (<code>3.14159...</code>) &amp; e (<code>2.71828...</code>).</span>
+                    </div>
+
+                    <h5 style="margin-top: 12px; margin-bottom: 6px; font-size: 11px; color: #a855f7;">Example Use Cases</h5>
+                    <div class="token-item">
+                        <span class="token-badge">{player.attribute.Strength} + 1</span>
+                        <span class="token-desc">Increment player Strength attribute by 1.</span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">min(100, {var.Health} + 25)</span>
+                        <span class="token-desc">Heal 25 HP capped at 100 max.</span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">random(1, 20) + {player.attribute.Mind}</span>
+                        <span class="token-desc">D20 dice roll + Mind stat modifier.</span>
                     </div>
                 </div>
             </div>

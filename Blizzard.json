@@ -1,0 +1,5549 @@
+{
+  "Title": "Blizzard",
+  "Author": "",
+  "Version": "1.0",
+  "Description": "",
+  "Player": {
+    "Id": "271d3e4b-b981-4a63-b125-d8f91a67ac92",
+    "Name": "Player",
+    "Description": "[v: PlayerDesc]",
+    "Gender": "Male",
+    "PortraitImagePath": null,
+    "StartingRoomId": "4280b7c6-e147-4f51-a9de-33ce1e90e479",
+    "Inventory": [],
+    "Actions": [
+      {
+        "Id": "d2f5820c-b9cd-4eb8-9e90-c1be8d1311b3",
+        "Name": "<<On Game Start>>",
+        "InitallyActive": true,
+        "Trigger": "OnGameStart",
+        "DirectionFilter": "All",
+        "Nodes": []
+      },
+      {
+        "Id": "0e637e5f-e6e8-44a9-9999-186fa3228f20",
+        "Name": "<<On Player Enter>>",
+        "InitallyActive": true,
+        "Trigger": "OnPlayerEnter",
+        "DirectionFilter": "All",
+        "Nodes": []
+      },
+      {
+        "Id": "147e5e85-e822-45c2-be39-cd6d4fba8a01",
+        "Name": "<<On Player Leave>>",
+        "InitallyActive": true,
+        "Trigger": "OnPlayerExit",
+        "DirectionFilter": "All",
+        "Nodes": [
+          {
+            "$type": "player.attributeCheck",
+            "AttributeName": "None",
+            "ExpectedValue": "",
+            "TrueBranch": [
+              {
+                "$type": "media.playSound",
+                "SoundId": "[pp: WalkEffect]"
+              },
+              {
+                "$type": "player.attributeCheck",
+                "AttributeName": "0",
+                "ExpectedValue": "",
+                "TrueBranch": [
+                  {
+                    "$type": "player.setAttribute",
+                    "AttributeName": "OneTimeHeelMessage",
+                    "Value": "1"
+                  },
+                  {
+                    "$type": "general.displayText",
+                    "Text": "<i>(Press Enter to continue)</i>"
+                  },
+                  {
+                    "$type": "general.displayText",
+                    "Text": "Oooh, that's new you think to yourself as you listen to your heels clicking on the floor.<br><br>That's a really sexy sound.  You could get used to walking in these heels.<br><br>Wait, where did that thought come from, you think to yourself.  You must be a bit flustered from lack of food or something."
+                  },
+                  {
+                    "$type": "general.displayText",
+                    "Text": "<i>(Press Enter to continue)</i>"
+                  }
+                ],
+                "FalseBranch": [],
+                "Label": "FirstTimeHeelWalk?"
+              }
+            ],
+            "FalseBranch": [],
+            "Label": "WalkEffect?"
+          },
+          {
+            "$type": "var.compare",
+            "Name": "true",
+            "Comparison": "=",
+            "Value": "true",
+            "TrueBranch": [
+              {
+                "$type": "general.displayText",
+                "Text": "[Condition Check: \"Outside?\" | Tests: [[\"CT_Room_CustomPropertyCheck\",\"CT_Uninitialized\",\"<CurrentRoom>:Environment\",\"Equals\",\"Outside\"]]]",
+                "Label": "Outside?"
+              },
+              {
+                "$type": "media.playSound",
+                "SoundId": "12c0fede-df98-4cfc-aaea-0b6811b09980"
+              }
+            ],
+            "FalseBranch": [],
+            "Label": "Outside?"
+          },
+          {
+            "$type": "general.displayText",
+            "Text": ""
+          }
+        ]
+      },
+      {
+        "Id": "409da33c-967f-474c-a4c0-c01b9b2e8968",
+        "Name": "Examine",
+        "InitallyActive": true,
+        "Trigger": "OnObjectExamined",
+        "DirectionFilter": "All",
+        "Nodes": [
+          {
+            "$type": "general.displayText",
+            "Text": "[Command Fallback: \"CT_DISPLAYPLAYERDESC\" | Args: [\"\",\"\",\"\",\"\",\"\"]]"
+          },
+          {
+            "$type": "media.displayMultimedia",
+            "MediaId": "[v: PlayerExaminePic]"
+          }
+        ]
+      },
+      {
+        "Id": "1afed681-d50a-496f-addd-ebb3c0e96c98",
+        "Name": "Drive",
+        "InitallyActive": true,
+        "Trigger": "UserClicked",
+        "DirectionFilter": "All",
+        "Nodes": [
+          {
+            "$type": "general.displayText",
+            "Text": "You bravely drive on...trying to find somewhere to wait out the storm."
+          },
+          {
+            "$type": "general.displayText",
+            "Text": "<i>(Press Enter to continue)</i>"
+          },
+          {
+            "$type": "general.displayText",
+            "Text": "Unfortunately, you slide off the road and get stuck."
+          },
+          {
+            "$type": "media.playSound",
+            "SoundId": "86626547-3d91-452f-a119-08114230af4f"
+          },
+          {
+            "$type": "general.displayText",
+            "Text": "Great!  Now what will you do?!"
+          },
+          {
+            "$type": "general.displayText",
+            "Text": "[Command Fallback: \"CT_SETPLAYERACTION\" | Args: [\"\",\"\",\"\",\"Drive-Inactive\",\"\"]]"
+          },
+          {
+            "$type": "general.displayText",
+            "Text": "[Command Fallback: \"CT_SETROOMPIC\" | Args: [\"\",\"\",\"00000000-0000-0000-0000-000000000001\",\"stuckinsnow.jpg\",\"\"]]"
+          },
+          {
+            "$type": "media.displayMultimedia",
+            "MediaId": "3b0d1b87-7a57-4a42-aced-c3ccfd96cdf5"
+          },
+          {
+            "$type": "general.displayText",
+            "Text": "[Command Fallback: \"CT_SETEXIT\" | Args: [\"\",\"\",\"4280b7c6-e147-4f51-a9de-33ce1e90e479\",\"Out-Active-To:Snow Storm - 1\",\"\"]]"
+          }
+        ]
+      }
+    ],
+    "Attributes": [
+      {
+        "Name": "PlayerStage",
+        "Value": "0"
+      },
+      {
+        "Name": "PortraitImage",
+        "Value": "playerinsnow.png"
+      },
+      {
+        "Name": "WalkEffect",
+        "Value": "None"
+      },
+      {
+        "Name": "OneTimeHeelMessage",
+        "Value": "0"
+      }
+    ]
+  },
+  "Rooms": [
+    {
+      "Id": "1b4090c4-b21a-4d90-941e-9e3b3c01dc5b",
+      "Name": "Master Bathroom",
+      "Description": "",
+      "PortraitImagePath": "masterbath.jpg",
+      "Exits": {
+        "South": "bbded258-58c6-49f1-ace8-efa87f9b467d"
+      },
+      "LockedExits": {
+        "South": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "5f7081c1-c46a-4f39-a26d-8109c0083689",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "5ee3efa2-89fc-4b0f-99d6-e4b983dc0472",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "cee663f4-2d26-43d2-801f-e0a632c3e785",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "5d996a47-4d92-4237-bba1-87d396443e8f",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "a928cb9f-4e5d-4326-ad3f-1113d43b14af",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "1b4090c4-b21a-4d90-941e-9e3b3c01dc5b"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "1b4090c4-b21a-4d90-941e-9e3b3c01dc5b"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "06f888ba-d29b-4868-957f-7fc0215dfd72",
+      "Name": "Pink Guest Room",
+      "Description": "",
+      "PortraitImagePath": "pinkroom.JPG",
+      "Exits": {
+        "West": "b318921c-8775-49cf-83a8-4d14b36bd423"
+      },
+      "LockedExits": {
+        "West": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "5f01c4c9-bf85-44c5-a0d9-25ca997805cb",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "30d2d55e-2bd0-42b3-9ca3-da496f45dbb3",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6b8e312a-e2ab-413f-bc90-e6240adf00a6",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "97de3581-a91b-4ac9-b89a-fdea74441685",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "9ab44eb4-5fcb-48e9-aae5-ca2875bd4f64",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "06f888ba-d29b-4868-957f-7fc0215dfd72"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "06f888ba-d29b-4868-957f-7fc0215dfd72"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "bbded258-58c6-49f1-ace8-efa87f9b467d",
+      "Name": "Master Suite",
+      "Description": "",
+      "PortraitImagePath": "Master-Suite.jpg",
+      "Exits": {
+        "North": "1b4090c4-b21a-4d90-941e-9e3b3c01dc5b",
+        "East": "b318921c-8775-49cf-83a8-4d14b36bd423"
+      },
+      "LockedExits": {
+        "North": true,
+        "East": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "07d0d7ad-9a94-479d-bd96-28d6b14622a7",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "20ed8a47-aa3f-4995-a540-6e439da12d3b",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6b7b2098-570a-492e-ac0e-220931b5d4d9",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "b317a32e-9ca7-43d4-9e58-971aa8b84790",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "9ca68d25-54da-417b-a730-58b0f410d989",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "bbded258-58c6-49f1-ace8-efa87f9b467d"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "bbded258-58c6-49f1-ace8-efa87f9b467d"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "b318921c-8775-49cf-83a8-4d14b36bd423",
+      "Name": "Northern Hallway",
+      "Description": "",
+      "PortraitImagePath": "hallways2.jpg",
+      "Exits": {
+        "South": "82d9f60c-69db-4018-b7c0-b973541bb5de",
+        "West": "bbded258-58c6-49f1-ace8-efa87f9b467d",
+        "East": "06f888ba-d29b-4868-957f-7fc0215dfd72"
+      },
+      "LockedExits": {
+        "South": true,
+        "West": true,
+        "East": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "fb597b85-ee64-46ee-8083-60dbc4514eb6",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "c22634f8-38ef-4c68-b146-d9df88f7333f",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "910ed063-b1f9-4382-8f24-995866ab8812",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "983af678-0cf4-4825-9fcb-f6b97720f36c",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "dd12336a-41b9-4b0d-b2a3-a9975bd878b0",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "b318921c-8775-49cf-83a8-4d14b36bd423"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "b318921c-8775-49cf-83a8-4d14b36bd423"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "ca16e6b7-1806-497e-a187-de6254e0fd6c",
+      "Name": "Guest Room",
+      "Description": "",
+      "PortraitImagePath": "guestsuite.jpg",
+      "Exits": {
+        "East": "82d9f60c-69db-4018-b7c0-b973541bb5de"
+      },
+      "LockedExits": {
+        "East": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "f1f5b8b9-e5b2-424f-bf41-97b27dff502b",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6c7148b7-566e-4a4e-a2c3-0f6ef2c226b7",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "89aea0c0-fc48-41cd-b989-f641a4d212f4",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "43bee7d3-6b85-4a36-852f-e2a84946176e",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "79d062d4-828c-4dfe-8ca2-4025325e5e36",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "ca16e6b7-1806-497e-a187-de6254e0fd6c"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "ca16e6b7-1806-497e-a187-de6254e0fd6c"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "719c0165-ea72-46d0-83c5-24d6f0254b12",
+      "Name": "Hall Bathroom",
+      "Description": "",
+      "PortraitImagePath": "Suite_Bathroom.jpg",
+      "Exits": {
+        "West": "82d9f60c-69db-4018-b7c0-b973541bb5de"
+      },
+      "LockedExits": {
+        "West": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "c71f98b2-83c9-4c2d-831a-cf7e2950ed5a",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "ee5c57b1-ee5f-4977-b3a5-385340b8edab",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "30fec5f1-badd-4967-904f-16afec335548",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "93ee189b-9bc3-45f7-b869-6509ca5adb5d",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6b4c9deb-21f2-48db-bfeb-d143ac0ebd6d",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "719c0165-ea72-46d0-83c5-24d6f0254b12"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "719c0165-ea72-46d0-83c5-24d6f0254b12"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "82d9f60c-69db-4018-b7c0-b973541bb5de",
+      "Name": "Upstairs Hallway",
+      "Description": "",
+      "PortraitImagePath": "upstairs_hall.jpg",
+      "Exits": {
+        "North": "b318921c-8775-49cf-83a8-4d14b36bd423",
+        "West": "ca16e6b7-1806-497e-a187-de6254e0fd6c",
+        "East": "719c0165-ea72-46d0-83c5-24d6f0254b12",
+        "Down": "95cbea71-ca22-4620-90c6-5d4d6d298c32"
+      },
+      "LockedExits": {
+        "North": true,
+        "West": true,
+        "East": true,
+        "Down": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "b3d4086f-a5ef-4182-9e60-2b0e133d4d63",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "34202430-19d9-4d76-92e3-5d71b2a2164d",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1b635cda-fcd6-4afe-97af-c8196b7d8608",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "cf9df930-9dc2-484b-ab5c-a86c801c8ed3",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "ebeda148-23e0-402e-bd81-d664fed5e22a",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "82d9f60c-69db-4018-b7c0-b973541bb5de"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "82d9f60c-69db-4018-b7c0-b973541bb5de"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "135a2d5a-ea4b-4e4d-b7a7-f6419d36a256",
+      "Name": "Backyard",
+      "Description": "You don't want to be out here long.  You'll freeze to death!",
+      "PortraitImagePath": "blizzard.jpg",
+      "Exits": {
+        "South": "77cfc2a7-5bb0-4a22-9468-435450ea0bcc"
+      },
+      "LockedExits": {
+        "South": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "9f073fb5-6502-4704-bfe9-878147db9ca0",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "ea0a3bc6-ee1b-45c6-901c-d04042c38a27",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "[Command Fallback: \"CT_SETTIMER\" | Args: [\"\",\"\",\"Freeze Timer\",\"Active\",\"\"]]"
+            }
+          ]
+        },
+        {
+          "Id": "a5dc7238-b1e3-4710-bf5d-6f948e812164",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "a38fe438-06a7-48a1-8577-8db955bdbaf6",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "[Command Fallback: \"CT_SETTIMER\" | Args: [\"\",\"\",\"Freeze Timer\",\"Inactive\",\"\"]]"
+            }
+          ]
+        },
+        {
+          "Id": "bb0641d5-4daa-4e5d-a1b0-818fbe039616",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "135a2d5a-ea4b-4e4d-b7a7-f6419d36a256"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "135a2d5a-ea4b-4e4d-b7a7-f6419d36a256"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "87a62900-578a-420e-b05b-036bcb7f3129",
+      "Name": "Cellar",
+      "Description": "",
+      "PortraitImagePath": "Wine Cellar 013.JPG",
+      "Exits": {
+        "Up": "77cfc2a7-5bb0-4a22-9468-435450ea0bcc"
+      },
+      "LockedExits": {
+        "Up": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "f20cce2c-4e7f-4112-857f-9d3925ac4bbd",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2b60dfb0-e234-436e-966a-99ed176b5afa",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1fff8942-951d-4147-95d8-0a0c8d9202ee",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "65746c5a-94c7-4b05-b1b9-cbf5b08fd8bf",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "7d5918fe-e995-4eaf-8a6d-bce21f6a1170",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "87a62900-578a-420e-b05b-036bcb7f3129"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "87a62900-578a-420e-b05b-036bcb7f3129"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "77cfc2a7-5bb0-4a22-9468-435450ea0bcc",
+      "Name": "Kitchen",
+      "Description": "",
+      "PortraitImagePath": "Grand Kitchen- Inlaid Ceiling.JPG",
+      "Exits": {
+        "North": "135a2d5a-ea4b-4e4d-b7a7-f6419d36a256",
+        "South": "f6a3424d-5c84-4d87-9345-bd97d8b86947",
+        "East": "7b13bee4-6e29-4631-9225-fb058d9bccd1",
+        "Down": "87a62900-578a-420e-b05b-036bcb7f3129"
+      },
+      "LockedExits": {
+        "North": true,
+        "South": true,
+        "Down": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "9b7f0c9b-fe91-430f-9e65-fa9571fed0f2",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "675810a7-8a53-4f68-898b-e41ad72b2bcf",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "57b8b6d9-703f-42c0-a52b-361b050fe251",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "75355f27-15a3-4cfa-a879-10090219f55b",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "800bed57-a336-4635-b2db-29d71b21d957",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "77cfc2a7-5bb0-4a22-9468-435450ea0bcc"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "77cfc2a7-5bb0-4a22-9468-435450ea0bcc"
+            }
+          ]
+        },
+        {
+          "Id": "afecf3aa-9099-440a-a477-18f269869eb1",
+          "Name": "Search Cupboards",
+          "InitallyActive": true,
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "var.compare",
+              "Name": "true",
+              "Comparison": "=",
+              "Value": "true",
+              "TrueBranch": [
+                {
+                  "$type": "general.displayText",
+                  "Text": "[Condition Check: \"Item Found 0\" | Tests: [[\"CT_Room_CustomPropertyCheck\",\"CT_Uninitialized\",\"<CurrentRoom>:ItemFound\",\"Equals\",\"0\"]]]",
+                  "Label": "Item Found 0"
+                },
+                {
+                  "$type": "general.displayText",
+                  "Text": "[Command Fallback: \"CT_ROOM_SET_CUSTOM_PROPERTY\" | Args: [\"\",\"\",\"<CurrentRoom>:ItemFound\",\"Add\",\"1\"]]"
+                },
+                {
+                  "$type": "object.moveToInventory",
+                  "ObjectId": "fa030ffc-5246-4f4d-b1ff-c241348b8eed"
+                },
+                {
+                  "$type": "general.displayText",
+                  "Text": "You search through the cupboards and find a pack of matches!"
+                }
+              ],
+              "FalseBranch": [
+                {
+                  "$type": "general.displayText",
+                  "Text": "You find nothing else of value."
+                }
+              ],
+              "Label": "Item Found 0"
+            }
+          ]
+        },
+        {
+          "Id": "4dd4d0b7-d156-4534-b09b-a7ed83aef6bf",
+          "Name": "Search Drawers",
+          "InitallyActive": false,
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "var.compare",
+              "Name": "true",
+              "Comparison": "=",
+              "Value": "true",
+              "TrueBranch": [
+                {
+                  "$type": "general.displayText",
+                  "Text": "[Condition Check: \"Item Found 0\" | Tests: [[\"CT_Room_CustomPropertyCheck\",\"CT_Uninitialized\",\"<CurrentRoom>:ItemFound\",\"Equals\",\"1\"]]]",
+                  "Label": "Item Found 0"
+                },
+                {
+                  "$type": "general.displayText",
+                  "Text": "[Command Fallback: \"CT_ROOM_SET_CUSTOM_PROPERTY\" | Args: [\"\",\"\",\"<CurrentRoom>:ItemFound\",\"Add\",\"1\"]]"
+                },
+                {
+                  "$type": "object.moveToInventory",
+                  "ObjectId": "a80b3af0-453c-420f-b6eb-77207202f7b9"
+                },
+                {
+                  "$type": "general.displayText",
+                  "Text": "You search through the drawers and find a corkscrew!"
+                }
+              ],
+              "FalseBranch": [
+                {
+                  "$type": "general.displayText",
+                  "Text": "You find nothing else of value."
+                }
+              ],
+              "Label": "Item Found 0"
+            },
+            {
+              "$type": "general.displayText",
+              "Text": ""
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "f6a3424d-5c84-4d87-9345-bd97d8b86947",
+      "Name": "Living Room",
+      "Description": "",
+      "PortraitImagePath": "residences1_4.jpg",
+      "Exits": {
+        "North": "77cfc2a7-5bb0-4a22-9468-435450ea0bcc",
+        "East": "95cbea71-ca22-4620-90c6-5d4d6d298c32"
+      },
+      "LockedExits": {
+        "North": true,
+        "East": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "9845ce11-f9b7-40e9-b932-2c8479f7177f",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "767fbfd3-0fb3-4a36-bc6b-57b441dba529",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "246a2695-4496-4860-8c9a-bb8c0248083f",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "0ebc59ab-96ac-44ea-8b64-1084b575fba2",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "b103262a-3bd3-4ad4-9923-167df44308e0",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "f6a3424d-5c84-4d87-9345-bd97d8b86947"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "f6a3424d-5c84-4d87-9345-bd97d8b86947"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "95cbea71-ca22-4620-90c6-5d4d6d298c32",
+      "Name": "Foyer",
+      "Description": "A stately foyer.  The ceilings are impressively tall.  This house didn't look this nice from outside, although it was hard to see much of anything in the storm!",
+      "PortraitImagePath": "Foyer_001.jpg",
+      "Exits": {
+        "South": "d6d55ff7-4f72-4b3a-923f-e11eabbbb3d3",
+        "West": "f6a3424d-5c84-4d87-9345-bd97d8b86947",
+        "Up": "82d9f60c-69db-4018-b7c0-b973541bb5de"
+      },
+      "LockedExits": {
+        "West": true,
+        "Up": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "2aab788f-7d59-4774-9f08-e4af5817fae4",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "361e6ff0-b0bc-4ddd-92cc-5113d404faf9",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1679e71b-fdd5-4849-9244-c1250509cb16",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6a6bca29-0dae-4e34-81ad-37447b033c17",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "95cbea71-ca22-4620-90c6-5d4d6d298c32"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "95cbea71-ca22-4620-90c6-5d4d6d298c32"
+            }
+          ]
+        },
+        {
+          "Id": "570d7f89-a544-4508-9fb3-cd66fd04cec0",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "[Command Fallback: \"CT_MM_STOP_BACKGROUND_MUSIC\" | Args: [\"\",\"\",\"\",\"\",\"\"]]"
+            },
+            {
+              "$type": "media.playSound",
+              "SoundId": "696f5db6-b757-4d70-b8bf-d8c86577dd94"
+            },
+            {
+              "$type": "general.displayText",
+              "Text": "You jump as the door slams behind you!<br><br>You check the door and find that you can't seem to get it open again.  Perhaps it has frozen shut due to the cold weather!<br><br>Your clothes have gotten wet and you are starting to freeze.  You better hurry up and get out of those clothes!"
+            },
+            {
+              "$type": "general.displayText",
+              "Text": "[Command Fallback: \"CT_SETTIMER\" | Args: [\"\",\"\",\"Freeze Timer\",\"Active\",\"\"]]"
+            },
+            {
+              "$type": "general.displayText",
+              "Text": "[Command Fallback: \"CT_SETOBJECTACTION\" | Args: [\"\",\"\",\"63d8dd12-117f-4d52-a875-998f373cb32b\",\"Remove-Active\",\"\"]]"
+            },
+            {
+              "$type": "general.displayText",
+              "Text": "[Command Fallback: \"CT_MM_STOP_BACKGROUND_MUSIC\" | Args: [\"\",\"\",\"\",\"\",\"\"]]"
+            },
+            {
+              "$type": "player.setAttribute",
+              "AttributeName": "PortraitImage",
+              "Value": "playerinhouse.png"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "Foyer_001.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "4280b7c6-e147-4f51-a9de-33ce1e90e479",
+      "Name": "Your Car",
+      "Description": "Your car is basic but functional.  ",
+      "PortraitImagePath": "carinsnow.jpg",
+      "Exits": {
+        "Out": "b71a1aed-aaa6-46d9-9ef6-4d99aec569af"
+      },
+      "LockedExits": {},
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "42188a6d-7f65-4af0-9cc8-fb0267b2232d",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "dc58ed87-f711-492c-9642-b6a84ea032bc",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "90cfd3f1-590d-40a9-89f8-85dccafee51d",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "95867f64-9f8b-4e90-aad2-43571717587f",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "[Command Fallback: \"CT_MM_SET_BACKGROUND_MUSIC\" | Args: [\"\",\"\",\"Wind.mp3\",\"\",\"\"]]"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "b71a1aed-aaa6-46d9-9ef6-4d99aec569af",
+      "Name": "Snow Storm - 1",
+      "Description": "",
+      "PortraitImagePath": "blizzard.jpg",
+      "Exits": {
+        "North": "667f6401-9513-4f79-9222-762aab47bc9a",
+        "South": "b71a1aed-aaa6-46d9-9ef6-4d99aec569af",
+        "West": "b71a1aed-aaa6-46d9-9ef6-4d99aec569af",
+        "East": "b71a1aed-aaa6-46d9-9ef6-4d99aec569af",
+        "In": "4280b7c6-e147-4f51-a9de-33ce1e90e479"
+      },
+      "LockedExits": {
+        "North": true,
+        "South": true,
+        "West": true,
+        "East": true,
+        "In": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "89ad09fd-2bae-4519-aff3-856e9c6c86fa",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "253142fc-840f-4055-91eb-1d6da8b2504d",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "f4a0b856-d646-4f85-a783-d5c4385ee762",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "9b2d621f-4be4-4af8-b6a6-f610cd79119b",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2771998a-dcf5-4b1f-9a8f-29f885b0dc72",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "Snow Storm - 1"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "Snow Storm - 1"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "Environment",
+          "Value": "Outside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "667f6401-9513-4f79-9222-762aab47bc9a",
+      "Name": "Snow Storm - 2",
+      "Description": "",
+      "PortraitImagePath": "blizzard.jpg",
+      "Exits": {
+        "North": "b71a1aed-aaa6-46d9-9ef6-4d99aec569af",
+        "South": "9abb59e1-26e6-4367-b50a-3c7115075bba",
+        "West": "b71a1aed-aaa6-46d9-9ef6-4d99aec569af",
+        "East": "667f6401-9513-4f79-9222-762aab47bc9a"
+      },
+      "LockedExits": {
+        "North": true,
+        "South": true,
+        "West": true,
+        "East": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "b93f99b9-dca0-465d-b5c2-3ddab2c1518c",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1a0b2b07-a774-4c47-8ee9-050db8e51b50",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "c4bdf0fb-f50d-4545-89b6-6e05b60b6b1d",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "52bd19a4-6340-4140-80d3-77f6e1f67519",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "Environment",
+          "Value": "Outside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "9abb59e1-26e6-4367-b50a-3c7115075bba",
+      "Name": "Snow Storm - 3",
+      "Description": "",
+      "PortraitImagePath": "blizzard.jpg",
+      "Exits": {
+        "North": "9abb59e1-26e6-4367-b50a-3c7115075bba",
+        "South": "9abb59e1-26e6-4367-b50a-3c7115075bba",
+        "West": "667f6401-9513-4f79-9222-762aab47bc9a",
+        "East": "659b50a1-8129-46ce-8d0a-da8a1d17952a"
+      },
+      "LockedExits": {
+        "North": true,
+        "South": true,
+        "West": true,
+        "East": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "8ac7f51e-e8bb-45be-aaa4-f897af04e822",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "743fb7e8-f2fc-48b2-88c5-ebd9ba593755",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "dcdae75a-c6dd-4928-b5b5-fefd713dc9e0",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6d1971d5-cc1e-4aef-af0f-82f0da761be0",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "Environment",
+          "Value": "Outside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "659b50a1-8129-46ce-8d0a-da8a1d17952a",
+      "Name": "Snow Storm - 4",
+      "Description": "",
+      "PortraitImagePath": "blizzard.jpg",
+      "Exits": {
+        "West": "9abb59e1-26e6-4367-b50a-3c7115075bba",
+        "In": "95cbea71-ca22-4620-90c6-5d4d6d298c32"
+      },
+      "LockedExits": {
+        "West": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "2482a8f7-b9c2-4173-a0ac-6ace2d058d4d",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "89c44689-5b6d-4abf-bb11-45d2aca6cfff",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "652b2b8f-8eed-4f6b-9fd2-03c296b537a2",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2e3940ad-ef6a-423d-96ce-273c680b4d2a",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "Environment",
+          "Value": "Outside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "7b13bee4-6e29-4631-9225-fb058d9bccd1",
+      "Name": "Garage",
+      "Description": "",
+      "PortraitImagePath": "empty_garage.jpg",
+      "Exits": {
+        "West": "77cfc2a7-5bb0-4a22-9468-435450ea0bcc"
+      },
+      "LockedExits": {
+        "West": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "b6348a0b-f97a-4d48-bebf-a6ab68a22281",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1655d1a6-d311-4fdd-9a4c-fb9c947d4137",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "09560e7d-cfba-44ea-ae68-e8d29706344b",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "74d6ab36-ce78-409d-918a-28d768340c42",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    },
+    {
+      "Id": "fff1b7db-3893-47a1-a3ee-bbb7c337f582",
+      "Name": "Inside Hummer",
+      "Description": "The seats are fine leather.  It still has that new car smell.  This is definitely an upgraded vehicle!",
+      "PortraitImagePath": "humint.jpg",
+      "Exits": {
+        "Out": "7b13bee4-6e29-4631-9225-fb058d9bccd1"
+      },
+      "LockedExits": {
+        "Out": true
+      },
+      "ObjectIds": [],
+      "Actions": [
+        {
+          "Id": "fdabc0ab-4c84-4832-9285-9ec4e6e9518f",
+          "Name": "<<On Player Enter First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "5554e73c-e828-4105-b7c3-e7ca6bd58ba9",
+          "Name": "<<On Player Enter>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerEnter",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "51dd744c-ac4a-4433-90e9-93040d140310",
+          "Name": "<<On Player Leave First Time>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "8dcb8284-09a0-4f92-9f4f-f85b136d64f8",
+          "Name": "<<On Player Leave>>",
+          "InitallyActive": true,
+          "Trigger": "OnPlayerExit",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "dfbe87b6-658f-459c-bcce-a14fa4608533",
+          "Name": "Examine",
+          "InitallyActive": true,
+          "Trigger": "OnObjectExamined",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": "Inside Hummer"
+            },
+            {
+              "$type": "media.displayMultimedia",
+              "MediaId": "Inside Hummer"
+            }
+          ]
+        },
+        {
+          "Id": "960b6d55-da56-4f25-8753-5016a3cb849e",
+          "Name": "Let's Get Out Of Here!",
+          "InitallyActive": true,
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": [
+            {
+              "$type": "general.displayText",
+              "Text": ""
+            },
+            {
+              "$type": "var.compare",
+              "Name": "true",
+              "Comparison": "=",
+              "Value": "true",
+              "TrueBranch": [
+                {
+                  "$type": "general.displayText",
+                  "Text": "[Condition Check: \"Key To Hummer?\" | Tests: [[\"CT_Item_Held_By_Player\",\"CT_Uninitialized\",\"3c5bd5d0-f4db-44f0-8e38-c1cceed5958f\",\"\",\"\"]]]",
+                  "Label": "Key To Hummer?"
+                },
+                {
+                  "$type": "general.displayText",
+                  "Text": "[Command Fallback: \"CT_ENDGAME\" | Args: [\"\",\"The Hummer roars to life and you floor it.  A somewhat changed individual, but at least you got out of the house!\",\"\",\"\",\"\"]]"
+                }
+              ],
+              "FalseBranch": [
+                {
+                  "$type": "general.displayText",
+                  "Text": "You will probably need some keys to make the car go."
+                }
+              ],
+              "Label": "Key To Hummer?"
+            }
+          ]
+        }
+      ],
+      "Attributes": [
+        {
+          "Name": "RoomImage",
+          "Value": "prisonsuite.jpg"
+        },
+        {
+          "Name": "Environment",
+          "Value": "Inside"
+        },
+        {
+          "Name": "ItemFound",
+          "Value": "0"
+        }
+      ]
+    }
+  ],
+  "Objects": [
+    {
+      "Id": "5b0e0b68-cbef-453d-8c83-f11ba161f28d",
+      "Name": "blue jeans",
+      "Description": "a pair of ordinary jeans.",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "0df3383b-e5e4-47fb-94ac-779aad5220de",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "3601599d-da80-4e4b-ab52-dfa274ebc528",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "adbdc4d0-f446-4567-9b2c-596054dc4f9b",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "542a26ee-83b5-4f03-ace6-a3ee61258e75",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "M",
+          "Value": "i"
+        }
+      ]
+    },
+    {
+      "Id": "a1345922-1e0c-48d9-8ced-72f9e69f2454",
+      "Name": "plain blue shirt",
+      "Description": "It's a blue t-shirt.  Not much more to report.",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "d862239e-20ec-4860-9ed7-72eddaceffd6",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "78c7ed13-5dd9-4e55-9c75-d7d9cc3aa7f6",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "453d9f4e-559d-4684-a9ea-715efe4e9561",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2b1307f6-564a-4362-96ea-ee181418651b",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "U",
+          "Value": "p"
+        }
+      ]
+    },
+    {
+      "Id": "cc1ee03d-3ff0-4899-ab3b-c442a65a97d3",
+      "Name": "shoes",
+      "Description": "This is a nice pair of women's running shoes.",
+      "PortraitImagePath": "ac0259de-dbad-477a-9655-1cddac04902a",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "a30f1a5b-8e93-41d2-8e5b-3bcac104f28a",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "def8f46a-fade-41e4-a2f5-ac2286c5712b",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "5b6b8fdd-e5ee-4d1e-b2a8-974bd88a73b5",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "8eec063a-ef96-4d1b-b45f-ef3fd732507d",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "L",
+          "Value": "o"
+        }
+      ]
+    },
+    {
+      "Id": "dbd61031-8c0c-4f70-b5ab-b5cd99cd0288",
+      "Name": "underwear",
+      "Description": "black cotton female underwear.",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "6600347e-8f8d-4fd9-a5e8-a9b96fd9b6b2",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "14419ef2-9ed1-4e09-9918-d35272148693",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "41ef0f9b-657c-49ef-ae54-b2bbc0896da5",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2d4f6377-a36a-4e13-a076-a60877d12cc7",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "M",
+          "Value": "i"
+        }
+      ]
+    },
+    {
+      "Id": "d668fdeb-87cf-4e86-b023-8ac2f87b849f",
+      "Name": "Panties",
+      "Description": "White cotton panties with pink flowers printed all over them.",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "180c5629-06d5-49ad-a77e-59770163ecc0",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "41568b0d-1221-4476-8e72-c2d2a7663535",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "723efe34-4f2b-41aa-a4b2-30d8781d900a",
+          "Name": "TransitionScore",
+          "InitallyActive": "2",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "e42e4531-3358-42fd-a485-c0f8b50c8ce3",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "M",
+          "Value": "i"
+        }
+      ]
+    },
+    {
+      "Id": "a6c96fe8-e800-483a-bdf3-fbf4ae386e0a",
+      "Name": "Stockings",
+      "Description": "A pair of sexy sheer white stockings.<br>Perhaps they'll help keep you warm you tell yourself.",
+      "PortraitImagePath": "306c75a7-c948-4e3f-87f8-0bcd77649bf0",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "620aca97-9d5c-4e2d-94c8-5e826241dd26",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "0cc8ad11-a523-4b1f-ba9a-da1b85a1005a",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "357682f8-519e-4ff2-a4e9-dd5177927f43",
+          "Name": "TransitionScore",
+          "InitallyActive": "2",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "831974d4-6e31-415d-bca8-7b02550ea9c1",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "L",
+          "Value": "o"
+        }
+      ]
+    },
+    {
+      "Id": "7f3bbe4a-cca2-499a-b63a-d6c6dc2f5580",
+      "Name": "Sandals",
+      "Description": "These are 3\" heeled open toed sandals.  These would look really sexy on pedicured feet!",
+      "PortraitImagePath": "ac0259de-dbad-477a-9655-1cddac04902a",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "42ef7b68-4528-4ca3-a681-539752a59f03",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "58273f91-aa6e-4923-984c-4d58ea8e31cd",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "3057de5b-0163-45a6-8fed-4435aafd897a",
+          "Name": "TransitionScore",
+          "InitallyActive": "3",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "193bb80d-ccb1-40a1-8c1d-dd2535c07c14",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "L",
+          "Value": "o"
+        }
+      ]
+    },
+    {
+      "Id": "7431e6db-c6b2-4883-acc7-9a04aa842f2d",
+      "Name": "Bra",
+      "Description": "This white silk bra has a cute print on it with red hearts!  It's adorable!",
+      "PortraitImagePath": "9e741024-af23-45ab-a36f-4a42de58188f",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "b22d556f-53dd-4439-98ff-a85b0f9d2b4b",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "f90118ef-d3c9-4d58-8e2b-851a269bd294",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "bb66c5b0-df2d-4b56-b8cb-8480df235b39",
+          "Name": "TransitionScore",
+          "InitallyActive": "2",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "7a60a733-04ad-402e-b776-9feaf145dc39",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "U",
+          "Value": "p"
+        }
+      ]
+    },
+    {
+      "Id": "589ba23c-3f4e-4c72-a93d-e4252acced56",
+      "Name": "4\" heels",
+      "Description": "These are some white heels.  When worn, they make the wearer arch her back, showing off her breasts.  ",
+      "PortraitImagePath": "ac0259de-dbad-477a-9655-1cddac04902a",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "0ba4e320-01a0-4b0d-beb9-c25e362852ad",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "0f882228-12a3-4ab8-a560-99a3c2ac68a7",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "354be94f-07d0-4d28-8e6b-5e9edf9e184c",
+          "Name": "TransitionScore",
+          "InitallyActive": "2",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1750ef2e-3bd7-4b8d-81e6-cf6e4e41d73f",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "L",
+          "Value": "o"
+        }
+      ]
+    },
+    {
+      "Id": "08c088d3-8581-4777-8315-5cdd137695be",
+      "Name": "g-string panties",
+      "Description": "This pair of g-string panties are black with lace trim.  They are very sexy on any woman's frame. ",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "93d69fcb-c976-4858-9b0f-f6ec4d033a3a",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "84a4cbda-1eee-4c10-b062-cfeb8c3306d0",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "20f02958-d51d-417e-a633-d7f0a46dae5a",
+          "Name": "TransitionScore",
+          "InitallyActive": "3",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1080c9de-5154-4a7c-8936-907267470bb9",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "M",
+          "Value": "i"
+        }
+      ]
+    },
+    {
+      "Id": "6252b0d9-0916-4d9f-9221-02b3fd2c4f11",
+      "Name": "Lace Bra",
+      "Description": "This bra is from Victoria's Secret.  It is trimmed in black lace.",
+      "PortraitImagePath": "9e741024-af23-45ab-a36f-4a42de58188f",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "ac01aee4-cf34-4adc-8815-4d306f88de03",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "493ee799-9dac-4bed-93e2-2737ae965bad",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2a2a730a-8cab-4403-8aa9-a3381b3c9733",
+          "Name": "TransitionScore",
+          "InitallyActive": "3",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "dc098cfd-b92d-4ae6-b0d2-0c6ec2ca1276",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "U",
+          "Value": "p"
+        }
+      ]
+    },
+    {
+      "Id": "b6cbb40f-0fa3-4b8d-ad1f-a50ff6b49b0d",
+      "Name": "T-Shrit",
+      "Description": "This pink t-shirt says Princess across the front in glitter sequins.  It looks cute on and shows off some midriff nicely when worn.",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "53516869-0227-467a-8541-4d8cdf51a90e",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "f54607e9-67ea-4e4c-abb1-6f5eb7e5f0df",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6817d3af-ab52-41e8-ad02-8a147e12c592",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6481dcca-6845-4e8a-9dd2-6655cbe24662",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "U",
+          "Value": "p"
+        }
+      ]
+    },
+    {
+      "Id": "b9db29d4-7ad5-4c36-805c-fc140851cd3f",
+      "Name": "skirt",
+      "Description": "This white pleated miniskirt is very short.  Whoever wears this should be careful to not bend over or anyone looking would get a show.",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "c15d8aab-2f30-474b-9932-80fd09134441",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "973785b1-db57-44e3-98c1-d9e7d11e0b7f",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "03d6eee7-7e96-46c8-97b7-2d5ddbc662f6",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "80d66d98-7569-4403-a5f5-912594847381",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "M",
+          "Value": "i"
+        }
+      ]
+    },
+    {
+      "Id": "efd7a271-256a-4359-adc9-02fdcead0719",
+      "Name": "implants",
+      "Description": "These are the implants to be worn under a bra.  They are approximately a C cup.",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "8915f553-0a54-4ceb-b518-79a31866bb75",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "cdafbc51-bf78-4af4-a041-8be8e1750f6b",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1eaf788f-5b84-428a-b2f3-7c68a35f36e1",
+          "Name": "TransitionScore",
+          "InitallyActive": "3",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2f446457-d26d-40fb-bb18-6959b36c14e4",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "U",
+          "Value": "p"
+        }
+      ]
+    },
+    {
+      "Id": "8c2c918c-fa34-410f-b3b7-bb84c337db71",
+      "Name": "gaff",
+      "Description": "This is a strange gaff.  It is incredibly thin and strong.  Nearly invisible when worn under panties.",
+      "PortraitImagePath": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "11331278-1e48-4de2-94fb-4e7baaee3076",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "729030ff-fc32-4844-9b09-7d39cf60ff81",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "e4dc0336-7369-4c00-8c2a-12607170a30b",
+          "Name": "TransitionScore",
+          "InitallyActive": "3",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1bb5e256-f03a-49a5-991a-e73c17a170ba",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "M",
+          "Value": "i"
+        }
+      ]
+    },
+    {
+      "Id": "ea53dda3-bd69-4527-b69c-fb64effae87a",
+      "Name": "A House!",
+      "Description": "At last!  You see a house!",
+      "PortraitImagePath": "659b50a1-8129-46ce-8d0a-da8a1d17952a",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "07667d40-b219-4142-834a-7f609be13bcd",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "53a2a99e-976a-4ca7-b8d6-65daccdcf652",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "105ea176-cf2b-4298-9c10-4c1699480525",
+      "Name": "Dresser",
+      "Description": "A large wooden dresser.",
+      "PortraitImagePath": "bbded258-58c6-49f1-ace8-efa87f9b467d",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "809cb531-fb00-4739-ade8-d1b89b8d3695",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6a5620b4-3884-427c-8f8d-a075bdbb2a3e",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "633197d3-634d-4823-848d-f378cec9dadb",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "c60009ca-30fb-40ad-b278-aa6b9a9fd4d1",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": true,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "63d8dd12-117f-4d52-a875-998f373cb32b",
+      "Name": "Your clothes",
+      "Description": "Your clothes are simple and functional.  They are warm.",
+      "PortraitImagePath": null,
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "21510d4d-a766-44f7-90bb-8bf854f628fe",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "37429b45-56aa-4166-9552-49f7e3b7395a",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "4986b109-a363-4549-8a48-34f18fd4f14e",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "9e0fb910-6d28-4de0-815b-ac26f88183c1",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "2f47f456-c1af-423a-b677-a0a5d577c9c6",
+      "Name": "Fireplace",
+      "Description": "This fireplace hasn't been lit in many years.  There is wood in the fireplace.",
+      "PortraitImagePath": "f6a3424d-5c84-4d87-9345-bd97d8b86947",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "b7bc99ed-bcde-459d-8795-b3401aed7ccc",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "8474ff30-ab73-4267-b5f1-4c8605d761ba",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "201e3844-5e48-4be5-9a54-78eb3698d5e6",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "0890e61b-9b14-4071-ac6a-528897366248",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "fa030ffc-5246-4f4d-b1ff-c241348b8eed",
+      "Name": "Matches",
+      "Description": "These are wooden stick matches.",
+      "PortraitImagePath": null,
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "9db9b7ca-890b-40d6-9750-e700e8273c72",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2889bd40-dc33-4751-912c-d82a4a990f3c",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "0ce4d0e6-be82-469e-a651-d1f4d002bd7a",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "afe02288-ff7f-46f4-9639-fbe3b97a58ab",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "104d65c0-7a19-44a1-ae45-f4e033a2ab5e",
+      "Name": "Shower",
+      "Description": "A gorgeous shower.  It has a seat and 5 water jets!",
+      "PortraitImagePath": "1b4090c4-b21a-4d90-941e-9e3b3c01dc5b",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "95a5c84a-475d-48f1-a73d-c71ee40b05df",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "f4783347-6274-4548-9a5b-755df88d0c4e",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "24c0e2e6-ab8f-47ea-b19a-5f24bcc26e7b",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "fe612615-97a0-45f7-a544-1493d719d2a3",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "5ae56645-58fe-4e16-b333-eb3000b761d0",
+      "Name": "Bathtub",
+      "Description": "This is a beautiful luxurious claw footed bathtub.  Maybe a warm bath would feel nice about now.",
+      "PortraitImagePath": "1b4090c4-b21a-4d90-941e-9e3b3c01dc5b",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "d7622520-8839-4bfa-87df-58765a67da55",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "8d75c186-663b-4c93-8dd4-159d0e36fa5d",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "67d7c045-44c7-4164-8c18-5d5bc70b36bc",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1094e4ae-44e4-4184-9a39-8d4fcd35aa68",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "306c75a7-c948-4e3f-87f8-0bcd77649bf0",
+      "Name": "Dresser-Pink Room",
+      "Description": "This is a cute pink dresser.  It goes with the room really well.",
+      "PortraitImagePath": "06f888ba-d29b-4868-957f-7fc0215dfd72",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "7ea5f993-22e1-402d-866a-7dff8c868cb3",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "45614590-4b7d-43d7-ac0c-8da65d73bfaf",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "71d98f11-7d97-4669-ace3-13eec5f2d13b",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "3bba3802-ef39-4416-ae64-8d9f1740a277",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": true,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "ac0259de-dbad-477a-9655-1cddac04902a",
+      "Name": "Shoe Storage Box",
+      "Description": "This box is used to contain shoes.  This will be invaluable in a storm like we have outside!",
+      "PortraitImagePath": "ca16e6b7-1806-497e-a187-de6254e0fd6c",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "7ac27a68-3570-49e0-83d7-18316f9e99c4",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "86d3fac5-16fc-4d5d-b820-b058ab7ba931",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "8db6e092-9d0a-4b51-a3b5-c546f36ccb95",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "dbd5f0df-a550-48a2-99e9-5cf573e12108",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": true,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "abfbcfd6-64aa-4c13-a238-6a932a0894c3",
+      "Name": "Stockings - fishnet",
+      "Description": "A pair of sexy fishnet stockings.<br>Although they won't keep you warm, they sure are sexy!",
+      "PortraitImagePath": "306c75a7-c948-4e3f-87f8-0bcd77649bf0",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "60dfac36-20e7-4802-b4a2-d7bac4191c2a",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1a0d7ab4-604b-46c4-bbab-0dce56e50600",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "9c2877fb-8b53-472a-932d-d12a0341a9c0",
+          "Name": "TransitionScore",
+          "InitallyActive": "3",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "b48d88df-8d8c-41cf-af6d-59cc26bbf2a8",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "L",
+          "Value": "o"
+        }
+      ]
+    },
+    {
+      "Id": "dfa62e2b-62d2-46bb-957b-376de32e8344",
+      "Name": "Bra - leila",
+      "Description": "This black silk bra is the least girly you could find.",
+      "PortraitImagePath": "9e741024-af23-45ab-a36f-4a42de58188f",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "fb7b0f03-3115-47b1-9b9f-41def422a9a7",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "b0a286c7-fd16-4cc8-a7f1-43a20d934f81",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "ba1f5430-1eb4-4159-918f-a96e7c6c21ad",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "a8e43da4-f7ae-4899-833f-f2e77dc6a762",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "U",
+          "Value": "p"
+        }
+      ]
+    },
+    {
+      "Id": "9e741024-af23-45ab-a36f-4a42de58188f",
+      "Name": "Dresser-Guest Room",
+      "Description": "A large wooden dresser.",
+      "PortraitImagePath": null,
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "b76d8eaa-ee65-43ef-b260-dd1c8cbf2101",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "db2b405a-f61b-4833-95e5-e565b51f5b9c",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6534cce3-4b0b-4ea8-9911-1624ec53db8f",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "9a08e6f0-890c-4faa-8231-8281672f97ce",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": true,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "6d4a4781-9af4-4444-ab54-4ae8c4f3b02e",
+      "Name": "Blonde Wig",
+      "Description": "A blonde haired wig.  The hair is shortish, so it may keep you a bit warmer.",
+      "PortraitImagePath": "e33bf355-9412-4290-8259-0356dd7b4694",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "f5e5438b-a311-470b-8031-6e018ea47e3b",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "b8f9c23a-6dd8-42dd-b68b-17c30c1365b2",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "13b0c304-4464-4bef-a8e5-d677989d9747",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "6a110605-9584-4e69-91f2-d99bff033e18",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "H",
+          "Value": "e"
+        }
+      ]
+    },
+    {
+      "Id": "61c4aad3-1714-4a78-ad08-7d9dd8631226",
+      "Name": "Red Wig",
+      "Description": "A red haired wig.  The hair is shortish, so it may keep you a bit warmer.",
+      "PortraitImagePath": "e33bf355-9412-4290-8259-0356dd7b4694",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "0dace5ab-6153-4c5b-83c6-5e514d42e4cb",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "c958b193-1ee1-4431-beea-b7a9fbec1415",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "8c2bb630-aeef-4f56-9d77-62007ab270c7",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "f8cb6a6b-a7ad-4e91-b4f9-7d075796a1f3",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "H",
+          "Value": "e"
+        }
+      ]
+    },
+    {
+      "Id": "2e867807-5ad9-49fb-9c68-4d756a545393",
+      "Name": "Brunette Wig",
+      "Description": "A brunette haired wig.  The hair is shortish, so it may keep you a bit warmer.",
+      "PortraitImagePath": "e33bf355-9412-4290-8259-0356dd7b4694",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "4560a664-d0e8-431e-b72c-655c04b31a57",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "facfce2c-96b1-4fe2-ab80-0f33e274436d",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "85598473-0678-485c-95b9-643166b257de",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "e3045ede-c5ab-4615-b786-dbb76c9e82e7",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "H",
+          "Value": "e"
+        }
+      ]
+    },
+    {
+      "Id": "e33bf355-9412-4290-8259-0356dd7b4694",
+      "Name": "Vanity Case",
+      "Description": "This is a beautiful and ornate vanity case.  I wonder what's inside.",
+      "PortraitImagePath": "bbded258-58c6-49f1-ace8-efa87f9b467d",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "1d875215-150a-4861-9d4b-ba297b299fbf",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "69795fb6-a51d-4dbd-b897-49e2d5091b59",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "d15f24a8-6395-4d42-841d-a8b3f047ffa2",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "30209d57-bd93-4315-8b7a-1783b70d899d",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": true,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "a92e4fbb-0178-4724-814f-71234df5415c",
+      "Name": "Pedicure Kit",
+      "Description": "a fully functioning pedicure kit with instructions.  Some guys get pedicures don't they? you think to yourself.  It's always nice to take care of yourself, especially after walking through all that snow.",
+      "PortraitImagePath": "1b4090c4-b21a-4d90-941e-9e3b3c01dc5b",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "1b669ad2-d856-4bc6-8dcc-a8b4b3d9f0f6",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "ffd8c937-99a4-4325-bdb8-6a40d04f02ca",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "e85b132c-ba08-489b-95f1-cb44c546eff7",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "0a14502f-1edc-44f4-a739-3408b411157f",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "c8989f5e-8066-4559-a70c-4e1b00469ce1",
+      "Name": "Manicure Kit",
+      "Description": "a fully functioning kit for manicures with instructions.  Some guys get manicures don't they? you think to yourself.  It's always nice to take care of yourself, especially after walking through all that snow.",
+      "PortraitImagePath": "1b4090c4-b21a-4d90-941e-9e3b3c01dc5b",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "bc8985ae-168f-4a11-9bdd-54205c96d5f3",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "dba77563-679e-4c4c-9114-ace3b6ebc199",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "2049a680-8948-4302-9edc-79705029e558",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "cadaeedf-7e13-4583-9e04-4b1939f82baf",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "153fa22b-21f1-4ce8-9d0a-56c8a8034400",
+      "Name": "Jewelery Box",
+      "Description": "This is a beautiful wooden carved jewelry box.",
+      "PortraitImagePath": "719c0165-ea72-46d0-83c5-24d6f0254b12",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "dcea8537-52bf-473d-b1aa-47e3d33f761a",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "9ad563df-15a7-4ef8-bfc3-08db93d28c47",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "11a28de1-73b1-40ed-91b5-bc3f2ad599bc",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "30093900-82af-4385-9eee-a64edf1974e0",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": true,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "9e54c4cc-b242-47e4-b8b1-4a638d0e1648",
+      "Name": "Earring Gun",
+      "Description": "This is used to pierce ears.  Just insert your desired earring, hold this up to the ear and pull.",
+      "PortraitImagePath": "153fa22b-21f1-4ce8-9d0a-56c8a8034400",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "93facf51-7893-4da6-83eb-199a292c7da5",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "29893b18-9c7f-44b4-94fc-7827dc2640c9",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "bf181c42-cb37-4b6a-b8be-46847b737956",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "64138c5d-1cc9-4995-8d6d-bc9e352dccb2",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "0b3e974a-b188-4e3d-8835-1197fdcb8666",
+      "Name": "Gold Stud Earrings",
+      "Description": "These are fairly ordinary stud earrings which look like little gold balls once inserted into your ears.",
+      "PortraitImagePath": "153fa22b-21f1-4ce8-9d0a-56c8a8034400",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "5e415900-c73f-4c12-a114-cda5b86fb7dd",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "f803cc64-ee3d-49c6-876a-e69ab7738847",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "837d118a-e1cd-497e-8148-6ac2ad44c786",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "f433b83c-8721-47db-a901-e373122e6f40",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "8f62892c-93d9-450c-80f3-ee6f4a95d7b8",
+      "Name": "Green Dangling Earrings",
+      "Description": "These are sophisticated looking earrings.  They add a sparkle to your face when you hold them up by it looking in the mirror.",
+      "PortraitImagePath": "153fa22b-21f1-4ce8-9d0a-56c8a8034400",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "1b526ebd-6b2d-442b-bc1a-730d8bd3e446",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "b462f643-6c74-4581-a2b0-9e181b4c2230",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "d6133a87-7dcd-476e-bd40-9a6562ad80dc",
+          "Name": "TransitionScore",
+          "InitallyActive": "3",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "fd51d79f-05c9-41d7-a640-dfe5501227af",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "2d26b40a-2cf6-44c8-93c9-b3fec5efad59",
+      "Name": "Jeweled Necklace",
+      "Description": "This is a dainty necklace, very feminine looking with a clear crystal at the bottom.",
+      "PortraitImagePath": "153fa22b-21f1-4ce8-9d0a-56c8a8034400",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "b665ad26-a537-4198-b936-7dac3ed8fdbd",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "265616b1-91c3-4855-9568-6051bf67a127",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "71ba9002-001f-499d-9230-fb364895c9fa",
+          "Name": "TransitionScore",
+          "InitallyActive": "2",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "dc2f6e2c-39dd-4afc-b72c-3b654851b03b",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "7b283e73-328e-4b40-8561-250275027616",
+      "Name": "Note",
+      "Description": "A handwritten note.  You have no idea where this could have come from.",
+      "PortraitImagePath": null,
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "ae188c6c-774c-49b3-84c5-e8cfd53c32c9",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "650811d2-e2cd-42e0-b99c-508feee5a74f",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "376b7337-ac13-4cc7-a88d-03c2e490440d",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "a6ea9f07-bcfa-4c9a-9793-2d3790c63c18",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "a58daff7-b578-4355-be92-aaa71f1f77bc",
+      "Name": "Garage Door",
+      "Description": "A sturdy door.",
+      "PortraitImagePath": null,
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "10c40615-9109-40d5-afb5-0687c342b8a9",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "d6071068-764f-46f5-97d5-664f5f3148db",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "0b83cd06-b611-4db7-aeb8-65eab2d4747e",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "d233e855-786b-4783-8ff4-fef09690663a",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": true,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "827a21c0-efb3-49b3-98b6-92fd709fd364",
+      "Name": "Garage Door Key",
+      "Description": "a key that looks like it will fit the garage door.",
+      "PortraitImagePath": null,
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "8c9ec87d-dcc6-422c-ad68-fefee280926a",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "de7b4660-be42-4991-82cd-1de18c0397bc",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "e96e7ee9-0dd7-47e1-83fc-f0cd2e23ff14",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "bf519147-3b77-4e7a-81d8-412b55221f90",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "e0ac703e-a56f-43b5-b7fb-33cc601fffad",
+      "Name": "Wine",
+      "Description": "an old vintage of red wine.  You can see something small at the bottom of the bottle.",
+      "PortraitImagePath": null,
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "c8ee88eb-7b4b-4af2-9bf5-44edb759b213",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "e32cc80f-99c4-4524-bb42-7f09bf900b7a",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "309ceb99-7aa0-48ad-a0a1-e587de074af5",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "cefd4daf-8a3d-42f4-ada9-64b075b0fa1a",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "a80b3af0-453c-420f-b6eb-77207202f7b9",
+      "Name": "Corkscrew",
+      "Description": "This is a pretty standard corkscrew.",
+      "PortraitImagePath": null,
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "752692e6-305e-49fe-8ba3-33b989b11013",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "8d13cd50-13cb-4700-ad60-ff6f27bfaeb3",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "bd96d402-dde6-4ee7-87e9-cd89ec1b582e",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "1ca3dfae-e5d4-4e09-88e8-6a286ec2bbff",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "0cca870c-91dc-4fff-815e-505631cbc471",
+      "Name": "Hummer",
+      "Description": "This is a big, bad hummer equipped with chains and snow tires.  This baby should be able to get you out of this crazy place!",
+      "PortraitImagePath": "7b13bee4-6e29-4631-9225-fb058d9bccd1",
+      "IsCollectible": false,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "b6949ef7-4e7d-4e25-b303-58f469ec7290",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "25d80791-6635-47aa-84d9-4e07a78d93d8",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "d821079e-cf16-4f22-b5d5-991f34466638",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "ff80e3c6-51c4-4959-b910-a4019390f2db",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": true,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "3c5bd5d0-f4db-44f0-8e38-c1cceed5958f",
+      "Name": "Car Keys",
+      "Description": "These are obviously car keys.",
+      "PortraitImagePath": null,
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "1c10e0c7-30dd-44f3-8385-249c3f9ed6c9",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "a01b1a1d-547a-4f1f-bb25-3c154d35833e",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "51545b28-5d90-4c42-9911-d7be69316686",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "0b952b65-a13e-47fd-8137-870f9313a096",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": []
+    },
+    {
+      "Id": "0dadcfca-cd00-4f34-9e2a-f57c9ab01e1c",
+      "Name": "Silver Wig",
+      "Description": "A silver haired wig.  The hair is shortish, so it may keep you a bit warmer.",
+      "PortraitImagePath": "e33bf355-9412-4290-8259-0356dd7b4694",
+      "IsCollectible": true,
+      "IsCharacter": false,
+      "Actions": [
+        {
+          "Id": "da40b629-1cca-47ba-a09f-dfa1ead1932c",
+          "Name": "Special Task Completed",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "ddc54f1e-8588-4080-b108-6b457f791c0f",
+          "Name": "MaidContacted",
+          "InitallyActive": "0",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "16013d52-574f-4bcd-b772-a6a2564ec435",
+          "Name": "TransitionScore",
+          "InitallyActive": "1",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        },
+        {
+          "Id": "7dca20c4-d729-4c9b-ab08-e8e44093ef8e",
+          "Name": "TempText",
+          "InitallyActive": "",
+          "Trigger": "UserClicked",
+          "DirectionFilter": "All",
+          "Nodes": []
+        }
+      ],
+      "Inventory": [],
+      "Properties": {},
+      "IsContainer": false,
+      "ContainerOpen": false,
+      "ContainedObjectIds": [],
+      "StartingRoomId": null,
+      "IsWearable": true,
+      "IsWorn": false,
+      "WearSlot": "",
+      "Attributes": [
+        {
+          "Name": "H",
+          "Value": "e"
+        }
+      ]
+    }
+  ],
+  "Characters": [],
+  "Variables": [
+    {
+      "Name": "Health",
+      "Value": "10",
+      "Description": ""
+    },
+    {
+      "Name": "TransitionLevel",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "PlayerDesc",
+      "Value": "0",
+      "Description": "You are [playername].  <br>[v: PlayerWearing]<br>[v: PlayerHair]<br>[v: HeadHair]<br>[v: Earrings]<br>[v: Necklace]<br>[v: Bra]<br>[v: Gaff]<br>[v: Underwear]<br>[v: Stockings]<br>[v: Shoe]<br>[v: Manicure]<br>[v: Pedicure]<br>"
+    },
+    {
+      "Name": "PlayerWearing",
+      "Value": "0",
+      "Description": "You are wearing your normal clothes."
+    },
+    {
+      "Name": "PlayerHair",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "TempName",
+      "Value": "0",
+      "Description": "blue jeans"
+    },
+    {
+      "Name": "True",
+      "Value": "1",
+      "Description": ""
+    },
+    {
+      "Name": "WearingStageLevel",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "PlayerExaminePic",
+      "Value": "0",
+      "Description": "playerinsnow.png"
+    },
+    {
+      "Name": "Stockings",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "Shoe",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "Bra",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "Underwear",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "HeadHair",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "Gaff",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "Earrings",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "Necklace",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "Pedicure",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "Manicure",
+      "Value": "0",
+      "Description": ""
+    },
+    {
+      "Name": "HairColor",
+      "Value": "0",
+      "Description": "red"
+    },
+    {
+      "Name": "Level",
+      "Value": "0",
+      "Description": "00"
+    }
+  ],
+  "MediaAssets": [
+    {
+      "Id": "ed0f2c23-677e-4edd-9511-a9b80abfd750",
+      "Name": "Wind.mp3",
+      "Type": "Audio",
+      "FilePath": "Wind.mp3"
+    },
+    {
+      "Id": "696f5db6-b757-4d70-b8bf-d8c86577dd94",
+      "Name": "Large Door Slam.mp3",
+      "Type": "Audio",
+      "FilePath": "Large Door Slam.mp3"
+    },
+    {
+      "Id": "dad352bb-bfdd-4dc6-ab77-521be08d4379",
+      "Name": "Old Door Creaking.mp3",
+      "Type": "Audio",
+      "FilePath": "Old Door Creaking.mp3"
+    },
+    {
+      "Id": "12c0fede-df98-4cfc-aaea-0b6811b09980",
+      "Name": "Walking In Snow.mp3",
+      "Type": "Audio",
+      "FilePath": "Walking In Snow.mp3"
+    },
+    {
+      "Id": "86626547-3d91-452f-a119-08114230af4f",
+      "Name": "carstuck.mp3",
+      "Type": "Audio",
+      "FilePath": "carstuck.mp3"
+    },
+    {
+      "Id": "662bcf9d-f61d-4f98-884e-fd2642841b5c",
+      "Name": "blizzard.jpg",
+      "Type": "Image",
+      "FilePath": "blizzard.jpg"
+    },
+    {
+      "Id": "bfe243b6-fc27-4bcc-a5fe-05a6e8bea500",
+      "Name": "carinsnow.jpg",
+      "Type": "Image",
+      "FilePath": "carinsnow.jpg"
+    },
+    {
+      "Id": "3b0d1b87-7a57-4a42-aced-c3ccfd96cdf5",
+      "Name": "stuckinsnow.jpg",
+      "Type": "Image",
+      "FilePath": "stuckinsnow.jpg"
+    },
+    {
+      "Id": "bc8b9e2c-1f11-4e8c-8599-d36146fe3a67",
+      "Name": "heelwalk.mp3",
+      "Type": "Audio",
+      "FilePath": "heelwalk.mp3"
+    },
+    {
+      "Id": "5f298d9d-15ad-4323-ae72-f08a58458beb",
+      "Name": "Player-body-01b.png",
+      "Type": "Image",
+      "FilePath": "Player-body-01b.png"
+    },
+    {
+      "Id": "7cb3ae91-5446-4775-a892-be7d4076a67b",
+      "Name": "LDstockings.jpg",
+      "Type": "Image",
+      "FilePath": "LDstockings.jpg"
+    },
+    {
+      "Id": "b3b9c5ee-8d38-44f9-a4ca-b95b9bba1557",
+      "Name": "bluejeans.jpg",
+      "Type": "Image",
+      "FilePath": "bluejeans.jpg"
+    },
+    {
+      "Id": "5d4a7662-1e33-4547-a683-edff0d8a5458",
+      "Name": "bluetshirt.jpg",
+      "Type": "Image",
+      "FilePath": "bluetshirt.jpg"
+    },
+    {
+      "Id": "56461d7f-c5ac-4c8d-a3b9-b16c8c0beb97",
+      "Name": "Pretty3D-Secretary-stockings.jpg",
+      "Type": "Image",
+      "FilePath": "Pretty3D-Secretary-stockings.jpg"
+    },
+    {
+      "Id": "e48efdb1-0714-45af-90c2-ee250c584160",
+      "Name": "gaff.jpg",
+      "Type": "Image",
+      "FilePath": "gaff.jpg"
+    },
+    {
+      "Id": "2401820a-4339-4eef-98a8-7b99f1ae7b10",
+      "Name": "inserts.jpg",
+      "Type": "Image",
+      "FilePath": "inserts.jpg"
+    },
+    {
+      "Id": "313cab38-6af0-4baa-b502-a1fcb59359e1",
+      "Name": "pleatedwhite.jpg",
+      "Type": "Image",
+      "FilePath": "pleatedwhite.jpg"
+    },
+    {
+      "Id": "1a31e0c9-fac4-4ea3-8ba6-9d6a722f7ebd",
+      "Name": "princess-t-shirt_L.jpg",
+      "Type": "Image",
+      "FilePath": "princess-t-shirt_L.jpg"
+    },
+    {
+      "Id": "56a4e55c-58c7-4274-9dfa-d3b42f7d48c8",
+      "Name": "Player-body-01c.png",
+      "Type": "Image",
+      "FilePath": "Player-body-01c.png"
+    },
+    {
+      "Id": "dfd61faa-6cb8-4fbe-af76-371b244416bf",
+      "Name": "Player-Head-00a.png",
+      "Type": "Image",
+      "FilePath": "Player-Head-00a.png"
+    },
+    {
+      "Id": "199be848-5fe7-4fd7-8df9-4c65826f971f",
+      "Name": "uniform.jpg",
+      "Type": "Image",
+      "FilePath": "uniform.jpg"
+    },
+    {
+      "Id": "3832856f-a35a-4642-a7c5-c119f873340e",
+      "Name": "Ravenous-Bra.jpg",
+      "Type": "Image",
+      "FilePath": "Ravenous-Bra.jpg"
+    },
+    {
+      "Id": "91fd873b-0891-481e-be5d-ce3746a1f00a",
+      "Name": "Wine Cellar 013.JPG",
+      "Type": "Image",
+      "FilePath": "Wine Cellar 013.JPG"
+    },
+    {
+      "Id": "20036bfe-5e7b-44e3-82f1-2fb95e108646",
+      "Name": "backyard.jpg",
+      "Type": "Image",
+      "FilePath": "backyard.jpg"
+    },
+    {
+      "Id": "b25f34fe-e08e-412a-b185-cdc5714c34f1",
+      "Name": "Foyer_001.jpg",
+      "Type": "Image",
+      "FilePath": "Foyer_001.jpg"
+    },
+    {
+      "Id": "6c7facbc-c59a-49f0-844e-e28d30bde7e4",
+      "Name": "Grand Kitchen- Inlaid Ceiling.JPG",
+      "Type": "Image",
+      "FilePath": "Grand Kitchen- Inlaid Ceiling.JPG"
+    },
+    {
+      "Id": "bd8a4215-e67a-429c-a7ed-d1da43219b5a",
+      "Name": "guestsuite.jpg",
+      "Type": "Image",
+      "FilePath": "guestsuite.jpg"
+    },
+    {
+      "Id": "39b3d30b-08f5-4546-8408-9ff80a6245fa",
+      "Name": "hallways2.jpg",
+      "Type": "Image",
+      "FilePath": "hallways2.jpg"
+    },
+    {
+      "Id": "5db8f65a-3228-45b7-95d0-15701f0039bb",
+      "Name": "masterbath.jpg",
+      "Type": "Image",
+      "FilePath": "masterbath.jpg"
+    },
+    {
+      "Id": "0e1f981a-2f16-4bb1-a299-bf77ec0b66f9",
+      "Name": "Master-Suite.jpg",
+      "Type": "Image",
+      "FilePath": "Master-Suite.jpg"
+    },
+    {
+      "Id": "56a05224-4947-47b2-8c08-1764bf5bd71c",
+      "Name": "pinkroom.JPG",
+      "Type": "Image",
+      "FilePath": "pinkroom.JPG"
+    },
+    {
+      "Id": "fc0f5cb0-bf40-4792-bd8d-e9c6141b50b6",
+      "Name": "residences1_4.jpg",
+      "Type": "Image",
+      "FilePath": "residences1_4.jpg"
+    },
+    {
+      "Id": "57869e34-d783-4ddd-a213-af437335661f",
+      "Name": "Suite_Bathroom.jpg",
+      "Type": "Image",
+      "FilePath": "Suite_Bathroom.jpg"
+    },
+    {
+      "Id": "53d551fa-1097-4f57-9acc-64f50696ae2f",
+      "Name": "suitebathroom.jpg",
+      "Type": "Image",
+      "FilePath": "suitebathroom.jpg"
+    },
+    {
+      "Id": "69e459e9-9c25-4531-9ce2-ce521667d796",
+      "Name": "upstairs_hall.jpg",
+      "Type": "Image",
+      "FilePath": "upstairs_hall.jpg"
+    },
+    {
+      "Id": "116129d0-ddf9-46a9-9ab7-f3fbbd19efd9",
+      "Name": "fireplace.wav",
+      "Type": "Audio",
+      "FilePath": "fireplace.wav"
+    },
+    {
+      "Id": "a55d731a-5339-4627-b5bb-7f21fa0e3b55",
+      "Name": "fireplace-main_full.jpg",
+      "Type": "Image",
+      "FilePath": "fireplace-main_full.jpg"
+    },
+    {
+      "Id": "800fe4d6-99a7-442e-b05f-172e7d5c3da5",
+      "Name": "shower.mp3",
+      "Type": "Audio",
+      "FilePath": "shower.mp3"
+    },
+    {
+      "Id": "a2361025-280e-4d4f-ad56-be8fa7a91b40",
+      "Name": "bathtub.mp3",
+      "Type": "Audio",
+      "FilePath": "bathtub.mp3"
+    },
+    {
+      "Id": "10cde3fe-a2f6-478e-be99-96a2f2adca83",
+      "Name": "Tina-Player-towel.jpg",
+      "Type": "Image",
+      "FilePath": "Tina-Player-towel.jpg"
+    },
+    {
+      "Id": "43354bab-4535-4447-9bbe-150c789ef600",
+      "Name": "playerinsnow.png",
+      "Type": "Image",
+      "FilePath": "playerinsnow.png"
+    },
+    {
+      "Id": "23ae4df2-e9a4-4520-8b83-de45628ff964",
+      "Name": "playerinhouse.png",
+      "Type": "Image",
+      "FilePath": "playerinhouse.png"
+    },
+    {
+      "Id": "35b433f9-5cd9-4a11-83fd-ba7a14a4ef72",
+      "Name": "Leila.jpg",
+      "Type": "Image",
+      "FilePath": "Leila.jpg"
+    },
+    {
+      "Id": "00b5cdff-a870-4228-8bde-53be8c7fc236",
+      "Name": "Tina-Player-bath.jpg",
+      "Type": "Image",
+      "FilePath": "Tina-Player-bath.jpg"
+    },
+    {
+      "Id": "c065c0b1-f3ff-4f0d-9298-7537de4619eb",
+      "Name": "Tina-Player-shower.jpg",
+      "Type": "Image",
+      "FilePath": "Tina-Player-shower.jpg"
+    },
+    {
+      "Id": "5ddda701-5c37-4d45-be30-77de2a578617",
+      "Name": "jewelerybox.jpg",
+      "Type": "Image",
+      "FilePath": "jewelerybox.jpg"
+    },
+    {
+      "Id": "944f7be9-ae75-420e-9b86-289a097ea69c",
+      "Name": "HongyuMaidenV4.jpg",
+      "Type": "Image",
+      "FilePath": "HongyuMaidenV4.jpg"
+    },
+    {
+      "Id": "1f3b3549-37ec-4138-b31d-87d0049b8e73",
+      "Name": "pedicurekit.jpg",
+      "Type": "Image",
+      "FilePath": "pedicurekit.jpg"
+    },
+    {
+      "Id": "1e13d628-a5b7-40a9-ab8c-7664606f422c",
+      "Name": "Player-Head-00b.png",
+      "Type": "Image",
+      "FilePath": "Player-Head-00b.png"
+    },
+    {
+      "Id": "7ef7afa6-2d0d-4805-a697-a71e8c2d2604",
+      "Name": "Ravenous-Panties.jpg",
+      "Type": "Image",
+      "FilePath": "Ravenous-Panties.jpg"
+    },
+    {
+      "Id": "8573269c-f1a1-4458-b3bc-2c346c59aa30",
+      "Name": "Player-Head-01a.png",
+      "Type": "Image",
+      "FilePath": "Player-Head-01a.png"
+    },
+    {
+      "Id": "79cdbf27-a938-4fee-a84a-2a72c9640ca6",
+      "Name": "Mytilus-the-hottie-sandals.jpg",
+      "Type": "Image",
+      "FilePath": "Mytilus-the-hottie-sandals.jpg"
+    },
+    {
+      "Id": "49dac994-b660-4b9f-8a86-4264994fb23a",
+      "Name": "Pretty3D-Secretary-shoes.jpg",
+      "Type": "Image",
+      "FilePath": "Pretty3D-Secretary-shoes.jpg"
+    },
+    {
+      "Id": "eea51c78-de43-4311-943b-907d77eca3f3",
+      "Name": "Sickleyield-sneakers.jpg",
+      "Type": "Image",
+      "FilePath": "Sickleyield-sneakers.jpg"
+    },
+    {
+      "Id": "68a81ded-0e58-40a8-9d26-2af492c2b3c0",
+      "Name": "Leila-bra.jpg",
+      "Type": "Image",
+      "FilePath": "Leila-bra.jpg"
+    },
+    {
+      "Id": "9340d104-0773-4cf4-b1fe-2f9c8f782e54",
+      "Name": "MaidenV4-bra.jpg",
+      "Type": "Image",
+      "FilePath": "MaidenV4-bra.jpg"
+    },
+    {
+      "Id": "f33315e5-cbef-4155-aacf-62b8307d3b11",
+      "Name": "manicure.jpg",
+      "Type": "Image",
+      "FilePath": "manicure.jpg"
+    },
+    {
+      "Id": "ad2d479e-702e-49e9-bf55-484de10313aa",
+      "Name": "Player-Head-02.png",
+      "Type": "Image",
+      "FilePath": "Player-Head-02.png"
+    },
+    {
+      "Id": "6b923a38-1dca-4c57-8f41-7da4b93d2790",
+      "Name": "manicurekit.jpg",
+      "Type": "Image",
+      "FilePath": "manicurekit.jpg"
+    },
+    {
+      "Id": "80e830e9-e722-4c05-be1c-7f4b263973df",
+      "Name": "Player-Head-04.png",
+      "Type": "Image",
+      "FilePath": "Player-Head-04.png"
+    },
+    {
+      "Id": "6c4ec7ad-9cab-4d70-818c-90cbd631bf98",
+      "Name": "Player-Head-05.png",
+      "Type": "Image",
+      "FilePath": "Player-Head-05.png"
+    },
+    {
+      "Id": "d37b6bce-ba55-48ed-92ce-05a14d2fcde6",
+      "Name": "pedicure.jpg",
+      "Type": "Image",
+      "FilePath": "pedicure.jpg"
+    },
+    {
+      "Id": "e16ed091-e5e3-40ff-87c0-d6b53ac736b0",
+      "Name": "Tina-Player-00a.png",
+      "Type": "Image",
+      "FilePath": "Tina-Player-00a.png"
+    },
+    {
+      "Id": "fea17b2c-9ae9-47f7-a51b-952dc70234da",
+      "Name": "vanitycase.jpg",
+      "Type": "Image",
+      "FilePath": "vanitycase.jpg"
+    },
+    {
+      "Id": "1f141525-a19b-4279-bc5f-ee8bc1248583",
+      "Name": "shoestoragebox",
+      "Type": "Image",
+      "FilePath": "shoestoragebox"
+    },
+    {
+      "Id": "8d3b1aed-793c-4c19-b94a-3cf3ce690d24",
+      "Name": "piercing_gun.jpg",
+      "Type": "Image",
+      "FilePath": "piercing_gun.jpg"
+    },
+    {
+      "Id": "6ccc1e85-cc12-4ede-ab8f-28e993ddb5d4",
+      "Name": "goldearrings.jpg",
+      "Type": "Image",
+      "FilePath": "goldearrings.jpg"
+    },
+    {
+      "Id": "dba735d3-42c7-4bb7-af45-294baefd94a4",
+      "Name": "greenearrings.jpg",
+      "Type": "Image",
+      "FilePath": "greenearrings.jpg"
+    },
+    {
+      "Id": "df891703-97e7-4234-bff0-65f47c60da56",
+      "Name": "cabinet-door-close-9.mp3",
+      "Type": "Audio",
+      "FilePath": "cabinet-door-close-9.mp3"
+    },
+    {
+      "Id": "7ac1c434-896b-4809-b5bb-3c772a723e61",
+      "Name": "2011-hummer-h3.jpg",
+      "Type": "Image",
+      "FilePath": "2011-hummer-h3.jpg"
+    },
+    {
+      "Id": "1314b777-61e3-4175-b941-f6937993dbf6",
+      "Name": "humint.jpg",
+      "Type": "Image",
+      "FilePath": "humint.jpg"
+    },
+    {
+      "Id": "28c79256-0878-4eeb-bde0-8c8da55f805e",
+      "Name": "empty_garage.jpg",
+      "Type": "Image",
+      "FilePath": "empty_garage.jpg"
+    },
+    {
+      "Id": "34746d39-ce02-4981-b372-f7ba9e82c2fc",
+      "Name": "totalhotty.mp3",
+      "Type": "Audio",
+      "FilePath": "totalhotty.mp3"
+    },
+    {
+      "Id": "addaacef-8d35-4a1d-a91b-c6d744aa7149",
+      "Name": "54926__digifishmusic__Female_Laugh.wav",
+      "Type": "Audio",
+      "FilePath": "54926__digifishmusic__Female_Laugh.wav"
+    },
+    {
+      "Id": "c372c19a-f309-4ec3-9178-def73933498b",
+      "Name": "Bald-01.png",
+      "Type": "Image",
+      "FilePath": "Bald-01.png"
+    },
+    {
+      "Id": "6494a12d-a4b2-4b12-a5d6-0c08bd96d0e7",
+      "Name": "Bald-02.png",
+      "Type": "Image",
+      "FilePath": "Bald-02.png"
+    },
+    {
+      "Id": "349fa1d9-48d8-4479-9653-475a51b0b300",
+      "Name": "Bald-03.png",
+      "Type": "Image",
+      "FilePath": "Bald-03.png"
+    },
+    {
+      "Id": "0fff69d2-1afc-4d86-8e2a-88339666c981",
+      "Name": "Bald-04.png",
+      "Type": "Image",
+      "FilePath": "Bald-04.png"
+    },
+    {
+      "Id": "297baad9-715a-443f-b026-c439208b9519",
+      "Name": "Bald-05.png",
+      "Type": "Image",
+      "FilePath": "Bald-05.png"
+    },
+    {
+      "Id": "556e1355-6813-4c89-9065-4e9d05bbae88",
+      "Name": "Bald-06.png",
+      "Type": "Image",
+      "FilePath": "Bald-06.png"
+    },
+    {
+      "Id": "828236d9-33bd-41e3-a2ed-5ad102fed14b",
+      "Name": "Bald-07.png",
+      "Type": "Image",
+      "FilePath": "Bald-07.png"
+    },
+    {
+      "Id": "41ccb9c6-21ba-466c-af4f-b2e97867fe1e",
+      "Name": "Bald-08.png",
+      "Type": "Image",
+      "FilePath": "Bald-08.png"
+    },
+    {
+      "Id": "95982df4-a042-429c-a18b-032995b14155",
+      "Name": "Blo-01.png",
+      "Type": "Image",
+      "FilePath": "Blo-01.png"
+    },
+    {
+      "Id": "4d7e5bda-be90-4619-bd73-8aa86a78f9ae",
+      "Name": "Blo-02.png",
+      "Type": "Image",
+      "FilePath": "Blo-02.png"
+    },
+    {
+      "Id": "ab57e16b-13e2-4997-bc05-dae4a2fdbf6b",
+      "Name": "Blo-03.png",
+      "Type": "Image",
+      "FilePath": "Blo-03.png"
+    },
+    {
+      "Id": "f1bcadd9-db8f-4ae7-ba87-c603db1b5d45",
+      "Name": "Blo-04.png",
+      "Type": "Image",
+      "FilePath": "Blo-04.png"
+    },
+    {
+      "Id": "a9bf2c40-5340-4706-8a7d-0373ececf31e",
+      "Name": "Blo-05.png",
+      "Type": "Image",
+      "FilePath": "Blo-05.png"
+    },
+    {
+      "Id": "3cc65326-5746-499d-b4b0-5d996fd63e35",
+      "Name": "Blo-06.png",
+      "Type": "Image",
+      "FilePath": "Blo-06.png"
+    },
+    {
+      "Id": "aae2495c-21dd-4b89-8725-b321e79b9433",
+      "Name": "Blo-07.png",
+      "Type": "Image",
+      "FilePath": "Blo-07.png"
+    },
+    {
+      "Id": "0b574e54-0756-4a9c-8708-dbfb5dff94e4",
+      "Name": "Blo-08.png",
+      "Type": "Image",
+      "FilePath": "Blo-08.png"
+    },
+    {
+      "Id": "c2a844b0-23d3-4644-ad35-ec531851fdeb",
+      "Name": "body_100.png",
+      "Type": "Image",
+      "FilePath": "body_100.png"
+    },
+    {
+      "Id": "2d71ddf5-2b03-4719-994e-d9cfcba15e0e",
+      "Name": "body_00.png",
+      "Type": "Image",
+      "FilePath": "body_00.png"
+    },
+    {
+      "Id": "f875b36c-07a1-4c71-8fbb-e77cd2881a32",
+      "Name": "body_25.png",
+      "Type": "Image",
+      "FilePath": "body_25.png"
+    },
+    {
+      "Id": "b1dcf90c-271e-486e-a235-afb3140483b6",
+      "Name": "body_50.png",
+      "Type": "Image",
+      "FilePath": "body_50.png"
+    },
+    {
+      "Id": "c8935873-01da-4de7-9621-aefb93f99fa7",
+      "Name": "body_75.png",
+      "Type": "Image",
+      "FilePath": "body_75.png"
+    },
+    {
+      "Id": "d5c7c0e4-7fc8-4240-b7bf-be27fe8adfdf",
+      "Name": "bra.png",
+      "Type": "Image",
+      "FilePath": "bra.png"
+    },
+    {
+      "Id": "4aae05be-7022-4314-a204-953bb42e4d13",
+      "Name": "Bra3.png",
+      "Type": "Image",
+      "FilePath": "Bra3.png"
+    },
+    {
+      "Id": "54e1b431-05ac-471c-b665-ffc010d0a277",
+      "Name": "Bra1.png",
+      "Type": "Image",
+      "FilePath": "Bra1.png"
+    },
+    {
+      "Id": "4828ccb7-6e18-4fce-ac72-9061a21fdc5d",
+      "Name": "Bra2.png",
+      "Type": "Image",
+      "FilePath": "Bra2.png"
+    },
+    {
+      "Id": "9daedefa-a58b-4053-995f-ee89a4f1b5e3",
+      "Name": "bru-01.png",
+      "Type": "Image",
+      "FilePath": "bru-01.png"
+    },
+    {
+      "Id": "9773ace5-b45d-4673-9be0-867d4b5499eb",
+      "Name": "Bru-02.png",
+      "Type": "Image",
+      "FilePath": "Bru-02.png"
+    },
+    {
+      "Id": "e9a96bed-0d29-4cdc-9bee-265daab095bf",
+      "Name": "Bru-03.png",
+      "Type": "Image",
+      "FilePath": "Bru-03.png"
+    },
+    {
+      "Id": "6c29b49b-6a65-41ad-a342-95d27f3f290a",
+      "Name": "Bru-04.png",
+      "Type": "Image",
+      "FilePath": "Bru-04.png"
+    },
+    {
+      "Id": "3c39624b-fba3-4bf0-9e01-8c00ee7206e9",
+      "Name": "Bru-05.png",
+      "Type": "Image",
+      "FilePath": "Bru-05.png"
+    },
+    {
+      "Id": "b473ee2e-2fe3-4d72-9d6a-8da78f382620",
+      "Name": "Bru-06.png",
+      "Type": "Image",
+      "FilePath": "Bru-06.png"
+    },
+    {
+      "Id": "453ddacf-65df-4fe0-b8cb-07627b52225d",
+      "Name": "Bru-07.png",
+      "Type": "Image",
+      "FilePath": "Bru-07.png"
+    },
+    {
+      "Id": "788cf729-9fd0-41b2-b2cc-da42b094030b",
+      "Name": "Bru-08.png",
+      "Type": "Image",
+      "FilePath": "Bru-08.png"
+    },
+    {
+      "Id": "3279e80a-714d-4754-b5b3-f1776e56dc7f",
+      "Name": "LegsShoe3Stocking2.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe3Stocking2.png"
+    },
+    {
+      "Id": "395507e9-1439-48a2-84dd-2c5fa93d613f",
+      "Name": "LegsShoe0Stocking1.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe0Stocking1.png"
+    },
+    {
+      "Id": "36d85f94-3b97-47b5-b7aa-1a32c0069cd0",
+      "Name": "LegsShoe0Stocking2.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe0Stocking2.png"
+    },
+    {
+      "Id": "1fe18284-92dc-4537-aaa0-ea6acf325394",
+      "Name": "LegsShoe1Stocking0.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe1Stocking0.png"
+    },
+    {
+      "Id": "79739bf2-35c4-41c7-a3f1-1906650d9463",
+      "Name": "LegsShoe1Stocking1.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe1Stocking1.png"
+    },
+    {
+      "Id": "35cc14d5-6d93-4395-8a04-2ead9566848f",
+      "Name": "LegsShoe1Stocking2.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe1Stocking2.png"
+    },
+    {
+      "Id": "c80200dc-2ae4-40ff-9336-a59633298d78",
+      "Name": "LegsShoe2Stocking0.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe2Stocking0.png"
+    },
+    {
+      "Id": "fa17ea34-d288-4bf4-a24a-dedf75c56acb",
+      "Name": "LegsShoe2Stocking1.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe2Stocking1.png"
+    },
+    {
+      "Id": "9984559a-335f-40a4-a962-8200d3f6dd8e",
+      "Name": "LegsShoe2Stocking2.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe2Stocking2.png"
+    },
+    {
+      "Id": "06155e49-13ee-4a1b-b825-a24ad353d52a",
+      "Name": "LegsShoe3Stocking0.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe3Stocking0.png"
+    },
+    {
+      "Id": "dbf7ae6b-c399-4e9a-a52e-e9bdff8d13ab",
+      "Name": "LegsShoe3Stocking1.png",
+      "Type": "Image",
+      "FilePath": "LegsShoe3Stocking1.png"
+    },
+    {
+      "Id": "4d2132c4-d2ce-4451-a26b-6eeda9bd33f4",
+      "Name": "feet.png",
+      "Type": "Image",
+      "FilePath": "feet.png"
+    },
+    {
+      "Id": "14deb00d-b016-4574-9e8f-ee73c7cb76cd",
+      "Name": "Panties3.png",
+      "Type": "Image",
+      "FilePath": "Panties3.png"
+    },
+    {
+      "Id": "63146dc3-5701-4da3-b4b8-9261fa1bb955",
+      "Name": "Panties1.png",
+      "Type": "Image",
+      "FilePath": "Panties1.png"
+    },
+    {
+      "Id": "4af55d22-7e22-4791-9fb7-08104b58c77d",
+      "Name": "Panties2.png",
+      "Type": "Image",
+      "FilePath": "Panties2.png"
+    },
+    {
+      "Id": "67a82dac-d34f-4127-bb59-46bfd2a6aa1e",
+      "Name": "Red-01.png",
+      "Type": "Image",
+      "FilePath": "Red-01.png"
+    },
+    {
+      "Id": "858a041d-f335-4452-b0db-c60c35fdd4c0",
+      "Name": "Red-02.png",
+      "Type": "Image",
+      "FilePath": "Red-02.png"
+    },
+    {
+      "Id": "223095c4-3879-47b8-ae59-ee03bd9b4bd1",
+      "Name": "Red-03.png",
+      "Type": "Image",
+      "FilePath": "Red-03.png"
+    },
+    {
+      "Id": "68bbc83e-ec24-41bd-b775-b6bf68997282",
+      "Name": "Red-04.png",
+      "Type": "Image",
+      "FilePath": "Red-04.png"
+    },
+    {
+      "Id": "bb568f44-e563-47a2-89f3-1edf8bb6d155",
+      "Name": "Red-05.png",
+      "Type": "Image",
+      "FilePath": "Red-05.png"
+    },
+    {
+      "Id": "a7c70a14-c497-41fd-88b4-0f95d2f9af9a",
+      "Name": "Red-06.png",
+      "Type": "Image",
+      "FilePath": "Red-06.png"
+    },
+    {
+      "Id": "c540fcc3-8179-4278-a95e-f77ddaf5417f",
+      "Name": "Red-07.png",
+      "Type": "Image",
+      "FilePath": "Red-07.png"
+    },
+    {
+      "Id": "8c7566ec-af3c-4a04-a1dd-8122b058e37d",
+      "Name": "Red-08.png",
+      "Type": "Image",
+      "FilePath": "Red-08.png"
+    },
+    {
+      "Id": "4fcc342c-d1b6-4d49-95bd-87a50fc26c45",
+      "Name": "Sil-01.png",
+      "Type": "Image",
+      "FilePath": "Sil-01.png"
+    },
+    {
+      "Id": "d9cd7264-c7d6-44f5-a20f-bca9be52a72f",
+      "Name": "Sil-02.png",
+      "Type": "Image",
+      "FilePath": "Sil-02.png"
+    },
+    {
+      "Id": "e33bebb5-71cc-4605-897b-54dc91d34599",
+      "Name": "Sil-03.png",
+      "Type": "Image",
+      "FilePath": "Sil-03.png"
+    },
+    {
+      "Id": "d85322e9-4543-4c36-aff0-1c0588d1e630",
+      "Name": "Sil-04.png",
+      "Type": "Image",
+      "FilePath": "Sil-04.png"
+    },
+    {
+      "Id": "cdab2b21-ad56-482e-a181-e41d82cc727d",
+      "Name": "Sil-05.png",
+      "Type": "Image",
+      "FilePath": "Sil-05.png"
+    },
+    {
+      "Id": "8efd535c-97c5-414f-9b69-d14a0858e9f8",
+      "Name": "Sil-06.png",
+      "Type": "Image",
+      "FilePath": "Sil-06.png"
+    },
+    {
+      "Id": "60e9e6f0-b3d4-4409-9f69-a81e30338813",
+      "Name": "Sil-07.png",
+      "Type": "Image",
+      "FilePath": "Sil-07.png"
+    },
+    {
+      "Id": "b2059b81-5c5a-44f8-b26f-e0559f73114d",
+      "Name": "Sil-08.png",
+      "Type": "Image",
+      "FilePath": "Sil-08.png"
+    },
+    {
+      "Id": "ce687d4a-d3b7-46eb-bc56-585cf8b19cda",
+      "Name": "face-blo-00.png",
+      "Type": "Image",
+      "FilePath": "face-blo-00.png"
+    },
+    {
+      "Id": "ed94b24c-5030-4b25-b4d3-62e89d47ceaf",
+      "Name": "face-blo-01.png",
+      "Type": "Image",
+      "FilePath": "face-blo-01.png"
+    },
+    {
+      "Id": "1740e127-ea66-429c-bdda-94cdcf1b4e0a",
+      "Name": "face-blo-02.png",
+      "Type": "Image",
+      "FilePath": "face-blo-02.png"
+    },
+    {
+      "Id": "7a10bdb0-3e08-464d-bdba-f48ef09fdf9b",
+      "Name": "face-blo-03.png",
+      "Type": "Image",
+      "FilePath": "face-blo-03.png"
+    },
+    {
+      "Id": "2361ed7c-10f4-431b-8afd-b1b4d74a102a",
+      "Name": "face-blo-04.png",
+      "Type": "Image",
+      "FilePath": "face-blo-04.png"
+    },
+    {
+      "Id": "e5cafdfa-d636-4f50-89fe-85bf2c2a52da",
+      "Name": "face-blo-05.png",
+      "Type": "Image",
+      "FilePath": "face-blo-05.png"
+    },
+    {
+      "Id": "935b88c2-0662-4511-9ff4-18b367a3e298",
+      "Name": "face-blo-06.png",
+      "Type": "Image",
+      "FilePath": "face-blo-06.png"
+    },
+    {
+      "Id": "c636a80e-b912-4964-9f4f-7c650e21b9ae",
+      "Name": "face-blo-07.png",
+      "Type": "Image",
+      "FilePath": "face-blo-07.png"
+    },
+    {
+      "Id": "2cd46f57-d1e2-47b8-b406-0ac071a2f114",
+      "Name": "face-blo-08.png",
+      "Type": "Image",
+      "FilePath": "face-blo-08.png"
+    },
+    {
+      "Id": "24d25117-25dc-4e3d-b6b7-2254c441a98a",
+      "Name": "face-bru-00.png",
+      "Type": "Image",
+      "FilePath": "face-bru-00.png"
+    },
+    {
+      "Id": "7e7851b8-f8f2-4134-8c2f-c41ae7761498",
+      "Name": "face-bru-01.png",
+      "Type": "Image",
+      "FilePath": "face-bru-01.png"
+    },
+    {
+      "Id": "b764e8cd-bf0d-4231-8d64-8d2f98c13612",
+      "Name": "face-bru-02.png",
+      "Type": "Image",
+      "FilePath": "face-bru-02.png"
+    },
+    {
+      "Id": "244b7395-b932-4c77-a1c8-84709da46bcf",
+      "Name": "face-bru-03.png",
+      "Type": "Image",
+      "FilePath": "face-bru-03.png"
+    },
+    {
+      "Id": "b5f63227-736b-4211-af0c-6955da0544a3",
+      "Name": "face-bru-04.png",
+      "Type": "Image",
+      "FilePath": "face-bru-04.png"
+    },
+    {
+      "Id": "092d2f7d-aa6c-4e7e-9df5-0dc2f4fda0ed",
+      "Name": "face-bru-05.png",
+      "Type": "Image",
+      "FilePath": "face-bru-05.png"
+    },
+    {
+      "Id": "b672cc4c-7f11-42dc-a86d-2f7a377a1e2d",
+      "Name": "face-bru-06.png",
+      "Type": "Image",
+      "FilePath": "face-bru-06.png"
+    },
+    {
+      "Id": "82db3e27-9a1d-4fb2-901d-68a81ddab445",
+      "Name": "face-bru-07.png",
+      "Type": "Image",
+      "FilePath": "face-bru-07.png"
+    },
+    {
+      "Id": "a2548504-1f4f-4c56-81a2-bb0be482693e",
+      "Name": "face-bru-08.png",
+      "Type": "Image",
+      "FilePath": "face-bru-08.png"
+    },
+    {
+      "Id": "ae5de66b-29d7-49d0-a0cc-9478f00e63b9",
+      "Name": "face-red-00.png",
+      "Type": "Image",
+      "FilePath": "face-red-00.png"
+    },
+    {
+      "Id": "ca7a43ce-c06b-494d-9716-0a45a1cc4780",
+      "Name": "face-red-01.png",
+      "Type": "Image",
+      "FilePath": "face-red-01.png"
+    },
+    {
+      "Id": "7b00a57c-0bbf-45aa-9219-4c9273a90ea8",
+      "Name": "face-red-02.png",
+      "Type": "Image",
+      "FilePath": "face-red-02.png"
+    },
+    {
+      "Id": "400afbce-8fcf-4e8d-94c3-206cf981425b",
+      "Name": "face-red-03.png",
+      "Type": "Image",
+      "FilePath": "face-red-03.png"
+    },
+    {
+      "Id": "ee869440-e62f-4e08-ba2c-9b114e09c8eb",
+      "Name": "face-red-04.png",
+      "Type": "Image",
+      "FilePath": "face-red-04.png"
+    },
+    {
+      "Id": "3b2a2403-0053-4689-800d-769119739196",
+      "Name": "face-red-05.png",
+      "Type": "Image",
+      "FilePath": "face-red-05.png"
+    },
+    {
+      "Id": "23a8296d-e98a-4907-ae4b-186d4f87900d",
+      "Name": "face-red-06.png",
+      "Type": "Image",
+      "FilePath": "face-red-06.png"
+    },
+    {
+      "Id": "28a1de03-725e-4956-9ad5-3b6913bbcf37",
+      "Name": "face-red-07.png",
+      "Type": "Image",
+      "FilePath": "face-red-07.png"
+    },
+    {
+      "Id": "485ff27d-387e-4452-ba7b-1a6ba255c773",
+      "Name": "face-red-08.png",
+      "Type": "Image",
+      "FilePath": "face-red-08.png"
+    },
+    {
+      "Id": "beb7b867-b802-44fc-8cd9-94c112a19021",
+      "Name": "face-sil-00.png",
+      "Type": "Image",
+      "FilePath": "face-sil-00.png"
+    },
+    {
+      "Id": "3bc616bd-2146-48e6-a3b3-a73c258f6a29",
+      "Name": "face-sil-01.png",
+      "Type": "Image",
+      "FilePath": "face-sil-01.png"
+    },
+    {
+      "Id": "5f3ab50e-89cb-4654-aa7f-a44700879223",
+      "Name": "face-sil-02.png",
+      "Type": "Image",
+      "FilePath": "face-sil-02.png"
+    },
+    {
+      "Id": "3baff52e-889b-40a7-82eb-16487601ef29",
+      "Name": "face-sil-03.png",
+      "Type": "Image",
+      "FilePath": "face-sil-03.png"
+    },
+    {
+      "Id": "d8a3e348-1477-48dc-b9a3-6032c05eae79",
+      "Name": "face-sil-04.png",
+      "Type": "Image",
+      "FilePath": "face-sil-04.png"
+    },
+    {
+      "Id": "8b2798d4-7ab3-4608-8e38-548cba9960e0",
+      "Name": "face-sil-05.png",
+      "Type": "Image",
+      "FilePath": "face-sil-05.png"
+    },
+    {
+      "Id": "5f31cd70-7dd9-4155-9748-6c7a58b65152",
+      "Name": "face-sil-06.png",
+      "Type": "Image",
+      "FilePath": "face-sil-06.png"
+    },
+    {
+      "Id": "e43d70b8-3676-4539-b576-9fa112abed09",
+      "Name": "face-sil-07.png",
+      "Type": "Image",
+      "FilePath": "face-sil-07.png"
+    },
+    {
+      "Id": "7e12b3c4-09f8-43a1-a91e-7da6c60bf95f",
+      "Name": "face-sil-08.png",
+      "Type": "Image",
+      "FilePath": "face-sil-08.png"
+    },
+    {
+      "Id": "ddc48dd9-ee9a-4892-969b-65ecac7b69e5",
+      "Name": "marine-girlfriend-4-pink.jpg",
+      "Type": "Image",
+      "FilePath": "marine-girlfriend-4-pink.jpg"
+    }
+  ],
+  "Functions": [],
+  "Timers": [
+    {
+      "Id": "e1b113c0-f7f3-4907-98f4-6b58a750a35f",
+      "Name": "Freeze Timer",
+      "IntervalSeconds": 7,
+      "IsActive": false,
+      "IsRepeating": false,
+      "Nodes": [
+        {
+          "$type": "var.set",
+          "Name": "Health",
+          "Value": "1"
+        },
+        {
+          "$type": "general.displayText",
+          "Text": "You are freezing to death!  You better get warm fast!"
+        },
+        {
+          "$type": "var.compare",
+          "Name": "Health",
+          "Comparison": "Less Than or Equals",
+          "Value": "0",
+          "TrueBranch": [
+            {
+              "$type": "general.displayText",
+              "Text": "[Command Fallback: \"CT_ENDGAME\" | Args: [\"\",\"You froze to death.  Sorry, please try again.\",\"\",\"\",\"\"]]"
+            }
+          ],
+          "FalseBranch": [],
+          "Label": "Dead?"
+        }
+      ]
+    },
+    {
+      "Id": "afa7622c-f379-407e-b9a9-afce411d3631",
+      "Name": "UpdateTransitionScore",
+      "IntervalSeconds": 1,
+      "IsActive": false,
+      "IsRepeating": false,
+      "Nodes": [
+        {
+          "$type": "var.set",
+          "Name": "TransitionLevel",
+          "Value": "[ip: [v: TempName] : TransitionScore]"
+        },
+        {
+          "$type": "var.set",
+          "Name": "PlayerWearing",
+          "Value": ""
+        }
+      ]
+    },
+    {
+      "Id": "58c4171c-876d-4a02-9a54-07ae2f210b7f",
+      "Name": "Introduce Guest Room Dresser",
+      "IntervalSeconds": 1,
+      "IsActive": false,
+      "IsRepeating": false,
+      "Nodes": [
+        {
+          "$type": "general.displayText",
+          "Text": "[Command Fallback: \"CT_MOVEITEMTOROOM\" | Args: [\"\",\"\",\"9e741024-af23-45ab-a36f-4a42de58188f\",\"ca16e6b7-1806-497e-a187-de6254e0fd6c\",\"\"]]"
+        },
+        {
+          "$type": "var.compare",
+          "Name": "true",
+          "Comparison": "=",
+          "Value": "true",
+          "TrueBranch": [
+            {
+              "$type": "general.displayText",
+              "Text": "[Condition Check: \"Player in guest room?\" | Tests: [[\"CT_Player_In_Room\",\"CT_Uninitialized\",\"ca16e6b7-1806-497e-a187-de6254e0fd6c\",\"\",\"\"]]]",
+              "Label": "Player in guest room?"
+            },
+            {
+              "$type": "general.displayText",
+              "Text": "You almost trip over a dresser you didn't notice before.  I wonder how you missed it?"
+            }
+          ],
+          "FalseBranch": [
+            {
+              "$type": "general.displayText",
+              "Text": "You hear a loud thump coming from you believe the guestroom."
+            }
+          ],
+          "Label": "Player in guest room?"
+        }
+      ]
+    },
+    {
+      "Id": "ef5dd419-4690-42f7-9ecb-b1108bf313a1",
+      "Name": "CabinetDoor",
+      "IntervalSeconds": 1,
+      "IsActive": false,
+      "IsRepeating": false,
+      "Nodes": [
+        {
+          "$type": "general.displayText",
+          "Text": "[Condition Check: \"not in kitchen\" | Tests: [[\"CT_Player_In_Room\",\"CT_Uninitialized\",\"77cfc2a7-5bb0-4a22-9468-435450ea0bcc\",\"\",\"\"],[\"CT_Timer_CustomPropertyCheck\",\"And\",\"CabinetDoor:ExecutedOnce\",\"Equals\",\"0\"]]]",
+          "Label": "not in kitchen"
+        },
+        {
+          "$type": "general.displayText",
+          "Text": ""
+        }
+      ]
+    },
+    {
+      "Id": "bc410c30-5dbd-46eb-bc5e-1e29aff0300a",
+      "Name": "UpdatePortrait",
+      "IntervalSeconds": 1,
+      "IsActive": false,
+      "IsRepeating": false,
+      "Nodes": [
+        {
+          "$type": "general.displayText",
+          "Text": "[Command Fallback: \"CT_SETPLAYERPORTRAIT\" | Args: [\"\",\"\",\"face-[v: HairColor]-[v: Level].png\",\"\",\"\"]]"
+        }
+      ]
+    }
+  ],
+  "SplashScreen": {
+    "Enabled": false
+  },
+  "StatusBarElements": [
+    {
+      "Id": "44b9c09d-4180-4094-8c65-e9bc79bd5563",
+      "Name": "stat bar",
+      "Template": "Name: [playername] | Health: [v: Health] Transition Level: [v: TransitionLevel]",
+      "IsVisible": false
+    }
+  ],
+  "WearSlots": []
+}

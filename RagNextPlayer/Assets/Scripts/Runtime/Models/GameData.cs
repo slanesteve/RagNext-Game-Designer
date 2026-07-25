@@ -179,7 +179,31 @@ namespace RagNextPlayer.Runtime.Models
         public string Name           { get; set; } = string.Empty;
         public bool   InitallyActive { get; set; } = true;
         public string Trigger        { get; set; } = "UserClicked";
-        public string DirectionFilter { get; set; } = "All";
+        private string _directionFilter = "All";
+        public string DirectionFilter
+        {
+            get => _directionFilter;
+            set => _directionFilter = NormalizeDirection(value);
+        }
+
+        public static string NormalizeDirection(string? dir)
+        {
+            if (string.IsNullOrWhiteSpace(dir)) return "All";
+            dir = dir.Trim();
+            if (string.Equals(dir, "North", System.StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "N", System.StringComparison.OrdinalIgnoreCase)) return "N";
+            if (string.Equals(dir, "South", System.StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "S", System.StringComparison.OrdinalIgnoreCase)) return "S";
+            if (string.Equals(dir, "East", System.StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "E", System.StringComparison.OrdinalIgnoreCase)) return "E";
+            if (string.Equals(dir, "West", System.StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "W", System.StringComparison.OrdinalIgnoreCase)) return "W";
+            if (string.Equals(dir, "NorthWest", System.StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "NW", System.StringComparison.OrdinalIgnoreCase)) return "NW";
+            if (string.Equals(dir, "NorthEast", System.StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "NE", System.StringComparison.OrdinalIgnoreCase)) return "NE";
+            if (string.Equals(dir, "SouthWest", System.StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "SW", System.StringComparison.OrdinalIgnoreCase)) return "SW";
+            if (string.Equals(dir, "SouthEast", System.StringComparison.OrdinalIgnoreCase) || string.Equals(dir, "SE", System.StringComparison.OrdinalIgnoreCase)) return "SE";
+            if (string.Equals(dir, "Up", System.StringComparison.OrdinalIgnoreCase)) return "Up";
+            if (string.Equals(dir, "Down", System.StringComparison.OrdinalIgnoreCase)) return "Down";
+            if (string.Equals(dir, "In", System.StringComparison.OrdinalIgnoreCase)) return "In";
+            if (string.Equals(dir, "Out", System.StringComparison.OrdinalIgnoreCase)) return "Out";
+            return dir;
+        }
 
         [JsonConverter(typeof(ActionStepListConverter))]
         public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();

@@ -118,6 +118,7 @@ namespace RagNextPlayer.Managers
         private Button         _gameOverExitBtn;
 
         // Prompt Input modal references
+        private VisualElement  _promptModalBackdrop;
         private VisualElement  _promptInputMenu;
         private Label          _promptInputMessage;
         private TextField      _promptTextField;
@@ -273,35 +274,35 @@ namespace RagNextPlayer.Managers
                 };
             }
             
-            // Bind static compass buttons
+            // Bind static compass buttons (supporting both full names and short codes)
             _compassButtons.Clear();
-            _compassButtons["North"] = _root.Q<Button>("compass-dir-north");
-            _compassButtons["South"] = _root.Q<Button>("compass-dir-south");
-            _compassButtons["East"]  = _root.Q<Button>("compass-dir-east");
-            _compassButtons["West"]  = _root.Q<Button>("compass-dir-west");
-            _compassButtons["NorthWest"] = _root.Q<Button>("compass-dir-nw");
-            _compassButtons["NorthEast"] = _root.Q<Button>("compass-dir-ne");
-            _compassButtons["SouthWest"] = _root.Q<Button>("compass-dir-sw");
-            _compassButtons["SouthEast"] = _root.Q<Button>("compass-dir-se");
-            _compassButtons["Up"]    = _root.Q<Button>("compass-dir-up");
-            _compassButtons["Down"]  = _root.Q<Button>("compass-dir-down");
-            _compassButtons["In"]    = _root.Q<Button>("compass-dir-in");
-            _compassButtons["Out"]   = _root.Q<Button>("compass-dir-out");
+            _compassButtons["North"] = _compassButtons["N"] = _root.Q<Button>("compass-dir-north");
+            _compassButtons["South"] = _compassButtons["S"] = _root.Q<Button>("compass-dir-south");
+            _compassButtons["East"]  = _compassButtons["E"]  = _root.Q<Button>("compass-dir-east");
+            _compassButtons["West"]  = _compassButtons["W"]  = _root.Q<Button>("compass-dir-west");
+            _compassButtons["NorthWest"] = _compassButtons["NW"] = _root.Q<Button>("compass-dir-nw");
+            _compassButtons["NorthEast"] = _compassButtons["NE"] = _root.Q<Button>("compass-dir-ne");
+            _compassButtons["SouthWest"] = _compassButtons["SW"] = _root.Q<Button>("compass-dir-sw");
+            _compassButtons["SouthEast"] = _compassButtons["SE"] = _root.Q<Button>("compass-dir-se");
+            _compassButtons["Up"]    = _compassButtons["U"] = _root.Q<Button>("compass-dir-up");
+            _compassButtons["Down"]  = _compassButtons["D"] = _root.Q<Button>("compass-dir-down");
+            _compassButtons["In"]    = _compassButtons["I"] = _root.Q<Button>("compass-dir-in");
+            _compassButtons["Out"]   = _compassButtons["O"] = _root.Q<Button>("compass-dir-out");
 
-            // Bind HUD compass buttons
+            // Bind HUD compass buttons (supporting both full names and short codes)
             _compassButtonsHud.Clear();
-            _compassButtonsHud["North"] = _root.Q<Button>("compass-dir-north-hud");
-            _compassButtonsHud["South"] = _root.Q<Button>("compass-dir-south-hud");
-            _compassButtonsHud["East"]  = _root.Q<Button>("compass-dir-east-hud");
-            _compassButtonsHud["West"]  = _root.Q<Button>("compass-dir-west-hud");
-            _compassButtonsHud["NorthWest"] = _root.Q<Button>("compass-dir-nw-hud");
-            _compassButtonsHud["NorthEast"] = _root.Q<Button>("compass-dir-ne-hud");
-            _compassButtonsHud["SouthWest"] = _root.Q<Button>("compass-dir-sw-hud");
-            _compassButtonsHud["SouthEast"] = _root.Q<Button>("compass-dir-se-hud");
-            _compassButtonsHud["Up"]    = _root.Q<Button>("compass-dir-up-hud");
-            _compassButtonsHud["Down"]  = _root.Q<Button>("compass-dir-down-hud");
-            _compassButtonsHud["In"]    = _root.Q<Button>("compass-dir-in-hud");
-            _compassButtonsHud["Out"]   = _root.Q<Button>("compass-dir-out-hud");
+            _compassButtonsHud["North"] = _compassButtonsHud["N"] = _root.Q<Button>("compass-dir-north-hud");
+            _compassButtonsHud["South"] = _compassButtonsHud["S"] = _root.Q<Button>("compass-dir-south-hud");
+            _compassButtonsHud["East"]  = _compassButtonsHud["E"]  = _root.Q<Button>("compass-dir-east-hud");
+            _compassButtonsHud["West"]  = _compassButtonsHud["W"]  = _root.Q<Button>("compass-dir-west-hud");
+            _compassButtonsHud["NorthWest"] = _compassButtonsHud["NW"] = _root.Q<Button>("compass-dir-nw-hud");
+            _compassButtonsHud["NorthEast"] = _compassButtonsHud["NE"] = _root.Q<Button>("compass-dir-ne-hud");
+            _compassButtonsHud["SouthWest"] = _compassButtonsHud["SW"] = _root.Q<Button>("compass-dir-sw-hud");
+            _compassButtonsHud["SouthEast"] = _compassButtonsHud["SE"] = _root.Q<Button>("compass-dir-se-hud");
+            _compassButtonsHud["Up"]    = _compassButtonsHud["U"] = _root.Q<Button>("compass-dir-up-hud");
+            _compassButtonsHud["Down"]  = _compassButtonsHud["D"] = _root.Q<Button>("compass-dir-down-hud");
+            _compassButtonsHud["In"]    = _compassButtonsHud["I"] = _root.Q<Button>("compass-dir-in-hud");
+            _compassButtonsHud["Out"]   = _compassButtonsHud["O"] = _root.Q<Button>("compass-dir-out-hud");
 
             _sidebarToggleBtn = _root.Q<Button>("sidebar-toggle-btn");
             if (_sidebarToggleBtn is not null) _sidebarToggleBtn.clicked += ToggleSidebar;
@@ -441,6 +442,7 @@ namespace RagNextPlayer.Managers
             _gameOverExitBtn     = _root.Q<Button>("game-over-exit-btn");
 
             // Query Prompt Input elements
+            _promptModalBackdrop   = _root.Q<VisualElement>("prompt-modal-backdrop");
             _promptInputMenu       = _root.Q<VisualElement>("prompt-input-menu");
             _promptInputMessage    = _root.Q<Label>("prompt-input-message");
             _promptTextField       = _root.Q<TextField>("prompt-text-field");
@@ -2306,9 +2308,9 @@ namespace RagNextPlayer.Managers
                     // Fallback to hardcoded defaults for standard presets if the file is missing
                     if (string.Equals(presetVar, "pink", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "wife", StringComparison.OrdinalIgnoreCase))
                     {
-                        primaryBgStr = "#FFF0F5";
-                        textMainStr = "#4A1525";
-                        borderAccentStr = "#FF69B4";
+                        primaryBgStr = "#2A081A";
+                        textMainStr = "#FFE4E6";
+                        borderAccentStr = "#F43F5E";
                         inventoryDock = "Bottom";
                         roomItemsDock = "Bottom";
                         navigationDock = "Bottom";
@@ -2316,19 +2318,29 @@ namespace RagNextPlayer.Managers
                     }
                     else if (string.Equals(presetVar, "blue", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "husband", StringComparison.OrdinalIgnoreCase) || string.Equals(presetVar, "man", StringComparison.OrdinalIgnoreCase))
                     {
-                        primaryBgStr = "#F0F8FF";
-                        textMainStr = "#0B3C5D";
-                        borderAccentStr = "#328CC1";
+                        primaryBgStr = "#0B192C";
+                        textMainStr = "#E0F2FE";
+                        borderAccentStr = "#00A8CC";
                         inventoryDock = "Bottom";
                         roomItemsDock = "Bottom";
                         navigationDock = "Bottom";
                         portraitAlign = "TopLeft";
                     }
+                    else if (string.Equals(presetVar, "cyberpunk", StringComparison.OrdinalIgnoreCase))
+                    {
+                        primaryBgStr = "#0D0D15";
+                        textMainStr = "#FEE500";
+                        borderAccentStr = "#FF0055";
+                        inventoryDock = "Right";
+                        roomItemsDock = "Right";
+                        navigationDock = "Right";
+                        portraitAlign = "TopLeft";
+                    }
                     else if (string.Equals(presetVar, "dark", StringComparison.OrdinalIgnoreCase))
                     {
-                        primaryBgStr = "#121214";
-                        textMainStr = "#E0E0E0";
-                        borderAccentStr = "#4A4A5A";
+                        primaryBgStr = "#0F172A";
+                        textMainStr = "#F1F5F9";
+                        borderAccentStr = "#818CF8";
                         inventoryDock = "Bottom";
                         roomItemsDock = "Bottom";
                         navigationDock = "Bottom";
@@ -2336,9 +2348,9 @@ namespace RagNextPlayer.Managers
                     }
                     else if (string.Equals(presetVar, "glass", StringComparison.OrdinalIgnoreCase))
                     {
-                        primaryBgStr = "rgba(40,40,40,0.55)";
-                        textMainStr = "#ffffff";
-                        borderAccentStr = "rgba(255,255,255,0.2)";
+                        primaryBgStr = "rgba(20,24,36,0.75)";
+                        textMainStr = "#FFFFFF";
+                        borderAccentStr = "rgba(56,189,248,0.35)";
                         inventoryDock = "Right";
                         roomItemsDock = "Right";
                         navigationDock = "Right";
@@ -2346,9 +2358,9 @@ namespace RagNextPlayer.Managers
                     }
                     else if (string.Equals(presetVar, "default", StringComparison.OrdinalIgnoreCase))
                     {
-                        primaryBgStr = "#1e1e24";
-                        textMainStr = "#ffffff";
-                        borderAccentStr = "#4a4a5a";
+                        primaryBgStr = "#181A24";
+                        textMainStr = "#F8FAFC";
+                        borderAccentStr = "#38BDF8";
                         inventoryDock = "Right";
                         roomItemsDock = "Right";
                         navigationDock = "Right";
@@ -2393,9 +2405,17 @@ namespace RagNextPlayer.Managers
                 var navPanel = _root.Q<VisualElement>("navigation-panel");
                 if (navPanel != null) navPanel.style.backgroundColor = glassBg;
 
-                // Popups and prompt menus
-                if (_promptInputMenu != null) _promptInputMenu.style.backgroundColor = glassBg;
-                if (_gameOverMenu != null) _gameOverMenu.style.backgroundColor = glassBg;
+                // Popups and prompt menus (Solid high-contrast opaque cards for maximum legibility)
+                var solidCardBg = new Color(0.08f, 0.09f, 0.13f, 0.98f);
+                if (TryParseHtmlColor(primaryBgStr, out var parsedCardBg))
+                {
+                    parsedCardBg.a = 0.98f;
+                    solidCardBg = parsedCardBg;
+                }
+                if (_promptInputMenu != null) _promptInputMenu.style.backgroundColor = solidCardBg;
+                if (_gameOverMenu != null) _gameOverMenu.style.backgroundColor = solidCardBg;
+                var interactionMenu = _root.Q<VisualElement>("interaction-menu");
+                if (interactionMenu != null) interactionMenu.style.backgroundColor = solidCardBg;
 
                 var menuContainer = _root.Q<VisualElement>("menu-container");
                 if (menuContainer != null) menuContainer.style.backgroundColor = glassBg;
@@ -2415,9 +2435,11 @@ namespace RagNextPlayer.Managers
                 if (_gameOverMessage != null) _gameOverMessage.style.color = textMain;
 
                 var promptTitle = _root.Q<Label>("prompt-input-title");
-                if (promptTitle != null) promptTitle.style.color = textMain;
+                if (promptTitle != null && TryParseHtmlColor(borderAccentStr, out var bAccent1)) promptTitle.style.color = bAccent1;
                 var gameOverTitle = _root.Q<Label>("game-over-title");
-                if (gameOverTitle != null) gameOverTitle.style.color = textMain;
+                if (gameOverTitle != null && TryParseHtmlColor(borderAccentStr, out var bAccent2)) gameOverTitle.style.color = bAccent2;
+                var interactTitle = _root.Q<Label>(className: "interaction-menu-title");
+                if (interactTitle != null && TryParseHtmlColor(borderAccentStr, out var bAccent3)) interactTitle.style.color = bAccent3;
 
                 // Exclude top settings bar buttons (Help, Log, Settings) from inheriting root color
                 // Setting to StyleKeyword.Null forces them to keep their default CSS color and hover classes
@@ -3930,18 +3952,28 @@ namespace RagNextPlayer.Managers
                     btn.style.fontSize = fs;
                     btn.Add(labelTextElement);
                     labelTextElement.BringToFront();
-                    btn.style.borderLeftWidth = 1;
-                    btn.style.borderRightWidth = 1;
-                    btn.style.borderTopWidth = 1;
-                    btn.style.borderBottomWidth = 1;
-                    btn.style.borderLeftColor = Color.white;
-                    btn.style.borderRightColor = Color.white;
-                    btn.style.borderTopColor = Color.white;
-                    btn.style.borderBottomColor = Color.white;
-                    btn.style.borderTopLeftRadius = 4;
-                    btn.style.borderTopRightRadius = 4;
-                    btn.style.borderBottomLeftRadius = 4;
-                    btn.style.borderBottomRightRadius = 4;
+                    if (hotspot.StyleType == "ImageButton")
+                    {
+                        btn.style.borderLeftWidth = 0;
+                        btn.style.borderRightWidth = 0;
+                        btn.style.borderTopWidth = 0;
+                        btn.style.borderBottomWidth = 0;
+                    }
+                    else
+                    {
+                        btn.style.borderLeftWidth = 1;
+                        btn.style.borderRightWidth = 1;
+                        btn.style.borderTopWidth = 1;
+                        btn.style.borderBottomWidth = 1;
+                        btn.style.borderLeftColor = Color.white;
+                        btn.style.borderRightColor = Color.white;
+                        btn.style.borderTopColor = Color.white;
+                        btn.style.borderBottomColor = Color.white;
+                        btn.style.borderTopLeftRadius = 4;
+                        btn.style.borderTopRightRadius = 4;
+                        btn.style.borderBottomLeftRadius = 4;
+                        btn.style.borderBottomRightRadius = 4;
+                    }
 
                     string resolvedImage = game != null ? TemplateResolver.Resolve(hotspot.ImageAssetId, game, room, null) : hotspot.ImageAssetId;
                     if (!string.IsNullOrEmpty(resolvedImage))
@@ -3986,6 +4018,10 @@ namespace RagNextPlayer.Managers
                         btn.style.borderBottomLeftRadius = 4;
                         btn.style.borderBottomRightRadius = 4;
                     }
+                    else if (hotspot.StyleType == "ImageButton")
+                    {
+                        btn.style.backgroundColor = Color.clear;
+                    }
                     else
                     {
                         btn.style.backgroundColor = new Color(resolvedBgColor.r * 1.18f, resolvedBgColor.g * 1.18f, resolvedBgColor.b * 1.18f, resolvedBgColor.a);
@@ -3994,12 +4030,16 @@ namespace RagNextPlayer.Managers
 
                 btn.RegisterCallback<PointerOutEvent>(evt => {
                     btn.style.scale = StyleKeyword.Null;
-                    if (hotspot.StyleType == "Invisible")
+                    if (hotspot.StyleType == "Invisible" || hotspot.StyleType == "ImageButton")
                     {
-                        btn.style.borderLeftWidth = 0;
-                        btn.style.borderRightWidth = 0;
-                        btn.style.borderTopWidth = 0;
-                        btn.style.borderBottomWidth = 0;
+                        btn.style.backgroundColor = Color.clear;
+                        if (hotspot.StyleType == "Invisible")
+                        {
+                            btn.style.borderLeftWidth = 0;
+                            btn.style.borderRightWidth = 0;
+                            btn.style.borderTopWidth = 0;
+                            btn.style.borderBottomWidth = 0;
+                        }
                     }
                     else
                     {
@@ -4835,46 +4875,6 @@ namespace RagNextPlayer.Managers
 
         private void BuildExitButtons(RoomData room)
         {
-            if (room?.InteractiveScreenSettings != null && room.InteractiveScreenSettings.Enabled)
-            {
-                foreach (var kvp in _compassButtons)
-                {
-                    if (kvp.Value is null) continue;
-                    kvp.Value.RemoveFromClassList("compass-btn--active");
-                    kvp.Value.AddToClassList("compass-btn--inactive");
-                    kvp.Value.SetEnabled(false);
-                    kvp.Value.clickable = null;
-                    if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
-                    {
-                        var dimColor = textMainColor;
-                        dimColor.a = 0.35f;
-                        kvp.Value.style.color = dimColor;
-                    }
-                    else
-                    {
-                        kvp.Value.style.color = new Color(1f, 1f, 1f, 0.35f);
-                    }
-                }
-                foreach (var kvp in _compassButtonsHud)
-                {
-                    if (kvp.Value is null) continue;
-                    kvp.Value.RemoveFromClassList("compass-btn--active");
-                    kvp.Value.AddToClassList("compass-btn--inactive");
-                    kvp.Value.SetEnabled(false);
-                    kvp.Value.clickable = null;
-                    if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
-                    {
-                        var dimColor = textMainColor;
-                        dimColor.a = 0.35f;
-                        kvp.Value.style.color = dimColor;
-                    }
-                    else
-                    {
-                        kvp.Value.style.color = new Color(1f, 1f, 1f, 0.35f);
-                    }
-                }
-                return;
-            }
 
             // Reset all static compass buttons to inactive (dimmed, non-clickable) state
             foreach (var kvp in _compassButtons)
@@ -4945,7 +4945,7 @@ namespace RagNextPlayer.Managers
                         btn.RemoveFromClassList("compass-btn--inactive");
                         btn.AddToClassList("compass-btn--active");
                         btn.SetEnabled(true);
-                        btn.clickable = new Clickable(() => OnCompassExitClicked(targetRoomId));
+                        btn.clickable = new Clickable(() => OnCompassExitClicked(targetRoomId, key));
                         if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
                         {
                             btn.style.color = textMainColor;
@@ -4969,7 +4969,7 @@ namespace RagNextPlayer.Managers
                         btnHud.RemoveFromClassList("compass-btn--inactive");
                         btnHud.AddToClassList("compass-btn--active");
                         btnHud.SetEnabled(true);
-                        btnHud.clickable = new Clickable(() => OnCompassExitClicked(targetRoomId));
+                        btnHud.clickable = new Clickable(() => OnCompassExitClicked(targetRoomId, key));
                         if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
                         {
                             btnHud.style.color = textMainColor;
@@ -5784,7 +5784,7 @@ namespace RagNextPlayer.Managers
             UpdateFontSizeUI();
         }
 
-        private float GetScaledFontSize()
+        public float GetScaledFontSize()
         {
             var game = GameManager.Instance?.ActiveGame;
             if (game?.Theme != null)
@@ -5829,12 +5829,21 @@ namespace RagNextPlayer.Managers
                     _root.Query<VisualElement>(className: "narrative-hotlink").ForEach(el => el.style.fontSize = targetSize);
                     _root.Query<VisualElement>(className: "inventory-item-name").ForEach(el => el.style.fontSize = targetSize * 0.8f);
                     _root.Query<VisualElement>(className: "entity-name").ForEach(el => el.style.fontSize = targetSize * 0.85f);
-                    _root.Query<VisualElement>(className: "prompt-input-message").ForEach(el => el.style.fontSize = targetSize * 0.8f);
+                    _root.Query<VisualElement>(className: "prompt-input-message").ForEach(el => el.style.fontSize = targetSize * 1.0f);
+                    _root.Query<VisualElement>(className: "game-over-message").ForEach(el => el.style.fontSize = targetSize * 1.0f);
                     _root.Query<VisualElement>(className: "status-bar-label").ForEach(el => el.style.fontSize = targetSize * 0.85f);
-                    _root.Query<VisualElement>(className: "prompt-choice-btn").ForEach(el => el.style.fontSize = targetSize * 0.85f);
+                    _root.Query<VisualElement>(className: "prompt-choice-btn").ForEach(el => el.style.fontSize = targetSize * 1.0f);
+                    _root.Query<VisualElement>(className: "interaction-menu-title").ForEach(el => el.style.fontSize = targetSize * 1.05f);
+                    _root.Query<VisualElement>(className: "interaction-menu-btn").ForEach(el => el.style.fontSize = targetSize * 0.95f);
+                    _root.Query<VisualElement>(className: "interaction-menu-cancel").ForEach(el => el.style.fontSize = targetSize * 0.85f);
                     _root.Query<VisualElement>(className: "section-header").ForEach(el => el.style.fontSize = targetSize * 0.75f);
                     _root.Query<VisualElement>(className: "compass-rose-btn").ForEach(el => el.style.fontSize = targetSize * 0.7f);
                     _root.Query<VisualElement>(className: "compass-aux-btn").ForEach(el => el.style.fontSize = targetSize * 0.7f);
+
+                    var gameOverTitle = _root.Q<Label>("game-over-title");
+                    if (gameOverTitle != null) gameOverTitle.style.fontSize = targetSize * 1.15f;
+                    var promptTitle = _root.Q<Label>("prompt-input-title");
+                    if (promptTitle != null) promptTitle.style.fontSize = targetSize * 1.15f;
 
                     if (_playerNameLabel != null) _playerNameLabel.style.fontSize = targetSize * 0.9f;
                     if (_playerGenderLabel != null) _playerGenderLabel.style.fontSize = targetSize * 0.75f;
@@ -5886,11 +5895,14 @@ namespace RagNextPlayer.Managers
             }
         }
 
-        private void OnCompassExitClicked(string targetRoomId)
+        private void OnCompassExitClicked(string targetRoomId, string? direction = null)
         {
+            // Block navigation if a prompt modal card is currently active on screen
+            if (_promptInputMenu != null && _promptInputMenu.style.display == DisplayStyle.Flex) return;
+
             // Trigger room movement
             PrepareForNewAction();
-            GameManager.Instance?.MovePlayerToRoom(targetRoomId);
+            GameManager.Instance?.MovePlayerToRoom(targetRoomId, direction);
         }
 
 
@@ -6063,6 +6075,23 @@ namespace RagNextPlayer.Managers
                 _gameOverMessage.text = finalMessage;
             }
 
+            // Sync font sizing and active theme across game over screen elements
+            UpdateFontSizeUI();
+            var game = GameManager.Instance?.ActiveGame;
+            if (game != null)
+            {
+                ApplyTheme(game);
+            }
+
+            float targetSize = GetScaledFontSize();
+            if (_gameOverMessage != null) _gameOverMessage.style.fontSize = targetSize;
+            var title = _root?.Q<Label>("game-over-title");
+            if (title != null) title.style.fontSize = targetSize * 1.15f;
+
+            if (_gameOverRestartBtn != null) _gameOverRestartBtn.style.fontSize = targetSize;
+            if (_gameOverLoadBtn != null) _gameOverLoadBtn.style.fontSize = targetSize;
+            if (_gameOverExitBtn != null) _gameOverExitBtn.style.fontSize = targetSize;
+
             if (_gameOverMenu is not null)
             {
                 _gameOverMenu.style.display = DisplayStyle.Flex;
@@ -6216,6 +6245,8 @@ namespace RagNextPlayer.Managers
                     var btn = new Button(() => SubmitPromptSelection(opt));
                     btn.text = opt;
                     btn.AddToClassList("prompt-choice-btn");
+                    btn.style.whiteSpace = WhiteSpace.Normal;
+                    btn.style.flexShrink = 0;
                     btn.style.fontSize = GetScaledFontSize();
                     if (TryParseHtmlColor(_activeTextMainColor, out var btnTextColor))
                     {
@@ -6236,6 +6267,11 @@ namespace RagNextPlayer.Managers
                 }
             }
 
+            if (_promptModalBackdrop is not null)
+            {
+                _promptModalBackdrop.style.display = DisplayStyle.Flex;
+                _promptModalBackdrop.BringToFront();
+            }
             if (_promptInputMenu is not null)
             {
                 if (_promptMenuCloseTween.isAlive)
@@ -6275,15 +6311,26 @@ namespace RagNextPlayer.Managers
                 ActionExecutor.ResumeSuspended();
 
                 if (_promptInputMenu is null) return;
+
+                // If a new prompt or dialogue is active, do not start the close tween.
+                var promptActive = GameManager.Instance?.ActiveGame?.Variables?.Find(v => string.Equals(v.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase))?.Value == "true";
+                if (promptActive) return;
+
                 _promptMenuCloseTween = PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
                     _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
                 }).OnComplete(() => {
-                    _promptInputMenu.style.display = DisplayStyle.None;
+                    if (GameManager.Instance?.ActiveGame?.Variables?.Find(v => string.Equals(v.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase))?.Value != "true")
+                    {
+                        _promptInputMenu.style.display = DisplayStyle.None;
+                        if (_promptModalBackdrop is not null) _promptModalBackdrop.style.display = DisplayStyle.None;
+                    }
                 });
             });
 
             btn.text = string.IsNullOrEmpty(buttonText) ? "Continue" : buttonText;
             btn.AddToClassList("prompt-choice-btn");
+            btn.style.whiteSpace = WhiteSpace.Normal;
+            btn.style.flexShrink = 0;
             btn.style.fontSize = GetScaledFontSize();
             
             // Custom primary accent styling for the main Continue button
@@ -6308,6 +6355,11 @@ namespace RagNextPlayer.Managers
             }
             selScroll.Add(btn);
 
+            if (_promptModalBackdrop is not null)
+            {
+                _promptModalBackdrop.style.display = DisplayStyle.Flex;
+                _promptModalBackdrop.BringToFront();
+            }
             if (_promptInputMenu is not null)
             {
                 if (_promptMenuCloseTween.isAlive)
@@ -6351,6 +6403,14 @@ namespace RagNextPlayer.Managers
             // Resume the action execution engine first to see if a new prompt gets activated
             ActionExecutor.ResumeSuspended();
 
+            // Re-fetch current room and refresh exits after resuming in case actions unlocked exits or changed room state
+            currentRoom = GameManager.Instance.CurrentRoom;
+            if (currentRoom is not null)
+            {
+                BuildExitButtons(currentRoom);
+                RefreshEntityLists();
+            }
+
             if (_promptInputMenu is null) return;
 
             // If a new prompt is active, do not start the close tween.
@@ -6364,6 +6424,7 @@ namespace RagNextPlayer.Managers
                 if (GameManager.Instance?.ActiveGame?.Variables?.Find(v => string.Equals(v.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase))?.Value != "true")
                 {
                     _promptInputMenu.style.display = DisplayStyle.None;
+                    if (_promptModalBackdrop is not null) _promptModalBackdrop.style.display = DisplayStyle.None;
                 }
             });
         }
@@ -6402,8 +6463,12 @@ namespace RagNextPlayer.Managers
                             _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
                         }).OnComplete(() => {
                             _promptInputMenu.style.display = DisplayStyle.None;
+                            if (_promptModalBackdrop is not null) _promptModalBackdrop.style.display = DisplayStyle.None;
                         });
                     }
+
+                    // Resume suspended dialogue action runner
+                    ActionExecutor.ResumeSuspended();
 
                     // Execute choice sub-commands
                     if (choice.Commands != null && choice.Commands.Count > 0)
@@ -6418,6 +6483,8 @@ namespace RagNextPlayer.Managers
                     }
                 }) { text = resolvedChoiceText };
                 btn.AddToClassList("prompt-choice-btn");
+                btn.style.whiteSpace = WhiteSpace.Normal;
+                btn.style.flexShrink = 0;
                 btn.style.fontSize = GetScaledFontSize();
                 if (TryParseHtmlColor(_activeTextMainColor, out var btnTextColor))
                 {
@@ -6437,6 +6504,11 @@ namespace RagNextPlayer.Managers
                 selScroll.Add(btn);
             }
 
+            if (_promptModalBackdrop is not null)
+            {
+                _promptModalBackdrop.style.display = DisplayStyle.Flex;
+                _promptModalBackdrop.BringToFront();
+            }
             if (_promptInputMenu is not null)
             {
                 if (_promptMenuCloseTween.isAlive)

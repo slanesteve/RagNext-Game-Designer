@@ -512,7 +512,7 @@ namespace RagNextPlayer.Managers
                             {
                                 if (MatchesDirection(action.DirectionFilter, currentDirection))
                                 {
-                                    ActionExecutor.Execute(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
+                                    await ActionExecutor.ExecuteAsync(action, exitCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: true);
                                 }
                             }
                         }
@@ -528,7 +528,7 @@ namespace RagNextPlayer.Managers
                                 {
                                     if (MatchesDirection(action.DirectionFilter, currentDirection))
                                     {
-                                        ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
+                                        await ActionExecutor.ExecuteAsync(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: true);
                                     }
                                 }
                             }
@@ -547,7 +547,7 @@ namespace RagNextPlayer.Managers
                                     {
                                         if (MatchesDirection(action.DirectionFilter, currentDirection))
                                         {
-                                            ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
+                                            await ActionExecutor.ExecuteAsync(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: true);
                                         }
                                     }
                                 }
@@ -615,7 +615,7 @@ namespace RagNextPlayer.Managers
                         {
                             if (MatchesDirection(action.DirectionFilter, currentDirection))
                             {
-                                ActionExecutor.Execute(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
+                                await ActionExecutor.ExecuteAsync(action, enterCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                             }
                         }
                     }
@@ -631,7 +631,7 @@ namespace RagNextPlayer.Managers
                             {
                                 if (MatchesDirection(action.DirectionFilter, currentDirection))
                                 {
-                                    ActionExecutor.Execute(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
+                                    await ActionExecutor.ExecuteAsync(action, playerCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                                 }
                             }
                         }
@@ -650,7 +650,7 @@ namespace RagNextPlayer.Managers
                                 {
                                     if (MatchesDirection(action.DirectionFilter, currentDirection))
                                     {
-                                        ActionExecutor.Execute(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
+                                        await ActionExecutor.ExecuteAsync(action, itemCtx, InteractionController.Instance?.GetComponent<CommandEffectRouter>(), isUserInteraction: false);
                                     }
                                 }
                             }

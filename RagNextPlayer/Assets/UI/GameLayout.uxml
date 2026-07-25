@@ -383,8 +383,11 @@
       </ui:VisualElement>
     </ui:VisualElement>
 
+    <!-- Full screen dark scrim backdrop for popup modals -->
+    <ui:VisualElement name="prompt-modal-backdrop" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(6, 8, 14, 0.75); display: none; z-index: 450;" />
+
     <!-- ══ PLAYER PROMPT INPUT POPUP (hidden by default) ══════════════════ -->
-    <ui:VisualElement name="prompt-input-menu" class="settings-menu" style="display: none;">
+    <ui:VisualElement name="prompt-input-menu" class="popup-modal-card settings-menu" style="display: none;">
       <ui:Label name="prompt-input-title" class="settings-menu-title" text="Input Required" />
       <ui:Label name="prompt-input-message" class="prompt-input-message" text="Please provide input:" />
       
@@ -401,15 +404,15 @@
     </ui:VisualElement>
 
     <!-- ══ GAME OVER POPUP (hidden by default) ═══════════════════════════ -->
-    <ui:VisualElement name="game-over-menu" class="settings-menu" style="display: none;">
-      <ui:Label name="game-over-title" class="settings-menu-title" text="Game Over" style="color: #ff5252;" />
+    <ui:VisualElement name="game-over-menu" class="popup-modal-card" style="display: none;">
+      <ui:Label name="game-over-title" class="settings-menu-title" text="Game Over" />
       <ui:Label name="game-over-message" class="game-over-message" text="The game has ended." />
       
       <!-- Buttons container -->
       <ui:VisualElement style="margin-top: 12px; flex-direction: column;">
-        <ui:Button name="game-over-restart-btn" class="settings-toggle-btn" style="margin-top: 4px; width: 100%;" text="↺ Restart" />
-        <ui:Button name="game-over-load-btn" class="settings-toggle-btn" style="margin-top: 4px; width: 100%;" text="📂 Load Game" />
-        <ui:Button name="game-over-exit-btn" class="settings-toggle-btn" style="margin-top: 4px; width: 100%;" text="⏻ Exit" />
+        <ui:Button name="game-over-restart-btn" class="prompt-choice-btn" style="margin-top: 4px; width: 100%;" text="↺ Restart" />
+        <ui:Button name="game-over-load-btn" class="prompt-choice-btn" style="margin-top: 4px; width: 100%;" text="📂 Load Game" />
+        <ui:Button name="game-over-exit-btn" class="prompt-choice-btn" style="margin-top: 4px; width: 100%;" text="⏻ Exit" />
       </ui:VisualElement>
     </ui:VisualElement>
 

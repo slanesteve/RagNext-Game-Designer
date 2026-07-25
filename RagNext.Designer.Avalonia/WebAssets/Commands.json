@@ -809,22 +809,6 @@
       ]
     },
     {
-      "name": "Variable: Evaluate Formula",
-      "category": "Variable",
-      "inputs": [
-        {
-          "label": "Variable",
-          "controlType": "ComboBox",
-          "dataType": "Variable"
-        },
-        {
-          "label": "Formula",
-          "controlType": "Text",
-          "dataType": "String"
-        }
-      ]
-    },
-    {
       "name": "Variable: Increment",
       "category": "Variable",
       "inputs": [
@@ -884,27 +868,6 @@
           "label": "Store Variable",
           "controlType": "ComboBox",
           "dataType": "Variable"
-        }
-      ]
-    },
-    {
-      "name": "Variable: Set Numeric Randomly",
-      "category": "Variable",
-      "inputs": [
-        {
-          "label": "Variable",
-          "controlType": "ComboBox",
-          "dataType": "Variable"
-        },
-        {
-          "label": "Minimum",
-          "controlType": "Number",
-          "dataType": "Number"
-        },
-        {
-          "label": "Maximum",
-          "controlType": "Number",
-          "dataType": "Number"
         }
       ]
     },
