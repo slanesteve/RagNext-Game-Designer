@@ -52,6 +52,33 @@ const nodesLayer = document.getElementById('nodes-layer');
 const svgLayer = document.getElementById('svg-layer');
 const contextMenu = document.getElementById('context-menu');
 
+// Disable spellchecking globally across all inputs and textareas in the visual script editor
+document.addEventListener('DOMContentLoaded', () => {
+    const disableSpellcheck = (node) => {
+        if (!node) return;
+        if (node.tagName === 'TEXTAREA' || node.tagName === 'INPUT') {
+            node.setAttribute('spellcheck', 'false');
+            node.spellcheck = false;
+        }
+        if (node.querySelectorAll) {
+            node.querySelectorAll('textarea, input').forEach(el => {
+                el.setAttribute('spellcheck', 'false');
+                el.spellcheck = false;
+            });
+        }
+    };
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(m => m.addedNodes.forEach(disableSpellcheck));
+    });
+    if (document.body) {
+        observer.observe(document.body, { childList: true, subtree: true });
+        document.querySelectorAll('textarea, input').forEach(el => {
+            el.setAttribute('spellcheck', 'false');
+            el.spellcheck = false;
+        });
+    }
+});
+
 // Dynamic Database Catalogs and reflection lookup maps
 let catalogs = {};
 let nameToTypeMap = {};

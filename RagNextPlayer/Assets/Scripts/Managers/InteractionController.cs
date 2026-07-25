@@ -239,7 +239,7 @@ namespace RagNextPlayer.Managers
             }
         }
 
-        private void ExecuteRoomAction(RoomData room, ActionData action, bool forceExecute = false)
+        public void ExecuteRoomAction(RoomData room, ActionData action, bool forceExecute = false)
         {
             HideMenu();
             var game = GameManager.Instance?.ActiveGame;

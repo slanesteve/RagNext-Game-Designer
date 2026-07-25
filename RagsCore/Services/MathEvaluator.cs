@@ -14,7 +14,12 @@ namespace RagsCore.Services
             if (string.IsNullOrWhiteSpace(expression)) return 0;
             var tokens = Tokenize(expression);
             int index = 0;
-            return ParseExpression(tokens, ref index);
+            double val = ParseExpression(tokens, ref index);
+            if (index < tokens.Count)
+            {
+                throw new ArgumentException($"Unparsed token '{tokens[index]}' remaining in expression.");
+            }
+            return val;
         }
 
         private static List<string> Tokenize(string expr)
@@ -112,7 +117,7 @@ namespace RagsCore.Services
 
         private static double ParseFactor(List<string> tokens, ref int index)
         {
-            if (index >= tokens.Count) return 0;
+            if (index >= tokens.Count) throw new ArgumentException("Unexpected end of math expression.");
 
             string token = tokens[index];
             if (token == "-") // Unary minus
@@ -233,7 +238,7 @@ namespace RagsCore.Services
             {
                 return value;
             }
-            return 0;
+            throw new ArgumentException($"Invalid symbol or token '{token}' in math expression.");
         }
     }
 }

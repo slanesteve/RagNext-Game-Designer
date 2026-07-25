@@ -41,6 +41,7 @@ namespace RagNextPlayer.Managers
         private VisualElement  _objectsListContainer;
         private VisualElement  _charactersListContainer;
         private VisualElement  _inventoryListContainer;
+        private VisualElement  _roomActionsListContainer;
         private Label          _playerNameLabel;
         private Label          _playerGenderLabel;
         private VisualElement  _sceneImageContainer;
@@ -326,6 +327,7 @@ namespace RagNextPlayer.Managers
             _objectsListContainer   = _root.Q<VisualElement>("objects-list");
             _charactersListContainer= _root.Q<VisualElement>("characters-list");
             _inventoryListContainer = _root.Q<VisualElement>("inventory-list");
+            _roomActionsListContainer = _root.Q<VisualElement>("room-actions-list");
             _playerNameLabel        = _root.Q<Label>("player-name");
             _playerGenderLabel      = _root.Q<Label>("player-gender");
             _sceneImageContainer    = _root.Q<VisualElement>("scene-image");
@@ -333,11 +335,21 @@ namespace RagNextPlayer.Managers
 
             // Query revamped HUD elements
             _playerHudContainer = _root.Q<VisualElement>("player-hud-container");
-            _roomActionThumbnail = _root.Q<VisualElement>("room-action-thumbnail");
             _roomActionThumbnailWrapper = _root.Q<VisualElement>("room-action-thumbnail-wrapper");
-            if (_roomActionThumbnailWrapper is not null)
+
+            _contextualPopover = _root.Q<VisualElement>("contextual-action-popover");
+            if (_root is not null)
             {
-                _roomActionThumbnailWrapper.RegisterCallback<ClickEvent>(OnRoomTitleClicked);
+                _root.RegisterCallback<PointerDownEvent>(evt => {
+                    if (_contextualPopover != null && _contextualPopover.style.display == DisplayStyle.Flex)
+                    {
+                        VisualElement target = evt.target as VisualElement;
+                        if (target != null && !IsElementOrChildOf(target, _contextualPopover) && !IsElementOrChildOf(target, _activePopoverTargetRow))
+                        {
+                            HideContextualActionPopover();
+                        }
+                    }
+                }, TrickleDown.TrickleDown);
             }
 
             _compassToggleBtn = _root.Q<Button>("compass-toggle-btn");
@@ -3112,6 +3124,31 @@ namespace RagNextPlayer.Managers
                 }
             }
 
+            var roomActionsSec = _root.Q<VisualElement>("room-actions-container");
+            if (roomActionsSec != null && leftCompartment != null && rightSidebar != null && bottomCompartment != null)
+            {
+                ResetGlassCardStyle(roomActionsSec);
+                if (string.Equals(roomItemsPos, "Left", StringComparison.OrdinalIgnoreCase))
+                {
+                    roomActionsSec.RemoveFromHierarchy();
+                    if (leftSidebar != null)
+                    {
+                        leftSidebar.Insert(0, roomActionsSec);
+                    }
+                }
+                else if (string.Equals(roomItemsPos, "Bottom", StringComparison.OrdinalIgnoreCase))
+                {
+                    roomActionsSec.RemoveFromHierarchy();
+                    bottomCompartment.Insert(0, roomActionsSec);
+                    ApplyBottomRowChildStyle(roomActionsSec);
+                }
+                else // Right
+                {
+                    roomActionsSec.RemoveFromHierarchy();
+                    rightSidebar.Insert(0, roomActionsSec);
+                }
+            }
+
             // Handle Room Items dock
             if (roomLegend != null && leftCompartment != null && rightSidebar != null && bottomCompartment != null)
             {
@@ -3122,7 +3159,8 @@ namespace RagNextPlayer.Managers
                     roomLegend.RemoveFromHierarchy();
                     if (leftSidebar != null)
                     {
-                        leftSidebar.Insert(0, roomLegend);
+                        int insertIdx = (roomActionsSec != null && roomActionsSec.parent == leftSidebar) ? 1 : 0;
+                        leftSidebar.Insert(insertIdx, roomLegend);
                     }
                     roomLegend.style.width = StyleKeyword.Null;
                     roomLegend.style.height = StyleKeyword.Null;
@@ -3140,7 +3178,8 @@ namespace RagNextPlayer.Managers
                 else // Right
                 {
                     roomLegend.RemoveFromHierarchy();
-                    rightSidebar.Insert(0, roomLegend);
+                    int insertIdx = (roomActionsSec != null && roomActionsSec.parent == rightSidebar) ? 1 : 0;
+                    rightSidebar.Insert(insertIdx, roomLegend);
                     roomLegend.style.width = StyleKeyword.Null;
                     roomLegend.style.height = StyleKeyword.Null;
                     roomLegend.style.marginTop = StyleKeyword.Null;
@@ -3500,65 +3539,21 @@ namespace RagNextPlayer.Managers
                 _pulseTween.Stop();
             }
 
-            if (_roomActionThumbnailWrapper is null && _roomActionsContainer is null) return;
-
-            // Reset style states
-            if (_roomActionsContainer is not null) _roomActionsContainer.style.opacity = 1f;
-            var game = GameManager.Instance?.ActiveGame;
-            Color baseBorderColor = new Color(0f, 188/255f, 212/255f, 0.4f);
-            if (game?.Theme != null && TryParseHtmlColor(game.Theme.BorderAccentColor, out var parsed))
-            {
-                baseBorderColor = parsed;
-            }
-
             if (_roomActionsContainer is not null) _roomActionsContainer.style.opacity = 1f;
             if (_roomActionThumbnailWrapper is not null)
             {
                 _roomActionThumbnailWrapper.RemoveFromClassList("room-action-thumbnail--pulse");
-                var resetColor = baseBorderColor;
+                var resetColor = new Color(0f, 188/255f, 212/255f, 0.4f);
+                var game = GameManager.Instance?.ActiveGame;
+                if (game?.Theme != null && TryParseHtmlColor(game.Theme.BorderAccentColor, out var parsed))
+                {
+                    resetColor = parsed;
+                }
                 resetColor.a = 0.4f;
                 _roomActionThumbnailWrapper.style.borderLeftColor = resetColor;
                 _roomActionThumbnailWrapper.style.borderRightColor = resetColor;
                 _roomActionThumbnailWrapper.style.borderTopColor = resetColor;
                 _roomActionThumbnailWrapper.style.borderBottomColor = resetColor;
-            }
-
-            bool hasActions = false;
-            if (room?.Actions != null)
-            {
-                foreach (var act in room.Actions)
-                {
-                    if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
-                    {
-                        hasActions = true;
-                        break;
-                    }
-                }
-            }
-
-            if (hasActions)
-            {
-                if (_roomActionThumbnailWrapper is not null)
-                {
-                    _roomActionThumbnailWrapper.AddToClassList("room-action-thumbnail--pulse");
-                }
-
-                // Pulse opacity and border color continuously using PrimeTween (2.0s sine oscillation)
-                _pulseTween = PrimeTween.Tween.Custom(0.2f, 0.8f, duration: 1.0f, ease: PrimeTween.Ease.InOutSine, cycles: -1, cycleMode: PrimeTween.CycleMode.Yoyo, onValueChange: val => {
-                    if (_roomActionsContainer is not null)
-                    {
-                        _roomActionsContainer.style.opacity = val;
-                    }
-                    if (_roomActionThumbnailWrapper is not null)
-                    {
-                        Color glowColor = baseBorderColor;
-                        glowColor.a = val + 0.2f;
-                        _roomActionThumbnailWrapper.style.borderLeftColor = glowColor;
-                        _roomActionThumbnailWrapper.style.borderRightColor = glowColor;
-                        _roomActionThumbnailWrapper.style.borderTopColor = glowColor;
-                        _roomActionThumbnailWrapper.style.borderBottomColor = glowColor;
-                    }
-                });
             }
         }
 
@@ -3751,6 +3746,33 @@ namespace RagNextPlayer.Managers
                         nameText += tuple.data.ContainerOpen ? " [Open]" : " [Closed]";
                     }
                     label.text = nameText;
+                }
+            });
+
+            // Room Actions in Sidebar
+            var requiredRoomActions = new List<ActionData>();
+            if (room?.Actions != null)
+            {
+                foreach (var act in room.Actions)
+                {
+                    if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
+                    {
+                        requiredRoomActions.Add(act);
+                    }
+                }
+            }
+
+            var roomActionsSec = _root?.Q<VisualElement>("room-actions-container");
+            if (roomActionsSec != null)
+            {
+                roomActionsSec.style.display = requiredRoomActions.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            ReconcileListContainer(_roomActionsListContainer, requiredRoomActions, act => CreateRoomActionRow(act, room), (element, act) => {
+                var label = element.Q<Label>(className: "entity-name");
+                if (label != null)
+                {
+                    label.text = game is not null ? TemplateResolver.Resolve(act.Name, game, room, null) : act.Name;
                 }
             });
 
@@ -4990,6 +5012,10 @@ namespace RagNextPlayer.Managers
 
         private VisualElement CreateEntityRow(GameObjectData entity, bool isInventory)
         {
+            var container = new VisualElement();
+            container.AddToClassList("entity-row-container");
+            container.style.flexDirection = FlexDirection.Column;
+
             var row = new VisualElement();
             row.userData = entity.Id;
             row.AddToClassList("entity-row");
@@ -5029,7 +5055,7 @@ namespace RagNextPlayer.Managers
             }
             row.Add(lbl);
 
-            var btn = new Button(() => ShowEntityInteractionMenu(entity, isInventory));
+            var btn = new Button(() => ShowContextualActionPopover(entity, row, isInventory));
             btn.text = "⋯";
             btn.AddToClassList("entity-action-btn");
             btn.style.fontSize = GetScaledFontSize() * 0.85f;
@@ -5039,8 +5065,267 @@ namespace RagNextPlayer.Managers
             }
             row.Add(btn);
 
-            // Tap on the whole row also opens the menu
-            row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
+            row.RegisterCallback<ClickEvent>(_ => ShowContextualActionPopover(entity, row, isInventory));
+
+            RegisterHoverSwell(row);
+
+            return row;
+        }
+
+        private VisualElement _contextualPopover;
+        private VisualElement _activePopoverTargetRow;
+
+        public void HideContextualActionPopover()
+        {
+            if (_contextualPopover != null)
+            {
+                _contextualPopover.style.display = DisplayStyle.None;
+                _activePopoverTargetRow = null;
+            }
+        }
+
+        private void ShowContextualActionPopover(GameObjectData entity, VisualElement rowElement, bool isInventory)
+        {
+            if (_contextualPopover == null)
+            {
+                _contextualPopover = _root?.Q<VisualElement>("contextual-action-popover");
+            }
+            if (_contextualPopover == null) return;
+
+            // Toggle off if clicking the same item again
+            if (_contextualPopover.style.display == DisplayStyle.Flex && _activePopoverTargetRow == rowElement)
+            {
+                HideContextualActionPopover();
+                return;
+            }
+
+            var game = GameManager.Instance?.ActiveGame;
+            var room = GameManager.Instance?.CurrentRoom;
+
+            // Actions list
+            var actionsContainer = _contextualPopover.Q<VisualElement>("contextual-popover-actions");
+            if (actionsContainer != null)
+            {
+                actionsContainer.Clear();
+                var activeActions = new List<ActionData>();
+                if (entity.Actions != null)
+                {
+                    foreach (var act in entity.Actions)
+                    {
+                        if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
+                        {
+                            activeActions.Add(act);
+                        }
+                    }
+                }
+
+                if (activeActions.Count == 0)
+                {
+                    var emptyLabel = new Label("No actions available");
+                    emptyLabel.style.fontSize = GetScaledFontSize() * 0.75f;
+                    emptyLabel.style.unityFontStyleAndWeight = FontStyle.Italic;
+                    emptyLabel.style.color = new Color(1f, 1f, 1f, 0.4f);
+                    emptyLabel.style.paddingTop = 4f;
+                    emptyLabel.style.paddingBottom = 4f;
+                    actionsContainer.Add(emptyLabel);
+                }
+                else
+                {
+                    foreach (var act in activeActions)
+                    {
+                        var actBtn = new Button(() => {
+                            HideContextualActionPopover();
+                            var ctx = GameManager.Instance?.MakeContext(entity);
+                            var sink = InteractionController.Instance?.GetComponent<CommandEffectRouter>();
+                            if (ctx != null && sink != null)
+                            {
+                                ActionExecutor.Execute(act, ctx, sink, true, false);
+                                RefreshEntityLists();
+                            }
+                        });
+
+                        string actName = game != null ? TemplateResolver.Resolve(act.Name, game, room, entity) : act.Name;
+                        actBtn.text = "⚡ " + actName;
+                        actBtn.style.fontSize = GetScaledFontSize() * 0.8f;
+                        actBtn.style.unityTextAlign = TextAnchor.MiddleLeft;
+                        actBtn.style.backgroundColor = new Color(1f, 1f, 1f, 0.06f);
+                        actBtn.style.borderLeftWidth = 1f;
+                        actBtn.style.borderRightWidth = 1f;
+                        actBtn.style.borderTopWidth = 1f;
+                        actBtn.style.borderBottomWidth = 1f;
+                        actBtn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.12f);
+                        actBtn.style.borderRightColor = new Color(1f, 1f, 1f, 0.12f);
+                        actBtn.style.borderTopColor = new Color(1f, 1f, 1f, 0.12f);
+                        actBtn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.12f);
+                        actBtn.style.borderTopLeftRadius = 6f;
+                        actBtn.style.borderTopRightRadius = 6f;
+                        actBtn.style.borderBottomLeftRadius = 6f;
+                        actBtn.style.borderBottomRightRadius = 6f;
+                        actBtn.style.paddingLeft = 10f;
+                        actBtn.style.paddingRight = 10f;
+                        actBtn.style.paddingTop = 6f;
+                        actBtn.style.paddingBottom = 6f;
+                        actBtn.style.marginTop = 2f;
+                        actBtn.style.marginBottom = 2f;
+                        if (TryParseHtmlColor(_activeTextMainColor, out var textMain))
+                        {
+                            actBtn.style.color = textMain;
+                        }
+
+                        RegisterHoverSwell(actBtn);
+                        actionsContainer.Add(actBtn);
+                    }
+                }
+            }
+
+            // Calculate anchor position
+            var pointerLbl = _contextualPopover.Q<Label>("contextual-popover-pointer");
+            string roomItemsPos = game?.Theme?.RoomItemsDockPosition ?? "Right";
+            if (isInventory)
+            {
+                roomItemsPos = game?.Theme?.InventoryDockPosition ?? "Right";
+            }
+
+            Rect rowBounds = rowElement.worldBound;
+            var layoutWrapper = _root?.Q<VisualElement>("hud-layout-wrapper");
+            Rect wrapperBounds = layoutWrapper != null ? layoutWrapper.worldBound : Rect.zero;
+
+            float popoverWidth = 220f;
+            float topY = Mathf.Max(20f, rowBounds.y - wrapperBounds.y - 10f);
+
+            if (string.Equals(roomItemsPos, "Left", System.StringComparison.OrdinalIgnoreCase))
+            {
+                float leftX = (rowBounds.x - wrapperBounds.x) + rowBounds.width + 16f;
+                _contextualPopover.style.left = leftX;
+                _contextualPopover.style.right = StyleKeyword.Null;
+                _contextualPopover.style.top = topY;
+                _contextualPopover.style.bottom = StyleKeyword.Null;
+                if (pointerLbl != null)
+                {
+                    pointerLbl.text = "◀";
+                    pointerLbl.style.left = -14f;
+                    pointerLbl.style.right = StyleKeyword.Null;
+                    pointerLbl.style.top = 14f;
+                }
+            }
+            else if (string.Equals(roomItemsPos, "Bottom", System.StringComparison.OrdinalIgnoreCase))
+            {
+                float leftX = Mathf.Max(20f, (rowBounds.x - wrapperBounds.x) + (rowBounds.width / 2f) - (popoverWidth / 2f));
+                float bottomY = (wrapperBounds.height - (rowBounds.y - wrapperBounds.y)) + 16f;
+                _contextualPopover.style.left = leftX;
+                _contextualPopover.style.right = StyleKeyword.Null;
+                _contextualPopover.style.top = StyleKeyword.Null;
+                _contextualPopover.style.bottom = bottomY;
+                if (pointerLbl != null)
+                {
+                    pointerLbl.text = "▼";
+                    pointerLbl.style.left = popoverWidth / 2f - 8f;
+                    pointerLbl.style.bottom = -16f;
+                    pointerLbl.style.top = StyleKeyword.Null;
+                }
+            }
+            else // Right (default)
+            {
+                float rightX = wrapperBounds.width - (rowBounds.x - wrapperBounds.x) + 16f;
+                _contextualPopover.style.right = rightX;
+                _contextualPopover.style.left = StyleKeyword.Null;
+                _contextualPopover.style.top = topY;
+                _contextualPopover.style.bottom = StyleKeyword.Null;
+                if (pointerLbl != null)
+                {
+                    pointerLbl.text = "▶";
+                    pointerLbl.style.right = -14f;
+                    pointerLbl.style.left = StyleKeyword.Null;
+                    pointerLbl.style.top = 14f;
+                }
+            }
+
+            _activePopoverTargetRow = rowElement;
+            _contextualPopover.style.display = DisplayStyle.Flex;
+            _contextualPopover.BringToFront();
+
+            // Entrance animation scale & fade
+            _contextualPopover.transform.scale = new Vector3(0.85f, 0.85f, 1f);
+            PrimeTween.Tween.Custom(0.85f, 1.0f, duration: 0.15f, ease: PrimeTween.Ease.OutBack, onValueChange: val => {
+                if (_contextualPopover != null)
+                {
+                    _contextualPopover.transform.scale = new Vector3(val, val, 1f);
+                }
+            });
+        }
+
+        private void CollapseAllInlineDrawers()
+        {
+            HideContextualActionPopover();
+        }
+
+        private static bool IsElementOrChildOf(VisualElement el, VisualElement parent)
+        {
+            if (el == null || parent == null) return false;
+            var curr = el;
+            while (curr != null)
+            {
+                if (curr == parent) return true;
+                curr = curr.parent;
+            }
+            return false;
+        }
+
+        private VisualElement CreateRoomActionRow(ActionData act, RoomData room)
+        {
+            var row = new VisualElement();
+            row.userData = act.Id;
+            row.AddToClassList("entity-row");
+            row.pickingMode = PickingMode.Position;
+
+            var thumb = new VisualElement();
+            thumb.AddToClassList("entity-thumbnail");
+
+            if (!string.IsNullOrWhiteSpace(room.PortraitImagePath))
+            {
+                LoadAndDisplayImageForElement(room.PortraitImagePath, thumb);
+            }
+            else
+            {
+                var icon = new Label("⚡");
+                icon.style.unityTextAlign = TextAnchor.MiddleCenter;
+                icon.style.fontSize = 18f;
+                if (TryParseHtmlColor(_activeTextMainColor, out var iconColor))
+                {
+                    icon.style.color = iconColor;
+                }
+                else
+                {
+                    icon.style.color = new Color(168 / 255f, 85 / 255f, 247 / 255f, 0.8f);
+                }
+                thumb.Add(icon);
+            }
+            row.Add(thumb);
+
+            var game = GameManager.Instance?.ActiveGame;
+            string nameText = game is not null
+                ? TemplateResolver.Resolve(act.Name, game, room, null)
+                : act.Name;
+            var lbl = new Label(nameText);
+            lbl.AddToClassList("entity-name");
+            lbl.style.fontSize = GetScaledFontSize() * 0.85f;
+            if (TryParseHtmlColor(_activeTextMainColor, out var textMain))
+            {
+                lbl.style.color = textMain;
+            }
+            row.Add(lbl);
+
+            var btn = new Button(() => InteractionController.Instance?.ExecuteRoomAction(room, act));
+            btn.text = "⚡";
+            btn.AddToClassList("entity-action-btn");
+            btn.style.fontSize = GetScaledFontSize() * 0.85f;
+            if (TryParseHtmlColor(_activeTextMainColor, out var textMainColor))
+            {
+                btn.style.color = textMainColor;
+            }
+            row.Add(btn);
+
+            row.RegisterCallback<ClickEvent>(_ => InteractionController.Instance?.ExecuteRoomAction(room, act));
 
             RegisterHoverSwell(row);
 
@@ -5115,7 +5400,7 @@ namespace RagNextPlayer.Managers
             }
             row.Add(lbl);
 
-            var btn = new Button(() => ShowEntityInteractionMenu(entity, isInventory));
+            var btn = new Button(() => ShowContextualActionPopover(entity, row, isInventory));
             btn.text = "⋯";
             btn.AddToClassList("entity-action-btn");
             btn.style.fontSize = GetScaledFontSize() * 0.85f;
@@ -5125,7 +5410,7 @@ namespace RagNextPlayer.Managers
             }
             row.Add(btn);
 
-            row.RegisterCallback<ClickEvent>(_ => ShowEntityInteractionMenu(entity, isInventory));
+            row.RegisterCallback<ClickEvent>(_ => ShowContextualActionPopover(entity, row, isInventory));
 
             RegisterHoverSwell(row);
 

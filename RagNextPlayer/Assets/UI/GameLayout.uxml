@@ -4,7 +4,7 @@
 
     <!-- ══ TOP BAR ═══════════════════════════════════════════════════════════ -->
     <ui:VisualElement name="top-bar" class="top-bar">
-      <ui:VisualElement name="room-actions-container" style="flex-direction: row; align-items: center;">
+      <ui:VisualElement name="topbar-room-title-container" style="flex-direction: row; align-items: center;">
         <ui:VisualElement name="room-portrait" class="room-portrait" style="display: none;" />
         <ui:Label name="room-title" class="room-title" text="Room Name" />
       </ui:VisualElement>
@@ -28,6 +28,12 @@
 
       <!-- Overlay HUD Layout Wrapper -->
       <ui:VisualElement name="hud-layout-wrapper" picking-mode="Ignore" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; flex-direction: row;">
+        
+        <!-- Contextual Action Callout Popover Card -->
+        <ui:VisualElement name="contextual-action-popover" class="glass-card" picking-mode="Position" style="position: absolute; display: none; flex-direction: column; width: 170px; padding: 8px; border-radius: 10px; border-width: 1px; border-color: rgba(0, 188, 212, 0.4); background-color: rgba(13, 13, 21, 0.95); z-index: 1000;">
+          <ui:VisualElement name="contextual-popover-actions" style="flex-direction: column; gap: 4px;" />
+          <ui:Label name="contextual-popover-pointer" text="▶" style="position: absolute; font-size: 16px; color: #00bcd4;" />
+        </ui:VisualElement>
         
         <!-- Left Sidebar Compartment: Interactive lists and collapsible compass -->
         <ui:VisualElement name="hud-left-sidebar-compartment" picking-mode="Ignore" style="flex-shrink: 1; min-height: 0; padding: 24px 0 24px 24px; flex-direction: column; justify-content: space-between; align-items: stretch; display: none;">
@@ -77,6 +83,17 @@
           
           <!-- Transparent Sidebar (Items and Inventory tabs) -->
           <ui:VisualElement name="right-sidebar-container" class="right-column glass-card" picking-mode="Position" style="flex-grow: 1; flex-shrink: 1; min-height: 0; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.15); padding: 14px; margin-bottom: 20px;">
+            <!-- Room Actions Container -->
+            <ui:VisualElement name="room-actions-container" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; flex-shrink: 1; min-height: 0; margin-bottom: 12px; flex-direction: column;">
+              <!-- Room Actions Section -->
+              <ui:Label text="Room Actions" class="section-header" style="margin-bottom: 6px; color: #a855f7; -unity-font-style: bold;" />
+              <ui:ScrollView name="room-actions-scroll" style="flex-grow: 1; flex-basis: 0; flex-shrink: 1; min-height: 0;" vertical-scroller-visibility="AlwaysVisible" horizontal-scroller-visibility="Hidden">
+                <ui:VisualElement name="room-actions-list" class="entity-list" />
+              </ui:ScrollView>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="legend-separator" style="margin: 4px 0 8px 0; height: 1px; background-color: rgba(168, 85, 247, 0.2);" />
+
             <!-- Room Items Container -->
             <ui:VisualElement name="room-items-container" class="entity-card" style="background-color: transparent; border-width: 0px; box-shadow: none; flex-grow: 1; flex-shrink: 1; min-height: 0; margin-bottom: 12px; flex-direction: column;">
               <!-- Room Items Section -->

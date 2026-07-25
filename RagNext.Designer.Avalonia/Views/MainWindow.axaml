@@ -462,7 +462,7 @@
                                             <!-- Name -->
                                             <TextBlock Text="Name" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBox Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
+                                                <TextBox x:Name="RoomNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                                 <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                             </Grid>
 
@@ -1299,7 +1299,7 @@
                                 
                                 <TextBlock Text="Name:" Foreground="{DynamicResource TextMuted}"/>
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBox Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
+                                    <TextBox x:Name="CharacterNameTextBox" Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                     <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                 </Grid>
                                 
@@ -1545,7 +1545,7 @@
                                             <!-- Name -->
                                             <TextBlock Text="Name" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBox Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
+                                                <TextBox x:Name="ObjectNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                                 <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                             </Grid>
                                             
@@ -1966,7 +1966,7 @@
                                 </Border>
 
                                 <TextBlock Text="Name:" Foreground="{DynamicResource TextMuted}"/>
-                                <TextBox Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"
+                                <TextBox x:Name="VariableNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"
                                          IsReadOnly="{Binding IsSystemVariable}"/>
                                 
                                 <TextBlock Text="Type Hint:" Foreground="{DynamicResource TextMuted}"/>
@@ -2151,7 +2151,7 @@
                             
                             <TextBlock Text="Name" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                             <Grid ColumnDefinitions="*,Auto">
-                                <TextBox Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
+                                <TextBox x:Name="TimerNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                 <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             </Grid>
                             
@@ -2199,7 +2199,7 @@
                             <TextBlock Text="Edit Function Routine" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
                             
                             <TextBlock Text="Function Name:" Foreground="{DynamicResource TextMuted}"/>
-                            <TextBox Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                            <TextBox x:Name="FunctionNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
 
                             <TextBlock Text="Trigger Events:" Foreground="{DynamicResource TextMuted}"/>
                             <Border Background="{DynamicResource InputBg}" CornerRadius="4" Padding="12">
@@ -2727,6 +2727,22 @@
                     <Binding Path="NavigationDockPosition"/>
                     </MultiBinding>
                     </StackPanel.IsVisible>
+                    <!-- Right Room Actions -->
+                    <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Height="110">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="⚡ Room Actions" HorizontalAlignment="Center" FontSize="13" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
+                            <Border Background="rgba(255,255,255,0.05)" CornerRadius="6" Padding="6" Margin="4,0">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="28" Height="28" CornerRadius="4" Background="#8E2DE2" HorizontalAlignment="Center">
+                                        <TextBlock Text="⚡" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="Inspect Room" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                                    <TextBlock Grid.Column="2" Text="⚡" VerticalAlignment="Center" FontSize="12" Foreground="#8E2DE2"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Right Room Items -->
                     <Border Background="{Binding PrimaryBgColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderBrush="{Binding BorderAccentColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="{Binding BorderThickness, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" CornerRadius="{Binding BorderRadius, Converter={x:Static views:DoubleToCornerRadiusConverter.Instance}}" Padding="{Binding PanelPadding, Converter={x:Static views:DoubleToThicknessConverter.Instance}}" Height="180"
                     IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Right}">
@@ -2821,6 +2837,11 @@
                                         <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.Gender}" IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Player.ShowGender}" FontSize="10" Foreground="#aaaaaa"/>
                                     </StackPanel>
                                 </StackPanel>
+                            </Border>
+                            
+                            <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
+                                    IsVisible="{Binding RoomItemsDockPosition, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Bottom}">
+                                <TextBlock Text="⚡ Room Actions" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="{Binding TextMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}" FontWeight="Bold"/>
                             </Border>
                             
                             <Border Background="Transparent" Padding="12" Width="200" VerticalAlignment="Stretch"
@@ -3260,8 +3281,25 @@
                                 <ListBox ItemsSource="{Binding ValidationErrors}" Background="Transparent" Foreground="{DynamicResource TextNormal}" FontSize="13">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
-                                                <TextBlock Text="{Binding}"/>
+                                            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="8,8" Margin="0,2">
+                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                    <!-- Icon -->
+                                                    <TextBlock Grid.Column="0" Text="{Binding SeverityIcon}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                                                    <!-- Category & Message -->
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1">
+                                                                <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="Bold" Foreground="{Binding SeverityColor}"/>
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextNormal}"/>
+                                                    </StackPanel>
+
+                                                    <!-- Jump To Link / Button -->
+                                                    <Button Grid.Column="2" Content="🔗 Jump To Entity" Command="{Binding JumpToCommand}" IsVisible="{Binding HasTarget}" 
+                                                            Classes="accent" Margin="10,0,0,0" Padding="10,4" VerticalAlignment="Center" FontSize="12"/>
+                                                </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>

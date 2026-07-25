@@ -10,6 +10,7 @@ using System.Windows.Input;
 using RagsCore.Models;
 using RagsCore.Services;
 using RagNext.Designer.Avalonia.Services;
+using RagNext.Designer.Avalonia.Models;
 using Avalonia.Threading;
 
 
@@ -714,7 +715,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         }
 
         // Validation Results
-        public ObservableCollection<string> ValidationErrors { get; } = new();
+        public ObservableCollection<ValidationErrorItem> ValidationErrors { get; } = new();
 
         private string _publishStatus = "Ready";
         public string PublishStatus
@@ -2690,21 +2691,76 @@ namespace RagNext.Designer.Avalonia.ViewModels
             ValidationErrors.Clear();
             if (CurrentGame == null)
             {
-                ValidationErrors.Add("No project loaded to validate.");
+                ValidationErrors.Add(new ValidationErrorItem
+                {
+                    Message = "No project loaded to validate.",
+                    Severity = "Info",
+                    Category = "General"
+                });
                 return;
             }
 
-            var results = ValidationEngine.Validate(CurrentGame);
-            if (results == null || results.Length == 0)
+            var mediaDir = new AvaloniaMediaPathProvider().GetGameRoot(CurrentGame);
+            var results = ValidationEngine.Validate(CurrentGame, mediaDir);
+            if (results == null || results.Count == 0)
             {
-                ValidationErrors.Add("✅ No errors or warnings! The project database is completely valid.");
+                ValidationErrors.Add(new ValidationErrorItem
+                {
+                    Message = "✅ No errors or warnings! The project database is completely valid.",
+                    Severity = "Info",
+                    Category = "General"
+                });
             }
             else
             {
                 foreach (var err in results)
                 {
+                    err.JumpToCommand = new Command(() => JumpToValidationTarget(err));
                     ValidationErrors.Add(err);
                 }
+            }
+        }
+
+        public void JumpToValidationTarget(ValidationErrorItem item)
+        {
+            if (item == null) return;
+
+            switch (item.Category)
+            {
+                case "Room":
+                    ActiveView = "Rooms";
+                    break;
+
+                case "Object":
+                    ActiveView = "Objects";
+                    break;
+
+                case "Character":
+                    ActiveView = "Characters";
+                    break;
+
+                case "Function":
+                    ActiveView = "Functions";
+                    break;
+
+                case "Timer":
+                    ActiveView = "Timers";
+                    break;
+
+                case "Variable":
+                    ActiveView = "Variables";
+                    break;
+
+                case "Media":
+                    ActiveView = "Media";
+                    break;
+
+                case "Player":
+                    ActiveView = "Player";
+                    break;
+
+                default:
+                    break;
             }
         }
 
@@ -2757,13 +2813,30 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 }
 
                 // We'll perform standard validation first
-                var errors = ValidationEngine.Validate(CurrentGame);
-                if (errors.Any(e => e.StartsWith("Error:")))
+                var mediaDir = new AvaloniaMediaPathProvider().GetGameRoot(CurrentGame);
+                var errors = ValidationEngine.Validate(CurrentGame, mediaDir);
+                if (errors.Any(e => e.Severity == "Error"))
                 {
                     PublishStatus = "Publish failed: Validation errors present";
                     PublishLogs += "❌ Cannot build package! Project has critical database validation errors.\n";
                     IsPublishing = false;
                     return;
+                }
+
+                var warningCount = errors.Count(e => e.Severity == "Warning");
+                if (warningCount > 0 && ShowConfirmDialogAsync != null)
+                {
+                    bool proceed = await ShowConfirmDialogAsync(
+                        "Unresolved Validation Warnings",
+                        $"Your project has {warningCount} unresolved validation warning(s) (e.g. unconfigured nodes or missing media).\n\nAre you sure you want to proceed with publishing?");
+
+                    if (!proceed)
+                    {
+                        PublishStatus = "Publish cancelled";
+                        PublishLogs += "⚠️ Publication cancelled by designer to review validation warnings.\n";
+                        IsPublishing = false;
+                        return;
+                    }
                 }
 
                 PublishLogs += "✔️ Database validation passed.\n";

@@ -523,6 +523,7 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     if (newGame != null)
                     {
+                        SubscribeToEntityCollections(newGame);
                         global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                         {
                             // Trigger VM Property notification to refresh ComboBox bindings in views
@@ -530,6 +531,155 @@ namespace RagNext.Designer.Avalonia.Views
                         }, global::Avalonia.Threading.DispatcherPriority.Loaded);
                     }
                 };
+
+                if (App.CurrentGame != null)
+                {
+                    SubscribeToEntityCollections(App.CurrentGame);
+                }
+            }
+        }
+
+        private void SubscribeToEntityCollections(Game? game)
+        {
+            if (game == null) return;
+
+            if (game.Rooms is System.Collections.Specialized.INotifyCollectionChanged rooms)
+            {
+                rooms.CollectionChanged -= OnRoomsCollectionChanged;
+                rooms.CollectionChanged += OnRoomsCollectionChanged;
+            }
+            if (game.Characters is System.Collections.Specialized.INotifyCollectionChanged chars)
+            {
+                chars.CollectionChanged -= OnCharactersCollectionChanged;
+                chars.CollectionChanged += OnCharactersCollectionChanged;
+            }
+            if (game.Objects is System.Collections.Specialized.INotifyCollectionChanged objs)
+            {
+                objs.CollectionChanged -= OnObjectsCollectionChanged;
+                objs.CollectionChanged += OnObjectsCollectionChanged;
+            }
+            if (game.Variables is System.Collections.Specialized.INotifyCollectionChanged vars)
+            {
+                vars.CollectionChanged -= OnVariablesCollectionChanged;
+                vars.CollectionChanged += OnVariablesCollectionChanged;
+            }
+            if (game.Timers is System.Collections.Specialized.INotifyCollectionChanged timers)
+            {
+                timers.CollectionChanged -= OnTimersCollectionChanged;
+                timers.CollectionChanged += OnTimersCollectionChanged;
+            }
+            if (game.Functions is System.Collections.Specialized.INotifyCollectionChanged funcs)
+            {
+                funcs.CollectionChanged -= OnFunctionsCollectionChanged;
+                funcs.CollectionChanged += OnFunctionsCollectionChanged;
+            }
+        }
+
+        private void OnRoomsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is Room newRoom)
+            {
+                var list = this.FindControl<ListBox>("RoomsList");
+                if (list != null) list.SelectedItem = newRoom;
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    var tb = this.FindControl<TextBox>("RoomNameTextBox");
+                    if (tb != null)
+                    {
+                        tb.Focus();
+                        tb.SelectAll();
+                    }
+                }, global::Avalonia.Threading.DispatcherPriority.Loaded);
+            }
+        }
+
+        private void OnCharactersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is Character newChar)
+            {
+                var list = this.FindControl<ListBox>("CharsList");
+                if (list != null) list.SelectedItem = newChar;
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    var tb = this.FindControl<TextBox>("CharacterNameTextBox");
+                    if (tb != null)
+                    {
+                        tb.Focus();
+                        tb.SelectAll();
+                    }
+                }, global::Avalonia.Threading.DispatcherPriority.Loaded);
+            }
+        }
+
+        private void OnObjectsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is GameObject newObj)
+            {
+                var list = this.FindControl<ListBox>("ObjectsList");
+                if (list != null) list.SelectedItem = newObj;
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    var tb = this.FindControl<TextBox>("ObjectNameTextBox");
+                    if (tb != null)
+                    {
+                        tb.Focus();
+                        tb.SelectAll();
+                    }
+                }, global::Avalonia.Threading.DispatcherPriority.Loaded);
+            }
+        }
+
+        private void OnVariablesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is GameVariable newVar)
+            {
+                var list = this.FindControl<ListBox>("VarsList");
+                if (list != null) list.SelectedItem = newVar;
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    var tb = this.FindControl<TextBox>("VariableNameTextBox");
+                    if (tb != null)
+                    {
+                        tb.Focus();
+                        tb.SelectAll();
+                    }
+                }, global::Avalonia.Threading.DispatcherPriority.Loaded);
+            }
+        }
+
+        private void OnTimersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is GameTimer newTimer)
+            {
+                var list = this.FindControl<ListBox>("TimersList");
+                if (list != null) list.SelectedItem = newTimer;
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    var tb = this.FindControl<TextBox>("TimerNameTextBox");
+                    if (tb != null)
+                    {
+                        tb.Focus();
+                        tb.SelectAll();
+                    }
+                }, global::Avalonia.Threading.DispatcherPriority.Loaded);
+            }
+        }
+
+        private void OnFunctionsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is GlobalFunction newFunc)
+            {
+                var list = this.FindControl<ListBox>("FuncsList");
+                if (list != null) list.SelectedItem = newFunc;
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    var tb = this.FindControl<TextBox>("FunctionNameTextBox");
+                    if (tb != null)
+                    {
+                        tb.Focus();
+                        tb.SelectAll();
+                    }
+                }, global::Avalonia.Threading.DispatcherPriority.Loaded);
             }
         }
 
@@ -5344,6 +5494,27 @@ namespace RagNext.Designer.Avalonia.Views
                 case "playerattributecheck": return "player.attributeCheck";
                 case "roomattributecheck": return "room.attributeCheck";
                 case "timeractivecheck": return "timer.isActive";
+                case "variablebreakloop": return "variable.breakLoop";
+                case "variablesetarrayelement": return "variable.setArrayElement";
+                case "variableaddarrayrow": return "variable.addArrayRow";
+                case "variableremovearrayrow": return "variable.removeArrayRow";
+                case "variableappendtext": return "variable.appendText";
+                case "variableappendline": return "variable.appendLine";
+                case "uisethotspotactivestate": return "ui.setHotspotActive";
+                case "waitforcontinue": return "general.waitForContinue";
+                case "showstatuselement": return "ui.showStatusElement";
+                case "hidestatuselement": return "ui.hideStatusElement";
+                case "setstatuselementtext": return "ui.setStatusElementText";
+                case "setstatuselementimage": return "ui.setStatusElementImage";
+                case "promptplayerinput": return "general.promptInput";
+                case "itemopencontainer": return "general.openContainer";
+                case "itemclosecontainer": return "general.closeContainer";
+                case "timersettimertoactiveinactive": return "timer.setActive";
+                case "playersetactiontoactiveinactive": return "player.setActionActive";
+                case "roomsetactiontoactiveinactive": return "room.setActionActive";
+                case "itemsetactiontoactiveinactive": return "item.setActionActive";
+                case "isstatuselementvisible": return "ui.isStatusElementVisible";
+                case "foreachloop": return "variable.forEachLoop";
             }
             
             var fallback = isCommand ? "general.command" : "general.condition";
@@ -5394,6 +5565,17 @@ namespace RagNext.Designer.Avalonia.Views
                 case "Min Value": return "minValue";
                 case "Max Value": return "maxValue";
                 case "Attribute": return "attributeName";
+                case "Array Variable": return "ArrayVariableName";
+                case "Row Index": return "RowIndex";
+                case "Column Name": return "ColumnName";
+                case "Comma-separated Values": return "Values";
+                case "Hotspot Id or Name": return "HotspotId";
+                case "ElementId": return "ElementId";
+                case "Custom Options": return "CustomOptions";
+                case "Final Message": return "FinalMessage";
+                case "Container Object": return "ContainerObjectId";
+                case "Action Name": return "ActionName";
+                case "Active": return "Active";
             }
             if (string.IsNullOrEmpty(label)) return "value";
             return label.Substring(0, 1).ToLower() + label.Substring(1).Replace(" ", "");
