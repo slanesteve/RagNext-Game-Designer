@@ -216,6 +216,7 @@ namespace RagNext.Designer.Avalonia.Services
         public string? PlayerStatusBoxShape { get; set; }
         public string? PlayerPortraitShape { get; set; }
         public double PortraitSize { get; set; }
+        public string? MapStyle { get; set; }
     }
 
     /// <summary>
@@ -270,7 +271,8 @@ namespace RagNext.Designer.Avalonia.Services
                 BorderThickness = game.Theme.BorderThickness,
                 PlayerStatusBoxShape = game.Theme.PlayerStatusBoxShape,
                 PlayerPortraitShape = game.Theme.PlayerPortraitShape,
-                PortraitSize = game.Theme.PortraitSize
+                PortraitSize = game.Theme.PortraitSize,
+                MapStyle = game.Theme.MapStyle
             },
             Player     = BuildPlayerDto(game.Player),
             Rooms      = game.Rooms.Select(r => BuildRoomDto(r)).ToList(),

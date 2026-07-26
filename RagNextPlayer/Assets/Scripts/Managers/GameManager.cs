@@ -196,6 +196,12 @@ namespace RagNextPlayer.Managers
             // Execute all OnGameStart actions globally (fired before transitioning so startup prints appear at the top)
             FireStartupTriggers();
 
+            // Wait for OnGameStart actions (and any initial prompts/suspensions) to complete before entering the starting room
+            while (RagNextPlayer.Runtime.ActionExecutor.IsSuspended)
+            {
+                await System.Threading.Tasks.Task.Yield();
+            }
+
             // Navigate to the starting room
             var startId = ActiveGame.Player.StartingRoomId
                           ?? (ActiveGame.Rooms.Count > 0 ? ActiveGame.Rooms[0].Id : null);

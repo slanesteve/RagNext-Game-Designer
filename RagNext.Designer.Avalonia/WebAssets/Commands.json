@@ -269,6 +269,31 @@
       ]
     },
     {
+      "name": "General: Show Map",
+      "category": "General",
+      "inputs": [
+        {
+          "name": "MapTitle",
+          "label": "Map Title",
+          "controlType": "Text",
+          "dataType": "String"
+        },
+        {
+          "name": "MapStyle",
+          "label": "Map Style",
+          "controlType": "ComboBox",
+          "dataType": "String",
+          "options": ["Clean", "SciFi", "Fantasy"]
+        },
+        {
+          "name": "CustomBackground",
+          "label": "Custom Background",
+          "controlType": "ComboBox",
+          "dataType": "Media"
+        }
+      ]
+    },
+    {
       "name": "Media: Display Multimedia",
       "category": "Media",
       "inputs": [

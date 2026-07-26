@@ -113,6 +113,7 @@ namespace RagNextPlayer.Runtime.Models
                 "media.displayMultimedia"=> typeof(DisplayMultimediaCommandData),
                 "general.endGame"        => typeof(EndGameCommandData),
                 "general.waitForContinue"=> typeof(WaitForContinueCommandData),
+                "general.showMap"        => typeof(ShowMapCommandData),
                 "general.promptInput"    => typeof(PromptPlayerInputCommandData),
                 "general.openContainer"  => typeof(OpenContainerCommandData),
                 "general.closeContainer" => typeof(CloseContainerCommandData),

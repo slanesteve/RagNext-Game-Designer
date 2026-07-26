@@ -94,6 +94,7 @@ namespace RagNextPlayer.Managers
         private VisualElement  _splashScreen;
         public bool IsSplashFinished { get; private set; } = false;
         private bool _themePresetInitialized = false;
+        private System.Collections.Generic.HashSet<string> _visitedRoomIds = new System.Collections.Generic.HashSet<string>();
         private Font _activeThemeFont;
 
         public event Action? OnVideoPlaybackCompleted;
@@ -2122,6 +2123,7 @@ namespace RagNextPlayer.Managers
 
         public void OnGameLoaded(GameData game)
         {
+            _visitedRoomIds.Clear();
             // Reset the theme-initialized flag so every load (including restart and slot loads)
             // always re-syncs the theme.preset variable from the active preset.
             _themePresetInitialized = false;
@@ -3323,6 +3325,10 @@ namespace RagNextPlayer.Managers
 
         public void OnRoomEntered(RoomData room)
         {
+            if (room != null)
+            {
+                _visitedRoomIds.Add(room.Id);
+            }
             RenderRoom(room);
             _firstRoomRendered = true;
         }
@@ -7366,5 +7372,792 @@ namespace RagNextPlayer.Managers
             if (focused == null) return false;
             return focused is TextField || focused.GetType().Name.Contains("TextField") || focused.GetType().Name.Contains("TextInput");
         }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        private static extern void ShowMapOverlay(string configJson);
+#else
+        private static void ShowMapOverlay(string configJson)
+        {
+            UnityEngine.Debug.Log("ShowMapOverlay (not WebGL): " + configJson);
+            if (Instance != null)
+            {
+                Instance.ShowMapOverlayStandalone(configJson);
+            }
+        }
+#endif
+
+        private void ShowMapOverlayStandalone(string configJson)
+        {
+            string customBackground = "";
+            string mapStyle = "clean";
+            try
+            {
+                var parsedObj = Newtonsoft.Json.Linq.JObject.Parse(configJson);
+                customBackground = parsedObj["customBackground"]?.ToString() ?? "";
+                mapStyle = (parsedObj["mapStyle"]?.ToString() ?? "clean").ToLower();
+            }
+            catch {}
+
+            var overlay = new VisualElement();
+            overlay.name = "map-overlay-standalone";
+            overlay.style.position = Position.Absolute;
+            overlay.style.left = 0f;
+            overlay.style.right = 0f;
+            overlay.style.top = 0f;
+            overlay.style.bottom = 0f;
+            overlay.style.backgroundColor = new Color(0.06f, 0.09f, 0.16f, 0.95f);
+            overlay.style.justifyContent = Justify.Center;
+            overlay.style.alignItems = Align.Center;
+
+            var container = new VisualElement();
+            container.style.width = Length.Percent(80f);
+            container.style.height = Length.Percent(80f);
+            container.style.backgroundColor = new Color(0.12f, 0.15f, 0.23f, 1f);
+            container.style.borderLeftWidth = 2f;
+            container.style.borderRightWidth = 2f;
+            container.style.borderTopWidth = 2f;
+            container.style.borderBottomWidth = 2f;
+            container.style.borderLeftColor = new Color(0.23f, 0.51f, 0.96f, 1f);
+            container.style.borderRightColor = new Color(0.23f, 0.51f, 0.96f, 1f);
+            container.style.borderTopColor = new Color(0.23f, 0.51f, 0.96f, 1f);
+            container.style.borderBottomColor = new Color(0.23f, 0.51f, 0.96f, 1f);
+            container.style.borderTopLeftRadius = 12f;
+            container.style.borderTopRightRadius = 12f;
+            container.style.borderBottomLeftRadius = 12f;
+            container.style.borderBottomRightRadius = 12f;
+            container.style.paddingLeft = 24f;
+            container.style.paddingRight = 24f;
+            container.style.paddingTop = 24f;
+            container.style.paddingBottom = 24f;
+
+            // Header
+            var header = new VisualElement();
+            header.style.flexDirection = FlexDirection.Row;
+            header.style.justifyContent = Justify.SpaceBetween;
+            header.style.alignItems = Align.Center;
+            header.style.borderBottomWidth = 1f;
+            header.style.borderBottomColor = new Color(0.2f, 0.2f, 0.3f, 1f);
+            header.style.paddingBottom = 12f;
+            header.style.marginBottom = 16f;
+
+            var title = new Label("Starship Map");
+            title.style.fontSize = 24f;
+            title.style.color = Color.white;
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+            var closeBtn = new Button(() => {
+                _root.Remove(overlay);
+                OnMapClosed();
+            });
+            closeBtn.text = "X";
+            closeBtn.style.fontSize = 20f;
+            closeBtn.style.color = Color.white;
+            closeBtn.style.backgroundColor = new Color(0.85f, 0.2f, 0.2f, 1f);
+            closeBtn.style.borderTopLeftRadius = 6f;
+            closeBtn.style.borderTopRightRadius = 6f;
+            closeBtn.style.borderBottomLeftRadius = 6f;
+            closeBtn.style.borderBottomRightRadius = 6f;
+            closeBtn.style.width = 36f;
+            closeBtn.style.height = 36f;
+            closeBtn.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+            header.Add(title);
+            header.Add(closeBtn);
+            container.Add(header);
+
+            // Viewport container (with Clipping to hide elements outside bounds)
+            var viewport = new VisualElement();
+            viewport.style.flexGrow = 1f;
+            viewport.style.overflow = Overflow.Hidden;
+            viewport.style.backgroundColor = new Color(0.08f, 0.1f, 0.18f, 1f);
+            viewport.style.borderTopLeftRadius = 8f;
+            viewport.style.borderTopRightRadius = 8f;
+            viewport.style.borderBottomLeftRadius = 8f;
+            viewport.style.borderBottomRightRadius = 8f;
+
+            if (!string.IsNullOrEmpty(customBackground) && !customBackground.Equals("none", System.StringComparison.OrdinalIgnoreCase) && !customBackground.Equals("<none>", System.StringComparison.OrdinalIgnoreCase))
+            {
+                string url = FormatLocalPathForWeb(customBackground);
+                string localPath = url.StartsWith("file://") ? new System.Uri(url).LocalPath : url;
+                if (System.IO.File.Exists(localPath))
+                {
+                    try
+                    {
+                        byte[] bytes = System.IO.File.ReadAllBytes(localPath);
+                        var tex = new UnityEngine.Texture2D(2, 2);
+                        tex.LoadImage(bytes);
+                        viewport.style.backgroundImage = tex;
+                        viewport.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
+                    }
+                    catch (System.Exception ex)
+                    {
+                        UnityEngine.Debug.LogError("Error loading custom map background image: " + ex.Message);
+                    }
+                }
+                else
+                {
+                    UnityEngine.Debug.LogWarning($"[ShowMapOverlayStandalone] Custom background file not found at: '{localPath}' (raw: '{customBackground}')");
+                }
+            }
+
+            // Centered graph container that translates and scales
+            var mapContainer = new VisualElement();
+            mapContainer.style.position = Position.Absolute;
+            mapContainer.style.left = Length.Percent(50f);
+            mapContainer.style.top = Length.Percent(50f);
+            mapContainer.style.width = 0f;
+            mapContainer.style.height = 0f;
+            mapContainer.style.overflow = Overflow.Visible;
+            viewport.Add(mapContainer);
+
+            // Setup Pan & Zoom Interaction state variables
+            bool isDragging = false;
+            Vector2 startMousePos = Vector2.zero;
+            Vector2 startPan = Vector2.zero;
+            float panX = 0f;
+            float panY = 0f;
+            float zoom = 1.0f;
+
+            viewport.RegisterCallback<PointerDownEvent>(evt => {
+                if (evt.button == 0)
+                {
+                    isDragging = true;
+                    startMousePos = evt.position;
+                    startPan = new Vector2(panX, panY);
+                    viewport.CapturePointer(evt.pointerId);
+                }
+            });
+
+            viewport.RegisterCallback<PointerMoveEvent>(evt => {
+                if (isDragging)
+                {
+                    Vector2 delta = (Vector2)evt.position - startMousePos;
+                    panX = startPan.x + delta.x;
+                    panY = startPan.y + delta.y;
+                    mapContainer.style.translate = new StyleTranslate(new Translate(panX, panY, 0));
+                }
+            });
+
+            viewport.RegisterCallback<PointerUpEvent>(evt => {
+                if (isDragging)
+                {
+                    isDragging = false;
+                    viewport.ReleasePointer(evt.pointerId);
+                }
+            });
+
+            viewport.RegisterCallback<WheelEvent>(evt => {
+                float zoomDelta = -evt.delta.y * 0.05f;
+                zoom = Mathf.Clamp(zoom + zoomDelta, 0.3f, 3.0f);
+                mapContainer.style.scale = new StyleScale(new Scale(new Vector3(zoom, zoom, 1f)));
+                evt.StopPropagation();
+            });
+
+            try
+            {
+                var parsed = Newtonsoft.Json.Linq.JObject.Parse(configJson);
+                var mapTitle = parsed["mapTitle"]?.ToString();
+                if (!string.IsNullOrEmpty(mapTitle))
+                {
+                    title.text = mapTitle.ToUpper(); // Display title in uppercase
+                }
+                var activeRoomId = parsed["activeRoomId"]?.ToString();
+                mapStyle = (parsed["mapStyle"]?.ToString() ?? "Clean").ToLower();
+                var roomsArray = parsed["rooms"] as Newtonsoft.Json.Linq.JArray;
+
+                var roomsMap = new System.Collections.Generic.Dictionary<string, Newtonsoft.Json.Linq.JToken>();
+                if (roomsArray != null)
+                {
+                    foreach (var r in roomsArray)
+                    {
+                        var id = r["id"]?.ToString();
+                        if (!string.IsNullOrEmpty(id))
+                        {
+                            roomsMap[id] = r;
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(activeRoomId) && roomsMap.ContainsKey(activeRoomId))
+                {
+                    // 1. BFS Traversal to resolve relative 3D coordinate space offsets
+                    var coords = new System.Collections.Generic.Dictionary<string, Vector3>();
+                    coords[activeRoomId] = new Vector3(0, 0, 0);
+
+                    var queue = new System.Collections.Generic.Queue<string>();
+                    queue.Enqueue(activeRoomId);
+
+                    var distances = new System.Collections.Generic.Dictionary<string, int>();
+                    distances[activeRoomId] = 0;
+
+                    var dirVectors = new System.Collections.Generic.Dictionary<string, Vector3>(System.StringComparer.OrdinalIgnoreCase)
+                    {
+                        { "north", new Vector3(0, -1, 0) },
+                        { "n", new Vector3(0, -1, 0) },
+                        { "south", new Vector3(0, 1, 0) },
+                        { "s", new Vector3(0, 1, 0) },
+                        { "east", new Vector3(1, 0, 0) },
+                        { "e", new Vector3(1, 0, 0) },
+                        { "west", new Vector3(-1, 0, 0) },
+                        { "w", new Vector3(-1, 0, 0) },
+                        { "northeast", new Vector3(0.7f, -0.7f, 0) },
+                        { "ne", new Vector3(0.7f, -0.7f, 0) },
+                        { "northwest", new Vector3(-0.7f, -0.7f, 0) },
+                        { "nw", new Vector3(-0.7f, -0.7f, 0) },
+                        { "southeast", new Vector3(0.7f, 0.7f, 0) },
+                        { "se", new Vector3(0.7f, 0.7f, 0) },
+                        { "southwest", new Vector3(-0.7f, 0.7f, 0) },
+                        { "sw", new Vector3(-0.7f, 0.7f, 0) },
+                        { "up", new Vector3(0, 0, 1) },
+                        { "u", new Vector3(0, 0, 1) },
+                        { "down", new Vector3(0, 0, -1) },
+                        { "d", new Vector3(0, 0, -1) },
+                        { "in", new Vector3(1.5f, -1.5f, 0) },
+                        { "out", new Vector3(-1.5f, 1.5f, 0) }
+                    };
+
+                    while (queue.Count > 0)
+                    {
+                        var currentId = queue.Dequeue();
+                        var currentRoom = roomsMap[currentId];
+                        var currentDist = distances[currentId];
+
+                        if (currentDist >= 3) continue;
+
+                        var currentCoord = coords[currentId];
+                        var exits = currentRoom["exits"] as Newtonsoft.Json.Linq.JObject;
+                        if (exits != null)
+                        {
+                            foreach (var exit in exits)
+                            {
+                                var dir = exit.Key;
+                                var destId = exit.Value?.ToString();
+                                if (string.IsNullOrEmpty(destId) || !roomsMap.ContainsKey(destId)) continue;
+
+                                Vector3 vec = Vector3.right;
+                                if (dirVectors.TryGetValue(dir, out var v))
+                                {
+                                    vec = v;
+                                }
+
+                                if (!coords.ContainsKey(destId))
+                                {
+                                    coords[destId] = currentCoord + vec;
+                                    distances[destId] = currentDist + 1;
+                                    queue.Enqueue(destId);
+                                }
+                            }
+                        }
+                    }
+
+                    // Parse theme settings
+                    var primaryBg = new Color(0.06f, 0.09f, 0.16f, 0.95f);
+                    var textCol = Color.white;
+                    var accentCol = new Color(0.23f, 0.51f, 0.96f, 1f);
+                    var themeObj = parsed["theme"];
+                    if (themeObj != null)
+                    {
+                        if (ColorUtility.TryParseHtmlString(themeObj["primaryBgColor"]?.ToString(), out var bg)) primaryBg = bg;
+                        if (ColorUtility.TryParseHtmlString(themeObj["textMainColor"]?.ToString(), out var tc)) textCol = tc;
+                        if (ColorUtility.TryParseHtmlString(themeObj["borderAccentColor"]?.ToString(), out var ac)) accentCol = ac;
+                    }
+
+                    Color nodeColor = accentCol;
+                    Color nodeBg = new Color(primaryBg.r, primaryBg.g, primaryBg.b, 1f);
+                    float borderRadiusVal = 50f; // circle
+
+                    if (mapStyle == "scifi")
+                    {
+                        borderRadiusVal = 0f; // sharp rhombus
+                        nodeColor = new Color(0f, 0.9f, 1f, 1f); // cyan
+
+                        container.style.backgroundColor = new Color(0.03f, 0.06f, 0.12f, 0.98f);
+                        container.style.borderLeftColor = new Color(0f, 0.94f, 1f, 1f);
+                        container.style.borderRightColor = new Color(0f, 0.94f, 1f, 1f);
+                        container.style.borderTopColor = new Color(0f, 0.94f, 1f, 1f);
+                        container.style.borderBottomColor = new Color(0f, 0.94f, 1f, 1f);
+                        
+                        viewport.style.backgroundColor = new Color(0.02f, 0.04f, 0.08f, 1f);
+                        title.style.color = new Color(0f, 0.94f, 1f, 1f);
+                    }
+                    else if (mapStyle == "fantasy")
+                    {
+                        borderRadiusVal = 8f;
+                        nodeColor = new Color(0.35f, 0.24f, 0.11f, 1f); // dark brown outline
+                        nodeBg = new Color(0.99f, 0.96f, 0.89f, 1f); // parchment white
+
+                        container.style.backgroundColor = new Color(0.95f, 0.9f, 0.79f, 1f); // parchment beige
+                        container.style.borderLeftColor = new Color(0.35f, 0.24f, 0.11f, 1f); // double border line brown
+                        container.style.borderRightColor = new Color(0.35f, 0.24f, 0.11f, 1f);
+                        container.style.borderTopColor = new Color(0.35f, 0.24f, 0.11f, 1f);
+                        container.style.borderBottomColor = new Color(0.35f, 0.24f, 0.11f, 1f);
+                        container.style.borderLeftWidth = 6f;
+                        container.style.borderRightWidth = 6f;
+                        container.style.borderTopWidth = 6f;
+                        container.style.borderBottomWidth = 6f;
+
+                        viewport.style.backgroundColor = new Color(0f, 0f, 0f, 0f); // transparent viewport
+                        title.style.color = new Color(0.29f, 0.18f, 0.07f, 1f);
+                        header.style.borderBottomColor = new Color(0.35f, 0.24f, 0.11f, 0.3f);
+                        closeBtn.style.backgroundColor = new Color(0.35f, 0.24f, 0.11f, 1f);
+                        textCol = new Color(0.29f, 0.18f, 0.07f, 1f); // brown text
+                    }
+
+                    float scaleX = 160f;
+                    float scaleY = 160f;
+                    float floorOffset = 180f;
+
+                    // 2. Pre-calculate projected screen coordinates for all room nodes
+                    var nodeScreenCoords = new System.Collections.Generic.Dictionary<string, Vector2>();
+                    foreach (var kvp in coords)
+                    {
+                        var c = kvp.Value;
+                        float px = (c.x - c.y) * 0.866f * scaleX;
+                        float py = (c.x + c.y) * 0.5f * scaleY - c.z * floorOffset;
+                        nodeScreenCoords[kvp.Key] = new Vector2(px, py);
+                    }
+
+                    // 3. Create canvas for drawing lines
+                    var canvas = new MapCanvasElement();
+                    canvas.style.position = Position.Absolute;
+                    canvas.style.left = -2000f;
+                    canvas.style.top = -2000f;
+                    canvas.style.width = 4000f;
+                    canvas.style.height = 4000f;
+                    mapContainer.Add(canvas);
+
+                    // 4. Draw Floor boundary grids
+                    var floors = new System.Collections.Generic.HashSet<int>();
+                    foreach (var kvp in coords)
+                    {
+                        floors.Add((int)kvp.Value.z);
+                    }
+
+                    foreach (var z in floors)
+                    {
+                        float fy = -z * floorOffset;
+                        Vector2 c1 = new Vector2((-2.2f - -2.2f) * 0.866f * scaleX, (-2.2f + -2.2f) * 0.5f * scaleY + fy);
+                        Vector2 c2 = new Vector2((2.2f - -2.2f) * 0.866f * scaleX, (2.2f + -2.2f) * 0.5f * scaleY + fy);
+                        Vector2 c3 = new Vector2((2.2f - 2.2f) * 0.866f * scaleX, (2.2f + 2.2f) * 0.5f * scaleY + fy);
+                        Vector2 c4 = new Vector2((-2.2f - 2.2f) * 0.866f * scaleX, (-2.2f + 2.2f) * 0.5f * scaleY + fy);
+
+                        Color floorLineCol;
+                        if (mapStyle == "fantasy")
+                        {
+                            floorLineCol = new Color(0.35f, 0.24f, 0.11f, 0.35f); // brown sketch line
+                        }
+                        else if (z > 0)
+                        {
+                            floorLineCol = new Color(0f, 0.75f, 1f, 0.6f); // Vibrant Sky Blue
+                        }
+                        else if (z < 0)
+                        {
+                            floorLineCol = new Color(0.85f, 0.27f, 0.94f, 0.6f); // Vibrant Purple/Magenta
+                        }
+                        else
+                        {
+                            floorLineCol = new Color(0.98f, 0.45f, 0.08f, 0.5f); // Vibrant Amber/Orange
+                        }
+
+                        canvas.lines.Add(new MapLine { from = c1 + new Vector2(2000f, 2000f), to = c2 + new Vector2(2000f, 2000f), color = floorLineCol, width = 2.5f, isDotted = false });
+                        canvas.lines.Add(new MapLine { from = c2 + new Vector2(2000f, 2000f), to = c3 + new Vector2(2000f, 2000f), color = floorLineCol, width = 2.5f, isDotted = false });
+                        canvas.lines.Add(new MapLine { from = c3 + new Vector2(2000f, 2000f), to = c4 + new Vector2(2000f, 2000f), color = floorLineCol, width = 2.5f, isDotted = false });
+                        canvas.lines.Add(new MapLine { from = c4 + new Vector2(2000f, 2000f), to = c1 + new Vector2(2000f, 2000f), color = floorLineCol, width = 2.5f, isDotted = false });
+
+                        var floorLabel = new Label($"LEVEL {z + 1}");
+                        floorLabel.style.position = Position.Absolute;
+                        floorLabel.style.left = c1.x - 70f;
+                        floorLabel.style.top = c1.y - 10f;
+                        floorLabel.style.fontSize = 12f;
+                        floorLabel.style.color = floorLineCol;
+                        floorLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                        mapContainer.Add(floorLabel);
+                    }
+
+                    // 5. Draw Path lines
+                    var drawnEdges = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+                    foreach (var kvp in coords)
+                    {
+                        var rId = kvp.Key;
+                        var fromCoord = coords[rId];
+                        var fromScreen = nodeScreenCoords[rId];
+
+                        var roomObj = roomsMap[rId];
+                        var exits = roomObj["exits"] as Newtonsoft.Json.Linq.JObject;
+                        if (exits != null)
+                        {
+                            foreach (var exit in exits)
+                            {
+                                var dir = exit.Key;
+                                var destId = exit.Value?.ToString();
+                                if (string.IsNullOrEmpty(destId) || !coords.ContainsKey(destId)) continue;
+
+                                var edgeKey = rId.CompareTo(destId) < 0 ? $"{rId}-{destId}" : $"{destId}-{rId}";
+                                if (drawnEdges.Contains(edgeKey)) continue;
+                                drawnEdges.Add(edgeKey);
+
+                                var toCoord = coords[destId];
+                                var toScreen = nodeScreenCoords[destId];
+
+                                // Case-insensitive lock check
+                                bool isLocked = false;
+                                var lockedExitsObj = roomObj["lockedExits"] as Newtonsoft.Json.Linq.JObject;
+                                if (lockedExitsObj != null)
+                                {
+                                    var prop = lockedExitsObj.Property(dir, System.StringComparison.OrdinalIgnoreCase);
+                                    if (prop != null)
+                                    {
+                                        isLocked = (bool)prop.Value;
+                                    }
+                                }
+
+                                // Check if this path is one-way
+                                bool isOneWay = true;
+                                string reverseDir = "";
+                                if (roomsMap.TryGetValue(destId, out var destRoomToken))
+                                {
+                                    var destExits = destRoomToken["exits"] as Newtonsoft.Json.Linq.JObject;
+                                    if (destExits != null)
+                                    {
+                                        foreach (var destExit in destExits)
+                                        {
+                                            if (destExit.Value?.ToString() == rId)
+                                            {
+                                                isOneWay = false;
+                                                reverseDir = destExit.Key;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Color lineCol = isLocked ? Color.red : (fromCoord.z != toCoord.z ? new Color(0f, 0.9f, 1f, 0.8f) : accentCol);
+                                if (mapStyle == "fantasy")
+                                {
+                                    lineCol = isLocked ? new Color(0.6f, 0.13f, 0.15f, 1f) : new Color(0.35f, 0.24f, 0.11f, 0.85f);
+                                }
+
+                                canvas.lines.Add(new MapLine {
+                                    from = fromScreen + new Vector2(2000f, 2000f),
+                                    to = toScreen + new Vector2(2000f, 2000f),
+                                    color = lineCol,
+                                    width = isLocked ? 4f : (fromCoord.z != toCoord.z ? 3f : 2.5f),
+                                    isDotted = (mapStyle != "fantasy" && (fromCoord.z != toCoord.z || isLocked))
+                                });
+
+                                // Draw vertical up/down or horizontal in/out indicator tags
+                                if (fromCoord.z != toCoord.z)
+                                {
+                                    Vector2 arrowPos = fromScreen + (toScreen - fromScreen) * 0.5f;
+                                    string tagText = toCoord.z > fromCoord.z ? "▲ UP" : "▼ DOWN";
+                                    if (!isOneWay && !string.IsNullOrEmpty(reverseDir) && (reverseDir.Equals("up", System.StringComparison.OrdinalIgnoreCase) || reverseDir.Equals("down", System.StringComparison.OrdinalIgnoreCase) || reverseDir.Equals("u", System.StringComparison.OrdinalIgnoreCase) || reverseDir.Equals("d", System.StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        tagText = "▲ UP / ▼ DOWN";
+                                    }
+                                    var dirLabel = new Label(tagText);
+                                    dirLabel.style.position = Position.Absolute;
+                                    dirLabel.style.left = arrowPos.x - 50f;
+                                    dirLabel.style.top = arrowPos.y - 8f;
+                                    dirLabel.style.width = 100f;
+                                    dirLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                                    dirLabel.style.fontSize = 11f;
+                                    dirLabel.style.color = new Color(1f, 0.75f, 0f, 1f); // matching amber/orange
+                                    dirLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                                    mapContainer.Add(dirLabel);
+                                }
+                                else if (dir.Equals("in", System.StringComparison.OrdinalIgnoreCase) || dir.Equals("out", System.StringComparison.OrdinalIgnoreCase))
+                                {
+                                    Vector2 arrowPos = fromScreen + (toScreen - fromScreen) * 0.5f;
+                                    string tagText = dir.Equals("in", System.StringComparison.OrdinalIgnoreCase) ? "IN ▶" : "◀ OUT";
+                                    if (!isOneWay && !string.IsNullOrEmpty(reverseDir) && (reverseDir.Equals("in", System.StringComparison.OrdinalIgnoreCase) || reverseDir.Equals("out", System.StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        tagText = "◀ OUT / IN ▶";
+                                    }
+                                    var dirLabel = new Label(tagText);
+                                    dirLabel.style.position = Position.Absolute;
+                                    dirLabel.style.left = arrowPos.x - 50f;
+                                    dirLabel.style.top = arrowPos.y - 8f;
+                                    dirLabel.style.width = 100f;
+                                    dirLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                                    dirLabel.style.fontSize = 11f;
+                                    dirLabel.style.color = new Color(1f, 0.75f, 0f, 1f); // bright amber/yellow
+                                    dirLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                                    mapContainer.Add(dirLabel);
+                                }
+
+                                // Draw a padlock icon at the midpoint of locked exits
+                                if (isLocked)
+                                {
+                                    var lockIndicator = new Label("🔒");
+                                    lockIndicator.style.position = Position.Absolute;
+                                    lockIndicator.style.left = (fromScreen.x + toScreen.x) / 2f - 8f;
+                                    lockIndicator.style.top = (fromScreen.y + toScreen.y) / 2f - 10f;
+                                    lockIndicator.style.fontSize = 14f;
+                                    lockIndicator.style.unityFontStyleAndWeight = FontStyle.Bold;
+                                    mapContainer.Add(lockIndicator);
+                                }
+
+                                if (isOneWay)
+                                {
+                                    // Place a small arrow pointing towards the destination node (at 65% of the path)
+                                    Vector2 arrowPos = fromScreen + (toScreen - fromScreen) * 0.65f;
+                                    var arrow = new Label("➔");
+                                    arrow.style.position = Position.Absolute;
+                                    arrow.style.left = arrowPos.x - 7f;
+                                    arrow.style.top = arrowPos.y - 9f;
+                                    arrow.style.fontSize = 13f;
+                                    arrow.style.color = isLocked ? Color.red : accentCol;
+                                    float angle = Mathf.Atan2(toScreen.y - fromScreen.y, toScreen.x - fromScreen.x) * Mathf.Rad2Deg;
+                                    arrow.style.rotate = new StyleRotate(new Rotate(angle));
+                                    mapContainer.Add(arrow);
+                                }
+                            }
+                        }
+                    }
+
+                    // 6. Draw Nodes & Labels
+                    float nodeSize = 44f;
+                    foreach (var kvp in coords)
+                    {
+                        var rId = kvp.Key;
+                        var roomObj = roomsMap[rId];
+                        var roomName = roomObj["name"]?.ToString() ?? "Unknown";
+                        var isPlayerActive = rId == activeRoomId;
+                        var screenPos = nodeScreenCoords[rId];
+
+                        var node = new VisualElement();
+                        node.style.position = Position.Absolute;
+                        node.style.left = screenPos.x - nodeSize / 2f;
+                        node.style.top = screenPos.y - nodeSize / 2f;
+                        node.style.width = nodeSize;
+                        node.style.height = nodeSize;
+
+                        bool isRoomVisited = true;
+                        var isVisitedProp = roomObj["isVisited"];
+                        if (isVisitedProp != null) isRoomVisited = (bool)isVisitedProp;
+
+                        if (isRoomVisited)
+                        {
+                            node.style.backgroundColor = isPlayerActive ? (mapStyle == "fantasy" ? new Color(0.85f, 0.74f, 0.53f, 1f) : new Color(0f, 0.75f, 1f, 1f)) : nodeBg;
+                            
+                            Color floorAccentCol = nodeColor;
+                            if (mapStyle == "fantasy")
+                            {
+                                floorAccentCol = new Color(0.35f, 0.24f, 0.11f, 1f); // brown outline
+                            }
+                            else if (kvp.Value.z > 0)
+                            {
+                                floorAccentCol = new Color(0f, 0.75f, 1f, 1f); // Sky Blue
+                            }
+                            else if (kvp.Value.z < 0)
+                            {
+                                floorAccentCol = new Color(0.85f, 0.27f, 0.94f, 1f); // Purple/Magenta
+                            }
+                            else
+                            {
+                                floorAccentCol = new Color(0.98f, 0.45f, 0.08f, 1f); // Amber/Orange
+                            }
+
+                            node.style.borderLeftColor = isPlayerActive ? (mapStyle == "fantasy" ? new Color(0.29f, 0.18f, 0.07f, 1f) : Color.white) : floorAccentCol;
+                            node.style.borderRightColor = isPlayerActive ? (mapStyle == "fantasy" ? new Color(0.29f, 0.18f, 0.07f, 1f) : Color.white) : floorAccentCol;
+                            node.style.borderTopColor = isPlayerActive ? (mapStyle == "fantasy" ? new Color(0.29f, 0.18f, 0.07f, 1f) : Color.white) : floorAccentCol;
+                            node.style.borderBottomColor = isPlayerActive ? (mapStyle == "fantasy" ? new Color(0.29f, 0.18f, 0.07f, 1f) : Color.white) : floorAccentCol;
+                        }
+                        else
+                        {
+                            node.style.backgroundColor = new Color(0.15f, 0.17f, 0.22f, 0.6f);
+                            node.style.borderLeftColor = new Color(0.3f, 0.32f, 0.38f, 0.6f);
+                            node.style.borderRightColor = new Color(0.3f, 0.32f, 0.38f, 0.6f);
+                            node.style.borderTopColor = new Color(0.3f, 0.32f, 0.38f, 0.6f);
+                            node.style.borderBottomColor = new Color(0.3f, 0.32f, 0.38f, 0.6f);
+                        }
+
+                        node.style.borderLeftWidth = isPlayerActive ? 4f : 3f;
+                        node.style.borderRightWidth = isPlayerActive ? 4f : 3f;
+                        node.style.borderTopWidth = isPlayerActive ? 4f : 3f;
+                        node.style.borderBottomWidth = isPlayerActive ? 4f : 3f;
+
+                        node.style.borderTopLeftRadius = borderRadiusVal;
+                        node.style.borderTopRightRadius = borderRadiusVal;
+                        node.style.borderBottomLeftRadius = borderRadiusVal;
+                        node.style.borderBottomRightRadius = borderRadiusVal;
+
+                        var label = new Label(roomName);
+                        label.style.position = Position.Absolute;
+                        label.style.width = 200f;
+                        label.style.left = -100f + nodeSize / 2f;
+                        label.style.top = -30f;
+                        label.style.unityTextAlign = TextAnchor.MiddleCenter;
+                        label.style.fontSize = 13f;
+                        label.style.color = isRoomVisited ? textCol : new Color(textCol.r, textCol.g, textCol.b, 0.5f);
+                        label.style.unityFontStyleAndWeight = isPlayerActive ? FontStyle.Bold : FontStyle.Normal;
+
+                        node.Add(label);
+                        mapContainer.Add(node);
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("Error parsing config in standalone map: " + ex.Message);
+            }
+
+            container.Add(viewport);
+            overlay.Add(container);
+            _root.Add(overlay);
+        }
+
+        public void ShowMap(string mapTitle = "Starship Map", string mapStyle = "Clean", string customBackground = "")
+        {
+            var game = GameManager.Instance?.ActiveGame;
+            if (game == null) return;
+
+            if (GameManager.Instance.CurrentRoom != null)
+            {
+                _visitedRoomIds.Add(GameManager.Instance.CurrentRoom.Id);
+            }
+
+            var theme = game.Theme ?? new ThemeSettingsData();
+
+            var adjacentRoomIds = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            if (game.Rooms != null)
+            {
+                foreach (var r in game.Rooms)
+                {
+                    if (_visitedRoomIds.Contains(r.Id) && r.Exits != null)
+                    {
+                        foreach (var kvp in r.Exits)
+                        {
+                            if (!string.IsNullOrEmpty(kvp.Value))
+                            {
+                                adjacentRoomIds.Add(kvp.Value);
+                            }
+                        }
+                    }
+                }
+            }
+
+            var serializedRooms = new System.Collections.Generic.List<object>();
+            if (game.Rooms != null)
+            {
+                foreach (var r in game.Rooms)
+                {
+                    bool isVisited = _visitedRoomIds.Contains(r.Id);
+                    bool isAdjacent = adjacentRoomIds.Contains(r.Id);
+
+                    if (isVisited || isAdjacent)
+                    {
+                        var exits = new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+                        var lockedExits = new System.Collections.Generic.Dictionary<string, bool>(System.StringComparer.OrdinalIgnoreCase);
+                        
+                        // Only serialize exits if the room has been visited (otherwise hide unexplored paths)
+                        if (isVisited && r.Exits != null)
+                        {
+                            foreach (var kvp in r.Exits)
+                            {
+                                exits[kvp.Key] = kvp.Value;
+                            }
+                        }
+                        if (isVisited && r.LockedExits != null)
+                        {
+                            foreach (var kvp in r.LockedExits)
+                            {
+                                lockedExits[kvp.Key] = kvp.Value;
+                            }
+                        }
+
+                        serializedRooms.Add(new {
+                            id = r.Id,
+                            name = isVisited ? r.Name : "?",
+                            isVisited = isVisited,
+                            exits = exits,
+                            lockedExits = lockedExits
+                        });
+                    }
+                }
+            }
+
+            var config = new {
+                activeRoomId = GameManager.Instance.CurrentRoom?.Id ?? "",
+                mapStyle = string.IsNullOrEmpty(mapStyle) ? (theme.MapStyle ?? "Clean") : mapStyle,
+                mapTitle = mapTitle,
+                customBackground = customBackground,
+                theme = new {
+                    primaryBgColor = theme.PrimaryBgColor ?? "#1e1e24",
+                    textMainColor = theme.TextMainColor ?? "#ffffff",
+                    borderAccentColor = theme.BorderAccentColor ?? "#4a4a5a",
+                    fontName = theme.FontName ?? "Outfit"
+                },
+                rooms = serializedRooms
+            };
+
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(config);
+            ShowMapOverlay(json);
+        }
+
+        public void OnMapClosed()
+        {
+            RagNextPlayer.Runtime.ActionExecutor.ResumeSuspended();
+        }
+    }
+
+    public class MapCanvasElement : VisualElement
+    {
+        public System.Collections.Generic.List<MapLine> lines = new System.Collections.Generic.List<MapLine>();
+
+        public MapCanvasElement()
+        {
+            generateVisualContent += OnGenerateVisualContent;
+        }
+
+        private void OnGenerateVisualContent(MeshGenerationContext mgc)
+        {
+            var painter = mgc.painter2D;
+            foreach (var line in lines)
+            {
+                painter.strokeColor = line.color;
+                painter.lineWidth = line.width;
+
+                if (line.isDotted)
+                {
+                    float distance = Vector2.Distance(line.from, line.to);
+                    Vector2 direction = (line.to - line.from).normalized;
+                    float dashLength = 6f;
+                    float gapLength = 4f;
+                    float currentLength = 0f;
+
+                    while (currentLength < distance)
+                    {
+                        Vector2 start = line.from + direction * currentLength;
+                        float endLength = Mathf.Min(currentLength + dashLength, distance);
+                        Vector2 end = line.from + direction * endLength;
+
+                        painter.BeginPath();
+                        painter.MoveTo(start);
+                        painter.LineTo(end);
+                        painter.Stroke();
+
+                        currentLength += dashLength + gapLength;
+                    }
+                }
+                else
+                {
+                    painter.BeginPath();
+                    painter.MoveTo(line.from);
+                    painter.LineTo(line.to);
+                    painter.Stroke();
+                }
+            }
+        }
+    }
+
+    public struct MapLine
+    {
+        public Vector2 from;
+        public Vector2 to;
+        public Color color;
+        public float width;
+        public bool isDotted;
     }
 }

@@ -340,7 +340,7 @@ namespace RagNextPlayer.Runtime
                                 _sink?.OnCommandExecuted(cmd, _ctx);
                             }
 
-                            if (cmd is PromptPlayerInputCommandData || cmd is WaitForContinueCommandData || cmd is StartDialogueCommandData)
+                            if (cmd is PromptPlayerInputCommandData || cmd is WaitForContinueCommandData || cmd is StartDialogueCommandData || cmd is ShowMapCommandData)
                             {
                                 IsSuspended = true;
                                 break;
@@ -2140,6 +2140,7 @@ namespace RagNextPlayer.Runtime
                 // Routed directly via sink during ExecuteNext
                 case ShowSplashScreenCommandData:
                 case WaitForContinueCommandData:
+                case ShowMapCommandData:
                     break;
 
                 case SwapPlayerCharacterCommandData c:

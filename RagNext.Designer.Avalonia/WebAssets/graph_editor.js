@@ -185,6 +185,7 @@ const fallbackDiscriminators = {
     "variableappendline": "variable.appendLine",
     "promptplayerinput": "general.promptInput",
     "waitforcontinue": "general.waitForContinue",
+    "generalshowmap": "general.showMap",
     "variablesetnumericrandomly": "var.setRandom",
     "endthegame": "general.endGame",
     "itemopencontainer": "general.openContainer",
@@ -246,6 +247,9 @@ const propertyMappings = {
     "Store Variable": ["StoreVariableName", "storeVariableName"],
     "Prompt Name": ["PromptName", "promptName"],
     "Attribute Name": ["AttributeName", "attributeName"],
+    "Map Title": ["MapTitle", "mapTitle"],
+    "Map Style": ["MapStyle", "mapStyle"],
+    "Custom Background": ["CustomBackground", "customBackground"],
     "Timer": ["TimerId", "timerId", "Timer"],
     "Function": ["FunctionId", "functionId", "Function"],
     "Expected Value": ["ExpectedValue", "expectedValue"],
@@ -2414,9 +2418,7 @@ function refreshCommandFields(node) {
         if ((inputSchema.label === "Array Variable" || inputSchema.label === "ArrayVariable") && currentLoopSource !== "Variable") {
             return;
         }
-        if ((inputSchema.label === "Filter Type" || inputSchema.label === "FilterType") && (currentLoopSource !== "Items" && currentLoopSource !== "Characters")) {
-            return;
-        }
+
 
         const row = document.createElement('div');
         row.className = 'field-row';
@@ -2990,6 +2992,12 @@ function refreshCommandFields(node) {
                     { Id: "In", Name: "In" },
                     { Id: "Out", Name: "Out" }
                 ];
+            } else if (inputSchema.label === 'Map Style' || inputSchema.label === 'MapStyle') {
+                optionsList = [
+                    { Id: "Clean", Name: "Clean" },
+                    { Id: "SciFi", Name: "SciFi" },
+                    { Id: "Fantasy", Name: "Fantasy" }
+                ];
             } else if (inputSchema.label === 'Column Name' || inputSchema.label === 'ColumnName') {
                 optionsList = [];
                 const varName = getPropertyValue(node.data, "Array Variable") || getPropertyValue(node.data, "ArrayVariable");
@@ -3110,7 +3118,7 @@ function refreshCommandFields(node) {
                     node.data["End Time"] = "";
                     node.data["EndTime"] = "";
                 }
-                if (inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.label === 'Loop Source' || inputSchema.label === 'LoopSource' || inputSchema.label === 'Filter Type' || inputSchema.label === 'FilterType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'ActionName') {
+                if (inputSchema.label === 'Map Style' || inputSchema.label === 'MapStyle' || inputSchema.label === 'Input Type' || inputSchema.label === 'InputType' || inputSchema.label === 'Loop Source' || inputSchema.label === 'LoopSource' || inputSchema.label === 'Filter Type' || inputSchema.label === 'FilterType' || inputSchema.dataType === 'Room' || inputSchema.dataType === 'GameObject' || inputSchema.dataType === 'Character' || inputSchema.dataType === 'Item' || inputSchema.dataType === 'Timer' || inputSchema.dataType === 'Variable' || inputSchema.dataType === 'Media' || inputSchema.dataType === 'ActionName') {
                     refreshCommandFields(node);
                 }
                 triggerAutoSave();

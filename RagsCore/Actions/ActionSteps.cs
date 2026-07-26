@@ -136,6 +136,7 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SwapPlayerCharacterCommand), "player.swapCharacter")]
     [JsonDerivedType(typeof(ShowSplashScreenCommand), "ui.showSplashScreen")]
     [JsonDerivedType(typeof(WaitForContinueCommand), "general.waitForContinue")]
+    [JsonDerivedType(typeof(ShowMapCommand), "general.showMap")]
     public abstract class ActionStep
     {
         public static string NormalizeLegacyDiscriminators(string json)
@@ -190,7 +191,7 @@ namespace RagsCore.Actions
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear", "item.remove",
                 "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
-                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "ui.setHotspotActive", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen", "general.waitForContinue"
+                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "ui.setHotspotActive", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen", "general.waitForContinue", "general.showMap"
             };
 
             // Convert unrecognized/unknown $type values to general.addComment to prevent crashes
@@ -633,6 +634,18 @@ namespace RagsCore.Actions
     {
         public string ButtonText { get; set; } = "Continue";
         public override string TypeName => "General: Wait for Continue";
+        public override void Execute(ActionContext ctx)
+        {
+            // Handled client side
+        }
+    }
+
+    public sealed class ShowMapCommand : GameCommand
+    {
+        public string MapTitle { get; set; } = "Starship Map";
+        public string MapStyle { get; set; } = "Clean";
+        public string CustomBackground { get; set; } = string.Empty;
+        public override string TypeName => "General: Show Map";
         public override void Execute(ActionContext ctx)
         {
             // Handled client side

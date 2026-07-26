@@ -1151,7 +1151,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                             BorderThickness = 1.5,
                             PlayerStatusBoxShape = "Default",
                             PlayerPortraitShape = "Circle",
-                            PortraitSize = 80
+                            PortraitSize = 80,
+                            MapStyle = "Clean"
                         };
                         var json = System.Text.Json.JsonSerializer.Serialize(theme, Services.DesignerJsonContext.Default.ThemeSettings);
                         File.WriteAllText(presetPath, json);
@@ -1282,6 +1283,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                         CurrentGame.Theme.PlayerStatusBoxShape = !string.IsNullOrEmpty(loadedTheme.PlayerStatusBoxShape) ? loadedTheme.PlayerStatusBoxShape : "Default";
                         CurrentGame.Theme.PlayerPortraitShape = !string.IsNullOrEmpty(loadedTheme.PlayerPortraitShape) ? loadedTheme.PlayerPortraitShape : "Circle";
                         CurrentGame.Theme.PortraitSize = loadedTheme.PortraitSize > 0 ? loadedTheme.PortraitSize : 80.0;
+                        CurrentGame.Theme.MapStyle = !string.IsNullOrEmpty(loadedTheme.MapStyle) ? loadedTheme.MapStyle : "Clean";
                         CurrentGame.Theme.ActivePreset = presetName;
 
                         global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>

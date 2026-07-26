@@ -1,0 +1,279 @@
+/* --- Theme Custom Properties --- */
+:root {
+  --primary-bg: #1e1e24;
+  --text-color: #ffffff;
+  --accent-color: #4a4a5a;
+  --font-family: 'Outfit', 'Inter', sans-serif;
+  --grid-line-color: rgba(255, 255, 255, 0.05);
+  --node-glow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+/* --- Modal & Overlay Backdrop --- */
+#map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: rgba(10, 12, 18, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+  user-select: none;
+  animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.map-modal {
+  width: 90%;
+  height: 90%;
+  max-width: 900px;
+  max-height: 540px;
+  background: var(--primary-bg);
+  border: 2px solid var(--accent-color);
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  color: var(--text-color);
+}
+
+/* Close button */
+.map-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 32px;
+  font-weight: 300;
+  cursor: pointer;
+  z-index: 10001;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.map-close-btn:hover {
+  transform: scale(1.15) rotate(90deg);
+  opacity: 1;
+}
+
+/* Header & Metadata */
+.map-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.map-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.map-subtitle {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+/* Viewport for pan & zoom */
+.map-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+  cursor: grab;
+}
+
+.map-viewport:active {
+  cursor: grabbing;
+}
+
+.map-zoom-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+}
+
+/* Isometric Layers Support */
+.floor-layer {
+  transform: rotateX(60deg) rotateZ(-45deg);
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  position: absolute;
+  width: 800px;
+  height: 600px;
+}
+
+/* --- Style Modes --- */
+
+/* 1. SCIFI STYLE */
+.map-style-scifi {
+  background: radial-gradient(circle at center, #070f1e 0%, #02060c 100%);
+  border: 2px solid #00f0ff;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 240, 255, 0.15);
+  border-radius: 16px;
+  position: relative;
+}
+
+.map-style-scifi .map-viewport {
+  background-image: linear-gradient(rgba(0, 240, 255, 0.08) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 240, 255, 0.08) 1px, transparent 1px);
+  background-size: 35px 35px;
+  background-position: center;
+  position: relative;
+}
+
+/* Cyberpunk scanlines effect overlay */
+.map-style-scifi .map-viewport::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 240, 255, 0.03),
+    rgba(0, 240, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+.map-style-scifi .map-title {
+  color: #00f0ff;
+  font-family: 'Courier New', Courier, monospace;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.map-style-scifi .node-pulse {
+  animation: scifiPulse 1.5s infinite alternate;
+}
+
+@keyframes scifiPulse {
+  0% { filter: drop-shadow(0 0 3px #00f0ff); }
+  100% { filter: drop-shadow(0 0 12px #00f0ff); }
+}
+
+/* 2. FANTASY STYLE */
+.map-style-fantasy {
+  background: radial-gradient(circle, #f3e6c9 0%, #e5d2a9 60%, #cbb17b 100%);
+  color: #2c1a04;
+  border: 8px double #5a3c1b;
+  border-radius: 12px;
+  box-shadow: inset 0 0 80px rgba(90, 60, 27, 0.45), 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.map-style-fantasy .map-header {
+  border-bottom: 2px dashed rgba(90, 60, 27, 0.25);
+}
+
+.map-style-fantasy .map-title {
+  font-family: 'Georgia', serif;
+  font-weight: bold;
+  color: #4a2f13;
+  text-shadow: 1px 1px 1px rgba(255,255,255,0.6);
+  letter-spacing: 1px;
+}
+
+.map-style-fantasy .map-close-btn {
+  color: #5a3c1b;
+  font-weight: bold;
+}
+
+.map-style-fantasy .map-viewport {
+  background: transparent;
+}
+
+/* Transform all SVG elements to look like hand-drawn ink sketches */
+.map-style-fantasy circle {
+  stroke: #4a2f13 !important;
+  fill: #fdf6e2 !important;
+  stroke-width: 2.5px !important;
+}
+
+.map-style-fantasy .map-node.node-pulse circle {
+  stroke: #4a2f13 !important;
+  fill: #d8bc88 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(1px 2px 3px rgba(90, 60, 27, 0.35));
+}
+
+.map-style-fantasy circle[opacity="0.6"] {
+  stroke: #8d7052 !important;
+  fill: #eae0c7 !important;
+  opacity: 0.55 !important;
+  stroke-dasharray: 3,3 !important;
+}
+
+.map-style-fantasy .map-link {
+  stroke: #5a3c1b !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: none !important;
+}
+
+.map-style-fantasy .map-link.locked {
+  stroke: #9b2226 !important;
+  stroke-width: 4px !important;
+}
+
+.map-style-fantasy text {
+  fill: #3d240d !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: bold !important;
+  text-shadow: 1px 1px 2px #fdf6e2;
+}
+
+/* 3. CLEAN STYLE (Default Minimalist) */
+.map-style-clean {
+  background: #111827;
+  border-color: #374151;
+}
+
+.map-style-clean .map-title {
+  font-weight: 600;
+}
+
+/* --- Node and Line elements inside SVG --- */
+.map-node {
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.map-node:hover {
+  transform: scale(1.15);
+}
+
+.map-link {
+  stroke-dasharray: 4, 4;
+  animation: lineDashFlow 12s linear infinite;
+}
+
+.map-link.locked {
+  stroke-dasharray: none;
+  animation: none;
+}
+
+@keyframes lineDashFlow {
+  to {
+    stroke-dashoffset: -100;
+  }
+}

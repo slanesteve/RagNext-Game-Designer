@@ -2548,6 +2548,13 @@
                     <x:String>Circle</x:String>
                     <x:String>Square</x:String>
                     </ComboBox>
+
+                    <TextBlock Text="Holographic Map Style:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,6,0,0"/>
+                    <ComboBox SelectedItem="{Binding MapStyle, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}">
+                    <x:String>Clean</x:String>
+                    <x:String>SciFi</x:String>
+                    <x:String>Fantasy</x:String>
+                    </ComboBox>
                     
                     <Separator Height="1" Background="{DynamicResource BorderBrush}" Margin="0,8,0,8"/>
                     

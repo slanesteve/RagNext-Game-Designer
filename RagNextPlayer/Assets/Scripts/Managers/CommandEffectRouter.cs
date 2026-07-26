@@ -255,6 +255,22 @@ namespace RagNextPlayer.Managers
                     UIManager.Instance?.ShowContinuePrompt(ctx.Resolve(c.ButtonText));
                     break;
 
+                case ShowMapCommandData c:
+                    {
+                        string customBgRaw = ctx.Resolve(c.CustomBackground);
+                        string resolvedPath = customBgRaw;
+                        if (!string.IsNullOrEmpty(customBgRaw) && ctx.Game?.MediaAssets != null)
+                        {
+                            var asset = ctx.Game.MediaAssets.Find(a => a.Id == customBgRaw || a.Name == customBgRaw);
+                            if (asset != null)
+                            {
+                                resolvedPath = asset.RelativePath;
+                            }
+                        }
+                        UIManager.Instance?.ShowMap(ctx.Resolve(c.MapTitle), ctx.Resolve(c.MapStyle), resolvedPath);
+                    }
+                    break;
+
                 case PromptPlayerInputCommandData c:
                     UIManager.Instance?.ShowPromptInputScreen(
                         ctx.Resolve(c.PromptName),

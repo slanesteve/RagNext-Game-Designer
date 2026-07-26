@@ -168,5 +168,8 @@ namespace RagsCore.Models
 
         private double _portraitSize = 80.0;
         public double PortraitSize { get => _portraitSize; set => SetProperty(ref _portraitSize, value); }
+
+        private string _mapStyle = "Clean"; // "Clean", "SciFi", "Fantasy"
+        public string MapStyle { get => _mapStyle; set => SetProperty(ref _mapStyle, value); }
     }
 }
