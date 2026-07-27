@@ -1,14 +1,15 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: "RagNext Game Designer",
-  description: "Official Documentation for the RagNext Game Engine Node Editor",
+  title: "RagNext Labs LLC",
+  description: "RagNext Labs LLC - Official Home of the RagNext Game Engine & Node-Based Story Designer",
   base: '/',
   themeConfig: {
     logo: '/logo.png',
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Guide', link: '/guide/getting-started' }
+      { text: 'Guide', link: '/guide/getting-started' },
+      { text: 'Contact', link: 'mailto:contact@ragnextlabs.com' }
     ],
 
     sidebar: [
@@ -33,8 +34,8 @@ export default defineConfig({
     ],
 
     footer: {
-      message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2026-present Steve Lane'
+      message: 'RagNext Labs LLC — Software Engine & Development Studio',
+      copyright: 'Copyright © 2026-present RagNext Labs LLC. All rights reserved.'
     }
   }
 })
