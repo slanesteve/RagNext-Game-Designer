@@ -6,8 +6,8 @@ hero:
   text: "Game Engine & Node Scripting Platform"
   tagline: "ADVANCED NARRATIVE ENGINE & CROSS-PLATFORM PLAYER"
   image:
-    src: /ragnext-logo.png
-    alt: RagNext Studio Logo
+    src: /main-capsule.jpg
+    alt: RagNext Studio
   actions:
     - theme: brand
       text: Documentation & Guide
