@@ -38,7 +38,7 @@ features:
 
 **RagNext Labs LLC** is an independent software development organization focused on building interactive narrative technologies, visual novel engines, and cross-platform story playback systems.
 
-Our flagship software suite, **RagNext Game Designer**, provides creators and developers with intuitive node-based graph scripting, real-time previewing, state persistence, and cross-platform export capabilities.
+Our flagship software suite, **RagNext Studio**, provides creators and developers with intuitive node-based graph scripting, real-time previewing, state persistence, and cross-platform export capabilities.
 
 ### Organization & Developer Information
 
