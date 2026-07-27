@@ -12,6 +12,10 @@ export default defineConfig({
       { text: 'Contact', link: 'mailto:contact@ragnext.com' }
     ],
 
+    socialLinks: [
+      { icon: 'discord', link: 'https://discord.gg/kYV2hJ7mF' }
+    ],
+
     sidebar: [
       {
         text: 'Introduction',

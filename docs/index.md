@@ -42,6 +42,7 @@ Our flagship software suite, **RagNext Studio**, provides creators and developer
 * **Primary Focus**: Software Development & Interactive Story Engine Tools
 * **Official Contact Email**: [contact@ragnext.com](mailto:contact@ragnext.com)
 * **Official Web Domain**: [https://ragnext.com](https://ragnext.com)
+* **Community Discord**: [https://discord.gg/kYV2hJ7mF](https://discord.gg/kYV2hJ7mF)
 
 ---
 
