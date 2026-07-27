@@ -6,8 +6,8 @@ hero:
   text: "Game Engine & Node Scripting Platform"
   tagline: "ADVANCED NARRATIVE ENGINE & CROSS-PLATFORM PLAYER"
   image:
-    src: /logo.png
-    alt: RagNext Labs Logo
+    src: /ragnext-studio-banner.jpg
+    alt: RagNext Studio Banner
   actions:
     - theme: brand
       text: Documentation & Guide
@@ -28,7 +28,11 @@ features:
     details: Fully supports string, numeric, boolean, and comprehensive date/time operations both in the editor and player.
 ---
 
-<div style="max-width: 860px; margin: 48px auto 32px auto; padding: 32px; background: var(--vp-c-bg-soft); border: 1px solid var(--vp-c-divider); border-radius: 12px;">
+<div style="max-width: 860px; margin: 32px auto 0 auto; text-align: center;">
+  <img src="/ragnext-hero-cyberpunk.jpg" alt="RagNext Studio Artwork" style="width: 100%; border-radius: 12px; border: 1px solid var(--vp-c-divider); box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
+</div>
+
+<div style="max-width: 860px; margin: 32px auto 32px auto; padding: 32px; background: var(--vp-c-bg-soft); border: 1px solid var(--vp-c-divider); border-radius: 12px;">
 
 ## About RagNext Labs LLC
 
