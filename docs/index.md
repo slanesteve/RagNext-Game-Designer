@@ -44,7 +44,6 @@ Our flagship software suite, **RagNext Game Designer**, provides creators and de
 
 * **Legal Entity Name**: RagNext Labs LLC
 * **Primary Focus**: Software Development & Interactive Story Engine Tools
-* **D-U-N-S Number**: 147670875
 * **Official Contact Email**: [contact@ragnext.com](mailto:contact@ragnext.com)
 * **Official Web Domain**: [https://ragnext.com](https://ragnext.com)
 
