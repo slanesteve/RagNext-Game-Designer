@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "RagNext Game Designer",
   description: "Official Documentation for the RagNext Game Engine Node Editor",
-  base: '/RagNext-Game-Designer/',
+  base: '/',
   themeConfig: {
     logo: '/logo.png',
     nav: [
