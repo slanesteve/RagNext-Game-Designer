@@ -14,7 +14,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: Contact Us
-      link: mailto:contact@ragnextlabs.com
+      link: mailto:contact@ragnext.com
 
 features:
   - icon: 🧩
@@ -41,13 +41,13 @@ Our flagship software suite, **RagNext Game Designer**, provides creators and de
 * **Legal Entity Name**: RagNext Labs LLC
 * **Primary Focus**: Software Development & Interactive Story Engine Tools
 * **D-U-N-S Number**: 147670875
-* **Official Contact Email**: [contact@ragnextlabs.com](mailto:contact@ragnextlabs.com)
-* **Official Web Domain**: [https://ragnextlabs.com](https://ragnextlabs.com)
+* **Official Contact Email**: [contact@ragnext.com](mailto:contact@ragnext.com)
+* **Official Web Domain**: [https://ragnext.com](https://ragnext.com)
 
 ---
 
 <p style="font-size: 0.9em; opacity: 0.8; text-align: center; margin-top: 16px;">
-  For support, business inquiries, or developer relations, please contact <a href="mailto:contact@ragnextlabs.com">contact@ragnextlabs.com</a>.
+  For support, business inquiries, or developer relations, please contact <a href="mailto:contact@ragnext.com">contact@ragnext.com</a>.
 </p>
 
 </div>

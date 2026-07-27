@@ -9,7 +9,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/getting-started' },
-      { text: 'Contact', link: 'mailto:contact@ragnextlabs.com' }
+      { text: 'Contact', link: 'mailto:contact@ragnext.com' }
     ],
 
     sidebar: [
