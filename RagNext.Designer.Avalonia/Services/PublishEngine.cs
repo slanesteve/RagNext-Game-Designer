@@ -146,6 +146,20 @@ namespace RagNext.Designer.Avalonia.Services
             }
             CopyDirectory(sourceApp, appBundle);
 
+            // Nuke all pre-existing _CodeSignature directories from template copy immediately
+            try
+            {
+                foreach (var sigDir in Directory.GetDirectories(appBundle, "_CodeSignature", SearchOption.AllDirectories))
+                {
+                    Directory.Delete(sigDir, true);
+                    Report("Removed template _CodeSignature folder.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Report($"Warning: Could not remove template signature: {ex.Message}");
+            }
+
             // Unity macOS .app has the binary in Contents/MacOS/RagNextPlayer
             string macOsDir = Path.Combine(appBundle, "Contents", "MacOS");
             string targetBinary = Path.Combine(macOsDir, title);
