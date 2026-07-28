@@ -185,6 +185,25 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 await ReSignMacBundleAsync(appBundle);
             }
+            else
+            {
+                // On non-macOS (Windows/Linux), remove stale _CodeSignature directory
+                // created before Info.plist modification so macOS Gatekeeper does not flag
+                // the modified Info.plist as "damaged"
+                string codeSigDir = Path.Combine(appBundle, "Contents", "_CodeSignature");
+                if (Directory.Exists(codeSigDir))
+                {
+                    try
+                    {
+                        Directory.Delete(codeSigDir, true);
+                        Report("Cleaned stale Mac code signature for Windows cross-publish.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Report($"Warning: Could not remove stale code signature: {ex.Message}");
+                    }
+                }
+            }
         }
 
         private static async Task ReSignMacBundleAsync(string appBundle)
