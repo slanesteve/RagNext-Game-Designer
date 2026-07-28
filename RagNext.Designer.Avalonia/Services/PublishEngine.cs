@@ -178,6 +178,45 @@ namespace RagNext.Designer.Avalonia.Services
             // StreamingAssets lives under Contents/Resources/Data/
             string streamingDir = Path.Combine(appBundle, "Contents", "Resources", "Data", "StreamingAssets");
             await InjectGameDataAsync(game, streamingDir);
+
+            // Re-sign Mac app bundle after Info.plist and StreamingAssets modifications
+            if (OperatingSystem.IsMacOS())
+            {
+                await ReSignMacBundleAsync(appBundle);
+            }
+        }
+
+        private static async Task ReSignMacBundleAsync(string appBundle)
+        {
+            try
+            {
+                Report("Re-signing macOS App Bundle...");
+                var psi = new ProcessStartInfo("codesign", $"--deep --force --sign - \"{appBundle}\"")
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var proc = Process.Start(psi);
+                if (proc != null)
+                {
+                    await proc.WaitForExitAsync();
+                    if (proc.ExitCode == 0)
+                    {
+                        Report("macOS App Bundle successfully signed.");
+                    }
+                    else
+                    {
+                        string err = await proc.StandardError.ReadToEndAsync();
+                        Report($"Warning: codesign returned code {proc.ExitCode}: {err}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Report($"Warning: Failed to re-sign Mac app bundle: {ex.Message}");
+            }
         }
 
         // ── Linux ─────────────────────────────────────────────────────────────
