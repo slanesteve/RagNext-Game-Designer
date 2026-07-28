@@ -152,110 +152,51 @@ namespace RagNext.Designer.Avalonia.Services
                 foreach (var sigDir in Directory.GetDirectories(appBundle, "_CodeSignature", SearchOption.AllDirectories))
                 {
                     Directory.Delete(sigDir, true);
-                    Report("Removed template _CodeSignature folder.");
                 }
             }
-            catch (Exception ex)
-            {
-                Report($"Warning: Could not remove template signature: {ex.Message}");
-            }
+            catch { }
 
-            // Unity macOS .app has the binary in Contents/MacOS/RagNextPlayer
             string macOsDir = Path.Combine(appBundle, "Contents", "MacOS");
-            string targetBinary = Path.Combine(macOsDir, title);
-            RenameFile(macOsDir, "RagNextPlayer", title);
+            string plistPath = Path.Combine(appBundle, "Contents", "Info.plist");
 
-            // Set +x execution permissions for Unix filesystems
-            try
+            if (OperatingSystem.IsMacOS())
             {
-                if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
+                // On macOS, rename binary and update Info.plist, then re-sign natively with codesign
+                string targetBinary = Path.Combine(macOsDir, title);
+                RenameFile(macOsDir, "RagNextPlayer", title);
+
+                if (File.Exists(plistPath))
+                {
+                    string plist = await File.ReadAllTextAsync(plistPath);
+                    plist = plist.Replace("RagNextPlayer", title);
+                    await File.WriteAllTextAsync(plistPath, plist);
+                }
+
+                try
                 {
                     File.SetUnixFileMode(targetBinary,
                         UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
                         UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
                         UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
                 }
+                catch { }
             }
-            catch (Exception ex)
+            else
             {
-                Report($"Warning: Failed to set executable permissions: {ex.Message}");
-            }
-
-            // Update the Info.plist CFBundleName (simple string replacement — no XML lib needed)
-            string plistPath = Path.Combine(appBundle, "Contents", "Info.plist");
-            if (File.Exists(plistPath))
-            {
-                string plist = await File.ReadAllTextAsync(plistPath);
-                plist = plist.Replace("RagNextPlayer", title);
-                await File.WriteAllTextAsync(plistPath, plist);
+                // On non-macOS (Windows/Linux cross-publish):
+                // Keep Info.plist and executable binary name untouched so the bundle headers remain 100% pristine.
+                // The outer folder name (MyGame.app) determines the title displayed in macOS Finder/Dock.
+                Report("Packaging Mac standalone bundle with pristine headers for cross-platform distribution...");
             }
 
             // StreamingAssets lives under Contents/Resources/Data/
             string streamingDir = Path.Combine(appBundle, "Contents", "Resources", "Data", "StreamingAssets");
             await InjectGameDataAsync(game, streamingDir);
 
-            // Re-sign Mac app bundle after Info.plist and StreamingAssets modifications
+            // Re-sign Mac app bundle on macOS after modifications
             if (OperatingSystem.IsMacOS())
             {
                 await ReSignMacBundleAsync(appBundle);
-            }
-            else if (OperatingSystem.IsWindows())
-            {
-                await ReSignMacBundleOnWindowsAsync(appBundle);
-            }
-        }
-
-        private static async Task ReSignMacBundleOnWindowsAsync(string appBundle)
-        {
-            try
-            {
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                string rcodesignPath = Path.Combine(baseDir, "Templates", "Tools", "rcodesign.exe");
-                if (!File.Exists(rcodesignPath))
-                {
-                    rcodesignPath = Path.Combine(baseDir, "Tools", "rcodesign.exe");
-                }
-                if (!File.Exists(rcodesignPath))
-                {
-                    rcodesignPath = Path.Combine(Directory.GetCurrentDirectory(), "Templates", "Tools", "rcodesign.exe");
-                }
-
-                if (File.Exists(rcodesignPath))
-                {
-                    Report("Running cross-platform Apple code signing on Windows via rcodesign...");
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = rcodesignPath,
-                        Arguments = $"sign \"{appBundle}\"",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true
-                    };
-                    using var proc = Process.Start(psi);
-                    if (proc != null)
-                    {
-                        string output = await proc.StandardOutput.ReadToEndAsync();
-                        string error = await proc.StandardError.ReadToEndAsync();
-                        await proc.WaitForExitAsync();
-                        if (proc.ExitCode == 0)
-                        {
-                            Report("Successfully signed macOS app bundle on Windows.");
-                        }
-                        else
-                        {
-                            Report($"Warning: rcodesign exited with code {proc.ExitCode}: {error}");
-                        }
-                    }
-                }
-                else
-                {
-                    Report("Notice: rcodesign.exe not found. Mac bundle output without Windows re-signing.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Report($"Warning: Cross-platform Mac signing failed: {ex.Message}");
             }
         }
 
