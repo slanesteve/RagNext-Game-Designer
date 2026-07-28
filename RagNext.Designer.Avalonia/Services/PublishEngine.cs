@@ -199,24 +199,63 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 await ReSignMacBundleAsync(appBundle);
             }
-            else
+            else if (OperatingSystem.IsWindows())
             {
-                // On non-macOS (Windows/Linux), remove stale _CodeSignature directory
-                // created before Info.plist modification so macOS Gatekeeper does not flag
-                // the modified Info.plist as "damaged"
-                string codeSigDir = Path.Combine(appBundle, "Contents", "_CodeSignature");
-                if (Directory.Exists(codeSigDir))
+                await ReSignMacBundleOnWindowsAsync(appBundle);
+            }
+        }
+
+        private static async Task ReSignMacBundleOnWindowsAsync(string appBundle)
+        {
+            try
+            {
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string rcodesignPath = Path.Combine(baseDir, "Templates", "Tools", "rcodesign.exe");
+                if (!File.Exists(rcodesignPath))
                 {
-                    try
+                    rcodesignPath = Path.Combine(baseDir, "Tools", "rcodesign.exe");
+                }
+                if (!File.Exists(rcodesignPath))
+                {
+                    rcodesignPath = Path.Combine(Directory.GetCurrentDirectory(), "Templates", "Tools", "rcodesign.exe");
+                }
+
+                if (File.Exists(rcodesignPath))
+                {
+                    Report("Running cross-platform Apple code signing on Windows via rcodesign...");
+                    var psi = new ProcessStartInfo
                     {
-                        Directory.Delete(codeSigDir, true);
-                        Report("Cleaned stale Mac code signature for Windows cross-publish.");
-                    }
-                    catch (Exception ex)
+                        FileName = rcodesignPath,
+                        Arguments = $"sign \"{appBundle}\"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc != null)
                     {
-                        Report($"Warning: Could not remove stale code signature: {ex.Message}");
+                        string output = await proc.StandardOutput.ReadToEndAsync();
+                        string error = await proc.StandardError.ReadToEndAsync();
+                        await proc.WaitForExitAsync();
+                        if (proc.ExitCode == 0)
+                        {
+                            Report("Successfully signed macOS app bundle on Windows.");
+                        }
+                        else
+                        {
+                            Report($"Warning: rcodesign exited with code {proc.ExitCode}: {error}");
+                        }
                     }
                 }
+                else
+                {
+                    Report("Notice: rcodesign.exe not found. Mac bundle output without Windows re-signing.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Report($"Warning: Cross-platform Mac signing failed: {ex.Message}");
             }
         }
 
