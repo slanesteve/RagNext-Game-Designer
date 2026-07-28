@@ -30,11 +30,11 @@
 		</data>
 		<key>Resources/Data/boot.config</key>
 		<data>
-		TiTYzd0460nCUc8kcxod3GxdoLI=
+		MjaV2vBUNvn5uJ1H8ZKp8R64gUs=
 		</data>
 		<key>Resources/Data/globalgamemanagers</key>
 		<data>
-		2e4Hq6kb7IYMZilQ2BRhBdhh3dA=
+		KKwEttQRa8lxR24IfbAu2Y7lpLQ=
 		</data>
 		<key>Resources/Data/globalgamemanagers.assets</key>
 		<data>
@@ -46,7 +46,7 @@
 		</data>
 		<key>Resources/Data/il2cpp_data/Metadata/global-metadata.dat</key>
 		<data>
-		f3L0seROK9a6z3SifcRcvwFnPjo=
+		hFjA3Vo725TbMrzAWf8ws4qU4gM=
 		</data>
 		<key>Resources/Data/il2cpp_data/Resources/Newtonsoft.Json.dll-resources.dat</key>
 		<data>
@@ -78,7 +78,7 @@
 		</data>
 		<key>Resources/Data/sharedassets0.assets</key>
 		<data>
-		ZOYnnXQ2lzaEULUFvXufwmx9jrM=
+		3np0h8NbJhwPT0Gva4Kx4zqzIok=
 		</data>
 		<key>Resources/Data/sharedassets0.assets.resS</key>
 		<data>
@@ -107,10 +107,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			SkcdABvm7bVpNEynQVmXK+KVgEo=
+			l8BmNQyjY7LSoN8BYv0KHyqkwns=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"4a471d001be6edb569344ca74159972be295804a" or cdhash H"9b47a684dc410d38cf735c9e7e35eab97daa8e7a"</string>
+			<string>cdhash H"97c066350ca363b2d2a0df0162fd0a1f2aa4c27b" or cdhash H"21268e901291406a762120a26e2cff9ce38ad191"</string>
 		</dict>
 		<key>Frameworks/UnityPlayer.dylib</key>
 		<dict>
@@ -125,10 +125,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			itodMnO+LUzSR4aKHpQVzQ7tIjE=
+			QnPZDszxYJ6UmC5sGoukTVENWZ8=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"8ada1d3273be2d4cd247868a1e9415cd0eed2231" or cdhash H"57eeef7390bd2ff2824ad3f5a715bae31735e79e"</string>
+			<string>cdhash H"4273d90eccf1609e94982e6c1a8ba44d510d599f" or cdhash H"9ff5ea11a08bbde42d1ed63e6b5f9485e151b016"</string>
 		</dict>
 		<key>Resources/Data/Resources/unity default resources</key>
 		<dict>
@@ -176,14 +176,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			d/tFdymfHJxa+V0IJzQH0hUUGVyVVIbupzRcdi4kYVE=
+			uQZTYWgnGjpCV/PudI+Jxpb9xtiKBnKTkYfwMoyIbqc=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			rhGcjKWvikDVSPOTVwfsT8D6bI1zZJ3RV4khUnPZ8AE=
+			Xh6iAqle18YAwbvF9iXtt8wVV54Wsy8FKwWqQh54G+Y=
 			</data>
 		</dict>
 		<key>Resources/Data/globalgamemanagers.assets</key>
@@ -204,7 +204,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Uol0APmwvffrmdTY+50uryCGqswE59CuaRfiZ71mVpU=
+			DpuNmDXkdq5vPVLDJj1JgiCZIIs0jbTzLEh4xJ+pN6A=
 			</data>
 		</dict>
 		<key>Resources/Data/il2cpp_data/Resources/Newtonsoft.Json.dll-resources.dat</key>
@@ -260,7 +260,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			JxN/keif4zadd6zOpJin3357c4xfvu7qVJa8+p9bpFQ=
+			BFKRnrmdNCD867rFOicF2KOu2tjZm0hZ4/MCGQ5xI3Q=
 			</data>
 		</dict>
 		<key>Resources/Data/sharedassets0.assets.resS</key>
