@@ -156,6 +156,9 @@ namespace RagNext.Designer.Avalonia.Services
             }
             catch { }
 
+            // Strip stale LC_CODE_SIGNATURE Mach-O header load commands from binaries
+            StripMachOCodeSignatures(appBundle);
+
             string macOsDir = Path.Combine(appBundle, "Contents", "MacOS");
             string plistPath = Path.Combine(appBundle, "Contents", "Info.plist");
 
@@ -198,6 +201,75 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 await ReSignMacBundleAsync(appBundle);
             }
+        }
+
+        private static void StripMachOCodeSignatures(string appBundle)
+        {
+            try
+            {
+                var files = Directory.GetFiles(appBundle, "*", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    string ext = Path.GetExtension(file).ToLowerInvariant();
+                    if (ext == "" || ext == ".dylib" || ext == ".bundle" || ext == ".so")
+                    {
+                        StripSingleMachOSignature(file);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Report($"Warning: Failed to strip Mach-O code signatures: {ex.Message}");
+            }
+        }
+
+        private static void StripSingleMachOSignature(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return;
+                byte[] bytes = File.ReadAllBytes(filePath);
+                if (bytes.Length < 32) return;
+
+                uint magic = BitConverter.ToUInt32(bytes, 0);
+                if (magic != 0xCFFAEDFE && magic != 0xFEEDFACF) return;
+                bool isLE = (magic == 0xCFFAEDFE);
+
+                uint ncmds = isLE ? BitConverter.ToUInt32(bytes, 16) : SwapEndianness(BitConverter.ToUInt32(bytes, 16));
+                int offset = 32;
+
+                bool modified = false;
+                for (int i = 0; i < ncmds; i++)
+                {
+                    if (offset + 8 > bytes.Length) break;
+                    uint cmd = isLE ? BitConverter.ToUInt32(bytes, offset) : SwapEndianness(BitConverter.ToUInt32(bytes, offset));
+                    uint cmdsize = isLE ? BitConverter.ToUInt32(bytes, offset + 4) : SwapEndianness(BitConverter.ToUInt32(bytes, offset + 4));
+
+                    if (cmd == 0x1D) // LC_CODE_SIGNATURE
+                    {
+                        Array.Clear(bytes, offset, (int)cmdsize);
+                        modified = true;
+                        break;
+                    }
+
+                    offset += (int)cmdsize;
+                }
+
+                if (modified)
+                {
+                    File.WriteAllBytes(filePath, bytes);
+                    Report($"Stripped embedded Mach-O code signature header from {Path.GetFileName(filePath)}");
+                }
+            }
+            catch { }
+        }
+
+        private static uint SwapEndianness(uint v)
+        {
+            return ((v & 0x000000FF) << 24) |
+                   ((v & 0x0000FF00) << 8) |
+                   ((v & 0x00FF0000) >> 8) |
+                   ((v & 0xFF000000) >> 24);
         }
 
         private static async Task ReSignMacBundleAsync(string appBundle)
