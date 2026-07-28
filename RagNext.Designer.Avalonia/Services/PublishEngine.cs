@@ -231,28 +231,49 @@ namespace RagNext.Designer.Avalonia.Services
                 byte[] bytes = File.ReadAllBytes(filePath);
                 if (bytes.Length < 32) return;
 
-                uint magic = BitConverter.ToUInt32(bytes, 0);
-                if (magic != 0xCFFAEDFE && magic != 0xFEEDFACF) return;
-                bool isLE = (magic == 0xCFFAEDFE);
-
-                uint ncmds = isLE ? BitConverter.ToUInt32(bytes, 16) : SwapEndianness(BitConverter.ToUInt32(bytes, 16));
-                int offset = 32;
-
                 bool modified = false;
-                for (int i = 0; i < ncmds; i++)
+                uint magic = BitConverter.ToUInt32(bytes, 0);
+
+                if (magic == 0xCAFEBABE || magic == 0xBEBAFECA) // Universal Fat Binary (32-bit fat header)
                 {
-                    if (offset + 8 > bytes.Length) break;
-                    uint cmd = isLE ? BitConverter.ToUInt32(bytes, offset) : SwapEndianness(BitConverter.ToUInt32(bytes, offset));
-                    uint cmdsize = isLE ? BitConverter.ToUInt32(bytes, offset + 4) : SwapEndianness(BitConverter.ToUInt32(bytes, offset + 4));
+                    bool isFatBE = (magic == 0xCAFEBABE);
+                    uint nfatArch = isFatBE ? SwapEndianness(BitConverter.ToUInt32(bytes, 4)) : BitConverter.ToUInt32(bytes, 4);
 
-                    if (cmd == 0x1D) // LC_CODE_SIGNATURE
+                    int fatHeaderSize = 8;
+                    for (int a = 0; a < nfatArch; a++)
                     {
-                        Array.Clear(bytes, offset, (int)cmdsize);
-                        modified = true;
-                        break;
-                    }
+                        int archOffset = fatHeaderSize + (a * 20); // fat_arch struct is 20 bytes
+                        if (archOffset + 20 > bytes.Length) break;
 
-                    offset += (int)cmdsize;
+                        uint sliceOffset = isFatBE ? SwapEndianness(BitConverter.ToUInt32(bytes, archOffset + 8)) : BitConverter.ToUInt32(bytes, archOffset + 8);
+                        if (sliceOffset < (uint)bytes.Length && StripMachOSignatureAtOffset(bytes, (int)sliceOffset))
+                        {
+                            modified = true;
+                        }
+                    }
+                }
+                else if (magic == 0xCAFEBABF || magic == 0xBFBAFECA) // Universal Fat Binary (64-bit fat header)
+                {
+                    bool isFatBE = (magic == 0xCAFEBABF);
+                    uint nfatArch = isFatBE ? SwapEndianness(BitConverter.ToUInt32(bytes, 4)) : BitConverter.ToUInt32(bytes, 4);
+
+                    int fatHeaderSize = 8;
+                    for (int a = 0; a < nfatArch; a++)
+                    {
+                        int archOffset = fatHeaderSize + (a * 32); // fat_arch_64 struct is 32 bytes
+                        if (archOffset + 32 > bytes.Length) break;
+
+                        ulong sliceOffset = isFatBE ? Swap64(BitConverter.ToUInt64(bytes, archOffset + 8)) : BitConverter.ToUInt64(bytes, archOffset + 8);
+                        if (sliceOffset < (ulong)bytes.Length && StripMachOSignatureAtOffset(bytes, (int)sliceOffset))
+                        {
+                            modified = true;
+                        }
+                    }
+                }
+                else
+                {
+                    // Single-architecture Mach-O binary
+                    modified = StripMachOSignatureAtOffset(bytes, 0);
                 }
 
                 if (modified)
@@ -262,6 +283,52 @@ namespace RagNext.Designer.Avalonia.Services
                 }
             }
             catch { }
+        }
+
+        private static bool StripMachOSignatureAtOffset(byte[] bytes, int startOffset)
+        {
+            if (startOffset + 32 > bytes.Length) return false;
+
+            uint magic = BitConverter.ToUInt32(bytes, startOffset);
+            if (magic != 0xCFFAEDFE && magic != 0xFEEDFACF && magic != 0xCEFAEDFE && magic != 0xFEEDFACE) return false;
+
+            bool isLE = (magic == 0xCFFAEDFE || magic == 0xCEFAEDFE);
+            bool is64 = (magic == 0xCFFAEDFE || magic == 0xFEEDFACF);
+
+            uint ncmds = isLE ? BitConverter.ToUInt32(bytes, startOffset + 16) : SwapEndianness(BitConverter.ToUInt32(bytes, startOffset + 16));
+            int headerSize = is64 ? 32 : 28;
+            int offset = startOffset + headerSize;
+
+            bool modified = false;
+            for (int i = 0; i < ncmds; i++)
+            {
+                if (offset + 8 > bytes.Length) break;
+                uint cmd = isLE ? BitConverter.ToUInt32(bytes, offset) : SwapEndianness(BitConverter.ToUInt32(bytes, offset));
+                uint cmdsize = isLE ? BitConverter.ToUInt32(bytes, offset + 4) : SwapEndianness(BitConverter.ToUInt32(bytes, offset + 4));
+
+                if (cmd == 0x1D) // LC_CODE_SIGNATURE
+                {
+                    Array.Clear(bytes, offset, (int)cmdsize);
+                    modified = true;
+                    break;
+                }
+
+                offset += (int)cmdsize;
+            }
+
+            return modified;
+        }
+
+        private static ulong Swap64(ulong v)
+        {
+            return ((v & 0x00000000000000FFUL) << 56) |
+                   ((v & 0x000000000000FF00UL) << 40) |
+                   ((v & 0x0000000000FF0000UL) << 24) |
+                   ((v & 0x00000000FF000000UL) << 8) |
+                   ((v & 0x000000FF00000000UL) >> 8) |
+                   ((v & 0x0000FF0000000000UL) >> 24) |
+                   ((v & 0x00FF000000000000UL) >> 40) |
+                   ((v & 0xFF00000000000000UL) >> 56);
         }
 
         private static uint SwapEndianness(uint v)
