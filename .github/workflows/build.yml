@@ -84,8 +84,8 @@ jobs:
         path: Publish/RagNext_Designer_Windows_x64.zip
         retention-days: 14
 
-  build-mac:
-    name: Build macOS Arm64 & Intel x64 Distributions
+  build-mac-arm64:
+    name: Build & Sign macOS Arm64 Distribution
     runs-on: macos-latest
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.buildMac }}
 
@@ -215,8 +215,80 @@ jobs:
           fi
         fi
 
-        # 7. Restore RagsCore back to multi-targeting temporarily
+        # 7. Restore RagsCore back to multi-targeting
         sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
+
+    - name: Compress macOS Arm64 Distribution
+      run: |
+        cd Publish
+        mv RagNext_Arm64.app RagNext.app
+        zip -r RagNext_Designer_Mac_Arm64.zip RagNext.app
+        rm -rf RagNext.app
+
+    - name: Upload macOS Arm64 Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RagNext_Designer_Mac_Arm64
+        path: Publish/RagNext_Designer_Mac_Arm64.zip
+        retention-days: 14
+
+  build-mac-intel:
+    name: Build & Sign macOS Intel x64 Distribution
+    runs-on: macos-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.buildMac }}
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Configure NuGet Cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Generate macOS .icns App Icon
+      run: |
+        mkdir -p RagNext.iconset
+        sips -z 16 16     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_16x16.png
+        sips -z 32 32     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_16x16@2x.png
+        sips -z 32 32     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_32x32.png
+        sips -z 64 64     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_32x32@2x.png
+        sips -z 128 128   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_128x128.png
+        sips -z 256 256   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_128x128@2x.png
+        sips -z 256 256   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_256x256.png
+        sips -z 512 512   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_256x256@2x.png
+        sips -z 512 512   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_512x512.png
+        sips -z 1024 1024 RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_512x512@2x.png
+        iconutil -c icns RagNext.iconset -o RagNext.icns
+
+    - name: Import Apple Developer ID Certificate
+      env:
+        CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
+        CERT_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERT_PASSWORD }}
+      run: |
+        if [ -n "$CERT_P12" ]; then
+          echo "Importing Developer ID Certificate into macOS Keychain..."
+          echo "$CERT_P12" | base64 --decode > cert.p12
+          security create-keychain -p "" build.keychain
+          security import cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productsign
+          security list-keychains -s build.keychain
+          security default-keychain -s build.keychain
+          security set-keychain-settings build.keychain
+          security unlock-keychain -p "" build.keychain
+          rm cert.p12
+        else
+          echo "No APPLE_DEVELOPER_CERT_P12 found, skipping cert import."
+        fi
 
     - name: Build & Publish Standalone macOS Intel x64
       run: |
@@ -294,24 +366,12 @@ jobs:
         # 7. Restore RagsCore back to multi-targeting
         sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
 
-    - name: Compress macOS Distributions
+    - name: Compress macOS Intel x64 Distribution
       run: |
         cd Publish
-        # Rename to generic RagNext.app before zipping so that the unzipped folders have clean names
-        mv RagNext_Arm64.app RagNext.app
-        zip -r RagNext_Designer_Mac_Arm64.zip RagNext.app
-        rm -rf RagNext.app
-        
         mv RagNext_Intel.app RagNext.app
         zip -r RagNext_Designer_Mac_Intel_x64.zip RagNext.app
         rm -rf RagNext.app
-
-    - name: Upload macOS Arm64 Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: RagNext_Designer_Mac_Arm64
-        path: Publish/RagNext_Designer_Mac_Arm64.zip
-        retention-days: 14
 
     - name: Upload macOS Intel x64 Artifact
       uses: actions/upload-artifact@v4
