@@ -3749,8 +3749,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             else if (!source.IsFolder)
             {
-                // Move entity item into target folder (or root if targetFolderModel == null)
                 EntityTreeHelper.MoveEntityToFolder(catTree, source.Id, targetFolderModel);
+            }
+
+            if (targetFolderModel != null)
+            {
+                targetFolderModel.IsExpanded = true;
             }
 
             RebuildEntityTrees();

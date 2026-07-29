@@ -448,6 +448,11 @@
                                         <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #RoomsTreeView.SelectedItem}"/>
                                     </ContextMenu>
                                 </TreeView.ContextMenu>
+                                <TreeView.Styles>
+                                    <Style Selector="TreeViewItem" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    </Style>
+                                </TreeView.Styles>
                                 <TreeView.ItemTemplate>
                                     <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:EntityTreeNodeViewModel">
                                         <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnEntityTreeNodePointerPressed" PointerMoved="OnEntityTreeNodePointerMoved" PointerReleased="OnEntityTreeNodePointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnEntityTreeNodeDragOver" DragDrop.Drop="OnEntityTreeNodeDrop">

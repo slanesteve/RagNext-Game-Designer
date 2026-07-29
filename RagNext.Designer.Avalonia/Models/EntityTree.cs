@@ -8,6 +8,7 @@ namespace RagNext.Models
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = "New Folder";
+        public bool IsExpanded { get; set; } = true;
         public ObservableCollection<EntityFolder> Children { get; set; } = new();
         public ObservableCollection<Guid> EntityIds { get; set; } = new();
     }

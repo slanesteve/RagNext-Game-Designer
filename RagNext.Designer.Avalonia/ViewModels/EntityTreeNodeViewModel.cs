@@ -28,7 +28,16 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public bool IsExpanded
         {
             get => _isExpanded;
-            set => SetProperty(ref _isExpanded, value);
+            set
+            {
+                if (SetProperty(ref _isExpanded, value))
+                {
+                    if (FolderModel != null)
+                    {
+                        FolderModel.IsExpanded = value;
+                    }
+                }
+            }
         }
 
         public bool IsSelected
@@ -45,6 +54,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 Name = folder.Name,
                 IsFolder = true,
                 Icon = "📁",
+                IsExpanded = folder.IsExpanded,
                 FolderModel = folder,
                 ParentNode = parent
             };
