@@ -263,6 +263,7 @@ jobs:
                 
                 if echo "$STATUS_LINE" | grep -q "Accepted"; then
                   echo "✅ Apple Notarization Accepted!"
+                  sleep 5
                   break
                 elif echo "$STATUS_LINE" | grep -q "Invalid"; then
                   echo "❌ Apple Notarization Rejected!"
@@ -461,6 +462,7 @@ jobs:
                 
                 if echo "$STATUS_LINE" | grep -q "Accepted"; then
                   echo "✅ Apple Notarization Accepted!"
+                  sleep 5
                   break
                 elif echo "$STATUS_LINE" | grep -q "Invalid"; then
                   echo "❌ Apple Notarization Rejected!"
