@@ -134,7 +134,7 @@ jobs:
       run: |
         if [ -n "$CERT_P12" ]; then
           echo "Importing Developer ID Certificate into macOS Keychain..."
-          echo "$CERT_P12" | base64 --decode > cert.p12
+          echo "$CERT_P12" | tr -d ' \r\n' | base64 --decode > cert.p12 2>/dev/null || echo "$CERT_P12" | tr -d ' \r\n' | base64 -d > cert.p12
           security create-keychain -p "" build.keychain
           security import cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productsign
           security list-keychains -s build.keychain
@@ -142,7 +142,8 @@ jobs:
           security set-keychain-settings build.keychain
           security unlock-keychain -p "" build.keychain
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
-          rm cert.p12
+          security find-identity -v -p codesigning build.keychain
+          rm -f cert.p12
         else
           echo "No APPLE_DEVELOPER_CERT_P12 found, skipping cert import."
         fi
@@ -226,8 +227,14 @@ jobs:
         # 6. Sign & Notarize Arm64 App Bundle
         if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
           echo "Signing Arm64 App Bundle..."
-          find Publish/RagNext_Arm64.app/Contents/MacOS -type f \( -name "*.dylib" -o -name "*.so" -o -name "RagNext" \) -exec codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime {} +
-          codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime Publish/RagNext_Arm64.app
+          KEYCHAIN_ID=$(security find-identity -v -p codesigning build.keychain 2>/dev/null | grep "Developer ID Application" | head -n 1 | awk -F '"' '{print $2}')
+          if [ -z "$KEYCHAIN_ID" ]; then
+            KEYCHAIN_ID="${{ secrets.APPLE_TEAM_ID }}"
+          fi
+          echo "Using signing identity: $KEYCHAIN_ID"
+
+          find Publish/RagNext_Arm64.app/Contents/MacOS -type f \( -name "*.dylib" -o -name "*.so" -o -name "RagNext" \) -exec codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime {} +
+          codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime Publish/RagNext_Arm64.app
           
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Arm64 App for Apple Notarization..."
@@ -301,7 +308,7 @@ jobs:
       run: |
         if [ -n "$CERT_P12" ]; then
           echo "Importing Developer ID Certificate into macOS Keychain..."
-          echo "$CERT_P12" | base64 --decode > cert.p12
+          echo "$CERT_P12" | tr -d ' \r\n' | base64 --decode > cert.p12 2>/dev/null || echo "$CERT_P12" | tr -d ' \r\n' | base64 -d > cert.p12
           security create-keychain -p "" build.keychain
           security import cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productsign
           security list-keychains -s build.keychain
@@ -309,7 +316,8 @@ jobs:
           security set-keychain-settings build.keychain
           security unlock-keychain -p "" build.keychain
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
-          rm cert.p12
+          security find-identity -v -p codesigning build.keychain
+          rm -f cert.p12
         else
           echo "No APPLE_DEVELOPER_CERT_P12 found, skipping cert import."
         fi
@@ -393,8 +401,14 @@ jobs:
         # 6. Sign & Notarize Intel x64 App Bundle
         if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
           echo "Signing Intel x64 App Bundle..."
-          find Publish/RagNext_Intel.app/Contents/MacOS -type f \( -name "*.dylib" -o -name "*.so" -o -name "RagNext" \) -exec codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime {} +
-          codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime Publish/RagNext_Intel.app
+          KEYCHAIN_ID=$(security find-identity -v -p codesigning build.keychain 2>/dev/null | grep "Developer ID Application" | head -n 1 | awk -F '"' '{print $2}')
+          if [ -z "$KEYCHAIN_ID" ]; then
+            KEYCHAIN_ID="${{ secrets.APPLE_TEAM_ID }}"
+          fi
+          echo "Using signing identity: $KEYCHAIN_ID"
+
+          find Publish/RagNext_Intel.app/Contents/MacOS -type f \( -name "*.dylib" -o -name "*.so" -o -name "RagNext" \) -exec codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime {} +
+          codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime Publish/RagNext_Intel.app
           
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Intel x64 App for Apple Notarization..."
