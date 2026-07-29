@@ -423,6 +423,106 @@ namespace RagNext.Designer.Avalonia.ViewModels
             set => SetProperty(ref _selectedRoom, value);
         }
 
+        // Characters
+        private EntityTreeNodeViewModel? _selectedCharacterTreeNode;
+        public EntityTreeNodeViewModel? SelectedCharacterTreeNode
+        {
+            get => _selectedCharacterTreeNode;
+            set
+            {
+                if (SetProperty(ref _selectedCharacterTreeNode, value))
+                {
+                    if (value?.Entity is Character c) SelectedCharacter = c;
+                }
+            }
+        }
+        private Character? _selectedCharacter;
+        public Character? SelectedCharacter
+        {
+            get => _selectedCharacter ?? CurrentGame?.Characters?.FirstOrDefault();
+            set => SetProperty(ref _selectedCharacter, value);
+        }
+
+        // Objects
+        private EntityTreeNodeViewModel? _selectedObjectTreeNode;
+        public EntityTreeNodeViewModel? SelectedObjectTreeNode
+        {
+            get => _selectedObjectTreeNode;
+            set
+            {
+                if (SetProperty(ref _selectedObjectTreeNode, value))
+                {
+                    if (value?.Entity is GameObject o) SelectedObject = o;
+                }
+            }
+        }
+        private GameObject? _selectedObject;
+        public GameObject? SelectedObject
+        {
+            get => _selectedObject ?? CurrentGame?.Objects?.FirstOrDefault();
+            set => SetProperty(ref _selectedObject, value);
+        }
+
+        // Functions
+        private EntityTreeNodeViewModel? _selectedFunctionTreeNode;
+        public EntityTreeNodeViewModel? SelectedFunctionTreeNode
+        {
+            get => _selectedFunctionTreeNode;
+            set
+            {
+                if (SetProperty(ref _selectedFunctionTreeNode, value))
+                {
+                    if (value?.Entity is GlobalFunction f) SelectedFunction = f;
+                }
+            }
+        }
+        private GlobalFunction? _selectedFunction;
+        public GlobalFunction? SelectedFunction
+        {
+            get => _selectedFunction ?? CurrentGame?.Functions?.FirstOrDefault();
+            set => SetProperty(ref _selectedFunction, value);
+        }
+
+        // Variables
+        private EntityTreeNodeViewModel? _selectedVariableTreeNode;
+        public EntityTreeNodeViewModel? SelectedVariableTreeNode
+        {
+            get => _selectedVariableTreeNode;
+            set
+            {
+                if (SetProperty(ref _selectedVariableTreeNode, value))
+                {
+                    if (value?.Entity is GameVariable v) SelectedVariable = v;
+                }
+            }
+        }
+        private GameVariable? _selectedVariable;
+        public GameVariable? SelectedVariable
+        {
+            get => _selectedVariable ?? CurrentGame?.Variables?.FirstOrDefault();
+            set => SetProperty(ref _selectedVariable, value);
+        }
+
+        // Timers
+        private EntityTreeNodeViewModel? _selectedTimerTreeNode;
+        public EntityTreeNodeViewModel? SelectedTimerTreeNode
+        {
+            get => _selectedTimerTreeNode;
+            set
+            {
+                if (SetProperty(ref _selectedTimerTreeNode, value))
+                {
+                    if (value?.Entity is GameTimer t) SelectedTimer = t;
+                }
+            }
+        }
+        private GameTimer? _selectedTimer;
+        public GameTimer? SelectedTimer
+        {
+            get => _selectedTimer ?? CurrentGame?.Timers?.FirstOrDefault();
+            set => SetProperty(ref _selectedTimer, value);
+        }
+
         public ICommand AddEntityFolderCommand { get; }
         public ICommand RenameEntityFolderCommand { get; }
         public ICommand DeleteSelectedEntityNodeCommand { get; }

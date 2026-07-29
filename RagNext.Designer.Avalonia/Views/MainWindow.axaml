@@ -1310,22 +1310,51 @@
                                 <TextBlock Grid.Column="0" Text="Characters" FontWeight="Bold" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Characters.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
                             </Grid>
-                            <ListBox Grid.Row="1" ItemsSource="{Binding Characters.Characters}" Background="Transparent" SelectedIndex="0" x:Name="CharsList" SelectionChanged="OnCharsSelectionChanged">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:Character">
-                                        <TextBlock Text="{Binding Name}"/>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
-                                <Button Grid.Column="0" Content="+ Create Character" Command="{Binding AddCharacterCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteCharacterCommand}" CommandParameter="{Binding #CharsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            
+                            <TreeView Grid.Row="1" ItemsSource="{Binding CharacterTreeRoots}" SelectedItem="{Binding SelectedCharacterTreeNode, Mode=TwoWay}" x:Name="CharsTreeView" Background="Transparent">
+                                <TreeView.ContextMenu>
+                                    <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                        <MenuItem Header="➕ Add Character" Command="{Binding AddCharacterCommand}"/>
+                                        <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Characters"/>
+                                        <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #CharsTreeView.SelectedItem}"/>
+                                        <Separator/>
+                                        <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #CharsTreeView.SelectedItem}"/>
+                                    </ContextMenu>
+                                </TreeView.ContextMenu>
+                                <TreeView.Styles>
+                                    <Style Selector="TreeViewItem" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    </Style>
+                                </TreeView.Styles>
+                                <TreeView.ItemTemplate>
+                                    <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnEntityTreeNodePointerPressed" PointerMoved="OnEntityTreeNodePointerMoved" PointerReleased="OnEntityTreeNodePointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnEntityTreeNodeDragOver" DragDrop.Drop="OnEntityTreeNodeDrop">
+                                            <StackPanel.ContextMenu>
+                                                <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                                    <MenuItem Header="➕ Add Character" Command="{Binding AddCharacterCommand}"/>
+                                                    <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Characters"/>
+                                                    <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #CharsTreeView.SelectedItem}"/>
+                                                    <Separator/>
+                                                    <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #CharsTreeView.SelectedItem}"/>
+                                                </ContextMenu>
+                                            </StackPanel.ContextMenu>
+                                            <TextBlock Text="{Binding Icon}" FontSize="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                        </StackPanel>
+                                    </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,10,0,0" ColumnSpacing="6">
+                                <Button Grid.Column="0" Content="+ Char" Command="{Binding AddCharacterCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6"/>
+                                <Button Grid.Column="1" Content="📁 + Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Characters" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6" Background="{DynamicResource ToolbarBtnBg}"/>
+                                <Button Grid.Column="2" Content="Delete" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #CharsTreeView.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B" FontSize="11" Padding="2,6"/>
                             </Grid>
                         </Grid>
                     </Border>
-                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding #CharsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding SelectedCharacter, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <ScrollViewer x:Name="CharDetailsScrollViewer" VerticalScrollBarVisibility="Auto">
-                            <StackPanel Spacing="16" DataContext="{Binding #CharsList.SelectedItem}" x:DataType="models:Character">
+                            <StackPanel Spacing="16" DataContext="{Binding SelectedCharacter}" x:DataType="models:Character">
                                 <TextBlock Text="Edit Character" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
                                 
                                 <TextBlock Text="Name:" Foreground="{DynamicResource TextMuted}"/>
@@ -1551,24 +1580,53 @@
                                 <TextBlock Grid.Column="0" Text="Objects &amp; Items" FontWeight="Bold" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Objects.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
                             </Grid>
-                            <ListBox Grid.Row="1" ItemsSource="{Binding Objects.Objects}" Background="Transparent" SelectedIndex="0" x:Name="ObjectsList" SelectionChanged="OnObjectsSelectionChanged">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:GameObject">
-                                        <TextBlock Text="{Binding Name}"/>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
-                                <Button Grid.Column="0" Content="+ Create Object" Command="{Binding AddObjectCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteObjectCommand}" CommandParameter="{Binding #ObjectsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            
+                            <TreeView Grid.Row="1" ItemsSource="{Binding ObjectTreeRoots}" SelectedItem="{Binding SelectedObjectTreeNode, Mode=TwoWay}" x:Name="ObjectsTreeView" Background="Transparent">
+                                <TreeView.ContextMenu>
+                                    <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                        <MenuItem Header="➕ Add Object" Command="{Binding AddObjectCommand}"/>
+                                        <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Objects"/>
+                                        <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #ObjectsTreeView.SelectedItem}"/>
+                                        <Separator/>
+                                        <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #ObjectsTreeView.SelectedItem}"/>
+                                    </ContextMenu>
+                                </TreeView.ContextMenu>
+                                <TreeView.Styles>
+                                    <Style Selector="TreeViewItem" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    </Style>
+                                </TreeView.Styles>
+                                <TreeView.ItemTemplate>
+                                    <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnEntityTreeNodePointerPressed" PointerMoved="OnEntityTreeNodePointerMoved" PointerReleased="OnEntityTreeNodePointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnEntityTreeNodeDragOver" DragDrop.Drop="OnEntityTreeNodeDrop">
+                                            <StackPanel.ContextMenu>
+                                                <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                                    <MenuItem Header="➕ Add Object" Command="{Binding AddObjectCommand}"/>
+                                                    <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Objects"/>
+                                                    <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #ObjectsTreeView.SelectedItem}"/>
+                                                    <Separator/>
+                                                    <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #ObjectsTreeView.SelectedItem}"/>
+                                                </ContextMenu>
+                                            </StackPanel.ContextMenu>
+                                            <TextBlock Text="{Binding Icon}" FontSize="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                        </StackPanel>
+                                    </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,10,0,0" ColumnSpacing="6">
+                                <Button Grid.Column="0" Content="+ Object" Command="{Binding AddObjectCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6"/>
+                                <Button Grid.Column="1" Content="📁 + Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Objects" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6" Background="{DynamicResource ToolbarBtnBg}"/>
+                                <Button Grid.Column="2" Content="Delete" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #ObjectsTreeView.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B" FontSize="11" Padding="2,6"/>
                             </Grid>
                         </Grid>
                     </Border>
-                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding #ObjectsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <Grid RowDefinitions="Auto, *">
                             <TextBlock Grid.Row="0" Text="Edit Object" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2" Margin="0,0,0,10"/>
                             
-                            <TabControl Grid.Row="1" DataContext="{Binding #ObjectsList.SelectedItem}" x:DataType="models:GameObject">
+                            <TabControl Grid.Row="1" DataContext="{Binding SelectedObject}" x:DataType="models:GameObject">
                                 <!-- Properties Tab -->
                                 <TabItem Header="Properties">
                                     <ScrollViewer x:Name="ObjectDetailsScrollViewer" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
@@ -1962,29 +2020,52 @@
                                 <TextBlock Grid.Column="0" Text="Game Variables" FontWeight="Bold" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
                             </Grid>
-                            <ListBox Grid.Row="1" ItemsSource="{Binding Variables.Variables}" Background="Transparent" x:Name="VarsList">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:GameVariable">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1" Text="🔒" FontSize="10" Margin="4,0,0,0"
-                                                       VerticalAlignment="Center" ToolTip.Tip="System-reserved variable — cannot be deleted"
-                                                       IsVisible="{Binding IsSystemVariable}"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
-                                <Button Grid.Column="0" Content="+ Define Variable" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Variables.AddVariableCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteVariableCommand}" CommandParameter="{Binding #VarsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"
-                                        ToolTip.Tip="System-reserved variables cannot be deleted"/>
+                            
+                            <TreeView Grid.Row="1" ItemsSource="{Binding VariableTreeRoots}" SelectedItem="{Binding SelectedVariableTreeNode, Mode=TwoWay}" x:Name="VarsTreeView" Background="Transparent">
+                                <TreeView.ContextMenu>
+                                    <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                        <MenuItem Header="➕ Add Variable" Command="{Binding Variables.AddVariableCommand}"/>
+                                        <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Variables"/>
+                                        <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #VarsTreeView.SelectedItem}"/>
+                                        <Separator/>
+                                        <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #VarsTreeView.SelectedItem}"/>
+                                    </ContextMenu>
+                                </TreeView.ContextMenu>
+                                <TreeView.Styles>
+                                    <Style Selector="TreeViewItem" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    </Style>
+                                </TreeView.Styles>
+                                <TreeView.ItemTemplate>
+                                    <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnEntityTreeNodePointerPressed" PointerMoved="OnEntityTreeNodePointerMoved" PointerReleased="OnEntityTreeNodePointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnEntityTreeNodeDragOver" DragDrop.Drop="OnEntityTreeNodeDrop">
+                                            <StackPanel.ContextMenu>
+                                                <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                                    <MenuItem Header="➕ Add Variable" Command="{Binding Variables.AddVariableCommand}"/>
+                                                    <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Variables"/>
+                                                    <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #VarsTreeView.SelectedItem}"/>
+                                                    <Separator/>
+                                                    <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #VarsTreeView.SelectedItem}"/>
+                                                </ContextMenu>
+                                            </StackPanel.ContextMenu>
+                                            <TextBlock Text="{Binding Icon}" FontSize="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                        </StackPanel>
+                                    </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,10,0,0" ColumnSpacing="6">
+                                <Button Grid.Column="0" Content="+ Var" Command="{Binding Variables.AddVariableCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6"/>
+                                <Button Grid.Column="1" Content="📁 + Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Variables" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6" Background="{DynamicResource ToolbarBtnBg}"/>
+                                <Button Grid.Column="2" Content="Delete" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #VarsTreeView.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B" FontSize="11" Padding="2,6"/>
                             </Grid>
                         </Grid>
                     </Border>
                     
-                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding #VarsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding SelectedVariable, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel Spacing="16" DataContext="{Binding #VarsList.SelectedItem}" x:DataType="models:GameVariable" Margin="0,0,12,0">
+                            <StackPanel Spacing="16" DataContext="{Binding SelectedVariable}" x:DataType="models:GameVariable" Margin="0,0,12,0">
                                 <TextBlock Text="Edit Variable" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
 
                                 <!-- System Variable Notice -->
@@ -2163,21 +2244,50 @@
                                 <TextBlock Grid.Column="0" Text="Game Timers" FontWeight="Bold" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Timers.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
                             </Grid>
-                            <ListBox Grid.Row="1" ItemsSource="{Binding Timers.Timers}" Background="Transparent" SelectedIndex="0" x:Name="TimersList">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:GameTimer">
-                                        <TextBlock Text="{Binding Name}"/>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
-                                <Button Grid.Column="0" Content="+ Add Timer" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Timers.AddTimerCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteTimerCommand}" CommandParameter="{Binding #TimersList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            
+                            <TreeView Grid.Row="1" ItemsSource="{Binding TimerTreeRoots}" SelectedItem="{Binding SelectedTimerTreeNode, Mode=TwoWay}" x:Name="TimersTreeView" Background="Transparent">
+                                <TreeView.ContextMenu>
+                                    <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                        <MenuItem Header="➕ Add Timer" Command="{Binding Timers.AddTimerCommand}"/>
+                                        <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Timers"/>
+                                        <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #TimersTreeView.SelectedItem}"/>
+                                        <Separator/>
+                                        <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #TimersTreeView.SelectedItem}"/>
+                                    </ContextMenu>
+                                </TreeView.ContextMenu>
+                                <TreeView.Styles>
+                                    <Style Selector="TreeViewItem" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    </Style>
+                                </TreeView.Styles>
+                                <TreeView.ItemTemplate>
+                                    <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnEntityTreeNodePointerPressed" PointerMoved="OnEntityTreeNodePointerMoved" PointerReleased="OnEntityTreeNodePointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnEntityTreeNodeDragOver" DragDrop.Drop="OnEntityTreeNodeDrop">
+                                            <StackPanel.ContextMenu>
+                                                <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                                    <MenuItem Header="➕ Add Timer" Command="{Binding Timers.AddTimerCommand}"/>
+                                                    <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Timers"/>
+                                                    <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #TimersTreeView.SelectedItem}"/>
+                                                    <Separator/>
+                                                    <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #TimersTreeView.SelectedItem}"/>
+                                                </ContextMenu>
+                                            </StackPanel.ContextMenu>
+                                            <TextBlock Text="{Binding Icon}" FontSize="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                        </StackPanel>
+                                    </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,10,0,0" ColumnSpacing="6">
+                                <Button Grid.Column="0" Content="+ Timer" Command="{Binding Timers.AddTimerCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6"/>
+                                <Button Grid.Column="1" Content="📁 + Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Timers" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6" Background="{DynamicResource ToolbarBtnBg}"/>
+                                <Button Grid.Column="2" Content="Delete" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #TimersTreeView.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B" FontSize="11" Padding="2,6"/>
                             </Grid>
                         </Grid>
                     </Border>
-                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding #TimersList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
-                        <StackPanel Spacing="16" DataContext="{Binding #TimersList.SelectedItem}" x:DataType="models:GameTimer">
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding SelectedTimer, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <StackPanel Spacing="16" DataContext="{Binding SelectedTimer}" x:DataType="models:GameTimer">
                             <TextBlock Text="Edit Timer" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
                             
                             <TextBlock Text="Name" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
@@ -2212,21 +2322,50 @@
                                 <TextBlock Grid.Column="0" Text="Global Scripting Functions" FontWeight="Bold" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Functions.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
                             </Grid>
-                            <ListBox Grid.Row="1" ItemsSource="{Binding CurrentGame.Functions}" Background="Transparent" SelectedIndex="0" x:Name="FuncsList">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:GlobalFunction">
-                                        <TextBlock Text="{Binding Name}"/>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
-                                <Button Grid.Column="0" Content="+ Create Function" Command="{Binding Functions.AddFunctionCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Delete" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteFunctionCommand}" CommandParameter="{Binding #FuncsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            
+                            <TreeView Grid.Row="1" ItemsSource="{Binding FunctionTreeRoots}" SelectedItem="{Binding SelectedFunctionTreeNode, Mode=TwoWay}" x:Name="FuncsTreeView" Background="Transparent">
+                                <TreeView.ContextMenu>
+                                    <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                        <MenuItem Header="➕ Add Function" Command="{Binding Functions.AddFunctionCommand}"/>
+                                        <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Functions"/>
+                                        <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #FuncsTreeView.SelectedItem}"/>
+                                        <Separator/>
+                                        <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #FuncsTreeView.SelectedItem}"/>
+                                    </ContextMenu>
+                                </TreeView.ContextMenu>
+                                <TreeView.Styles>
+                                    <Style Selector="TreeViewItem" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    </Style>
+                                </TreeView.Styles>
+                                <TreeView.ItemTemplate>
+                                    <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnEntityTreeNodePointerPressed" PointerMoved="OnEntityTreeNodePointerMoved" PointerReleased="OnEntityTreeNodePointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnEntityTreeNodeDragOver" DragDrop.Drop="OnEntityTreeNodeDrop">
+                                            <StackPanel.ContextMenu>
+                                                <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                                    <MenuItem Header="➕ Add Function" Command="{Binding Functions.AddFunctionCommand}"/>
+                                                    <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Functions"/>
+                                                    <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #FuncsTreeView.SelectedItem}"/>
+                                                    <Separator/>
+                                                    <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #FuncsTreeView.SelectedItem}"/>
+                                                </ContextMenu>
+                                            </StackPanel.ContextMenu>
+                                            <TextBlock Text="{Binding Icon}" FontSize="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                        </StackPanel>
+                                    </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,10,0,0" ColumnSpacing="6">
+                                <Button Grid.Column="0" Content="+ Func" Command="{Binding Functions.AddFunctionCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6"/>
+                                <Button Grid.Column="1" Content="📁 + Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Functions" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6" Background="{DynamicResource ToolbarBtnBg}"/>
+                                <Button Grid.Column="2" Content="Delete" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #FuncsTreeView.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B" FontSize="11" Padding="2,6"/>
                             </Grid>
                         </Grid>
                     </Border>
-                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20">
-                        <StackPanel Spacing="16" DataContext="{Binding #FuncsList.SelectedItem}" x:DataType="models:GlobalFunction">
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding SelectedFunction, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <StackPanel Spacing="16" DataContext="{Binding SelectedFunction}" x:DataType="models:GlobalFunction">
                             <TextBlock Text="Edit Function Routine" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
                             
                             <TextBlock Text="Function Name:" Foreground="{DynamicResource TextMuted}"/>

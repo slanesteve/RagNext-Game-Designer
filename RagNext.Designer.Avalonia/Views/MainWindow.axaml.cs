@@ -45,6 +45,24 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private Character? CurrentSelectedCharacter
+        {
+            get
+            {
+                var treeView = this.FindControl<TreeView>("CharsTreeView");
+                return (treeView?.SelectedItem as EntityTreeNodeViewModel)?.Entity as Character;
+            }
+        }
+
+        private GameObject? CurrentSelectedObject
+        {
+            get
+            {
+                var treeView = this.FindControl<TreeView>("ObjectsTreeView");
+                return (treeView?.SelectedItem as EntityTreeNodeViewModel)?.Entity as GameObject;
+            }
+        }
+
         public ObservableCollection<string> RecentColors { get; } = new()
         {
             "#FFFFFF", "#EF4444", "#3B82F6", "#10B981", "#F59E0B"
@@ -3099,11 +3117,11 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         room.PortraitImagePath = localPathReal;
                     }
-                    else if (dropType == "Character" && CharsList.SelectedItem is Character character)
+                    else if (dropType == "Character" && CurrentSelectedCharacter is Character character)
                     {
                         character.PortraitImagePath = localPathReal;
                     }
-                    else if (dropType == "Object" && ObjectsList.SelectedItem is GameObject obj)
+                    else if (dropType == "Object" && CurrentSelectedObject is GameObject obj)
                     {
                         obj.PortraitImagePath = localPathReal;
                     }
@@ -3665,11 +3683,11 @@ namespace RagNext.Designer.Avalonia.Views
                             {
                                 room.PortraitImagePath = localPathReal;
                             }
-                            else if (dropType == "Character" && CharsList.SelectedItem is Character character)
+                            else if (dropType == "Character" && CurrentSelectedCharacter is Character character)
                             {
                                 character.PortraitImagePath = localPathReal;
                             }
-                            else if (dropType == "Object" && ObjectsList.SelectedItem is GameObject obj)
+                            else if (dropType == "Object" && CurrentSelectedObject is GameObject obj)
                             {
                                 obj.PortraitImagePath = localPathReal;
                             }
