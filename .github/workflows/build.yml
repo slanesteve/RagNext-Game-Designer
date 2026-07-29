@@ -159,19 +159,19 @@ jobs:
         # 4. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Arm64/* Publish/RagNext_Arm64.app/Contents/MacOS/
         
-        # Move non-binary WebAssets to Contents/Resources and symlink for .NET runtime resolution
-        if [ -d "Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets" ]; then
-          mv Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets Publish/RagNext_Arm64.app/Contents/Resources/WebAssets
-          ln -s ../Resources/WebAssets Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets
-        fi
-        if [ -d "Templates" ]; then
-          mkdir -p Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS
-          cp -R Templates/* Publish/RagNext_Arm64.app/Contents/Resources/Templates/
-          if [ -d "Templates/MacOS/MacOS.app" ]; then
-            codesign --remove-signature Templates/MacOS/MacOS.app 2>/dev/null || true
-            ditto -c -k --keepParent Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.zip
-            rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
+        # Move non-binary resource directories (Samples, WebAssets, Templates) to Contents/Resources for Apple bundle compliance
+        for resDir in Samples WebAssets Templates; do
+          if [ -d "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir" ]; then
+            rm -rf "Publish/RagNext_Arm64.app/Contents/Resources/$resDir"
+            mv "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir" "Publish/RagNext_Arm64.app/Contents/Resources/$resDir"
+            ln -s "../Resources/$resDir" "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir"
           fi
+        done
+
+        if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
+          codesign --remove-signature Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app 2>/dev/null || true
+          ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.zip
+          rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
         fi
         cp RagNext.icns Publish/RagNext_Arm64.app/Contents/Resources/
 
@@ -320,19 +320,19 @@ jobs:
         # 4. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Intel/* Publish/RagNext_Intel.app/Contents/MacOS/
         
-        # Move non-binary WebAssets to Contents/Resources and symlink for .NET runtime resolution
-        if [ -d "Publish/RagNext_Intel.app/Contents/MacOS/WebAssets" ]; then
-          mv Publish/RagNext_Intel.app/Contents/MacOS/WebAssets Publish/RagNext_Intel.app/Contents/Resources/WebAssets
-          ln -s ../Resources/WebAssets Publish/RagNext_Intel.app/Contents/MacOS/WebAssets
-        fi
-        if [ -d "Templates" ]; then
-          mkdir -p Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS
-          cp -R Templates/* Publish/RagNext_Intel.app/Contents/Resources/Templates/
-          if [ -d "Templates/MacOS/MacOS.app" ]; then
-            codesign --remove-signature Templates/MacOS/MacOS.app 2>/dev/null || true
-            ditto -c -k --keepParent Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.zip
-            rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
+        # Move non-binary resource directories (Samples, WebAssets, Templates) to Contents/Resources for Apple bundle compliance
+        for resDir in Samples WebAssets Templates; do
+          if [ -d "Publish/RagNext_Intel.app/Contents/MacOS/$resDir" ]; then
+            rm -rf "Publish/RagNext_Intel.app/Contents/Resources/$resDir"
+            mv "Publish/RagNext_Intel.app/Contents/MacOS/$resDir" "Publish/RagNext_Intel.app/Contents/Resources/$resDir"
+            ln -s "../Resources/$resDir" "Publish/RagNext_Intel.app/Contents/MacOS/$resDir"
           fi
+        done
+
+        if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
+          codesign --remove-signature Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app 2>/dev/null || true
+          ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.zip
+          rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
         fi
         cp RagNext.icns Publish/RagNext_Intel.app/Contents/Resources/
 
