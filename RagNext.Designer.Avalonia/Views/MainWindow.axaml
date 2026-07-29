@@ -450,7 +450,7 @@
                                 </TreeView.ContextMenu>
                                 <TreeView.ItemTemplate>
                                     <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:EntityTreeNodeViewModel">
-                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnEntityTreeNodePointerPressed" PointerMoved="OnEntityTreeNodePointerMoved" PointerReleased="OnEntityTreeNodePointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnEntityTreeNodeDragOver" DragDrop.Drop="OnEntityTreeNodeDrop">
                                             <StackPanel.ContextMenu>
                                                 <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
                                                     <MenuItem Header="➕ Add Room" Command="{Binding AddRoomCommand}"/>

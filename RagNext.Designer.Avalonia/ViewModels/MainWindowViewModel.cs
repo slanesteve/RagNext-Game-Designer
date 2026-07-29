@@ -3713,6 +3713,60 @@ namespace RagNext.Designer.Avalonia.ViewModels
             foreach (var node in timerNodes) TimerTreeRoots.Add(node);
         }
 
+        public async Task MoveEntityTreeNodeAsync(EntityTreeNodeViewModel source, EntityTreeNodeViewModel target)
+        {
+            if (source == null || target == null || source == target) return;
+
+            // Determine which category tree source belongs to
+            EntityCategoryTree catTree = EntityTreeDoc.Rooms;
+            if (RoomTreeRoots.Contains(source) || ContainsNodeRecursive(RoomTreeRoots, source)) catTree = EntityTreeDoc.Rooms;
+            else if (ObjectTreeRoots.Contains(source) || ContainsNodeRecursive(ObjectTreeRoots, source)) catTree = EntityTreeDoc.Objects;
+            else if (CharacterTreeRoots.Contains(source) || ContainsNodeRecursive(CharacterTreeRoots, source)) catTree = EntityTreeDoc.Characters;
+            else if (FunctionTreeRoots.Contains(source) || ContainsNodeRecursive(FunctionTreeRoots, source)) catTree = EntityTreeDoc.Functions;
+            else if (VariableTreeRoots.Contains(source) || ContainsNodeRecursive(VariableTreeRoots, source)) catTree = EntityTreeDoc.Variables;
+            else if (TimerTreeRoots.Contains(source) || ContainsNodeRecursive(TimerTreeRoots, source)) catTree = EntityTreeDoc.Timers;
+
+            // Target folder is target if it's a folder, or target's parent folder if target is a leaf
+            EntityFolder? targetFolderModel = target.IsFolder ? target.FolderModel : target.ParentNode?.FolderModel;
+
+            if (source.IsFolder && source.FolderModel != null)
+            {
+                // Prevent moving a folder into itself or its children
+                if (targetFolderModel == source.FolderModel) return;
+
+                // Remove folder from old parent/roots
+                EntityTreeHelper.RemoveFolder(catTree, source.FolderModel);
+
+                // Add to new parent or roots
+                if (targetFolderModel != null)
+                {
+                    targetFolderModel.Children.Add(source.FolderModel);
+                }
+                else
+                {
+                    catTree.Roots.Add(source.FolderModel);
+                }
+            }
+            else if (!source.IsFolder)
+            {
+                // Move entity item into target folder (or root if targetFolderModel == null)
+                EntityTreeHelper.MoveEntityToFolder(catTree, source.Id, targetFolderModel);
+            }
+
+            RebuildEntityTrees();
+            await SaveEntityTreeAsync();
+        }
+
+        private bool ContainsNodeRecursive(IEnumerable<EntityTreeNodeViewModel> nodes, EntityTreeNodeViewModel target)
+        {
+            foreach (var n in nodes)
+            {
+                if (n == target) return true;
+                if (ContainsNodeRecursive(n.Children, target)) return true;
+            }
+            return false;
+        }
+
         public static global::Avalonia.Data.Converters.IMultiValueConverter MakeTupleConverter { get; } = new FuncMultiValueConverter<object, Tuple<object, object>>(parts =>
         {
             if (parts == null || parts.Count < 2) return new Tuple<object, object>(null!, null!);

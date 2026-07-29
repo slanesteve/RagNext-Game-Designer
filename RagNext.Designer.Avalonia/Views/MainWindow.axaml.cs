@@ -3266,6 +3266,90 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private Point? _entityDragStartPoint;
+        private PointerPressedEventArgs? _entityDragPressedEventArgs;
+        private EntityTreeNodeViewModel? _draggedEntityNode;
+
+        private void OnEntityTreeNodePointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            var prop = e.GetCurrentPoint(this).Properties;
+            if (prop.IsLeftButtonPressed)
+            {
+                _entityDragStartPoint = e.GetPosition(this);
+                _entityDragPressedEventArgs = e;
+
+                if (sender is StackPanel panel && panel.DataContext is EntityTreeNodeViewModel node)
+                {
+                    _draggedEntityNode = node;
+                }
+            }
+        }
+
+        private async void OnEntityTreeNodePointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (_entityDragStartPoint.HasValue && _entityDragPressedEventArgs != null && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                var currentPos = e.GetPosition(this);
+                var delta = currentPos - _entityDragStartPoint.Value;
+                if (Math.Abs(delta.X) > 5 || Math.Abs(delta.Y) > 5)
+                {
+                    var dragPressedArgs = _entityDragPressedEventArgs;
+                    _entityDragStartPoint = null;
+                    _entityDragPressedEventArgs = null;
+
+                    if (_draggedEntityNode != null)
+                    {
+                        var data = new DataTransfer();
+                        var item = DataTransferItem.Create(DataFormat.Text, "rags-entity-node:" + _draggedEntityNode.Id);
+                        data.Add(item);
+
+                        try
+                        {
+                            await DragDrop.DoDragDropAsync(dragPressedArgs, data, DragDropEffects.Move);
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+                }
+            }
+        }
+
+        private void OnEntityTreeNodePointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            _entityDragStartPoint = null;
+            _entityDragPressedEventArgs = null;
+        }
+
+        private void OnEntityTreeNodeDragOver(object? sender, global::Avalonia.Input.DragEventArgs e)
+        {
+            if (_draggedEntityNode != null && sender is StackPanel panel && panel.DataContext is EntityTreeNodeViewModel targetNode)
+            {
+                if (_draggedEntityNode != targetNode)
+                {
+                    e.DragEffects = DragDropEffects.Move;
+                    e.Handled = true;
+                    return;
+                }
+            }
+            e.DragEffects = DragDropEffects.None;
+            e.Handled = true;
+        }
+
+        private async void OnEntityTreeNodeDrop(object? sender, global::Avalonia.Input.DragEventArgs e)
+        {
+            if (_draggedEntityNode != null && sender is StackPanel panel && panel.DataContext is EntityTreeNodeViewModel targetNode)
+            {
+                if (DataContext is MainWindowViewModel vm)
+                {
+                    var source = _draggedEntityNode;
+                    _draggedEntityNode = null;
+                    e.Handled = true;
+                    await vm.MoveEntityTreeNodeAsync(source, targetNode);
+                }
+            }
+        }
+
         private readonly System.Collections.Generic.Dictionary<Button, object> _originalButtonContents = new();
 
         private void StartButtonSpinner(Button btn)
