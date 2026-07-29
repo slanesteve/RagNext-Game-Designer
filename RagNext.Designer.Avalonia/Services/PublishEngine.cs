@@ -146,7 +146,7 @@ namespace RagNext.Designer.Avalonia.Services
             }
             CopyDirectory(sourceApp, appBundle);
 
-            // Nuke all pre-existing _CodeSignature directories from template copy immediately
+            // Remove any leftover _CodeSignature directories from template copy
             try
             {
                 foreach (var sigDir in Directory.GetDirectories(appBundle, "_CodeSignature", SearchOption.AllDirectories))
@@ -155,9 +155,6 @@ namespace RagNext.Designer.Avalonia.Services
                 }
             }
             catch { }
-
-            // Strip stale LC_CODE_SIGNATURE Mach-O header load commands from binaries
-            StripMachOCodeSignatures(appBundle);
 
             string macOsDir = Path.Combine(appBundle, "Contents", "MacOS");
             string plistPath = Path.Combine(appBundle, "Contents", "Info.plist");
@@ -187,9 +184,9 @@ namespace RagNext.Designer.Avalonia.Services
             else
             {
                 // On non-macOS (Windows/Linux cross-publish):
-                // Keep Info.plist and executable binary name untouched so the bundle headers remain 100% pristine.
-                // The outer folder name (MyGame.app) determines the title displayed in macOS Finder/Dock.
-                Report("Packaging Mac standalone bundle with pristine headers for cross-platform distribution...");
+                // Keep Info.plist and executable binary name untouched so the bundle remains 100% pristine.
+                // The template is pre-stripped natively by Apple's codesign --remove-signature on macOS during template build.
+                Report("Packaging Mac standalone bundle with pre-cleared template for cross-platform distribution...");
             }
 
             // StreamingAssets lives under Contents/Resources/Data/
@@ -201,142 +198,6 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 await ReSignMacBundleAsync(appBundle);
             }
-        }
-
-        private static void StripMachOCodeSignatures(string appBundle)
-        {
-            try
-            {
-                var files = Directory.GetFiles(appBundle, "*", SearchOption.AllDirectories);
-                foreach (var file in files)
-                {
-                    string ext = Path.GetExtension(file).ToLowerInvariant();
-                    if (ext == "" || ext == ".dylib" || ext == ".bundle" || ext == ".so")
-                    {
-                        StripSingleMachOSignature(file);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Report($"Warning: Failed to strip Mach-O code signatures: {ex.Message}");
-            }
-        }
-
-        private static void StripSingleMachOSignature(string filePath)
-        {
-            try
-            {
-                if (!File.Exists(filePath)) return;
-                byte[] bytes = File.ReadAllBytes(filePath);
-                if (bytes.Length < 32) return;
-
-                bool modified = false;
-                uint magic = BitConverter.ToUInt32(bytes, 0);
-
-                if (magic == 0xCAFEBABE || magic == 0xBEBAFECA) // Universal Fat Binary (32-bit fat header)
-                {
-                    bool isFatBE = (magic == 0xCAFEBABE);
-                    uint nfatArch = isFatBE ? SwapEndianness(BitConverter.ToUInt32(bytes, 4)) : BitConverter.ToUInt32(bytes, 4);
-
-                    int fatHeaderSize = 8;
-                    for (int a = 0; a < nfatArch; a++)
-                    {
-                        int archOffset = fatHeaderSize + (a * 20); // fat_arch struct is 20 bytes
-                        if (archOffset + 20 > bytes.Length) break;
-
-                        uint sliceOffset = isFatBE ? SwapEndianness(BitConverter.ToUInt32(bytes, archOffset + 8)) : BitConverter.ToUInt32(bytes, archOffset + 8);
-                        if (sliceOffset < (uint)bytes.Length && StripMachOSignatureAtOffset(bytes, (int)sliceOffset))
-                        {
-                            modified = true;
-                        }
-                    }
-                }
-                else if (magic == 0xCAFEBABF || magic == 0xBFBAFECA) // Universal Fat Binary (64-bit fat header)
-                {
-                    bool isFatBE = (magic == 0xCAFEBABF);
-                    uint nfatArch = isFatBE ? SwapEndianness(BitConverter.ToUInt32(bytes, 4)) : BitConverter.ToUInt32(bytes, 4);
-
-                    int fatHeaderSize = 8;
-                    for (int a = 0; a < nfatArch; a++)
-                    {
-                        int archOffset = fatHeaderSize + (a * 32); // fat_arch_64 struct is 32 bytes
-                        if (archOffset + 32 > bytes.Length) break;
-
-                        ulong sliceOffset = isFatBE ? Swap64(BitConverter.ToUInt64(bytes, archOffset + 8)) : BitConverter.ToUInt64(bytes, archOffset + 8);
-                        if (sliceOffset < (ulong)bytes.Length && StripMachOSignatureAtOffset(bytes, (int)sliceOffset))
-                        {
-                            modified = true;
-                        }
-                    }
-                }
-                else
-                {
-                    // Single-architecture Mach-O binary
-                    modified = StripMachOSignatureAtOffset(bytes, 0);
-                }
-
-                if (modified)
-                {
-                    File.WriteAllBytes(filePath, bytes);
-                    Report($"Stripped embedded Mach-O code signature header from {Path.GetFileName(filePath)}");
-                }
-            }
-            catch { }
-        }
-
-        private static bool StripMachOSignatureAtOffset(byte[] bytes, int startOffset)
-        {
-            if (startOffset + 32 > bytes.Length) return false;
-
-            uint magic = BitConverter.ToUInt32(bytes, startOffset);
-            if (magic != 0xCFFAEDFE && magic != 0xFEEDFACF && magic != 0xCEFAEDFE && magic != 0xFEEDFACE) return false;
-
-            bool isLE = (magic == 0xCFFAEDFE || magic == 0xCEFAEDFE);
-            bool is64 = (magic == 0xCFFAEDFE || magic == 0xFEEDFACF);
-
-            uint ncmds = isLE ? BitConverter.ToUInt32(bytes, startOffset + 16) : SwapEndianness(BitConverter.ToUInt32(bytes, startOffset + 16));
-            int headerSize = is64 ? 32 : 28;
-            int offset = startOffset + headerSize;
-
-            bool modified = false;
-            for (int i = 0; i < ncmds; i++)
-            {
-                if (offset + 8 > bytes.Length) break;
-                uint cmd = isLE ? BitConverter.ToUInt32(bytes, offset) : SwapEndianness(BitConverter.ToUInt32(bytes, offset));
-                uint cmdsize = isLE ? BitConverter.ToUInt32(bytes, offset + 4) : SwapEndianness(BitConverter.ToUInt32(bytes, offset + 4));
-
-                if (cmd == 0x1D) // LC_CODE_SIGNATURE
-                {
-                    Array.Clear(bytes, offset, (int)cmdsize);
-                    modified = true;
-                    break;
-                }
-
-                offset += (int)cmdsize;
-            }
-
-            return modified;
-        }
-
-        private static ulong Swap64(ulong v)
-        {
-            return ((v & 0x00000000000000FFUL) << 56) |
-                   ((v & 0x000000000000FF00UL) << 40) |
-                   ((v & 0x0000000000FF0000UL) << 24) |
-                   ((v & 0x00000000FF000000UL) << 8) |
-                   ((v & 0x000000FF00000000UL) >> 8) |
-                   ((v & 0x0000FF0000000000UL) >> 24) |
-                   ((v & 0x00FF000000000000UL) >> 40) |
-                   ((v & 0xFF00000000000000UL) >> 56);
-        }
-
-        private static uint SwapEndianness(uint v)
-        {
-            return ((v & 0x000000FF) << 24) |
-                   ((v & 0x0000FF00) << 8) |
-                   ((v & 0x00FF0000) >> 8) |
-                   ((v & 0xFF000000) >> 24);
         }
 
         private static async Task ReSignMacBundleAsync(string appBundle)
