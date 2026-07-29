@@ -159,6 +159,8 @@ jobs:
         cp -R Publish/Designer-Mac-Arm64/* Publish/RagNext_Arm64.app/Contents/MacOS/
         cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets
         if [ -d "Templates" ]; then
+          # Ensure pre-packaged Mac player template has signatures officially stripped by Apple codesign
+          codesign --remove-signature Templates/MacOS/MacOS.app 2>/dev/null || true
           cp -R Templates Publish/RagNext_Arm64.app/Contents/Resources/Templates
         fi
         cp RagNext.icns Publish/RagNext_Arm64.app/Contents/Resources/
@@ -307,6 +309,8 @@ jobs:
         cp -R Publish/Designer-Mac-Intel/* Publish/RagNext_Intel.app/Contents/MacOS/
         cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Intel.app/Contents/MacOS/WebAssets
         if [ -d "Templates" ]; then
+          # Ensure pre-packaged Mac player template has signatures officially stripped by Apple codesign
+          codesign --remove-signature Templates/MacOS/MacOS.app 2>/dev/null || true
           cp -R Templates Publish/RagNext_Intel.app/Contents/Resources/Templates
         fi
         cp RagNext.icns Publish/RagNext_Intel.app/Contents/Resources/
