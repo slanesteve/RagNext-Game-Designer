@@ -250,7 +250,7 @@ jobs:
       run: |
         cd Publish
         mv RagNext_Arm64.app RagNext.app
-        zip -r RagNext_Designer_Mac_Arm64.zip RagNext.app
+        ditto -c -k --keepParent RagNext.app RagNext_Designer_Mac_Arm64.zip
         rm -rf RagNext.app
 
     - name: Upload macOS Arm64 Artifact
@@ -410,7 +410,7 @@ jobs:
       run: |
         cd Publish
         mv RagNext_Intel.app RagNext.app
-        zip -r RagNext_Designer_Mac_Intel_x64.zip RagNext.app
+        ditto -c -k --keepParent RagNext.app RagNext_Designer_Mac_Intel_x64.zip
         rm -rf RagNext.app
 
     - name: Upload macOS Intel x64 Artifact
