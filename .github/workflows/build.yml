@@ -64,6 +64,11 @@ jobs:
         if [ -d "Templates" ]; then
           mkdir -p Publish/Designer-Windows/Templates
           cp -R Templates/* Publish/Designer-Windows/Templates/
+          for tPlatform in MacOS Windows Linux WebGL; do
+            if [ -d "Publish/Designer-Windows/Templates/$tPlatform" ]; then
+              (cd "Publish/Designer-Windows/Templates/$tPlatform" && zip -q -r "$tPlatform.zip" . && find . -mindepth 1 ! -name "$tPlatform.zip" -exec rm -rf {} +)
+            fi
+          done
         fi
 
         # 4. Bundle rcodesign for cross-platform macOS signing on Windows
@@ -487,6 +492,11 @@ jobs:
         if [ -d "Templates" ]; then
           mkdir -p Publish/Designer-Linux/Templates
           cp -R Templates/* Publish/Designer-Linux/Templates/
+          for tPlatform in MacOS Windows Linux WebGL; do
+            if [ -d "Publish/Designer-Linux/Templates/$tPlatform" ]; then
+              (cd "Publish/Designer-Linux/Templates/$tPlatform" && zip -q -r "$tPlatform.zip" . && find . -mindepth 1 ! -name "$tPlatform.zip" -exec rm -rf {} +)
+            fi
+          done
         fi
 
         # Ensure core executable has +x execution rights
