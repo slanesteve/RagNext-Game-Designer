@@ -158,7 +158,12 @@ jobs:
         
         # 4. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Arm64/* Publish/RagNext_Arm64.app/Contents/MacOS/
-        cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets
+        
+        # Move non-binary WebAssets to Contents/Resources and symlink for .NET runtime resolution
+        if [ -d "Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets" ]; then
+          mv Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets Publish/RagNext_Arm64.app/Contents/Resources/WebAssets
+          ln -s ../Resources/WebAssets Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets
+        fi
         if [ -d "Templates" ]; then
           mkdir -p Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS
           cp -R Templates/* Publish/RagNext_Arm64.app/Contents/Resources/Templates/
@@ -314,7 +319,12 @@ jobs:
         
         # 4. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Intel/* Publish/RagNext_Intel.app/Contents/MacOS/
-        cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Intel.app/Contents/MacOS/WebAssets
+        
+        # Move non-binary WebAssets to Contents/Resources and symlink for .NET runtime resolution
+        if [ -d "Publish/RagNext_Intel.app/Contents/MacOS/WebAssets" ]; then
+          mv Publish/RagNext_Intel.app/Contents/MacOS/WebAssets Publish/RagNext_Intel.app/Contents/Resources/WebAssets
+          ln -s ../Resources/WebAssets Publish/RagNext_Intel.app/Contents/MacOS/WebAssets
+        fi
         if [ -d "Templates" ]; then
           mkdir -p Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS
           cp -R Templates/* Publish/RagNext_Intel.app/Contents/Resources/Templates/
