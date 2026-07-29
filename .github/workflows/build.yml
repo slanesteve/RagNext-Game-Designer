@@ -17,11 +17,10 @@ on:
         type: boolean
         default: true
 
-
 jobs:
   build-windows:
     name: Build Windows x64 Distribution
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.buildWindows }}
 
     steps:
@@ -44,54 +43,43 @@ jobs:
           ${{ runner.os }}-nuget-
 
     - name: Retarget RagsCore to Net9.0 (Bypass Mobile Workloads)
-      shell: pwsh
       run: |
-        (Get-Content RagsCore\RagsCore.csproj) -replace '<TargetFrameworks>.*</TargetFrameworks>', '<TargetFramework>net9.0</TargetFramework>' | Set-Content RagsCore\RagsCore.csproj
+        sed -i 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
 
     - name: Run Designer Unit Tests
       run: dotnet test RagNext.Tests/RagNext.Tests.csproj -c Release
 
     - name: Build & Publish Standalone Windows x64
-      shell: pwsh
       run: |
         # 1. Temporarily target net9.0 only to bypass mobile Mono restores
-        (Get-Content RagsCore\RagsCore.csproj) -replace '<TargetFrameworks>.*</TargetFrameworks>', '<TargetFramework>net9.0</TargetFramework>' | Set-Content RagsCore\RagsCore.csproj
+        sed -i 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
         
         # 2. Run publish in Single-File ReadyToRun format
-        Remove-Item -Recurse -Force Publish\Designer-Windows -ErrorAction SilentlyContinue
+        rm -rf Publish/Designer-Windows
         dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.5.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Windows
         
         # 3. Deploy WebAssets, Templates and Tools
-        New-Item -ItemType Directory -Force Publish\Designer-Windows\WebAssets
-        Copy-Item -Recurse -Force RagNext.Designer.Avalonia\WebAssets\* Publish\Designer-Windows\WebAssets\
-        if (Test-Path Templates) {
-          New-Item -ItemType Directory -Force Publish\Designer-Windows\Templates
-          Copy-Item -Recurse -Force Templates\* Publish\Designer-Windows\Templates\
-        }
+        mkdir -p Publish/Designer-Windows/WebAssets
+        cp -R RagNext.Designer.Avalonia/WebAssets/* Publish/Designer-Windows/WebAssets/
+        if [ -d "Templates" ]; then
+          mkdir -p Publish/Designer-Windows/Templates
+          cp -R Templates/* Publish/Designer-Windows/Templates/
+        fi
 
         # 4. Bundle rcodesign for cross-platform macOS signing on Windows
-        New-Item -ItemType Directory -Force Publish\Designer-Windows\Tools
-        try {
-          $url = "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-pc-windows-msvc.zip"
-          Invoke-WebRequest -Uri $url -OutFile "rcodesign.zip"
-          Expand-Archive -Path "rcodesign.zip" -DestinationPath "rcodesign_extracted" -Force
-          $rcodesignExe = Get-ChildItem -Path "rcodesign_extracted" -Filter "rcodesign.exe" -Recurse | Select-Object -First 1
-          if ($rcodesignExe) {
-            Copy-Item $rcodesignExe.FullName "Publish\Designer-Windows\Tools\rcodesign.exe" -Force
-            Write-Output "rcodesign.exe successfully bundled into Publish/Designer-Windows/Tools/"
-          }
-          Remove-Item -Recurse -Force "rcodesign.zip", "rcodesign_extracted" -ErrorAction SilentlyContinue
-        } catch {
-          Write-Output "Warning: Could not download rcodesign tool during build: $_"
-        }
+        mkdir -p Publish/Designer-Windows/Tools
+        wget -q https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-pc-windows-msvc.zip -O rcodesign.zip
+        unzip -q rcodesign.zip -d rcodesign_extracted
+        cp rcodesign_extracted/*/rcodesign.exe Publish/Designer-Windows/Tools/rcodesign.exe
+        rm -rf rcodesign.zip rcodesign_extracted
 
         # 5. Restore RagsCore back to multi-targeting
-        (Get-Content RagsCore\RagsCore.csproj) -replace '<TargetFramework>net9.0</TargetFramework>', '<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0</TargetFrameworks>' | Set-Content RagsCore\RagsCore.csproj
+        sed -i 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
 
     - name: Compress Windows Distribution
-      shell: pwsh
       run: |
-        Compress-Archive -Path Publish\Designer-Windows\* -DestinationPath Publish\RagNext_Designer_Windows_x64.zip -Force
+        cd Publish/Designer-Windows
+        zip -q -r ../RagNext_Designer_Windows_x64.zip .
 
     - name: Upload Windows Artifact
       uses: actions/upload-artifact@v4
@@ -102,7 +90,7 @@ jobs:
 
   build-mac-arm64:
     name: Build & Sign macOS Arm64 Distribution
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.buildMac }}
 
     steps:
@@ -124,45 +112,22 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
+    - name: Install rcodesign tool & icns tools
+      run: |
+        sudo apt-get update && sudo apt-get install -y icnsutils zip
+        wget -q https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz -O rcodesign.tar.gz
+        tar -xzf rcodesign.tar.gz
+        sudo mv apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign /usr/local/bin/
+        rm -rf rcodesign.tar.gz apple-codesign-0.29.0-x86_64-unknown-linux-musl
+
     - name: Generate macOS .icns App Icon
       run: |
-        mkdir -p RagNext.iconset
-        sips -z 16 16     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_16x16.png
-        sips -z 32 32     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_16x16@2x.png
-        sips -z 32 32     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_32x32.png
-        sips -z 64 64     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_32x32@2x.png
-        sips -z 128 128   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_128x128.png
-        sips -z 256 256   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_128x128@2x.png
-        sips -z 256 256   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_256x256.png
-        sips -z 512 512   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_256x256@2x.png
-        sips -z 512 512   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_512x512.png
-        sips -z 1024 1024 RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_512x512@2x.png
-        iconutil -c icns RagNext.iconset -o RagNext.icns
-
-    - name: Import Apple Developer ID Certificate
-      env:
-        CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
-        CERT_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERT_PASSWORD }}
-      run: |
-        if [ -n "$CERT_P12" ]; then
-          echo "Importing Developer ID Certificate into macOS Keychain..."
-          echo "$CERT_P12" | base64 --decode > cert.p12
-          security create-keychain -p "" build.keychain
-          security import cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productsign
-          security list-keychains -s build.keychain
-          security default-keychain -s build.keychain
-          security set-keychain-settings build.keychain
-          security unlock-keychain -p "" build.keychain
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
-          rm cert.p12
-        else
-          echo "No APPLE_DEVELOPER_CERT_P12 found, skipping cert import."
-        fi
+        png2icns RagNext.icns RagNext.Designer.Avalonia/Assets/ragnext-logo.png || touch RagNext.icns
 
     - name: Build & Publish Standalone macOS Arm64
       run: |
         # 1. Temporarily target net9.0 only to bypass mobile Mono restores
-        sed -i '' 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
+        sed -i 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
         
         # 2. Run publish in Single-File ReadyToRun format for Arm64
         rm -rf Publish/Designer-Mac-Arm64
@@ -175,7 +140,7 @@ jobs:
         # 4. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Arm64/* Publish/RagNext_Arm64.app/Contents/MacOS/
         
-        # Move non-binary resource directories (Samples, WebAssets, Templates) to Contents/Resources for Apple bundle compliance
+        # Move non-binary resource directories (Samples, WebAssets, Templates, Presets) to Contents/Resources for Apple bundle compliance
         for resDir in Samples WebAssets Templates Presets; do
           if [ -d "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir" ]; then
             rm -rf "Publish/RagNext_Arm64.app/Contents/Resources/$resDir"
@@ -184,11 +149,9 @@ jobs:
           fi
         done
 
-        if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-          ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.zip
-          rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
+        if [ -f "RagNext.icns" ]; then
+          cp RagNext.icns Publish/RagNext_Arm64.app/Contents/Resources/
         fi
-        cp RagNext.icns Publish/RagNext_Arm64.app/Contents/Resources/
 
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
@@ -228,29 +191,32 @@ jobs:
         echo '</dict>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '</plist>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
 
-        # 6. Sign & Notarize Arm64 App Bundle
-        if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
-          echo "Signing Arm64 App Bundle..."
-          find Publish/RagNext_Arm64.app/Contents/MacOS -type f \( -name "*.dylib" -o -name "*.so" -o -name "RagNext" \) -exec codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime {} +
-          codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime Publish/RagNext_Arm64.app
-          
+        # 6. Sign & Notarize Arm64 App Bundle via rcodesign
+        if [ -n "${{ secrets.APPLE_DEVELOPER_CERT_P12 }}" ]; then
+          echo "Importing Developer ID Certificate for rcodesign..."
+          echo "${{ secrets.APPLE_DEVELOPER_CERT_P12 }}" | base64 --decode > cert.p12
+
+          echo "Signing Arm64 App Bundle with Developer ID Certificate..."
+          rcodesign sign --p12-file cert.p12 --p12-password "${{ secrets.APPLE_DEVELOPER_CERT_PASSWORD }}" --code-signature-flags runtime Publish/RagNext_Arm64.app
+          rm -f cert.p12
+
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Arm64 App for Apple Notarization..."
-            ditto -c -k --keepParent Publish/RagNext_Arm64.app Publish/RagNext_Arm64.zip
-            xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait || true
-            xcrun stapler staple Publish/RagNext_Arm64.app 2>/dev/null || true
+            rcodesign zip Publish/RagNext_Arm64.app Publish/RagNext_Arm64.zip
+            rcodesign notarize --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" Publish/RagNext_Arm64.zip || true
+            rcodesign staple Publish/RagNext_Arm64.app 2>/dev/null || true
             rm -f Publish/RagNext_Arm64.zip
           fi
         fi
 
         # 7. Restore RagsCore back to multi-targeting
-        sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
+        sed -i 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
 
     - name: Compress macOS Arm64 Distribution
       run: |
         cd Publish
         mv RagNext_Arm64.app RagNext.app
-        ditto -c -k --keepParent RagNext.app RagNext_Designer_Mac_Arm64.zip
+        zip -q -r -y RagNext_Designer_Mac_Arm64.zip RagNext.app
         rm -rf RagNext.app
 
     - name: Upload macOS Arm64 Artifact
@@ -262,7 +228,7 @@ jobs:
 
   build-mac-intel:
     name: Build & Sign macOS Intel x64 Distribution
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.buildMac }}
 
     steps:
@@ -284,45 +250,22 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
+    - name: Install rcodesign tool & icns tools
+      run: |
+        sudo apt-get update && sudo apt-get install -y icnsutils zip
+        wget -q https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz -O rcodesign.tar.gz
+        tar -xzf rcodesign.tar.gz
+        sudo mv apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign /usr/local/bin/
+        rm -rf rcodesign.tar.gz apple-codesign-0.29.0-x86_64-unknown-linux-musl
+
     - name: Generate macOS .icns App Icon
       run: |
-        mkdir -p RagNext.iconset
-        sips -z 16 16     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_16x16.png
-        sips -z 32 32     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_16x16@2x.png
-        sips -z 32 32     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_32x32.png
-        sips -z 64 64     RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_32x32@2x.png
-        sips -z 128 128   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_128x128.png
-        sips -z 256 256   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_128x128@2x.png
-        sips -z 256 256   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_256x256.png
-        sips -z 512 512   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_256x256@2x.png
-        sips -z 512 512   RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_512x512.png
-        sips -z 1024 1024 RagNext.Designer.Avalonia/Assets/ragnext-logo.png --out RagNext.iconset/icon_512x512@2x.png
-        iconutil -c icns RagNext.iconset -o RagNext.icns
-
-    - name: Import Apple Developer ID Certificate
-      env:
-        CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
-        CERT_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERT_PASSWORD }}
-      run: |
-        if [ -n "$CERT_P12" ]; then
-          echo "Importing Developer ID Certificate into macOS Keychain..."
-          echo "$CERT_P12" | base64 --decode > cert.p12
-          security create-keychain -p "" build.keychain
-          security import cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productsign
-          security list-keychains -s build.keychain
-          security default-keychain -s build.keychain
-          security set-keychain-settings build.keychain
-          security unlock-keychain -p "" build.keychain
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
-          rm cert.p12
-        else
-          echo "No APPLE_DEVELOPER_CERT_P12 found, skipping cert import."
-        fi
+        png2icns RagNext.icns RagNext.Designer.Avalonia/Assets/ragnext-logo.png || touch RagNext.icns
 
     - name: Build & Publish Standalone macOS Intel x64
       run: |
         # 1. Temporarily target net9.0 only to bypass mobile Mono restores
-        sed -i '' 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
+        sed -i 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
         
         # 2. Run publish in Single-File ReadyToRun format for Intel x64
         rm -rf Publish/Designer-Mac-Intel
@@ -335,7 +278,7 @@ jobs:
         # 4. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Intel/* Publish/RagNext_Intel.app/Contents/MacOS/
         
-        # Move non-binary resource directories (Samples, WebAssets, Templates) to Contents/Resources for Apple bundle compliance
+        # Move non-binary resource directories (Samples, WebAssets, Templates, Presets) to Contents/Resources for Apple bundle compliance
         for resDir in Samples WebAssets Templates Presets; do
           if [ -d "Publish/RagNext_Intel.app/Contents/MacOS/$resDir" ]; then
             rm -rf "Publish/RagNext_Intel.app/Contents/Resources/$resDir"
@@ -344,11 +287,9 @@ jobs:
           fi
         done
 
-        if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-          ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.zip
-          rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
+        if [ -f "RagNext.icns" ]; then
+          cp RagNext.icns Publish/RagNext_Intel.app/Contents/Resources/
         fi
-        cp RagNext.icns Publish/RagNext_Intel.app/Contents/Resources/
 
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext
@@ -388,29 +329,32 @@ jobs:
         echo '</dict>' >> Publish/RagNext_Intel.app/Contents/Info.plist
         echo '</plist>' >> Publish/RagNext_Intel.app/Contents/Info.plist
 
-        # 6. Sign & Notarize Intel x64 App Bundle
-        if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
-          echo "Signing Intel x64 App Bundle..."
-          find Publish/RagNext_Intel.app/Contents/MacOS -type f \( -name "*.dylib" -o -name "*.so" -o -name "RagNext" \) -exec codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime {} +
-          codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime Publish/RagNext_Intel.app
-          
+        # 6. Sign & Notarize Intel x64 App Bundle via rcodesign
+        if [ -n "${{ secrets.APPLE_DEVELOPER_CERT_P12 }}" ]; then
+          echo "Importing Developer ID Certificate for rcodesign..."
+          echo "${{ secrets.APPLE_DEVELOPER_CERT_P12 }}" | base64 --decode > cert.p12
+
+          echo "Signing Intel x64 App Bundle with Developer ID Certificate..."
+          rcodesign sign --p12-file cert.p12 --p12-password "${{ secrets.APPLE_DEVELOPER_CERT_PASSWORD }}" --code-signature-flags runtime Publish/RagNext_Intel.app
+          rm -f cert.p12
+
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Intel x64 App for Apple Notarization..."
-            ditto -c -k --keepParent Publish/RagNext_Intel.app Publish/RagNext_Intel.zip
-            xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait || true
-            xcrun stapler staple Publish/RagNext_Intel.app 2>/dev/null || true
+            rcodesign zip Publish/RagNext_Intel.app Publish/RagNext_Intel.zip
+            rcodesign notarize --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" Publish/RagNext_Intel.zip || true
+            rcodesign staple Publish/RagNext_Intel.app 2>/dev/null || true
             rm -f Publish/RagNext_Intel.zip
           fi
         fi
 
         # 7. Restore RagsCore back to multi-targeting
-        sed -i '' 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
+        sed -i 's/<TargetFramework>net9.0<\/TargetFramework>/<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0<\/TargetFrameworks>/' RagsCore/RagsCore.csproj
 
     - name: Compress macOS Intel x64 Distribution
       run: |
         cd Publish
         mv RagNext_Intel.app RagNext.app
-        ditto -c -k --keepParent RagNext.app RagNext_Designer_Mac_Intel_x64.zip
+        zip -q -r -y RagNext_Designer_Mac_Intel_x64.zip RagNext.app
         rm -rf RagNext.app
 
     - name: Upload macOS Intel x64 Artifact
@@ -490,4 +434,3 @@ jobs:
         name: RagNext_Designer_Linux_x64
         path: Publish/RagNext_Designer_Linux_x64.tar.gz
         retention-days: 14
-
