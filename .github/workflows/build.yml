@@ -61,7 +61,7 @@ jobs:
         Remove-Item -Recurse -Force Publish\Designer-Windows -ErrorAction SilentlyContinue
         dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.5.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Windows
         
-        # 3. Deploy WebAssets and Templates
+        # 3. Deploy WebAssets, Templates and Tools
         New-Item -ItemType Directory -Force Publish\Designer-Windows\WebAssets
         Copy-Item -Recurse -Force RagNext.Designer.Avalonia\WebAssets\* Publish\Designer-Windows\WebAssets\
         if (Test-Path Templates) {
@@ -69,7 +69,23 @@ jobs:
           Copy-Item -Recurse -Force Templates\* Publish\Designer-Windows\Templates\
         }
 
-        # 4. Restore RagsCore back to multi-targeting
+        # 4. Bundle rcodesign for cross-platform macOS signing on Windows
+        New-Item -ItemType Directory -Force Publish\Designer-Windows\Tools
+        try {
+          $url = "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-pc-windows-msvc.zip"
+          Invoke-WebRequest -Uri $url -OutFile "rcodesign.zip"
+          Expand-Archive -Path "rcodesign.zip" -DestinationPath "rcodesign_extracted" -Force
+          $rcodesignExe = Get-ChildItem -Path "rcodesign_extracted" -Filter "rcodesign.exe" -Recurse | Select-Object -First 1
+          if ($rcodesignExe) {
+            Copy-Item $rcodesignExe.FullName "Publish\Designer-Windows\Tools\rcodesign.exe" -Force
+            Write-Output "rcodesign.exe successfully bundled into Publish/Designer-Windows/Tools/"
+          }
+          Remove-Item -Recurse -Force "rcodesign.zip", "rcodesign_extracted" -ErrorAction SilentlyContinue
+        } catch {
+          Write-Output "Warning: Could not download rcodesign tool during build: $_"
+        }
+
+        # 5. Restore RagsCore back to multi-targeting
         (Get-Content RagsCore\RagsCore.csproj) -replace '<TargetFramework>net9.0</TargetFramework>', '<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0</TargetFrameworks>' | Set-Content RagsCore\RagsCore.csproj
 
     - name: Compress Windows Distribution
@@ -160,7 +176,7 @@ jobs:
         cp -R Publish/Designer-Mac-Arm64/* Publish/RagNext_Arm64.app/Contents/MacOS/
         
         # Move non-binary resource directories (Samples, WebAssets, Templates) to Contents/Resources for Apple bundle compliance
-        for resDir in Samples WebAssets Templates; do
+        for resDir in Samples WebAssets Templates Presets; do
           if [ -d "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir" ]; then
             rm -rf "Publish/RagNext_Arm64.app/Contents/Resources/$resDir"
             mv "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir" "Publish/RagNext_Arm64.app/Contents/Resources/$resDir"
@@ -169,7 +185,6 @@ jobs:
         done
 
         if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-          codesign --remove-signature Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app 2>/dev/null || true
           ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.zip
           rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
         fi
@@ -321,7 +336,7 @@ jobs:
         cp -R Publish/Designer-Mac-Intel/* Publish/RagNext_Intel.app/Contents/MacOS/
         
         # Move non-binary resource directories (Samples, WebAssets, Templates) to Contents/Resources for Apple bundle compliance
-        for resDir in Samples WebAssets Templates; do
+        for resDir in Samples WebAssets Templates Presets; do
           if [ -d "Publish/RagNext_Intel.app/Contents/MacOS/$resDir" ]; then
             rm -rf "Publish/RagNext_Intel.app/Contents/Resources/$resDir"
             mv "Publish/RagNext_Intel.app/Contents/MacOS/$resDir" "Publish/RagNext_Intel.app/Contents/Resources/$resDir"
@@ -330,7 +345,6 @@ jobs:
         done
 
         if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-          codesign --remove-signature Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app 2>/dev/null || true
           ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.zip
           rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
         fi

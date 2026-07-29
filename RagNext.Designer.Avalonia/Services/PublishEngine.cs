@@ -194,19 +194,39 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 // On non-macOS (Windows/Linux cross-publish):
                 // Keep Info.plist and executable binary name untouched so the bundle remains 100% pristine.
-                // The template is pre-stripped natively by Apple's codesign --remove-signature on macOS during template build.
                 Report("Packaging Mac standalone bundle with pre-cleared template for cross-platform distribution...");
+
+                // Create helper script for macOS users to bypass Gatekeeper quarantine and re-sign ad-hoc
+                try
+                {
+                    string helperPath = Path.Combine(outputDir, "Fix_Mac_Permissions.command");
+                    string helperScript =
+                        "#!/bin/bash\n" +
+                        "DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" && pwd )\"\n" +
+                        $"APP_PATH=\"$DIR/{title}.app\"\n\n" +
+                        "echo \"===============================================\"\n" +
+                        $"echo \" macOS Gatekeeper Fixer for {title}.app\"\n" +
+                        "echo \"===============================================\"\n\n" +
+                        "echo \"Clearing quarantine attribute...\"\n" +
+                        "xattr -cr \"$APP_PATH\"\n\n" +
+                        "echo \"Applying ad-hoc code signature...\"\n" +
+                        "codesign --force --deep --sign - \"$APP_PATH\" 2>/dev/null || true\n\n" +
+                        "echo \"Setting executable permissions...\"\n" +
+                        "chmod +x \"$APP_PATH/Contents/MacOS/\"* 2>/dev/null || true\n\n" +
+                        "echo \"Done! Launching app...\"\n" +
+                        "open \"$APP_PATH\"\n";
+
+                    await File.WriteAllTextAsync(helperPath, helperScript);
+                }
+                catch { }
             }
 
             // StreamingAssets lives under Contents/Resources/Data/
             string streamingDir = Path.Combine(appBundle, "Contents", "Resources", "Data", "StreamingAssets");
             await InjectGameDataAsync(game, streamingDir);
 
-            // Re-sign Mac app bundle on macOS after modifications
-            if (OperatingSystem.IsMacOS())
-            {
-                await ReSignMacBundleAsync(appBundle);
-            }
+            // Re-sign Mac app bundle after modifications
+            await ReSignMacBundleAsync(appBundle);
         }
 
         private static async Task ReSignMacBundleAsync(string appBundle)
@@ -214,25 +234,102 @@ namespace RagNext.Designer.Avalonia.Services
             try
             {
                 Report("Re-signing macOS App Bundle...");
-                var psi = new ProcessStartInfo("codesign", $"--deep --force --sign - \"{appBundle}\"")
+
+                if (OperatingSystem.IsMacOS())
                 {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                using var proc = Process.Start(psi);
-                if (proc != null)
-                {
-                    await proc.WaitForExitAsync();
-                    if (proc.ExitCode == 0)
+                    var psi = new ProcessStartInfo("codesign", $"--deep --force --sign - \"{appBundle}\"")
                     {
-                        Report("macOS App Bundle successfully signed.");
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc != null)
+                    {
+                        await proc.WaitForExitAsync();
+                        if (proc.ExitCode == 0)
+                        {
+                            Report("macOS App Bundle successfully signed natively.");
+                        }
+                        else
+                        {
+                            string err = await proc.StandardError.ReadToEndAsync();
+                            Report($"Warning: codesign returned code {proc.ExitCode}: {err}");
+                        }
                     }
-                    else
+                }
+                else
+                {
+                    // On Windows/Linux, attempt cross-platform signing via rcodesign tool
+                    string? rcodesignTool = FindTool("rcodesign");
+                    if (string.IsNullOrEmpty(rcodesignTool))
                     {
-                        string err = await proc.StandardError.ReadToEndAsync();
-                        Report($"Warning: codesign returned code {proc.ExitCode}: {err}");
+                        Report("Info: rcodesign tool not found. Install rcodesign (or place rcodesign.exe in Tools/) for native cross-platform macOS signing on Windows.");
+                        return;
+                    }
+
+                    string p12Cert = Environment.GetEnvironmentVariable("APPLE_DEVELOPER_CERT_P12") ?? "";
+                    string p12Pass = Environment.GetEnvironmentVariable("APPLE_DEVELOPER_CERT_PASSWORD") ?? "";
+                    string appleId = Environment.GetEnvironmentVariable("APPLE_ID") ?? "";
+                    string appPass = Environment.GetEnvironmentVariable("APPLE_APP_PASSWORD") ?? "";
+                    string teamId  = Environment.GetEnvironmentVariable("APPLE_TEAM_ID") ?? "";
+
+                    bool hasDevIdCert = !string.IsNullOrEmpty(p12Cert) && File.Exists(p12Cert);
+                    string args = hasDevIdCert
+                        ? $"sign --p12-file \"{p12Cert}\" --p12-password \"{p12Pass}\" --code-signature-flags runtime \"{appBundle}\""
+                        : $"sign --adhoc \"{appBundle}\"";
+
+                    var psi = new ProcessStartInfo(rcodesignTool, args)
+                    {
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc != null)
+                    {
+                        await proc.WaitForExitAsync();
+                        if (proc.ExitCode == 0)
+                        {
+                            Report(hasDevIdCert
+                                ? "macOS App Bundle successfully signed with Developer ID Certificate via rcodesign!"
+                                : "macOS App Bundle successfully ad-hoc signed via rcodesign on Windows.");
+                        }
+                        else
+                        {
+                            string err = await proc.StandardError.ReadToEndAsync();
+                            Report($"Warning: rcodesign returned code {proc.ExitCode}: {err}");
+                        }
+                    }
+
+                    // Optional Apple Notarization from Windows via rcodesign
+                    if (hasDevIdCert && !string.IsNullOrEmpty(appleId) && !string.IsNullOrEmpty(appPass) && !string.IsNullOrEmpty(teamId))
+                    {
+                        Report("Submitting macOS App Bundle to Apple Notarization Service from Windows...");
+                        string notarizeArgs = $"notarize --apple-id \"{appleId}\" --password \"{appPass}\" --team-id \"{teamId}\" \"{appBundle}\"";
+                        var notPsi = new ProcessStartInfo(rcodesignTool, notarizeArgs)
+                        {
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        using var notProc = Process.Start(notPsi);
+                        if (notProc != null)
+                        {
+                            await notProc.WaitForExitAsync();
+                            if (notProc.ExitCode == 0)
+                            {
+                                Report("✅ macOS App Bundle successfully Notarized by Apple (Zero Warnings)!");
+                            }
+                            else
+                            {
+                                string err = await notProc.StandardError.ReadToEndAsync();
+                                Report($"Warning: rcodesign notarize returned code {notProc.ExitCode}: {err}");
+                            }
+                        }
                     }
                 }
             }
@@ -240,6 +337,31 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 Report($"Warning: Failed to re-sign Mac app bundle: {ex.Message}");
             }
+        }
+
+        private static string? FindTool(string toolName)
+        {
+            string exeName = OperatingSystem.IsWindows() ? $"{toolName}.exe" : toolName;
+            string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+            
+            string localTool = Path.Combine(exeDir, "Tools", exeName);
+            if (File.Exists(localTool)) return localTool;
+
+            string templatesTool = Path.Combine(exeDir, "Templates", "Tools", exeName);
+            if (File.Exists(templatesTool)) return templatesTool;
+
+            // Check system PATH
+            string? pathEnv = Environment.GetEnvironmentVariable("PATH");
+            if (pathEnv != null)
+            {
+                foreach (var dir in pathEnv.Split(Path.PathSeparator))
+                {
+                    string candidate = Path.Combine(dir, exeName);
+                    if (File.Exists(candidate)) return candidate;
+                }
+            }
+
+            return null;
         }
 
         // ── Linux ─────────────────────────────────────────────────────────────
@@ -580,8 +702,10 @@ namespace RagNext.Designer.Avalonia.Services
                         sourceStream.CopyTo(entryStream);
                     }
 
-                    // Detect if file is a macOS executable binary inside the app bundle
-                    bool isMacExecutable = relativePath.Contains(".app/Contents/MacOS/", StringComparison.OrdinalIgnoreCase);
+                    // Detect if file is a macOS executable binary inside the app bundle or helper script
+                    bool isMacExecutable = relativePath.Contains(".app/Contents/MacOS/", StringComparison.OrdinalIgnoreCase) ||
+                                          relativePath.EndsWith(".command", StringComparison.OrdinalIgnoreCase) ||
+                                          relativePath.EndsWith(".sh", StringComparison.OrdinalIgnoreCase);
 
                     if (isMacExecutable)
                     {
