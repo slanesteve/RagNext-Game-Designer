@@ -256,13 +256,15 @@ jobs:
             
             if [ -n "$SUBMISSION_ID" ]; then
               echo "Polling Apple Notarization status for submission $SUBMISSION_ID..."
-              for i in {1..60}; do
+              NOTARIZED=false
+              for i in {1..120}; do
                 STATUS_OUT=$(xcrun notarytool info "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" 2>&1 || true)
                 STATUS_LINE=$(echo "$STATUS_OUT" | grep "status:" | head -n 1 | xargs)
-                echo "Check $i ($i/60): $STATUS_LINE"
+                echo "Check $i ($i/120): $STATUS_LINE"
                 
                 if echo "$STATUS_LINE" | grep -q "Accepted"; then
                   echo "✅ Apple Notarization Accepted!"
+                  NOTARIZED=true
                   sleep 5
                   break
                 elif echo "$STATUS_LINE" | grep -q "Invalid"; then
@@ -272,9 +274,16 @@ jobs:
                 fi
                 sleep 10
               done
+
+              if [ "$NOTARIZED" = "true" ]; then
+                echo "Stapling Apple Notarization ticket to ARM64 App..."
+                xcrun stapler staple Publish/RagNext_Arm64.app || true
+              else
+                echo "❌ Apple Notarization timed out before completion!"
+                exit 1
+              fi
             fi
 
-            xcrun stapler staple Publish/RagNext_Arm64.app 2>/dev/null || true
             rm -f Publish/RagNext_Arm64.zip
           fi
         fi
@@ -455,13 +464,15 @@ jobs:
             
             if [ -n "$SUBMISSION_ID" ]; then
               echo "Polling Apple Notarization status for submission $SUBMISSION_ID..."
-              for i in {1..60}; do
+              NOTARIZED=false
+              for i in {1..120}; do
                 STATUS_OUT=$(xcrun notarytool info "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" 2>&1 || true)
                 STATUS_LINE=$(echo "$STATUS_OUT" | grep "status:" | head -n 1 | xargs)
-                echo "Check $i ($i/60): $STATUS_LINE"
+                echo "Check $i ($i/120): $STATUS_LINE"
                 
                 if echo "$STATUS_LINE" | grep -q "Accepted"; then
                   echo "✅ Apple Notarization Accepted!"
+                  NOTARIZED=true
                   sleep 5
                   break
                 elif echo "$STATUS_LINE" | grep -q "Invalid"; then
@@ -471,9 +482,15 @@ jobs:
                 fi
                 sleep 10
               done
-            fi
 
-            xcrun stapler staple Publish/RagNext_Intel.app 2>/dev/null || true
+              if [ "$NOTARIZED" = "true" ]; then
+                echo "Stapling Apple Notarization ticket to Intel x64 App..."
+                xcrun stapler staple Publish/RagNext_Intel.app || true
+              else
+                echo "❌ Apple Notarization timed out before completion!"
+                exit 1
+              fi
+            fi
             rm -f Publish/RagNext_Intel.zip
           fi
         fi
