@@ -171,9 +171,17 @@ jobs:
           fi
         done
 
-        if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-          ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.zip
-          rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
+        if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates" ]; then
+          for tPlatform in MacOS Windows Linux WebGL; do
+            if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/$tPlatform" ]; then
+              if [ "$tPlatform" = "MacOS" ] && [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
+                ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.zip
+                rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
+              elif [ "$tPlatform" != "MacOS" ]; then
+                (cd "Publish/RagNext_Arm64.app/Contents/Resources/Templates/$tPlatform" && ditto -c -k . "$tPlatform.zip" && find . -mindepth 1 ! -name "$tPlatform.zip" -exec rm -rf {} +)
+              fi
+            fi
+          done
         fi
         cp RagNext.icns Publish/RagNext_Arm64.app/Contents/Resources/
 
@@ -330,9 +338,17 @@ jobs:
           fi
         done
 
-        if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-          ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.zip
-          rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
+        if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates" ]; then
+          for tPlatform in MacOS Windows Linux WebGL; do
+            if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/$tPlatform" ]; then
+              if [ "$tPlatform" = "MacOS" ] && [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
+                ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.zip
+                rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
+              elif [ "$tPlatform" != "MacOS" ]; then
+                (cd "Publish/RagNext_Intel.app/Contents/Resources/Templates/$tPlatform" && ditto -c -k . "$tPlatform.zip" && find . -mindepth 1 ! -name "$tPlatform.zip" -exec rm -rf {} +)
+              fi
+            fi
+          done
         fi
         cp RagNext.icns Publish/RagNext_Intel.app/Contents/Resources/
 

@@ -109,10 +109,26 @@ namespace RagNext.Designer.Avalonia.Services
         //           UnityPlayer.dll
         //           (other Unity runtime DLLs)
 
+        private static string EnsureTemplateSource(string templateDir, string zipFileName)
+        {
+            if (string.IsNullOrEmpty(zipFileName)) return templateDir;
+            string zipPath = Path.Combine(templateDir, zipFileName);
+            if (File.Exists(zipPath))
+            {
+                try
+                {
+                    System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, templateDir, true);
+                }
+                catch { }
+            }
+            return templateDir;
+        }
+
         private static async Task PublishWindowsAsync(Game game, string title, string templateDir, string outputDir)
         {
             Report("Copying Windows shell player...");
-            CopyDirectory(templateDir, outputDir);
+            string sourceDir = EnsureTemplateSource(templateDir, "Windows.zip");
+            CopyDirectory(sourceDir, outputDir);
 
             // Rename exe
             RenameFile(outputDir, "RagNextPlayer.exe", $"{title}.exe");
@@ -392,7 +408,8 @@ namespace RagNext.Designer.Avalonia.Services
         private static async Task PublishLinuxAsync(Game game, string title, string templateDir, string outputDir)
         {
             Report("Copying Linux shell player...");
-            CopyDirectory(templateDir, outputDir);
+            string sourceDir = EnsureTemplateSource(templateDir, "Linux.zip");
+            CopyDirectory(sourceDir, outputDir);
 
             string targetBinary = Path.Combine(outputDir, title);
             RenameFile(outputDir, "RagNextPlayer", title);
@@ -428,7 +445,8 @@ namespace RagNext.Designer.Avalonia.Services
         private static async Task PublishWebGLAsync(Game game, string title, string templateDir, string outputDir)
         {
             Report("Copying WebGL shell player...");
-            CopyDirectory(templateDir, outputDir);
+            string sourceDir = EnsureTemplateSource(templateDir, "WebGL.zip");
+            CopyDirectory(sourceDir, outputDir);
 
             // Update the page title in index.html
             string indexPath = Path.Combine(outputDir, "index.html");
