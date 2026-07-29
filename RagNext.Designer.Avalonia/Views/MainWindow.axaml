@@ -301,10 +301,7 @@
                                         </Border>
                                         <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No Portrait Image set'}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
-                                                <Button Content="✨ Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Player" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
-                                            </StackPanel>
+                                            <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -564,10 +561,7 @@
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
-                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
-                                                            <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Room" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
-                                                        </StackPanel>
+                                                        <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>
@@ -1421,10 +1415,7 @@
                                         </Border>
                                         <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
-                                                <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Character" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
-                                            </StackPanel>
+                                            <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -1717,10 +1708,7 @@
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding PortraitImageFileName, FallbackValue='No image selected'}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
-                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
-                                                            <Button Content="Generate with AI..." Click="OnGeneratePortraitClicked" Tag="Object" Background="#8E2DE2" Foreground="White" FontSize="11" Padding="10,4"/>
-                                                        </StackPanel>
+                                                        <Button Content="Clear Image" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearPortraitCommand}" CommandParameter="{Binding}" Background="#C0392B" Foreground="White" FontSize="11" Padding="8,4"/>
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>
@@ -3656,70 +3644,6 @@
 
                                 <TextBlock Text="System Assistant Instructions (Prompt Template)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextNormal}" Margin="0,10,0,0"/>
                                 <TextBox Text="{Binding Preferences.AiCoAuthorAssistantPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="100" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- AI Image Generator Settings Card -->
-                        <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
-                            <StackPanel Spacing="16">
-                                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                    <TextBlock Text="🖼️ AI Image Generator" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
-                                    <ToggleSwitch IsChecked="{Binding Preferences.AiImageGenEnableHelper, Mode=TwoWay}" OnContent="Enabled" OffContent="Disabled" Foreground="{DynamicResource TextMuted}"/>
-                                </StackPanel>
-                                <TextBlock Text="Set up Stable Diffusion or Dall-E services to automatically create room portraits, items icons, and character artwork." FontSize="13" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
-
-                                <!-- Setup Help Instructions Box -->
-                                <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="15" IsVisible="{Binding Preferences.IsImageGenHelpVisible}">
-                                    <StackPanel Spacing="10">
-                                        <TextBlock Text="{Binding Preferences.ImageGenSetupStepsTitle}" FontWeight="Bold" Foreground="{DynamicResource TextNormal}" FontSize="13"/>
-                                        <TextBlock Text="{Binding Preferences.ImageGenStep1}" Foreground="{DynamicResource TextMuted}" FontSize="12" TextWrapping="Wrap"/>
-                                        <TextBlock Text="{Binding Preferences.ImageGenStep2}" Foreground="{DynamicResource TextMuted}" FontSize="12" TextWrapping="Wrap"/>
-                                        <TextBlock Text="{Binding Preferences.ImageGenStep3}" Foreground="{DynamicResource TextMuted}" FontSize="12" TextWrapping="Wrap"/>
-                                        <Button Content="{Binding Preferences.ImageGenHelpButtonText}" Command="{Binding Preferences.OpenHelpCommand}" CommandParameter="{Binding Preferences.ImageGenHelpUrl}" Background="#8E2DE2" Foreground="White" CornerRadius="4" Padding="10,6" FontSize="11" HorizontalAlignment="Left"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="150,*" RowSpacing="12">
-                                    <!-- Provider -->
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="AI Provider" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <ComboBox Grid.Row="0" Grid.Column="1" SelectedItem="{Binding Preferences.AiImageGenProvider, Mode=TwoWay}" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}">
-                                        <ComboBox.Items>
-                                            <x:String>Pollinations.ai</x:String>
-                                            <x:String>ChatGPT</x:String>
-                                            <x:String>Azure OpenAI Images</x:String>
-                                            <x:String>Google Gemini</x:String>
-                                            <x:String>Local Stable Diffusion</x:String>
-                                            <x:String>Local ComfyUI</x:String>
-                                            <x:String>Other</x:String>
-                                        </ComboBox.Items>
-                                    </ComboBox>
-
-                                    <!-- Endpoint -->
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="API Endpoint" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenEndpoint}"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Preferences.AiImageGenEndpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="e.g. https://api.openai.com/v1" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowImageGenEndpoint}"/>
-
-                                    <!-- Key -->
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="API Key" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenApiKey}"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Preferences.AiImageGenKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PasswordChar="●" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowImageGenApiKey}"/>
-
-                                    <!-- Model -->
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Model / Checkpoint Name" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
-                                    <StackPanel Grid.Row="3" Grid.Column="1" Spacing="4">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <TextBox Grid.Column="0" Text="{Binding Preferences.AiImageGenModel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}"/>
-                                            <Button Grid.Column="1" Content="Test" Command="{Binding Preferences.FetchModelsCommand}" CommandParameter="ImageGen" Margin="8,0,0,0" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Test Connection"/>
-                                        </Grid>
-                                        <TextBlock Text="{Binding Preferences.ImageGenConnectionStatus}" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                    </StackPanel>
-
-                                    <!-- Host (Conditional for Local Servers) -->
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Host (include scheme)" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
-                                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Preferences.AiImageGenHost, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="http://localhost" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
-
-                                    <!-- Port (Conditional for Local Servers) -->
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Port" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
-                                    <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Preferences.AiImageGenPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Watermark="7860" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" IsVisible="{Binding Preferences.ShowImageGenHostPort}"/>
-                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
