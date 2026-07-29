@@ -275,7 +275,7 @@ namespace RagNext.Designer.Avalonia.Services
                     bool hasDevIdCert = !string.IsNullOrEmpty(p12Cert) && File.Exists(p12Cert);
                     string args = hasDevIdCert
                         ? $"sign --p12-file \"{p12Cert}\" --p12-password \"{p12Pass}\" --code-signature-flags runtime \"{appBundle}\""
-                        : $"sign --adhoc \"{appBundle}\"";
+                        : $"sign \"{appBundle}\"";
 
                     var psi = new ProcessStartInfo(rcodesignTool, args)
                     {
