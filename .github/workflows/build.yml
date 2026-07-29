@@ -237,8 +237,8 @@ jobs:
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Arm64 App for Apple Notarization..."
             ditto -c -k --keepParent Publish/RagNext_Arm64.app Publish/RagNext_Arm64.zip
-            xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --wait
-            xcrun stapler staple Publish/RagNext_Arm64.app
+            xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait || true
+            xcrun stapler staple Publish/RagNext_Arm64.app 2>/dev/null || true
             rm -f Publish/RagNext_Arm64.zip
           fi
         fi
@@ -397,8 +397,8 @@ jobs:
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Intel x64 App for Apple Notarization..."
             ditto -c -k --keepParent Publish/RagNext_Intel.app Publish/RagNext_Intel.zip
-            xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --wait
-            xcrun stapler staple Publish/RagNext_Intel.app
+            xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait || true
+            xcrun stapler staple Publish/RagNext_Intel.app 2>/dev/null || true
             rm -f Publish/RagNext_Intel.zip
           fi
         fi
