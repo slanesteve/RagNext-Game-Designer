@@ -256,15 +256,15 @@ jobs:
             
             if [ -n "$SUBMISSION_ID" ]; then
               echo "Polling Apple Notarization status for submission $SUBMISSION_ID..."
-              for i in {1..30}; do
+              for i in {1..60}; do
                 STATUS_OUT=$(xcrun notarytool info "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" 2>&1 || true)
-                CURRENT_STATUS=$(echo "$STATUS_OUT" | grep "status:" | head -n 1 | awk '{print $2}')
-                echo "Check $i ($i/30): $CURRENT_STATUS"
+                STATUS_LINE=$(echo "$STATUS_OUT" | grep "status:" | head -n 1 | xargs)
+                echo "Check $i ($i/60): $STATUS_LINE"
                 
-                if [ "$CURRENT_STATUS" = "Accepted" ]; then
+                if echo "$STATUS_LINE" | grep -q "Accepted"; then
                   echo "✅ Apple Notarization Accepted!"
                   break
-                elif [ "$CURRENT_STATUS" = "Invalid" ]; then
+                elif echo "$STATUS_LINE" | grep -q "Invalid"; then
                   echo "❌ Apple Notarization Rejected!"
                   xcrun notarytool log "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || true
                   exit 1
@@ -454,15 +454,15 @@ jobs:
             
             if [ -n "$SUBMISSION_ID" ]; then
               echo "Polling Apple Notarization status for submission $SUBMISSION_ID..."
-              for i in {1..30}; do
+              for i in {1..60}; do
                 STATUS_OUT=$(xcrun notarytool info "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" 2>&1 || true)
-                CURRENT_STATUS=$(echo "$STATUS_OUT" | grep "status:" | head -n 1 | awk '{print $2}')
-                echo "Check $i ($i/30): $CURRENT_STATUS"
+                STATUS_LINE=$(echo "$STATUS_OUT" | grep "status:" | head -n 1 | xargs)
+                echo "Check $i ($i/60): $STATUS_LINE"
                 
-                if [ "$CURRENT_STATUS" = "Accepted" ]; then
+                if echo "$STATUS_LINE" | grep -q "Accepted"; then
                   echo "✅ Apple Notarization Accepted!"
                   break
-                elif [ "$CURRENT_STATUS" = "Invalid" ]; then
+                elif echo "$STATUS_LINE" | grep -q "Invalid"; then
                   echo "❌ Apple Notarization Rejected!"
                   xcrun notarytool log "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || true
                   exit 1
