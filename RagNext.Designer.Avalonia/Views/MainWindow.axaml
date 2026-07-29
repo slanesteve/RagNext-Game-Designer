@@ -3583,6 +3583,15 @@
                         </StackPanel>
                         <!-- TreeView -->
                         <TreeView Grid.Row="2" x:Name="MediaTreeView" SelectionMode="Multiple" ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" Margin="8" DragDrop.AllowDrop="True" DragDrop.Drop="OnDragDropFile" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <TreeView.ContextMenu>
+                                <ContextMenu DataContext="{Binding #MediaSidebarBorder.DataContext}">
+                                    <MenuItem Header="📁 + New Folder" Command="{Binding AddFolderCommand}"/>
+                                    <MenuItem Header="📥 Import Files..." Command="{Binding ImportFilesCommand}"/>
+                                    <MenuItem Header="✏️ Rename" Command="{Binding RenameCommand}"/>
+                                    <Separator/>
+                                    <MenuItem Header="🗑️ Delete" Command="{Binding DeleteCommand}"/>
+                                </ContextMenu>
+                            </TreeView.ContextMenu>
                             <TreeView.Styles>
                                 <Style Selector="TreeViewItem" x:DataType="vm:MediaLibraryViewModel+Node">
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
@@ -3591,6 +3600,15 @@
                             <TreeView.ItemTemplate>
                                 <TreeDataTemplate DataType="{x:Type vm:MediaLibraryViewModel+Node}" ItemsSource="{Binding Children}">
                                     <StackPanel Orientation="Horizontal" Spacing="6" Margin="2" Background="Transparent" HorizontalAlignment="Stretch" PointerPressed="OnMediaItemPointerPressed" PointerMoved="OnMediaItemPointerMoved" PointerReleased="OnMediaItemPointerReleased" DragDrop.AllowDrop="True" DragDrop.DragOver="OnMediaItemDragOver" DragDrop.Drop="OnMediaItemDrop">
+                                        <StackPanel.ContextMenu>
+                                            <ContextMenu DataContext="{Binding #MediaSidebarBorder.DataContext}">
+                                                <MenuItem Header="📁 + New Folder" Command="{Binding AddFolderCommand}"/>
+                                                <MenuItem Header="📥 Import Files..." Command="{Binding ImportFilesCommand}"/>
+                                                <MenuItem Header="✏️ Rename" Command="{Binding RenameCommand}"/>
+                                                <Separator/>
+                                                <MenuItem Header="🗑️ Delete" Command="{Binding DeleteCommand}"/>
+                                            </ContextMenu>
+                                        </StackPanel.ContextMenu>
                                         <TextBlock Text="{Binding Icon}"/>
                                         <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
                                     </StackPanel>
