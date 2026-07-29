@@ -250,13 +250,13 @@ jobs:
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Arm64 App for Apple Notarization..."
             ditto -c -k --keepParent Publish/RagNext_Arm64.app Publish/RagNext_Arm64.zip
-            NOTARY_OUT=$(xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait 2>&1 || true)
-            echo "$NOTARY_OUT"
-            SUBMISSION_ID=$(echo "$NOTARY_OUT" | grep "id:" | head -n 1 | awk '{print $2}')
+            xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait 2>&1 | tee notary_out.txt || true
+            SUBMISSION_ID=$(grep "id:" notary_out.txt | head -n 1 | awk '{print $2}')
             if [ -n "$SUBMISSION_ID" ]; then
               echo "Fetching Apple Notarization status log for submission $SUBMISSION_ID..."
               xcrun notarytool log "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || true
             fi
+            rm -f notary_out.txt
             xcrun stapler staple Publish/RagNext_Arm64.app 2>/dev/null || true
             rm -f Publish/RagNext_Arm64.zip
           fi
@@ -432,13 +432,13 @@ jobs:
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Intel x64 App for Apple Notarization..."
             ditto -c -k --keepParent Publish/RagNext_Intel.app Publish/RagNext_Intel.zip
-            NOTARY_OUT=$(xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait 2>&1 || true)
-            echo "$NOTARY_OUT"
-            SUBMISSION_ID=$(echo "$NOTARY_OUT" | grep "id:" | head -n 1 | awk '{print $2}')
+            xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait 2>&1 | tee notary_out.txt || true
+            SUBMISSION_ID=$(grep "id:" notary_out.txt | head -n 1 | awk '{print $2}')
             if [ -n "$SUBMISSION_ID" ]; then
               echo "Fetching Apple Notarization status log for submission $SUBMISSION_ID..."
               xcrun notarytool log "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || true
             fi
+            rm -f notary_out.txt
             xcrun stapler staple Publish/RagNext_Intel.app 2>/dev/null || true
             rm -f Publish/RagNext_Intel.zip
           fi
