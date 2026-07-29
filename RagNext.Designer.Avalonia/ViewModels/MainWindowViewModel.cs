@@ -424,6 +424,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
         }
 
         public ICommand AddEntityFolderCommand { get; }
+        public ICommand RenameEntityFolderCommand { get; }
         public ICommand DeleteSelectedEntityNodeCommand { get; }
 
         // Active properties
@@ -1595,6 +1596,14 @@ namespace RagNext.Designer.Avalonia.ViewModels
             AddEntityFolderCommand = new Command<string>(async (category) =>
             {
                 if (string.IsNullOrEmpty(category)) return;
+                string folderName = "New Folder";
+                if (MediaLibraryViewModel.PromptInputAsync != null)
+                {
+                    var name = await MediaLibraryViewModel.PromptInputAsync("New Folder", "Enter folder name");
+                    if (string.IsNullOrWhiteSpace(name)) return;
+                    folderName = name.Trim();
+                }
+
                 EntityCategoryTree catTree = category switch
                 {
                     "Rooms" => EntityTreeDoc.Rooms,
@@ -1605,9 +1614,23 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     "Timers" => EntityTreeDoc.Timers,
                     _ => EntityTreeDoc.Rooms
                 };
-                EntityTreeHelper.AddFolder(catTree, null, "New Folder");
+                EntityTreeHelper.AddFolder(catTree, null, folderName);
                 RebuildEntityTrees();
                 await SaveEntityTreeAsync();
+            });
+
+            RenameEntityFolderCommand = new Command<EntityTreeNodeViewModel>(async (node) =>
+            {
+                if (node == null || !node.IsFolder || node.FolderModel == null) return;
+                if (MediaLibraryViewModel.PromptInputAsync != null)
+                {
+                    var newName = await MediaLibraryViewModel.PromptInputAsync("Rename Folder", "Enter new name");
+                    if (string.IsNullOrWhiteSpace(newName)) return;
+                    node.FolderModel.Name = newName.Trim();
+                    node.Name = newName.Trim();
+                    RebuildEntityTrees();
+                    await SaveEntityTreeAsync();
+                }
             });
 
             DeleteSelectedEntityNodeCommand = new Command<EntityTreeNodeViewModel>(async (node) =>

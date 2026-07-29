@@ -443,6 +443,7 @@
                                     <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
                                         <MenuItem Header="➕ Add Room" Command="{Binding AddRoomCommand}"/>
                                         <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Rooms"/>
+                                        <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #RoomsTreeView.SelectedItem}"/>
                                         <Separator/>
                                         <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #RoomsTreeView.SelectedItem}"/>
                                     </ContextMenu>
@@ -454,6 +455,7 @@
                                                 <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
                                                     <MenuItem Header="➕ Add Room" Command="{Binding AddRoomCommand}"/>
                                                     <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Rooms"/>
+                                                    <MenuItem Header="✏️ Rename Folder" Command="{Binding RenameEntityFolderCommand}" CommandParameter="{Binding #RoomsTreeView.SelectedItem}"/>
                                                     <Separator/>
                                                     <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #RoomsTreeView.SelectedItem}"/>
                                                 </ContextMenu>
