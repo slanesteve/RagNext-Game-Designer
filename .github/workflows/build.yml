@@ -248,13 +248,42 @@ jobs:
           codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime Publish/RagNext_Arm64.app
           
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
-            echo "Submitting Arm64 App for Apple Notarization (Async / Instant Exit)..."
+            echo "Submitting Arm64 App for Apple Notarization..."
             (cd Publish && ditto -c -k --keepParent RagNext_Arm64.app RagNext_Arm64.zip)
-            xcrun notarytool submit Publish/RagNext_Arm64.zip \
-              --apple-id "${{ secrets.APPLE_ID }}" \
-              --password "${{ secrets.APPLE_APP_PASSWORD }}" \
-              --team-id "${{ secrets.APPLE_TEAM_ID }}" \
-              --no-wait || true
+            SUBMISSION_OUT=$(xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" 2>&1 || true)
+            echo "$SUBMISSION_OUT"
+            SUBMISSION_ID=$(echo "$SUBMISSION_OUT" | grep "id:" | head -n 1 | awk '{print $2}')
+            
+            if [ -n "$SUBMISSION_ID" ]; then
+              echo "Polling Apple Notarization status for submission $SUBMISSION_ID..."
+              NOTARIZED=false
+              for i in {1..120}; do
+                STATUS_OUT=$(xcrun notarytool info "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" 2>&1 || true)
+                STATUS_LINE=$(echo "$STATUS_OUT" | grep "status:" | head -n 1 | xargs)
+                echo "Check $i ($i/120): $STATUS_LINE"
+                
+                if echo "$STATUS_LINE" | grep -q "Accepted"; then
+                  echo "✅ Apple Notarization Accepted!"
+                  NOTARIZED=true
+                  sleep 5
+                  break
+                elif echo "$STATUS_LINE" | grep -q "Invalid"; then
+                  echo "❌ Apple Notarization Rejected!"
+                  xcrun notarytool log "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || true
+                  exit 1
+                fi
+                sleep 10
+              done
+
+              if [ "$NOTARIZED" = "true" ]; then
+                echo "Stapling Apple Notarization ticket to ARM64 App..."
+                xcrun stapler staple Publish/RagNext_Arm64.app || true
+              else
+                echo "❌ Apple Notarization timed out before completion!"
+                exit 1
+              fi
+            fi
+
             rm -f Publish/RagNext_Arm64.zip
           fi
         fi
@@ -427,13 +456,42 @@ jobs:
           codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime Publish/RagNext_Intel.app
           
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
-            echo "Submitting Intel x64 App for Apple Notarization (Async / Instant Exit)..."
+            echo "Submitting Intel x64 App for Apple Notarization..."
             (cd Publish && ditto -c -k --keepParent RagNext_Intel.app RagNext_Intel.zip)
-            xcrun notarytool submit Publish/RagNext_Intel.zip \
-              --apple-id "${{ secrets.APPLE_ID }}" \
-              --password "${{ secrets.APPLE_APP_PASSWORD }}" \
-              --team-id "${{ secrets.APPLE_TEAM_ID }}" \
-              --no-wait || true
+            SUBMISSION_OUT=$(xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" 2>&1 || true)
+            echo "$SUBMISSION_OUT"
+            SUBMISSION_ID=$(echo "$SUBMISSION_OUT" | grep "id:" | head -n 1 | awk '{print $2}')
+            
+            if [ -n "$SUBMISSION_ID" ]; then
+              echo "Polling Apple Notarization status for submission $SUBMISSION_ID..."
+              NOTARIZED=false
+              for i in {1..120}; do
+                STATUS_OUT=$(xcrun notarytool info "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" 2>&1 || true)
+                STATUS_LINE=$(echo "$STATUS_OUT" | grep "status:" | head -n 1 | xargs)
+                echo "Check $i ($i/120): $STATUS_LINE"
+                
+                if echo "$STATUS_LINE" | grep -q "Accepted"; then
+                  echo "✅ Apple Notarization Accepted!"
+                  NOTARIZED=true
+                  sleep 5
+                  break
+                elif echo "$STATUS_LINE" | grep -q "Invalid"; then
+                  echo "❌ Apple Notarization Rejected!"
+                  xcrun notarytool log "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || true
+                  exit 1
+                fi
+                sleep 10
+              done
+
+              if [ "$NOTARIZED" = "true" ]; then
+                echo "Stapling Apple Notarization ticket to Intel x64 App..."
+                xcrun stapler staple Publish/RagNext_Intel.app || true
+              else
+                echo "❌ Apple Notarization timed out before completion!"
+                exit 1
+              fi
+            fi
+
             rm -f Publish/RagNext_Intel.zip
           fi
         fi
