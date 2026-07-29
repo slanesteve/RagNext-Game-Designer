@@ -348,6 +348,10 @@ namespace RagNext.Designer.Avalonia.ViewModels
             }
             if (!File.Exists(path))
             {
+                path = Path.Combine(baseDir, "..", "Resources", "WebAssets", filename);
+            }
+            if (!File.Exists(path))
+            {
                 path = Path.Combine(baseDir, "Resources", "Raw", filename);
             }
             if (!File.Exists(path))

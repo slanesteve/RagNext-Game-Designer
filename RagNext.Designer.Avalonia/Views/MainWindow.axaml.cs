@@ -691,6 +691,10 @@ namespace RagNext.Designer.Avalonia.Views
                 var htmlPath = Path.Combine(baseDir, "WebAssets", "graph_editor.html");
                 if (!File.Exists(htmlPath))
                 {
+                    htmlPath = Path.Combine(baseDir, "..", "Resources", "WebAssets", "graph_editor.html");
+                }
+                if (!File.Exists(htmlPath))
+                {
                     htmlPath = Path.Combine(baseDir, "graph_editor.html");
                 }
 
@@ -764,12 +768,14 @@ namespace RagNext.Designer.Avalonia.Views
                     var baseDir = AppDomain.CurrentDomain.BaseDirectory;
                     var cmdsPath = Path.Combine(baseDir, "Commands.json");
                     if (!File.Exists(cmdsPath)) cmdsPath = Path.Combine(baseDir, "WebAssets", "Commands.json");
+                    if (!File.Exists(cmdsPath)) cmdsPath = Path.Combine(baseDir, "..", "Resources", "WebAssets", "Commands.json");
                     if (!File.Exists(cmdsPath)) cmdsPath = Path.Combine(baseDir, "Resources", "Raw", "Commands.json");
                     if (!File.Exists(cmdsPath)) cmdsPath = Path.Combine(baseDir, "..", "..", "..", "..", "RagNext", "Resources", "Raw", "Commands.json");
                     if (File.Exists(cmdsPath)) commandsJson = await File.ReadAllTextAsync(cmdsPath);
 
                     var condsPath = Path.Combine(baseDir, "Conditions.json");
                     if (!File.Exists(condsPath)) condsPath = Path.Combine(baseDir, "WebAssets", "Conditions.json");
+                    if (!File.Exists(condsPath)) condsPath = Path.Combine(baseDir, "..", "Resources", "WebAssets", "Conditions.json");
                     if (!File.Exists(condsPath)) condsPath = Path.Combine(baseDir, "Resources", "Raw", "Conditions.json");
                     if (!File.Exists(condsPath)) condsPath = Path.Combine(baseDir, "..", "..", "..", "..", "RagNext", "Resources", "Raw", "Conditions.json");
                     if (File.Exists(condsPath)) conditionsJson = await File.ReadAllTextAsync(condsPath);

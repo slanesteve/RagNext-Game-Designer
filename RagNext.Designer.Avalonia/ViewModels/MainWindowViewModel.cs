@@ -2956,6 +2956,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 SampleGames.Clear();
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
                 var samplesDir = Path.Combine(appDir, "Samples");
+                if (!Directory.Exists(samplesDir))
+                {
+                    var resSamples = Path.Combine(appDir, "..", "Resources", "Samples");
+                    if (Directory.Exists(resSamples)) samplesDir = resSamples;
+                }
                 if (Directory.Exists(samplesDir))
                 {
                     foreach (var file in Directory.GetFiles(samplesDir, "*.ragnext"))

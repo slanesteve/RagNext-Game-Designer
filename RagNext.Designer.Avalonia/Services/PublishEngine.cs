@@ -489,6 +489,11 @@ namespace RagNext.Designer.Avalonia.Services
             string docPresetsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RagNext", "Themes");
             string srcPresetsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", "Themes");
             string fallbackPresetsDir = Path.Combine(AppContext.BaseDirectory, "Presets");
+            if (!Directory.Exists(fallbackPresetsDir))
+            {
+                var resPresets = Path.Combine(AppContext.BaseDirectory, "..", "Resources", "Presets");
+                if (Directory.Exists(resPresets)) fallbackPresetsDir = resPresets;
+            }
             string destPresetsDir = Path.Combine(streamingAssetsDir, "Presets");
             int copiedPresets = 0;
 

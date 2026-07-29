@@ -168,7 +168,6 @@ jobs:
           if [ -d "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir" ]; then
             rm -rf "Publish/RagNext_Arm64.app/Contents/Resources/$resDir"
             mv "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir" "Publish/RagNext_Arm64.app/Contents/Resources/$resDir"
-            ln -s "../Resources/$resDir" "Publish/RagNext_Arm64.app/Contents/MacOS/$resDir"
           fi
         done
 
@@ -328,7 +327,6 @@ jobs:
           if [ -d "Publish/RagNext_Intel.app/Contents/MacOS/$resDir" ]; then
             rm -rf "Publish/RagNext_Intel.app/Contents/Resources/$resDir"
             mv "Publish/RagNext_Intel.app/Contents/MacOS/$resDir" "Publish/RagNext_Intel.app/Contents/Resources/$resDir"
-            ln -s "../Resources/$resDir" "Publish/RagNext_Intel.app/Contents/MacOS/$resDir"
           fi
         done
 
