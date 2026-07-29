@@ -33,8 +33,17 @@ namespace RagNext.Designer.Avalonia.Views
         private int _composeSelectionEnd = -1;
         private int _inlineSelectionStart = -1;
         private int _inlineSelectionEnd = -1;
-        private TextBox? _lastFocusedTextBox = null;
         private bool _isSelectingStatusBarElement = false;
+        private TextBox? _lastFocusedTextBox = null;
+
+        private Room? CurrentSelectedRoom
+        {
+            get
+            {
+                var treeView = this.FindControl<TreeView>("RoomsTreeView");
+                return (treeView?.SelectedItem as EntityTreeNodeViewModel)?.Entity as Room;
+            }
+        }
 
         public ObservableCollection<string> RecentColors { get; } = new()
         {
@@ -159,7 +168,7 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         if (e.Property.Name == "ItemsSource" || e.Property.Name == "DataContext")
                         {
-                            if (combo.ItemsSource != null && RoomsList.SelectedItem is Room room)
+                            if (combo.ItemsSource != null && CurrentSelectedRoom is Room room)
                             {
                                 var direction = name.Replace("Picker", "");
                                 if (room.Exits.TryGetValue(direction, out var destId))
@@ -1017,7 +1026,7 @@ namespace RagNext.Designer.Avalonia.Views
 
         public void OnAddHotspotClicked(object sender, RoutedEventArgs e)
         {
-            var room = this.FindControl<ListBox>("RoomsList")?.SelectedItem as Room;
+            var room = CurrentSelectedRoom;
             if (room != null)
             {
                 if (room.InteractiveScreenSettings == null)
@@ -1030,7 +1039,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             var button = sender as Button;
             var hotspot = button?.CommandParameter as ScreenHotspot;
-            var room = this.FindControl<ListBox>("RoomsList")?.SelectedItem as Room;
+            var room = CurrentSelectedRoom;
             if (room != null && hotspot != null)
             {
                 room.InteractiveScreenSettings?.Hotspots.Remove(hotspot);
@@ -1109,7 +1118,7 @@ namespace RagNext.Designer.Avalonia.Views
 
             if (!string.IsNullOrEmpty(backdropName))
             {
-                var room = this.FindControl<ListBox>("RoomsList")?.SelectedItem as Room;
+                var room = CurrentSelectedRoom;
                 if (room != null)
                 {
                     if (room.InteractiveScreenSettings == null) room.InteractiveScreenSettings = new InteractiveScreenSettings();
@@ -2719,7 +2728,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is Button btn && btn.Tag is string direction && App.CurrentGame != null)
             {
-                if (RoomsList.SelectedItem is Room room)
+                if (CurrentSelectedRoom is Room room)
                 {
                     var defaultRoom = App.CurrentGame.Rooms.FirstOrDefault(r => r.Id != room.Id) ?? App.CurrentGame.Rooms.FirstOrDefault();
                     if (defaultRoom != null)
@@ -2759,7 +2768,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (_suppressExitEvents) return;
             if (sender is not ComboBox picker) return;
-            if (RoomsList.SelectedItem is not Room room) return;
+            if (CurrentSelectedRoom is not Room room) return;
 
             if (!picker.IsDropDownOpen && !picker.IsFocused && !_isClearingExit) return;
 
@@ -2840,7 +2849,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (_suppressExitEvents) return;
             if (sender is not CheckBox cb) return;
-            if (RoomsList.SelectedItem is not Room room) return;
+            if (CurrentSelectedRoom is not Room room) return;
             if (!cb.IsFocused) return;
 
             var ec = _exitControls?.FirstOrDefault(x => x.OneWay == cb);
@@ -2881,7 +2890,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (_suppressExitEvents) return;
             if (sender is not CheckBox cb) return;
-            if (RoomsList.SelectedItem is not Room room) return;
+            if (CurrentSelectedRoom is not Room room) return;
             if (!cb.IsFocused) return;
 
             var ec = _exitControls?.FirstOrDefault(x => x.Locked == cb);
@@ -2900,7 +2909,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
             _roomObjectCheckBoxes.Add(cb);
-            if (RoomsList.SelectedItem is not Room room) return;
+            if (CurrentSelectedRoom is not Room room) return;
 
             _isSyncingRoomObjects = true;
             try
@@ -2944,7 +2953,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (_isSyncingRoomObjects) return;
             if (sender is not CheckBox cb || cb.DataContext is not GameObject item) return;
-            if (RoomsList.SelectedItem is not Room room) return;
+            if (CurrentSelectedRoom is not Room room) return;
 
             if (cb.IsChecked == true)
             {
@@ -3086,7 +3095,7 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         game.Player.PortraitImagePath = localPathReal;
                     }
-                    else if (dropType == "Room" && RoomsList.SelectedItem is Room room)
+                    else if (dropType == "Room" && CurrentSelectedRoom is Room room)
                     {
                         room.PortraitImagePath = localPathReal;
                     }
@@ -3568,7 +3577,7 @@ namespace RagNext.Designer.Avalonia.Views
                             {
                                 game.Player.PortraitImagePath = localPathReal;
                             }
-                            else if (dropType == "Room" && RoomsList.SelectedItem is Room room)
+                            else if (dropType == "Room" && CurrentSelectedRoom is Room room)
                             {
                                 room.PortraitImagePath = localPathReal;
                             }

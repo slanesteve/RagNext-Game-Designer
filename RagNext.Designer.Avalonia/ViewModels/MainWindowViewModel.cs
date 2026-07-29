@@ -11,6 +11,7 @@ using RagsCore.Models;
 using RagsCore.Services;
 using RagNext.Designer.Avalonia.Services;
 using RagNext.Designer.Avalonia.Models;
+using RagNext.Models;
 using Avalonia.Threading;
 
 
@@ -387,6 +388,43 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public MediaLibraryViewModel Media { get; }
         public PreferencesViewModel Preferences { get; }
         public StatusBarViewModel StatusBar { get; }
+
+        // Entity Tree Collections & Storage
+        public ObservableCollection<EntityTreeNodeViewModel> RoomTreeRoots { get; } = new();
+        public ObservableCollection<EntityTreeNodeViewModel> ObjectTreeRoots { get; } = new();
+        public ObservableCollection<EntityTreeNodeViewModel> CharacterTreeRoots { get; } = new();
+        public ObservableCollection<EntityTreeNodeViewModel> FunctionTreeRoots { get; } = new();
+        public ObservableCollection<EntityTreeNodeViewModel> VariableTreeRoots { get; } = new();
+        public ObservableCollection<EntityTreeNodeViewModel> TimerTreeRoots { get; } = new();
+
+        public EntityTreeDocument EntityTreeDoc { get; set; } = new();
+        public IEntityTreeStore EntityTreeStore { get; } = new EntityTreeStore();
+
+        private EntityTreeNodeViewModel? _selectedRoomTreeNode;
+        public EntityTreeNodeViewModel? SelectedRoomTreeNode
+        {
+            get => _selectedRoomTreeNode;
+            set
+            {
+                if (SetProperty(ref _selectedRoomTreeNode, value))
+                {
+                    if (value?.Entity is Room r)
+                    {
+                        SelectedRoom = r;
+                    }
+                }
+            }
+        }
+
+        private Room? _selectedRoom;
+        public Room? SelectedRoom
+        {
+            get => _selectedRoom ?? CurrentGame?.Rooms?.FirstOrDefault();
+            set => SetProperty(ref _selectedRoom, value);
+        }
+
+        public ICommand AddEntityFolderCommand { get; }
+        public ICommand DeleteSelectedEntityNodeCommand { get; }
 
         // Active properties
         public Player? Player => CurrentGame?.Player;
@@ -1554,6 +1592,41 @@ namespace RagNext.Designer.Avalonia.ViewModels
             Preferences = new PreferencesViewModel();
             StatusBar = new StatusBarViewModel(_storage);
 
+            AddEntityFolderCommand = new Command<string>(async (category) =>
+            {
+                if (string.IsNullOrEmpty(category)) return;
+                EntityCategoryTree catTree = category switch
+                {
+                    "Rooms" => EntityTreeDoc.Rooms,
+                    "Objects" => EntityTreeDoc.Objects,
+                    "Characters" => EntityTreeDoc.Characters,
+                    "Functions" => EntityTreeDoc.Functions,
+                    "Variables" => EntityTreeDoc.Variables,
+                    "Timers" => EntityTreeDoc.Timers,
+                    _ => EntityTreeDoc.Rooms
+                };
+                EntityTreeHelper.AddFolder(catTree, null, "New Folder");
+                RebuildEntityTrees();
+                await SaveEntityTreeAsync();
+            });
+
+            DeleteSelectedEntityNodeCommand = new Command<EntityTreeNodeViewModel>(async (node) =>
+            {
+                if (node == null) return;
+                if (node.IsFolder && node.FolderModel != null)
+                {
+                    // Deleting folder moves contained items to root
+                    EntityTreeHelper.RemoveFolder(EntityTreeDoc.Rooms, node.FolderModel);
+                    EntityTreeHelper.RemoveFolder(EntityTreeDoc.Objects, node.FolderModel);
+                    EntityTreeHelper.RemoveFolder(EntityTreeDoc.Characters, node.FolderModel);
+                    EntityTreeHelper.RemoveFolder(EntityTreeDoc.Functions, node.FolderModel);
+                    EntityTreeHelper.RemoveFolder(EntityTreeDoc.Variables, node.FolderModel);
+                    EntityTreeHelper.RemoveFolder(EntityTreeDoc.Timers, node.FolderModel);
+                    RebuildEntityTrees();
+                    await SaveEntityTreeAsync();
+                }
+            });
+
             App.GameChanged += (g) => 
             { 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG-THEME] Loaded BackgroundAssetId: '{g?.Theme?.BackgroundAssetId}', FrameAssetId: '{g?.Theme?.FrameAssetId}'");
@@ -1568,6 +1641,7 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 OnPropertyChanged(nameof(SelectedThemeFrame));
                 InitializePresets();
                 Media.Refresh();
+                _ = LoadEntityTreeAsync(g);
                 
                 Dispatcher.UIThread.Post(async () => {
                     await Task.Delay(1500);
@@ -3534,6 +3608,86 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     _ = SaveGameAsync();
                 };
             }
+        }
+
+        public async Task LoadEntityTreeAsync(Game? game)
+        {
+            if (game == null) return;
+            EntityTreeDoc = await EntityTreeStore.LoadAsync(game);
+            RebuildEntityTrees();
+        }
+
+        public async Task SaveEntityTreeAsync()
+        {
+            if (CurrentGame != null)
+            {
+                await EntityTreeStore.SaveAsync(CurrentGame, EntityTreeDoc);
+            }
+        }
+
+        public void RebuildEntityTrees()
+        {
+            if (CurrentGame == null) return;
+
+            // 1. Rooms
+            RoomTreeRoots.Clear();
+            var roomNodes = EntityTreeHelper.BuildTreeNodes(
+                CurrentGame.Rooms ?? Enumerable.Empty<Room>(),
+                EntityTreeDoc.Rooms,
+                r => r.Id,
+                r => r.Name ?? "Unnamed Room",
+                "🚪");
+            foreach (var node in roomNodes) RoomTreeRoots.Add(node);
+
+            // 2. Objects
+            ObjectTreeRoots.Clear();
+            var objectNodes = EntityTreeHelper.BuildTreeNodes(
+                CurrentGame.Objects ?? Enumerable.Empty<GameObject>(),
+                EntityTreeDoc.Objects,
+                o => o.Id,
+                o => o.Name ?? "Unnamed Object",
+                "🗡️");
+            foreach (var node in objectNodes) ObjectTreeRoots.Add(node);
+
+            // 3. Characters
+            CharacterTreeRoots.Clear();
+            var charNodes = EntityTreeHelper.BuildTreeNodes(
+                CurrentGame.Characters ?? Enumerable.Empty<Character>(),
+                EntityTreeDoc.Characters,
+                c => c.Id,
+                c => c.Name ?? "Unnamed Character",
+                "👤");
+            foreach (var node in charNodes) CharacterTreeRoots.Add(node);
+
+            // 4. Functions
+            FunctionTreeRoots.Clear();
+            var funcNodes = EntityTreeHelper.BuildTreeNodes(
+                CurrentGame.Functions ?? Enumerable.Empty<GlobalFunction>(),
+                EntityTreeDoc.Functions,
+                f => f.Id,
+                f => f.Name ?? "Unnamed Function",
+                "⚡");
+            foreach (var node in funcNodes) FunctionTreeRoots.Add(node);
+
+            // 5. Variables
+            VariableTreeRoots.Clear();
+            var varNodes = EntityTreeHelper.BuildTreeNodes(
+                CurrentGame.Variables ?? Enumerable.Empty<GameVariable>(),
+                EntityTreeDoc.Variables,
+                v => v.Id,
+                v => v.Name ?? "Unnamed Variable",
+                "🔢");
+            foreach (var node in varNodes) VariableTreeRoots.Add(node);
+
+            // 6. Timers
+            TimerTreeRoots.Clear();
+            var timerNodes = EntityTreeHelper.BuildTreeNodes(
+                CurrentGame.Timers ?? Enumerable.Empty<GameTimer>(),
+                EntityTreeDoc.Timers,
+                t => t.Id,
+                t => t.Name ?? "Unnamed Timer",
+                "⏱️");
+            foreach (var node in timerNodes) TimerTreeRoots.Add(node);
         }
 
         public static global::Avalonia.Data.Converters.IMultiValueConverter MakeTupleConverter { get; } = new FuncMultiValueConverter<object, Tuple<object, object>>(parts =>

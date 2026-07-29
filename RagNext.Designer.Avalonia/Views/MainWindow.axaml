@@ -436,25 +436,49 @@
                                 <TextBlock Grid.Column="0" Text="Rooms in World" FontWeight="Bold" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Rooms.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
                             </Grid>
-                            <ListBox Grid.Row="1" ItemsSource="{Binding Rooms.Rooms}" Background="Transparent" SelectedIndex="0" x:Name="RoomsList" SelectionChanged="OnRoomsSelectionChanged">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:Room">
-                                        <TextBlock Text="{Binding Name}"/>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,10,0,0" ColumnSpacing="8">
-                                <Button Grid.Column="0" Content="+ Add Room" Command="{Binding AddRoomCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteRoomCommand}" CommandParameter="{Binding #RoomsList.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B"/>
+                            
+                            <!-- TreeView for Rooms with Folder Support -->
+                            <TreeView Grid.Row="1" ItemsSource="{Binding RoomTreeRoots}" SelectedItem="{Binding SelectedRoomTreeNode, Mode=TwoWay}" x:Name="RoomsTreeView" Background="Transparent">
+                                <TreeView.ContextMenu>
+                                    <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                        <MenuItem Header="➕ Add Room" Command="{Binding AddRoomCommand}"/>
+                                        <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Rooms"/>
+                                        <Separator/>
+                                        <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #RoomsTreeView.SelectedItem}"/>
+                                    </ContextMenu>
+                                </TreeView.ContextMenu>
+                                <TreeView.ItemTemplate>
+                                    <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:EntityTreeNodeViewModel">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2">
+                                            <StackPanel.ContextMenu>
+                                                <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
+                                                    <MenuItem Header="➕ Add Room" Command="{Binding AddRoomCommand}"/>
+                                                    <MenuItem Header="📁 + New Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Rooms"/>
+                                                    <Separator/>
+                                                    <MenuItem Header="🗑️ Delete Selected" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #RoomsTreeView.SelectedItem}"/>
+                                                </ContextMenu>
+                                            </StackPanel.ContextMenu>
+                                            <TextBlock Text="{Binding Icon}" FontSize="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}"/>
+                                        </StackPanel>
+                                    </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <!-- Toolbar Action Buttons -->
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,10,0,0" ColumnSpacing="6">
+                                <Button Grid.Column="0" Content="+ Room" Command="{Binding AddRoomCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6"/>
+                                <Button Grid.Column="1" Content="📁 + Folder" Command="{Binding AddEntityFolderCommand}" CommandParameter="Rooms" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,6" Background="{DynamicResource ToolbarBtnBg}"/>
+                                <Button Grid.Column="2" Content="Delete" Command="{Binding DeleteSelectedEntityNodeCommand}" CommandParameter="{Binding #RoomsTreeView.SelectedItem}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#C0392B" FontSize="11" Padding="2,6"/>
                             </Grid>
                         </Grid>
                     </Border>
                     <!-- Right Room Fields -->
-                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding #RoomsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="20" IsVisible="{Binding SelectedRoom, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <Grid RowDefinitions="Auto, *">
                             <TextBlock Grid.Row="0" Text="Edit Room" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2" Margin="0,0,0,10"/>
                             
-                            <TabControl Grid.Row="1" DataContext="{Binding #RoomsList.SelectedItem}" x:DataType="models:Room">
+                            <TabControl Grid.Row="1" DataContext="{Binding SelectedRoom}" x:DataType="models:Room">
                                 <!-- Properties Tab -->
                                 <TabItem Header="Properties">
                                     <ScrollViewer x:Name="RoomDetailsScrollViewer" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
