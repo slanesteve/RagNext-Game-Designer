@@ -249,7 +249,7 @@ jobs:
           
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Arm64 App for Apple Notarization..."
-            ditto -c -k --keepParent Publish/RagNext_Arm64.app Publish/RagNext_Arm64.zip
+            (cd Publish && ditto -c -k --keepParent RagNext_Arm64.app RagNext_Arm64.zip)
             xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait 2>&1 | tee notary_out.txt || true
             SUBMISSION_ID=$(grep "id:" notary_out.txt | head -n 1 | awk '{print $2}')
             if [ -n "$SUBMISSION_ID" ]; then
@@ -431,7 +431,7 @@ jobs:
           
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Intel x64 App for Apple Notarization..."
-            ditto -c -k --keepParent Publish/RagNext_Intel.app Publish/RagNext_Intel.zip
+            (cd Publish && ditto -c -k --keepParent RagNext_Intel.app RagNext_Intel.zip)
             xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait 2>&1 | tee notary_out.txt || true
             SUBMISSION_ID=$(grep "id:" notary_out.txt | head -n 1 | awk '{print $2}')
             if [ -n "$SUBMISSION_ID" ]; then
