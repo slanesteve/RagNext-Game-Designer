@@ -194,6 +194,8 @@ jobs:
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
         # Clean up build artifacts that can trigger macOS bundle layout validation errors
+        rm -rf Publish/RagNext_Arm64.app/Contents/MacOS/Tools
+        rm -f Publish/RagNext_Arm64.app/Contents/MacOS/*.exe
         rm -rf Publish/RagNext_Arm64.app/Contents/MacOS/*.dSYM
         rm -f Publish/RagNext_Arm64.app/Contents/MacOS/*.pdb
 
@@ -244,7 +246,13 @@ jobs:
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Arm64 App for Apple Notarization..."
             ditto -c -k --keepParent Publish/RagNext_Arm64.app Publish/RagNext_Arm64.zip
-            xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait || true
+            NOTARY_OUT=$(xcrun notarytool submit Publish/RagNext_Arm64.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait 2>&1 || true)
+            echo "$NOTARY_OUT"
+            SUBMISSION_ID=$(echo "$NOTARY_OUT" | grep "id:" | head -n 1 | awk '{print $2}')
+            if [ -n "$SUBMISSION_ID" ]; then
+              echo "Fetching Apple Notarization status log for submission $SUBMISSION_ID..."
+              xcrun notarytool log "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || true
+            fi
             xcrun stapler staple Publish/RagNext_Arm64.app 2>/dev/null || true
             rm -f Publish/RagNext_Arm64.zip
           fi
@@ -368,6 +376,8 @@ jobs:
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext
         # Clean up build artifacts that can trigger macOS bundle layout validation errors
+        rm -rf Publish/RagNext_Intel.app/Contents/MacOS/Tools
+        rm -f Publish/RagNext_Intel.app/Contents/MacOS/*.exe
         rm -rf Publish/RagNext_Intel.app/Contents/MacOS/*.dSYM
         rm -f Publish/RagNext_Intel.app/Contents/MacOS/*.pdb
 
@@ -418,7 +428,13 @@ jobs:
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Intel x64 App for Apple Notarization..."
             ditto -c -k --keepParent Publish/RagNext_Intel.app Publish/RagNext_Intel.zip
-            xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait || true
+            NOTARY_OUT=$(xcrun notarytool submit Publish/RagNext_Intel.zip --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --timeout 10m --wait 2>&1 || true)
+            echo "$NOTARY_OUT"
+            SUBMISSION_ID=$(echo "$NOTARY_OUT" | grep "id:" | head -n 1 | awk '{print $2}')
+            if [ -n "$SUBMISSION_ID" ]; then
+              echo "Fetching Apple Notarization status log for submission $SUBMISSION_ID..."
+              xcrun notarytool log "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || true
+            fi
             xcrun stapler staple Publish/RagNext_Intel.app 2>/dev/null || true
             rm -f Publish/RagNext_Intel.zip
           fi
