@@ -142,6 +142,15 @@ namespace RagNext.Designer.Avalonia.Services
             string sourceApp = Path.Combine(templateDir, "MacOS.app");
             if (!Directory.Exists(sourceApp))
             {
+                string zipPath = Path.Combine(templateDir, "MacOS.zip");
+                if (File.Exists(zipPath))
+                {
+                    try { System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, templateDir, true); } catch { }
+                    sourceApp = Path.Combine(templateDir, "MacOS.app");
+                }
+            }
+            if (!Directory.Exists(sourceApp))
+            {
                 sourceApp = Directory.GetDirectories(templateDir, "*.app").FirstOrDefault() ?? templateDir;
             }
             CopyDirectory(sourceApp, appBundle);

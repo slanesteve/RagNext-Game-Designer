@@ -160,18 +160,22 @@ jobs:
         cp -R Publish/Designer-Mac-Arm64/* Publish/RagNext_Arm64.app/Contents/MacOS/
         cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Arm64.app/Contents/MacOS/WebAssets
         if [ -d "Templates" ]; then
-          # Ensure pre-packaged Mac player template has signatures officially stripped by Apple codesign
-          codesign --remove-signature Templates/MacOS/MacOS.app 2>/dev/null || true
-          cp -R Templates Publish/RagNext_Arm64.app/Contents/Resources/Templates
+          mkdir -p Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS
+          cp -R Templates/* Publish/RagNext_Arm64.app/Contents/Resources/Templates/
+          if [ -d "Templates/MacOS/MacOS.app" ]; then
+            codesign --remove-signature Templates/MacOS/MacOS.app 2>/dev/null || true
+            ditto -c -k --keepParent Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.zip
+            rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
+          fi
         fi
         cp RagNext.icns Publish/RagNext_Arm64.app/Contents/Resources/
- 
+
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Arm64.app/Contents/MacOS/RagNext
         # Clean up build artifacts that can trigger macOS bundle layout validation errors
         rm -rf Publish/RagNext_Arm64.app/Contents/MacOS/*.dSYM
         rm -f Publish/RagNext_Arm64.app/Contents/MacOS/*.pdb
- 
+
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> Publish/RagNext_Arm64.app/Contents/Info.plist
@@ -203,11 +207,12 @@ jobs:
         echo '    <string>RagNext.icns</string>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '</dict>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
         echo '</plist>' >> Publish/RagNext_Arm64.app/Contents/Info.plist
- 
+
         # 6. Sign & Notarize Arm64 App Bundle
         if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
           echo "Signing Arm64 App Bundle..."
-          codesign --deep --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime Publish/RagNext_Arm64.app
+          find Publish/RagNext_Arm64.app/Contents/MacOS -type f \( -name "*.dylib" -o -name "*.so" -o -name "RagNext" \) -exec codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime {} +
+          codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime Publish/RagNext_Arm64.app
           
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Arm64 App for Apple Notarization..."
@@ -311,18 +316,22 @@ jobs:
         cp -R Publish/Designer-Mac-Intel/* Publish/RagNext_Intel.app/Contents/MacOS/
         cp -R RagNext.Designer.Avalonia/WebAssets Publish/RagNext_Intel.app/Contents/MacOS/WebAssets
         if [ -d "Templates" ]; then
-          # Ensure pre-packaged Mac player template has signatures officially stripped by Apple codesign
-          codesign --remove-signature Templates/MacOS/MacOS.app 2>/dev/null || true
-          cp -R Templates Publish/RagNext_Intel.app/Contents/Resources/Templates
+          mkdir -p Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS
+          cp -R Templates/* Publish/RagNext_Intel.app/Contents/Resources/Templates/
+          if [ -d "Templates/MacOS/MacOS.app" ]; then
+            codesign --remove-signature Templates/MacOS/MacOS.app 2>/dev/null || true
+            ditto -c -k --keepParent Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.zip
+            rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
+          fi
         fi
         cp RagNext.icns Publish/RagNext_Intel.app/Contents/Resources/
- 
+
         # Ensure core executable has +x execution rights
         chmod +x Publish/RagNext_Intel.app/Contents/MacOS/RagNext
         # Clean up build artifacts that can trigger macOS bundle layout validation errors
         rm -rf Publish/RagNext_Intel.app/Contents/MacOS/*.dSYM
         rm -f Publish/RagNext_Intel.app/Contents/MacOS/*.pdb
-   
+
         # 5. Write standard Apple Info.plist metadata
         echo '<?xml version="1.0" encoding="UTF-8"?>' > Publish/RagNext_Intel.app/Contents/Info.plist
         echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> Publish/RagNext_Intel.app/Contents/Info.plist
@@ -358,7 +367,8 @@ jobs:
         # 6. Sign & Notarize Intel x64 App Bundle
         if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
           echo "Signing Intel x64 App Bundle..."
-          codesign --deep --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime Publish/RagNext_Intel.app
+          find Publish/RagNext_Intel.app/Contents/MacOS -type f \( -name "*.dylib" -o -name "*.so" -o -name "RagNext" \) -exec codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime {} +
+          codesign --force --verify --verbose --sign "Developer ID Application: RagNext Labs LLC (${{ secrets.APPLE_TEAM_ID }})" --options runtime Publish/RagNext_Intel.app
           
           if [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ]; then
             echo "Submitting Intel x64 App for Apple Notarization..."
