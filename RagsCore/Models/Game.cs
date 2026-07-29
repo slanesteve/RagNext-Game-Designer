@@ -39,6 +39,18 @@ namespace RagsCore.Models
         private string _iconPath = string.Empty;
         public string IconPath { get => _iconPath; set => SetProperty(ref _iconPath, value); }
 
+        private string _steamUrl = "https://store.steampowered.com/app/4944750/RagNext_Studio/";
+        public string SteamUrl { get => _steamUrl; set => SetProperty(ref _steamUrl, value); }
+
+        private string _discordUrl = string.Empty;
+        public string DiscordUrl { get => _discordUrl; set => SetProperty(ref _discordUrl, value); }
+
+        private string _websiteUrl = string.Empty;
+        public string WebsiteUrl { get => _websiteUrl; set => SetProperty(ref _websiteUrl, value); }
+
+        private bool _showEngineCredits = true;
+        public bool ShowEngineCredits { get => _showEngineCredits; set => SetProperty(ref _showEngineCredits, value); }
+
         public Player Player { get; set; } = new();
 
         // Make collections settable so System.Text.Json can assign them during deserialization.

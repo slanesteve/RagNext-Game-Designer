@@ -453,13 +453,36 @@ namespace RagNext.Designer.Avalonia.Services
             string sourceDir = EnsureTemplateSource(templateDir, "WebGL");
             CopyDirectory(sourceDir, outputDir);
 
-            // Update the page title in index.html
+            // Update the page title and engine promo links in index.html
             string indexPath = Path.Combine(outputDir, "index.html");
             if (File.Exists(indexPath))
             {
                 string html = await File.ReadAllTextAsync(indexPath);
                 html = html.Replace("RagNextPlayer", title)
                            .Replace("<title>Unity WebGL Player", $"<title>{title}");
+
+                if (!game.ShowEngineCredits)
+                {
+                    html = html.Replace("id=\"ragnext-engine-links\" style=\"", "id=\"ragnext-engine-links\" style=\"display:none; ");
+                }
+                else
+                {
+                    if (!string.IsNullOrWhiteSpace(game.SteamUrl))
+                    {
+                        html = html.Replace("href=\"https://store.steampowered.com/app/4944750/RagNext_Studio/\"", $"href=\"{game.SteamUrl}\"");
+                    }
+                    if (!string.IsNullOrWhiteSpace(game.DiscordUrl))
+                    {
+                        html = html.Replace("id=\"ragnext-discord-link\" href=\"#\" target=\"_blank\" style=\"color: #5865F2; text-decoration: none; font-weight: bold; margin-right: 10px; display: none;\"",
+                                            $"id=\"ragnext-discord-link\" href=\"{game.DiscordUrl}\" target=\"_blank\" style=\"color: #5865F2; text-decoration: none; font-weight: bold; margin-right: 10px; display: inline-block;\"");
+                    }
+                    if (!string.IsNullOrWhiteSpace(game.WebsiteUrl))
+                    {
+                        html = html.Replace("id=\"ragnext-website-link\" href=\"#\" target=\"_blank\" style=\"color: #38bdf8; text-decoration: none; font-weight: bold; display: none;\"",
+                                            $"id=\"ragnext-website-link\" href=\"{game.WebsiteUrl}\" target=\"_blank\" style=\"color: #38bdf8; text-decoration: none; font-weight: bold; display: inline-block;\"");
+                    }
+                }
+
                 await File.WriteAllTextAsync(indexPath, html);
             }
 

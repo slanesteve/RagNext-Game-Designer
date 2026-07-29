@@ -3538,6 +3538,28 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Engine Credits & Promotion Links Card -->
+                        <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+                            <StackPanel Spacing="16">
+                                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <TextBlock Text="🔗 Engine Credits &amp; Links" FontSize="16" FontWeight="Bold" Foreground="#8E2DE2"/>
+                                    <ToggleSwitch IsChecked="{Binding CurrentGame.ShowEngineCredits, Mode=TwoWay}" OnContent="Include Links in Player" OffContent="Disabled" Foreground="{DynamicResource TextMuted}"/>
+                                </StackPanel>
+                                <TextBlock Text="Configure promotional links and engine credits displayed in exported player templates (Web, Desktop, Mobile)." FontSize="13" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+
+                                <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="160,*" RowSpacing="12">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Steam Page URL" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" FontSize="13"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding CurrentGame.SteamUrl, Mode=TwoWay}" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" CornerRadius="4" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Discord Server URL" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" FontSize="13"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CurrentGame.DiscordUrl, Mode=TwoWay}" Watermark="e.g. https://discord.gg/your-invite" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" CornerRadius="4" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Official Website URL" VerticalAlignment="Center" Foreground="{DynamicResource TextNormal}" FontSize="13"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding CurrentGame.WebsiteUrl, Mode=TwoWay}" Watermark="e.g. https://ragnext.com" Background="{DynamicResource InputBg}" Foreground="{DynamicResource TextNormal}" CornerRadius="4" BorderBrush="{DynamicResource BorderBrush}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <Border Background="{DynamicResource InputBg}" BorderBrush="#232333" BorderThickness="1" CornerRadius="8" Padding="20">
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Build Output Logs" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
