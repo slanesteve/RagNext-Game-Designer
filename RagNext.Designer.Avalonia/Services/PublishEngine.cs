@@ -109,15 +109,19 @@ namespace RagNext.Designer.Avalonia.Services
         //           UnityPlayer.dll
         //           (other Unity runtime DLLs)
 
-        private static string EnsureTemplateSource(string templateDir, string zipFileName)
+        private static string EnsureTemplateSource(string templateDir, string templateName)
         {
-            if (string.IsNullOrEmpty(zipFileName)) return templateDir;
-            string zipPath = Path.Combine(templateDir, zipFileName);
-            if (File.Exists(zipPath))
+            if (string.IsNullOrEmpty(templateName)) return templateDir;
+            string templateFile = Path.Combine(templateDir, $"{templateName}.template");
+            if (!File.Exists(templateFile))
+            {
+                templateFile = Path.Combine(templateDir, $"{templateName}.zip");
+            }
+            if (File.Exists(templateFile))
             {
                 try
                 {
-                    System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, templateDir, true);
+                    System.IO.Compression.ZipFile.ExtractToDirectory(templateFile, templateDir, true);
                 }
                 catch { }
             }
@@ -127,7 +131,7 @@ namespace RagNext.Designer.Avalonia.Services
         private static async Task PublishWindowsAsync(Game game, string title, string templateDir, string outputDir)
         {
             Report("Copying Windows shell player...");
-            string sourceDir = EnsureTemplateSource(templateDir, "Windows.zip");
+            string sourceDir = EnsureTemplateSource(templateDir, "Windows");
             CopyDirectory(sourceDir, outputDir);
 
             // Rename exe
@@ -158,7 +162,8 @@ namespace RagNext.Designer.Avalonia.Services
             string sourceApp = Path.Combine(templateDir, "MacOS.app");
             if (!Directory.Exists(sourceApp))
             {
-                string zipPath = Path.Combine(templateDir, "MacOS.zip");
+                string zipPath = Path.Combine(templateDir, "MacOS.template");
+                if (!File.Exists(zipPath)) zipPath = Path.Combine(templateDir, "MacOS.zip");
                 if (File.Exists(zipPath))
                 {
                     try { System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, templateDir, true); } catch { }
@@ -408,7 +413,7 @@ namespace RagNext.Designer.Avalonia.Services
         private static async Task PublishLinuxAsync(Game game, string title, string templateDir, string outputDir)
         {
             Report("Copying Linux shell player...");
-            string sourceDir = EnsureTemplateSource(templateDir, "Linux.zip");
+            string sourceDir = EnsureTemplateSource(templateDir, "Linux");
             CopyDirectory(sourceDir, outputDir);
 
             string targetBinary = Path.Combine(outputDir, title);
@@ -445,7 +450,7 @@ namespace RagNext.Designer.Avalonia.Services
         private static async Task PublishWebGLAsync(Game game, string title, string templateDir, string outputDir)
         {
             Report("Copying WebGL shell player...");
-            string sourceDir = EnsureTemplateSource(templateDir, "WebGL.zip");
+            string sourceDir = EnsureTemplateSource(templateDir, "WebGL");
             CopyDirectory(sourceDir, outputDir);
 
             // Update the page title in index.html

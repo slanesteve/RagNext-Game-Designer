@@ -66,7 +66,7 @@ jobs:
           cp -R Templates/* Publish/Designer-Windows/Templates/
           for tPlatform in MacOS Windows Linux WebGL; do
             if [ -d "Publish/Designer-Windows/Templates/$tPlatform" ]; then
-              (cd "Publish/Designer-Windows/Templates/$tPlatform" && zip -q -r "$tPlatform.zip" . && find . -mindepth 1 ! -name "$tPlatform.zip" -exec rm -rf {} +)
+              (cd "Publish/Designer-Windows/Templates/$tPlatform" && zip -q -r "$tPlatform.template" . && find . -mindepth 1 ! -name "$tPlatform.template" -exec rm -rf {} +)
             fi
           done
         fi
@@ -181,10 +181,10 @@ jobs:
           for tPlatform in MacOS Windows Linux WebGL; do
             if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/$tPlatform" ]; then
               if [ "$tPlatform" = "MacOS" ] && [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-                ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.zip
+                ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.template
                 rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
               elif [ "$tPlatform" != "MacOS" ]; then
-                (cd "Publish/RagNext_Arm64.app/Contents/Resources/Templates/$tPlatform" && ditto -c -k . "$tPlatform.zip" && find . -mindepth 1 ! -name "$tPlatform.zip" -exec rm -rf {} +)
+                (cd "Publish/RagNext_Arm64.app/Contents/Resources/Templates/$tPlatform" && ditto -c -k . "$tPlatform.template" && find . -mindepth 1 ! -name "$tPlatform.template" -exec rm -rf {} +)
               fi
             fi
           done
@@ -363,10 +363,10 @@ jobs:
           for tPlatform in MacOS Windows Linux WebGL; do
             if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/$tPlatform" ]; then
               if [ "$tPlatform" = "MacOS" ] && [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-                ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.zip
+                ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.template
                 rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
               elif [ "$tPlatform" != "MacOS" ]; then
-                (cd "Publish/RagNext_Intel.app/Contents/Resources/Templates/$tPlatform" && ditto -c -k . "$tPlatform.zip" && find . -mindepth 1 ! -name "$tPlatform.zip" -exec rm -rf {} +)
+                (cd "Publish/RagNext_Intel.app/Contents/Resources/Templates/$tPlatform" && ditto -c -k . "$tPlatform.template" && find . -mindepth 1 ! -name "$tPlatform.template" -exec rm -rf {} +)
               fi
             fi
           done
@@ -510,7 +510,7 @@ jobs:
           cp -R Templates/* Publish/Designer-Linux/Templates/
           for tPlatform in MacOS Windows Linux WebGL; do
             if [ -d "Publish/Designer-Linux/Templates/$tPlatform" ]; then
-              (cd "Publish/Designer-Linux/Templates/$tPlatform" && zip -q -r "$tPlatform.zip" . && find . -mindepth 1 ! -name "$tPlatform.zip" -exec rm -rf {} +)
+              (cd "Publish/Designer-Linux/Templates/$tPlatform" && zip -q -r "$tPlatform.template" . && find . -mindepth 1 ! -name "$tPlatform.template" -exec rm -rf {} +)
             fi
           done
         fi
