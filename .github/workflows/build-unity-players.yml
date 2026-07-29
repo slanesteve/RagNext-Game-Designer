@@ -21,8 +21,8 @@ on:
         default: true
 
 jobs:
-  # Job 1: Build for Linux and WebGL on Linux runner using Docker containers
-  build-linux-containers:
+  # Build all 4 Unity Player targets on Ubuntu runner using GameCI Docker containers
+  build-unity-templates:
     name: Build ${{ matrix.targetPlatform }} (Linux Container)
     runs-on: ubuntu-latest
     strategy:
@@ -34,6 +34,13 @@ jobs:
             customImage: 'unityci/editor:ubuntu-6000.3.6f1-linux-il2cpp-3'
           - targetPlatform: WebGL
             inputKey: buildWebGL
+            customImage: ''
+          - targetPlatform: StandaloneWindows64
+            inputKey: buildWindows
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-mono-3'
+          - targetPlatform: StandaloneOSX
+            inputKey: buildOSX
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-mac-mono-3'
     steps:
       - name: Free Disk Space (Ubuntu)
         if: ${{ inputs[matrix.inputKey] }}
@@ -50,7 +57,7 @@ jobs:
         with:
           lfs: true
 
-      # Build using GameCI Action with automated Personal license
+      # Build using GameCI Action with automated license
       - name: Build Unity Player
         if: ${{ inputs[matrix.inputKey] }}
         uses: game-ci/unity-builder@v4
@@ -74,93 +81,9 @@ jobs:
           path: build/${{ matrix.targetPlatform }}
           if-no-files-found: error
 
-  # Job 2: Build macOS StandaloneOSX directly on native macOS runner to compile IL2CPP targets
-  build-mac-native:
-    name: Build StandaloneOSX (macOS Native)
-    runs-on: macos-latest
-    steps:
-      - name: Checkout Source Code
-        if: ${{ inputs.buildOSX }}
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Build macOS Player
-        if: ${{ inputs.buildOSX }}
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          projectPath: RagNextPlayer
-          unityVersion: 6000.3.6f1
-          targetPlatform: StandaloneOSX
-          buildName: RagNextPlayer
-
-      - name: Upload macOS Artifact
-        if: ${{ inputs.buildOSX }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: UnityTemplate-StandaloneOSX
-          path: build/StandaloneOSX
-          if-no-files-found: error
-
-  # Job 3: Build Windows StandaloneWindows64 directly on native Windows runner to compile IL2CPP targets
-  build-windows-native:
-    name: Build StandaloneWindows64 (Windows Native)
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Source Code
-        if: ${{ inputs.buildWindows }}
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Build Windows Player
-        if: ${{ inputs.buildWindows }}
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          projectPath: RagNextPlayer
-          unityVersion: 6000.3.6f1
-          targetPlatform: StandaloneWindows64
-          buildName: RagNextPlayer
-
-      - name: Upload Windows Artifact
-        if: ${{ inputs.buildWindows }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: UnityTemplate-StandaloneWindows64
-          path: build/StandaloneWindows64
-          if-no-files-found: error
-
-      - name: Copy Unity Build Log
-        if: always() && inputs.buildWindows
-        shell: pwsh
-        run: |
-          mkdir -p build/logs
-          $logPath = "$env:LOCALAPPDATA\Unity\Editor\Editor.log"
-          if (Test-Path $logPath) {
-              cp $logPath build/logs/Editor.log
-          } else {
-              Write-Output "Unity Editor.log not found."
-          }
-
-      - name: Upload Unity Build Log
-        if: always() && inputs.buildWindows
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windows-Unity-Editor-Log
-          path: build/logs/Editor.log
-          if-no-files-found: warn
-
   commit-templates:
     name: Commit Built Templates to Repository
-    needs: [build-linux-containers, build-mac-native, build-windows-native]
+    needs: [build-unity-templates]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -275,7 +198,6 @@ jobs:
           git add Templates/
           if ! git diff-index --quiet HEAD; then
             git commit -m "chore: automated update of built player templates"
-            # Pull any commits pushed during the build run to prevent conflicts
             git pull --rebase origin master
             git push origin master
           else
