@@ -266,15 +266,36 @@ namespace RagNext.Designer.Avalonia.Services
                         return;
                     }
 
-                    string p12Cert = Environment.GetEnvironmentVariable("APPLE_DEVELOPER_CERT_P12") ?? "";
+                    string p12CertRaw = Environment.GetEnvironmentVariable("APPLE_DEVELOPER_CERT_P12") ?? "";
                     string p12Pass = Environment.GetEnvironmentVariable("APPLE_DEVELOPER_CERT_PASSWORD") ?? "";
                     string appleId = Environment.GetEnvironmentVariable("APPLE_ID") ?? "";
                     string appPass = Environment.GetEnvironmentVariable("APPLE_APP_PASSWORD") ?? "";
                     string teamId  = Environment.GetEnvironmentVariable("APPLE_TEAM_ID") ?? "";
 
-                    bool hasDevIdCert = !string.IsNullOrEmpty(p12Cert) && File.Exists(p12Cert);
+                    string? p12CertPath = null;
+                    string? tempCertFile = null;
+                    if (!string.IsNullOrWhiteSpace(p12CertRaw))
+                    {
+                        if (File.Exists(p12CertRaw))
+                        {
+                            p12CertPath = p12CertRaw;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                byte[] certBytes = Convert.FromBase64String(p12CertRaw);
+                                tempCertFile = Path.Combine(Path.GetTempPath(), "ragnext_dev_id.p12");
+                                await File.WriteAllBytesAsync(tempCertFile, certBytes);
+                                p12CertPath = tempCertFile;
+                            }
+                            catch { }
+                        }
+                    }
+
+                    bool hasDevIdCert = !string.IsNullOrEmpty(p12CertPath) && File.Exists(p12CertPath);
                     string args = hasDevIdCert
-                        ? $"sign --p12-file \"{p12Cert}\" --p12-password \"{p12Pass}\" --code-signature-flags runtime \"{appBundle}\""
+                        ? $"sign --p12-file \"{p12CertPath}\" --p12-password \"{p12Pass}\" --code-signature-flags runtime \"{appBundle}\""
                         : $"sign \"{appBundle}\"";
 
                     var psi = new ProcessStartInfo(rcodesignTool, args)
@@ -327,6 +348,10 @@ namespace RagNext.Designer.Avalonia.Services
                                 Report($"Warning: rcodesign notarize returned code {notProc.ExitCode}: {err}");
                             }
                         }
+                    }
+                    if (!string.IsNullOrEmpty(tempCertFile) && File.Exists(tempCertFile))
+                    {
+                        try { File.Delete(tempCertFile); } catch { }
                     }
                 }
             }
