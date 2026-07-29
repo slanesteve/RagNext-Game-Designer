@@ -193,32 +193,7 @@ namespace RagNext.Designer.Avalonia.Services
             else
             {
                 // On non-macOS (Windows/Linux cross-publish):
-                // Keep Info.plist and executable binary name untouched so the bundle remains 100% pristine.
-                Report("Packaging Mac standalone bundle with pre-cleared template for cross-platform distribution...");
-
-                // Create helper script for macOS users to bypass Gatekeeper quarantine and re-sign ad-hoc
-                try
-                {
-                    string helperPath = Path.Combine(outputDir, "Fix_Mac_Permissions.command");
-                    string helperScript =
-                        "#!/bin/bash\n" +
-                        "DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" && pwd )\"\n" +
-                        $"APP_PATH=\"$DIR/{title}.app\"\n\n" +
-                        "echo \"===============================================\"\n" +
-                        $"echo \" macOS Gatekeeper Fixer for {title}.app\"\n" +
-                        "echo \"===============================================\"\n\n" +
-                        "echo \"Clearing quarantine attribute...\"\n" +
-                        "xattr -cr \"$APP_PATH\"\n\n" +
-                        "echo \"Applying ad-hoc code signature...\"\n" +
-                        "codesign --force --deep --sign - \"$APP_PATH\" 2>/dev/null || true\n\n" +
-                        "echo \"Setting executable permissions...\"\n" +
-                        "chmod +x \"$APP_PATH/Contents/MacOS/\"* 2>/dev/null || true\n\n" +
-                        "echo \"Done! Launching app...\"\n" +
-                        "open \"$APP_PATH\"\n";
-
-                    await File.WriteAllTextAsync(helperPath, helperScript);
-                }
-                catch { }
+                Report("Packaging Mac standalone bundle for cross-platform distribution...");
             }
 
             // StreamingAssets lives under Contents/Resources/Data/
@@ -226,10 +201,10 @@ namespace RagNext.Designer.Avalonia.Services
             await InjectGameDataAsync(game, streamingDir);
 
             // Re-sign Mac app bundle after modifications
-            await ReSignMacBundleAsync(appBundle);
+            await ReSignMacBundleAsync(appBundle, title, outputDir);
         }
 
-        private static async Task ReSignMacBundleAsync(string appBundle)
+        private static async Task ReSignMacBundleAsync(string appBundle, string title, string outputDir)
         {
             try
             {
@@ -265,7 +240,29 @@ namespace RagNext.Designer.Avalonia.Services
                     string? rcodesignTool = FindTool("rcodesign");
                     if (string.IsNullOrEmpty(rcodesignTool))
                     {
-                        Report("Info: rcodesign tool not found. Install rcodesign (or place rcodesign.exe in Tools/) for native cross-platform macOS signing on Windows.");
+                        Report("Info: rcodesign tool not found. Generating Fix_Mac_Permissions.command fallback script for macOS Gatekeeper...");
+                        try
+                        {
+                            string helperPath = Path.Combine(outputDir, "Fix_Mac_Permissions.command");
+                            string helperScript =
+                                "#!/bin/bash\n" +
+                                "DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" && pwd )\"\n" +
+                                $"APP_PATH=\"$DIR/{title}.app\"\n\n" +
+                                "echo \"===============================================\"\n" +
+                                $"echo \" macOS Gatekeeper Fixer for {title}.app\"\n" +
+                                "echo \"===============================================\"\n\n" +
+                                "echo \"Clearing quarantine attribute...\"\n" +
+                                "xattr -cr \"$APP_PATH\"\n\n" +
+                                "echo \"Applying ad-hoc code signature...\"\n" +
+                                "codesign --force --deep --sign - \"$APP_PATH\" 2>/dev/null || true\n\n" +
+                                "echo \"Setting executable permissions...\"\n" +
+                                "chmod +x \"$APP_PATH/Contents/MacOS/\"* 2>/dev/null || true\n\n" +
+                                "echo \"Done! Launching app...\"\n" +
+                                "open \"$APP_PATH\"\n";
+
+                            await File.WriteAllTextAsync(helperPath, helperScript);
+                        }
+                        catch { }
                         return;
                     }
 
