@@ -137,6 +137,7 @@ jobs:
           security default-keychain -s build.keychain
           security set-keychain-settings build.keychain
           security unlock-keychain -p "" build.keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
           rm cert.p12
         else
           echo "No APPLE_DEVELOPER_CERT_P12 found, skipping cert import."
@@ -287,6 +288,7 @@ jobs:
           security default-keychain -s build.keychain
           security set-keychain-settings build.keychain
           security unlock-keychain -p "" build.keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
           rm cert.p12
         else
           echo "No APPLE_DEVELOPER_CERT_P12 found, skipping cert import."
