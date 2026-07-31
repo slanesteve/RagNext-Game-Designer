@@ -70,7 +70,15 @@ namespace RagNextPlayer.Runtime
                     }
                 }
             }
-            return Game.Variables.Find(v => string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
+
+            var cleanName = name?.Trim();
+            var found = Game.Variables.Find(v => string.Equals(v.Name?.Trim(), cleanName, StringComparison.OrdinalIgnoreCase));
+            if (found == null && cleanName != null)
+            {
+                var noSpaceName = cleanName.Replace(" ", "");
+                found = Game.Variables.Find(v => string.Equals(v.Name?.Replace(" ", ""), noSpaceName, StringComparison.OrdinalIgnoreCase));
+            }
+            return found;
         }
 
         public void SetVariable(string name, string? value)
@@ -664,26 +672,42 @@ namespace RagNextPlayer.Runtime
         private static readonly System.Collections.Generic.List<ActionRunner> _runners = new();
         private static int _executionDepth = 0;
 
+        private static readonly System.Collections.Generic.HashSet<string> MathKeywords = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "random", "rand", "abs", "min", "max", "round", "floor", "ceil", "clamp", "sqrt", "pow", "log", "sin", "cos", "tan", "pi", "e"
+        };
+
         public static string EvaluateAttributeValue(string value)
         {
             if (string.IsNullOrWhiteSpace(value)) return value;
 
-            if (!double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _))
+            if (double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double directNum))
             {
-                try
+                return directNum.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            try
+            {
+                var tokens = value.Split(new[] { '+', '-', '*', '/', '%', '^', '(', ')', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                bool isMathFormula = tokens.Length > 0 && System.Linq.Enumerable.All(tokens, t =>
                 {
-                    var tokens = value.Split(new[] { '+', '-', '*', '/', '%', '^' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (tokens.Length > 1 && System.Linq.Enumerable.All(tokens, t => double.TryParse(t.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _)))
-                    {
-                        double numVal = MathEvaluator.Evaluate(value);
-                        return numVal.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    }
-                }
-                catch
+                    var clean = t.Trim();
+                    if (string.IsNullOrEmpty(clean)) return true;
+                    if (MathKeywords.Contains(clean)) return true;
+                    return double.TryParse(clean, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _);
+                });
+
+                if (isMathFormula)
                 {
-                    // Fallback to original string if not a valid mathematical formula
+                    double numVal = MathEvaluator.Evaluate(value);
+                    return numVal.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 }
             }
+            catch
+            {
+                // Fallback to original string if not a valid mathematical formula
+            }
+
             return value;
         }
 
@@ -928,6 +952,10 @@ namespace RagNextPlayer.Runtime
                         var resolved = ctx.Resolve(c.ObjectId);
                         ctx.SetVariable("player.activeInteractiveScreenObjectId", resolved);
                     }
+                    break;
+
+                case CloseInteractiveScreenCommandData:
+                    ctx.SetVariable("player.activeInteractiveScreenObjectId", null);
                     break;
 
                 case AddObjectToRoomCommandData c:
@@ -1215,7 +1243,10 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case AddCommentCommandData:
-                    break; // Design-time only — no runtime effect
+                case SetBackgroundMusicCommandData:
+                case StopBackgroundMusicCommandData:
+                case SetCloseButtonVisibleCommandData:
+                    break; // Handled by CommandEffectRouter or UI state — no variable state change needed
 
                 case EndGameCommandData c:
                     ctx.SetVariable("system.isGameOver", "true");

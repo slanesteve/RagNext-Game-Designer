@@ -1,6 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using RagNext.Designer.Avalonia.Services;
+using RagNext.Models;
 using RagsCore.Models;
 using RagsCore.Services;
 
@@ -30,7 +32,30 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Timers is not null)
                 {
                     App.CurrentGame.Timers.Add(newTimer);
-                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                    if (MainWindowViewModel.Instance != null)
+                    {
+                        var targetNode = MainWindowViewModel.Instance.SelectedTimerTreeNode;
+                        EntityFolder? targetFolder = targetNode?.IsFolder == true 
+                            ? targetNode.FolderModel 
+                            : targetNode?.ParentNode?.FolderModel;
+                        if (targetFolder != null)
+                        {
+                            EntityTreeHelper.MoveEntityToFolder(MainWindowViewModel.Instance.EntityTreeDoc.Timers, newTimer.Id, targetFolder);
+                            await MainWindowViewModel.Instance.SaveEntityTreeAsync();
+                        }
+                        MainWindowViewModel.Instance.RebuildEntityTrees();
+                        var newNode = MainWindowViewModel.Instance.FindNodeByEntityId(MainWindowViewModel.Instance.TimerTreeRoots, newTimer.Id);
+                        if (newNode != null)
+                        {
+                            MainWindowViewModel.Instance.ExpandParents(newNode);
+                            MainWindowViewModel.Instance.SelectedTimerTreeNode = newNode;
+                        }
+                        else
+                        {
+                            MainWindowViewModel.Instance.SelectedTimer = newTimer;
+                        }
+                        await MainWindowViewModel.Instance.SaveGameAsync();
+                    }
                     OnPropertyChanged(nameof(Timers));
                 }
                 else
@@ -45,7 +70,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Timers is not null)
                 {
                     App.CurrentGame.Timers.Remove(t);
-                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                    if (MainWindowViewModel.Instance != null)
+                    {
+                        EntityTreeHelper.MoveEntityToFolder(MainWindowViewModel.Instance.EntityTreeDoc.Timers, t.Id, null);
+                        MainWindowViewModel.Instance.RebuildEntityTrees();
+                        if (MainWindowViewModel.Instance.SelectedTimer == t)
+                        {
+                            MainWindowViewModel.Instance.SelectedTimer = App.CurrentGame.Timers.Count > 0 ? App.CurrentGame.Timers[0] : null;
+                        }
+                        await MainWindowViewModel.Instance.SaveEntityTreeAsync();
+                        await MainWindowViewModel.Instance.SaveGameAsync();
+                    }
                     OnPropertyChanged(nameof(Timers));
                 }
             });
@@ -69,7 +104,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     int oldIndex = App.CurrentGame.Timers.IndexOf(sorted[i]);
                     if (oldIndex != i) App.CurrentGame.Timers.Move(oldIndex, i);
                 }
-                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                if (MainWindowViewModel.Instance != null)
+                {
+                    MainWindowViewModel.Instance.RebuildEntityTrees();
+                    await MainWindowViewModel.Instance.SaveGameAsync();
+                }
                 OnPropertyChanged(nameof(Timers));
             });
         }

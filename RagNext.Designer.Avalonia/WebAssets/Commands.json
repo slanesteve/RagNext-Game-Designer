@@ -775,6 +775,17 @@
       ]
     },
     {
+      "name": "UI: Set Close Button Visible",
+      "category": "UI",
+      "inputs": [
+        {
+          "label": "Visible",
+          "controlType": "Checkbox",
+          "dataType": "Bool"
+        }
+      ]
+    },
+    {
       "name": "UI: Set Hotspot Active State",
       "category": "UI",
       "inputs": [
@@ -828,7 +839,7 @@
         },
         {
           "label": "Value",
-          "controlType": "Text",
+          "controlType": "RichText",
           "dataType": "String"
         }
       ]
@@ -1019,6 +1030,11 @@
           "dataType": "GameObject"
         }
       ]
+    },
+    {
+      "name": "Item: Close Interactive Screen",
+      "category": "Item",
+      "inputs": []
     },
     {
       "name": "Variable: Break Loop",

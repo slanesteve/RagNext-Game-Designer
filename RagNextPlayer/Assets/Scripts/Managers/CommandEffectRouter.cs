@@ -85,6 +85,15 @@ namespace RagNextPlayer.Managers
                     }
                     break;
 
+                case CloseInteractiveScreenCommandData:
+                    UnityEngine.Debug.Log("[CommandEffectRouter] CloseInteractiveScreenCommandData received. Calling CloseItemInteractiveScreen.");
+                    UIManager.Instance?.CloseItemInteractiveScreen();
+                    break;
+
+                case SetCloseButtonVisibleCommandData c:
+                    UIManager.Instance?.SetCloseButtonVisible(c.Visible);
+                    break;
+
                 case ScreenShakeCommandData c:
                     TransitionVFXManager.Instance?.TriggerScreenShake(c.Intensity, c.Duration);
                     break;

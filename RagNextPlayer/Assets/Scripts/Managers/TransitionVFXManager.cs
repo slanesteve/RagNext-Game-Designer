@@ -526,34 +526,42 @@ namespace RagNextPlayer.Managers
             emission.enabled = false;
         }
 
-        public void SetAmbientOverlay(string style, bool active)
+        private System.Collections.Generic.Dictionary<ParticleSystem, float> _baseEmissionRates = new();
+
+        public void SetAmbientOverlay(string style, bool active, float intensity = 1.0f)
         {
-            Debug.Log($"[TransitionVFXManager] SetAmbientOverlay: style='{style}', active={active}, _vfxCamera is null: {(_vfxCamera == null)}");
+            Debug.Log($"[TransitionVFXManager] SetAmbientOverlay: style='{style}', active={active}, intensity={intensity}, _vfxCamera is null: {(_vfxCamera == null)}");
             EnsureCameraStacked();
             if (active)
             {
-                if (_embersPS != null) SetPSEnabled(_embersPS, style == "Embers");
-                if (_rainPS != null) SetPSEnabled(_rainPS, style == "Rain");
-                if (_snowPS != null) SetPSEnabled(_snowPS, style == "Snow");
-                if (_roomSmokePS != null) SetPSEnabled(_roomSmokePS, style == "Smoke");
-                if (_roomSandPS != null) SetPSEnabled(_roomSandPS, style == "Sand");
+                if (_embersPS != null) SetPSEnabled(_embersPS, style == "Embers", intensity);
+                if (_rainPS != null) SetPSEnabled(_rainPS, style == "Rain", intensity);
+                if (_snowPS != null) SetPSEnabled(_snowPS, style == "Snow", intensity);
+                if (_roomSmokePS != null) SetPSEnabled(_roomSmokePS, style == "Smoke", intensity);
+                if (_roomSandPS != null) SetPSEnabled(_roomSandPS, style == "Sand", intensity);
             }
             else
             {
-                if (style == "Embers" && _embersPS != null) SetPSEnabled(_embersPS, false);
-                if (style == "Rain" && _rainPS != null) SetPSEnabled(_rainPS, false);
-                if (style == "Snow" && _snowPS != null) SetPSEnabled(_snowPS, false);
-                if (style == "Smoke" && _roomSmokePS != null) SetPSEnabled(_roomSmokePS, false);
-                if (style == "Sand" && _roomSandPS != null) SetPSEnabled(_roomSandPS, false);
+                if (style == "Embers" && _embersPS != null) SetPSEnabled(_embersPS, false, intensity);
+                if (style == "Rain" && _rainPS != null) SetPSEnabled(_rainPS, false, intensity);
+                if (style == "Snow" && _snowPS != null) SetPSEnabled(_snowPS, false, intensity);
+                if (style == "Smoke" && _roomSmokePS != null) SetPSEnabled(_roomSmokePS, false, intensity);
+                if (style == "Sand" && _roomSandPS != null) SetPSEnabled(_roomSandPS, false, intensity);
             }
         }
 
-        private void SetPSEnabled(ParticleSystem ps, bool enabled)
+        private void SetPSEnabled(ParticleSystem ps, bool enabled, float intensity = 1.0f)
         {
+            if (ps == null) return;
             var emission = ps.emission;
             emission.enabled = enabled;
             if (enabled)
             {
+                if (!_baseEmissionRates.ContainsKey(ps))
+                {
+                    _baseEmissionRates[ps] = emission.rateOverTimeMultiplier > 0 ? emission.rateOverTimeMultiplier : 50f;
+                }
+                emission.rateOverTimeMultiplier = _baseEmissionRates[ps] * Mathf.Clamp(intensity, 0.1f, 10.0f);
                 if (!ps.isPlaying) ps.Play();
             }
             else

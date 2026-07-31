@@ -1714,7 +1714,19 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     "Timers" => EntityTreeDoc.Timers,
                     _ => EntityTreeDoc.Rooms
                 };
-                EntityTreeHelper.AddFolder(catTree, null, folderName);
+
+                EntityTreeNodeViewModel? selectedNode = category switch
+                {
+                    "Rooms" => SelectedRoomTreeNode,
+                    "Objects" => SelectedObjectTreeNode,
+                    "Characters" => SelectedCharacterTreeNode,
+                    "Functions" => SelectedFunctionTreeNode,
+                    "Variables" => SelectedVariableTreeNode,
+                    "Timers" => SelectedTimerTreeNode,
+                    _ => null
+                };
+
+                EntityTreeHelper.AddFolder(catTree, selectedNode, folderName);
                 RebuildEntityTrees();
                 await SaveEntityTreeAsync();
             });
@@ -1746,6 +1758,60 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     EntityTreeHelper.RemoveFolder(EntityTreeDoc.Variables, node.FolderModel);
                     EntityTreeHelper.RemoveFolder(EntityTreeDoc.Timers, node.FolderModel);
                     RebuildEntityTrees();
+                    await SaveEntityTreeAsync();
+                }
+                else if (!node.IsFolder && node.Entity != null)
+                {
+                    if (node.Entity is Room r)
+                    {
+                        CurrentGame?.Rooms?.Remove(r);
+                        if (SelectedRoom == r) SelectedRoom = CurrentGame?.Rooms?.FirstOrDefault();
+                    }
+                    else if (node.Entity is GameObject o)
+                    {
+                        CurrentGame?.Objects?.Remove(o);
+                        if (SelectedObject == o) SelectedObject = CurrentGame?.Objects?.FirstOrDefault();
+                    }
+                    else if (node.Entity is Character c)
+                    {
+                        CurrentGame?.Characters?.Remove(c);
+                        if (SelectedCharacter == c) SelectedCharacter = CurrentGame?.Characters?.FirstOrDefault();
+                    }
+                    else if (node.Entity is GlobalFunction f)
+                    {
+                        CurrentGame?.Functions?.Remove(f);
+                        if (SelectedFunction == f) SelectedFunction = CurrentGame?.Functions?.FirstOrDefault();
+                    }
+                    else if (node.Entity is GameVariable v)
+                    {
+                        if (v.IsSystemVariable)
+                        {
+                            if (ShowAlertDialogAsync != null)
+                            {
+                                await ShowAlertDialogAsync(
+                                    "System Variable",
+                                    $"'{v.Name}' is a system-reserved variable required by the theme engine and cannot be deleted.");
+                            }
+                            return;
+                        }
+                        CurrentGame?.Variables?.Remove(v);
+                        if (SelectedVariable == v) SelectedVariable = CurrentGame?.Variables?.FirstOrDefault();
+                    }
+                    else if (node.Entity is GameTimer t)
+                    {
+                        CurrentGame?.Timers?.Remove(t);
+                        if (SelectedTimer == t) SelectedTimer = CurrentGame?.Timers?.FirstOrDefault();
+                    }
+
+                    EntityTreeHelper.MoveEntityToFolder(EntityTreeDoc.Rooms, node.Id, null);
+                    EntityTreeHelper.MoveEntityToFolder(EntityTreeDoc.Objects, node.Id, null);
+                    EntityTreeHelper.MoveEntityToFolder(EntityTreeDoc.Characters, node.Id, null);
+                    EntityTreeHelper.MoveEntityToFolder(EntityTreeDoc.Functions, node.Id, null);
+                    EntityTreeHelper.MoveEntityToFolder(EntityTreeDoc.Variables, node.Id, null);
+                    EntityTreeHelper.MoveEntityToFolder(EntityTreeDoc.Timers, node.Id, null);
+
+                    RebuildEntityTrees();
+                    await SaveGameAsync();
                     await SaveEntityTreeAsync();
                 }
             });
@@ -3859,6 +3925,27 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             RebuildEntityTrees();
             await SaveEntityTreeAsync();
+        }
+
+        public EntityTreeNodeViewModel? FindNodeByEntityId(IEnumerable<EntityTreeNodeViewModel> nodes, Guid entityId)
+        {
+            foreach (var node in nodes)
+            {
+                if (!node.IsFolder && node.Id == entityId) return node;
+                var foundInChild = FindNodeByEntityId(node.Children, entityId);
+                if (foundInChild != null) return foundInChild;
+            }
+            return null;
+        }
+
+        public void ExpandParents(EntityTreeNodeViewModel? node)
+        {
+            var curr = node?.ParentNode;
+            while (curr != null)
+            {
+                curr.IsExpanded = true;
+                curr = curr.ParentNode;
+            }
         }
 
         private bool ContainsNodeRecursive(IEnumerable<EntityTreeNodeViewModel> nodes, EntityTreeNodeViewModel target)

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using RagNext.Designer.Avalonia.Services;
+using RagNext.Models;
 using RagsCore.Models;
 using RagsCore.Services;
 
@@ -30,7 +32,30 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Functions is not null)
                 {
                     App.CurrentGame.Functions.Add(newFunc);
-                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                    if (MainWindowViewModel.Instance != null)
+                    {
+                        var targetNode = MainWindowViewModel.Instance.SelectedFunctionTreeNode;
+                        EntityFolder? targetFolder = targetNode?.IsFolder == true 
+                            ? targetNode.FolderModel 
+                            : targetNode?.ParentNode?.FolderModel;
+                        if (targetFolder != null)
+                        {
+                            EntityTreeHelper.MoveEntityToFolder(MainWindowViewModel.Instance.EntityTreeDoc.Functions, newFunc.Id, targetFolder);
+                            await MainWindowViewModel.Instance.SaveEntityTreeAsync();
+                        }
+                        MainWindowViewModel.Instance.RebuildEntityTrees();
+                        var newNode = MainWindowViewModel.Instance.FindNodeByEntityId(MainWindowViewModel.Instance.FunctionTreeRoots, newFunc.Id);
+                        if (newNode != null)
+                        {
+                            MainWindowViewModel.Instance.ExpandParents(newNode);
+                            MainWindowViewModel.Instance.SelectedFunctionTreeNode = newNode;
+                        }
+                        else
+                        {
+                            MainWindowViewModel.Instance.SelectedFunction = newFunc;
+                        }
+                        await MainWindowViewModel.Instance.SaveGameAsync();
+                    }
                     OnPropertyChanged(nameof(Functions));
                 }
                 else
@@ -45,7 +70,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Functions is not null)
                 {
                     App.CurrentGame.Functions.Remove(f);
-                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                    if (MainWindowViewModel.Instance != null)
+                    {
+                        EntityTreeHelper.MoveEntityToFolder(MainWindowViewModel.Instance.EntityTreeDoc.Functions, f.Id, null);
+                        MainWindowViewModel.Instance.RebuildEntityTrees();
+                        if (MainWindowViewModel.Instance.SelectedFunction == f)
+                        {
+                            MainWindowViewModel.Instance.SelectedFunction = App.CurrentGame.Functions.Count > 0 ? App.CurrentGame.Functions[0] : null;
+                        }
+                        await MainWindowViewModel.Instance.SaveEntityTreeAsync();
+                        await MainWindowViewModel.Instance.SaveGameAsync();
+                    }
                     OnPropertyChanged(nameof(Functions));
                 }
             });
@@ -69,7 +104,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     int oldIndex = App.CurrentGame.Functions.IndexOf(sorted[i]);
                     if (oldIndex != i) App.CurrentGame.Functions.Move(oldIndex, i);
                 }
-                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                if (MainWindowViewModel.Instance != null)
+                {
+                    MainWindowViewModel.Instance.RebuildEntityTrees();
+                    await MainWindowViewModel.Instance.SaveGameAsync();
+                }
                 OnPropertyChanged(nameof(Functions));
             });
         }

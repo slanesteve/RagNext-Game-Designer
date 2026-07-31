@@ -93,6 +93,8 @@ namespace RagNextPlayer.Runtime.Models
     {
         public bool Enabled { get; set; }
         public string BackdropAssetId { get; set; } = string.Empty;
+        public bool ShowCloseButton { get; set; } = true;
+        public string OnCloseActionId { get; set; } = string.Empty;
         public List<ScreenHotspotData> Hotspots { get; set; } = new List<ScreenHotspotData>();
     }
 
@@ -112,6 +114,7 @@ namespace RagNextPlayer.Runtime.Models
         public string ImageAssetId { get; set; } = string.Empty;
         public string LinkedActionId { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
+        public bool EnableHoverScale { get; set; } = true;
     }
 
     // ── Player ────────────────────────────────────────────────────────────────
@@ -283,6 +286,8 @@ namespace RagNextPlayer.Runtime.Models
     public class PlayerSetPortraitMediaCommandData   : CommandData { public string MediaId { get; set; } = string.Empty; }
     public class SwapPlayerCharacterCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; }
     public class ShowInteractiveScreenCommandData    : CommandData { public string ObjectId { get; set; } = string.Empty; }
+    public class CloseInteractiveScreenCommandData   : CommandData { }
+    public class SetCloseButtonVisibleCommandData   : CommandData { public bool Visible { get; set; } = true; }
     public class ShowSplashScreenCommandData         : CommandData { public string SplashScreenName { get; set; } = "Default"; }
     public class CharacterMoveToRoomCommandData      : CommandData { public string CharacterId { get; set; } = string.Empty; public string RoomId { get; set; } = string.Empty; }
     public class CharacterMoveToRandomAdjacentCommandData : CommandData { public string CharacterId { get; set; } = string.Empty; }

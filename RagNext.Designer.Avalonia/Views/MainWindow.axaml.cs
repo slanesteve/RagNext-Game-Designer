@@ -606,8 +606,6 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is Room newRoom)
             {
-                var list = this.FindControl<ListBox>("RoomsList");
-                if (list != null) list.SelectedItem = newRoom;
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     var tb = this.FindControl<TextBox>("RoomNameTextBox");
@@ -624,8 +622,6 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is Character newChar)
             {
-                var list = this.FindControl<ListBox>("CharsList");
-                if (list != null) list.SelectedItem = newChar;
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     var tb = this.FindControl<TextBox>("CharacterNameTextBox");
@@ -642,8 +638,6 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems?.Count > 0 && e.NewItems[0] is GameObject newObj)
             {
-                var list = this.FindControl<ListBox>("ObjectsList");
-                if (list != null) list.SelectedItem = newObj;
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     var tb = this.FindControl<TextBox>("ObjectNameTextBox");
@@ -1066,12 +1060,15 @@ namespace RagNext.Designer.Avalonia.Views
 
         public void OnAddObjectHotspotClicked(object sender, RoutedEventArgs e)
         {
-            var obj = this.FindControl<ListBox>("ObjectsList")?.SelectedItem as GameObject;
+            var obj = CurrentSelectedObject;
             if (obj != null)
             {
                 if (obj.InteractiveScreenSettings == null)
                     obj.InteractiveScreenSettings = new InteractiveScreenSettings();
-                obj.InteractiveScreenSettings.Hotspots.Add(new ScreenHotspot { Name = "New Button" });
+                var newHotspot = new ScreenHotspot { Name = "New Button" };
+                obj.InteractiveScreenSettings.Hotspots.Add(newHotspot);
+                var list = this.FindControl<ListBox>("ObjectHotspotsList");
+                if (list != null) list.SelectedItem = newHotspot;
             }
         }
 
@@ -1079,7 +1076,7 @@ namespace RagNext.Designer.Avalonia.Views
         {
             var button = sender as Button;
             var hotspot = button?.CommandParameter as ScreenHotspot;
-            var obj = this.FindControl<ListBox>("ObjectsList")?.SelectedItem as GameObject;
+            var obj = CurrentSelectedObject;
             if (obj != null && hotspot != null)
             {
                 obj.InteractiveScreenSettings?.Hotspots.Remove(hotspot);
@@ -1142,7 +1139,7 @@ namespace RagNext.Designer.Avalonia.Views
                     if (room.InteractiveScreenSettings == null) room.InteractiveScreenSettings = new InteractiveScreenSettings();
                     room.InteractiveScreenSettings.BackdropAssetId = backdropName;
                 }
-                var obj = this.FindControl<ListBox>("ObjectsList")?.SelectedItem as GameObject;
+                var obj = CurrentSelectedObject;
                 if (obj != null)
                 {
                     if (obj.InteractiveScreenSettings == null) obj.InteractiveScreenSettings = new InteractiveScreenSettings();
@@ -6537,10 +6534,18 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (value is string hex && !string.IsNullOrWhiteSpace(hex))
             {
+                if (string.Equals(hex, "transparent", StringComparison.OrdinalIgnoreCase) || string.Equals(hex, "none", StringComparison.OrdinalIgnoreCase))
+                {
+                    return global::Avalonia.Media.Brushes.Transparent;
+                }
                 if (global::Avalonia.Media.Color.TryParse(hex, out var color))
                 {
                     return new global::Avalonia.Media.SolidColorBrush(color);
                 }
+            }
+            if (parameter is string p && string.Equals(p, "background", StringComparison.OrdinalIgnoreCase))
+            {
+                return global::Avalonia.Media.Brushes.Transparent;
             }
             return global::Avalonia.Media.Brushes.White;
         }
@@ -6564,7 +6569,10 @@ namespace RagNext.Designer.Avalonia.Views
             if (value is RagsCore.Models.ScreenHotspot hotspot)
             {
                 if (string.Equals(hotspot.StyleType, "ImageButton", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(hotspot.StyleType, "Invisible", StringComparison.OrdinalIgnoreCase))
+                    string.Equals(hotspot.StyleType, "Invisible", StringComparison.OrdinalIgnoreCase) ||
+                    string.IsNullOrWhiteSpace(hotspot.BackgroundColor) ||
+                    string.Equals(hotspot.BackgroundColor, "transparent", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(hotspot.BackgroundColor, "none", StringComparison.OrdinalIgnoreCase))
                 {
                     return global::Avalonia.Media.Brushes.Transparent;
                 }
@@ -6588,17 +6596,17 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (value is double val)
             {
-                return val / 8.0;
+                return val / 14.0;
             }
             if (value is int ival)
             {
-                return ival / 8.0;
+                return ival / 14.0;
             }
             if (value is float fval)
             {
-                return fval / 8.0;
+                return fval / 14.0;
             }
-            return 3.0;
+            return 2.2;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();

@@ -51,6 +51,8 @@ namespace RagsCore.Actions
     [JsonDerivedType(typeof(SetVariableCommand), "var.set")]
     [JsonDerivedType(typeof(MovePlayerToRoomCommand), "player.moveTo")]
     [JsonDerivedType(typeof(ShowInteractiveScreenCommand), "item.showInteractiveScreen")]
+    [JsonDerivedType(typeof(CloseInteractiveScreenCommand), "item.closeInteractiveScreen")]
+    [JsonDerivedType(typeof(SetCloseButtonVisibleCommand), "ui.setCloseButtonVisible")]
     [JsonDerivedType(typeof(ScreenShakeCommand), "player.screenShake")]
     [JsonDerivedType(typeof(AddObjectToRoomCommand), "room.addObject")]
     [JsonDerivedType(typeof(RemoveObjectFromRoomCommand), "room.removeObject")]
@@ -191,7 +193,7 @@ namespace RagsCore.Actions
                 "variable.setArrayElement", "variable.addArrayRow", "variable.removeArrayRow",
                 "variable.appendText", "variable.appendLine", "general.switch", "item.wear", "item.remove",
                 "player.moveInventoryToChar", "player.moveInventoryToRoom", "player.moveToChar", "player.moveToObject", "room.moveItemsToPlayer",
-                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "ui.setHotspotActive", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen", "general.waitForContinue", "general.showMap"
+                "char.moveInventoryToPlayer", "char.moveToObject", "char.setDescription", "char.setDisplayName", "room.setDescription", "room.setPicture", "ui.setStatusBarVisible", "ui.setHotspotActive", "media.setBackgroundMusic", "media.stopBackgroundMusic", "player.screenShake", "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen", "item.closeInteractiveScreen", "ui.setCloseButtonVisible", "general.waitForContinue", "general.showMap"
             };
 
             // Convert unrecognized/unknown $type values to general.addComment to prevent crashes
@@ -535,6 +537,24 @@ namespace RagsCore.Actions
             var resolved = RagsCore.Services.TemplateResolver.Resolve(ObjectId, ctx);
             if (!string.IsNullOrEmpty(resolved))
                 ctx.SetVariable("player.activeInteractiveScreenObjectId", resolved);
+        }
+    }
+
+    public sealed class CloseInteractiveScreenCommand : GameCommand
+    {
+        public override string TypeName => "Item: Close Interactive Screen";
+        public override void Execute(ActionContext ctx)
+        {
+            ctx.SetVariable("player.activeInteractiveScreenObjectId", null);
+        }
+    }
+
+    public sealed class SetCloseButtonVisibleCommand : GameCommand
+    {
+        public bool Visible { get; set; } = true;
+        public override string TypeName => "UI: Set Close Button Visible";
+        public override void Execute(ActionContext ctx)
+        {
         }
     }
 

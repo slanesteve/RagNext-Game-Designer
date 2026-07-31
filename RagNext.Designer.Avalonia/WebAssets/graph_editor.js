@@ -145,6 +145,7 @@ const fallbackDiscriminators = {
     "itemmovetoroom": "room.addObject",
     "itemsetattribute": "item.setAttribute",
     "itemshowinteractivescreen": "item.showInteractiveScreen",
+    "itemcloseinteractivescreen": "item.closeInteractiveScreen",
     "playerdisplaydescription": "player.displayDescription",
     "playermoveinventorytocharacter": "player.moveInventoryToChar",
     "playermoveinventorytoroom": "player.moveInventoryToRoom",
@@ -169,6 +170,7 @@ const fallbackDiscriminators = {
     "roomunlockexit": "room.unlockExit",
     "statusbarsetvisibleinvisible": "ui.setStatusBarVisible",
     "uisethotspotactivestate": "ui.setHotspotActive",
+    "uisetclosebuttonvisible": "ui.setCloseButtonVisible",
     "timersetattribute": "timer.setAttribute",
     "timersettimertoactiveinactive": "timer.setTimerActive",
     "variableset": "var.set",
@@ -743,6 +745,8 @@ function redrawConnections() {
         const fromPin = document.getElementById(conn.fromPinId);
         const toPin = document.getElementById(conn.toPinId);
         if (!fromPin || !toPin) return;
+        if (fromPin.style.display === 'none' || window.getComputedStyle(fromPin).display === 'none') return;
+        if (toPin.style.display === 'none' || window.getComputedStyle(toPin).display === 'none') return;
 
         const path = drawBezierCurve(fromPin, toPin, conn.type);
         path.style.cursor = 'pointer';
@@ -1370,6 +1374,7 @@ function autoLinkNodeIfPossible(newNode) {
     const allOutputPins = Array.from(document.querySelectorAll('.pin.output'));
     const unconnectedOutputPins = allOutputPins.filter(pinEl => {
         if (pinEl.id.startsWith(newNode.id)) return false;
+        if (pinEl.style.display === 'none' || window.getComputedStyle(pinEl).display === 'none') return false;
         return !connections.some(c => c.fromPinId === pinEl.id);
     });
 
@@ -3143,7 +3148,7 @@ function refreshCommandFields(node) {
             fieldWrapper.appendChild(pickerSelect);
             fieldWrapper.appendChild(textInput);
             inputElement = fieldWrapper;
-        } else if (inputSchema.controlType === 'TextArea' || inputSchema.label.toLowerCase().includes('text') || inputSchema.label.toLowerCase().includes('lines') || inputSchema.label.toLowerCase().includes('description') || inputSchema.label.toLowerCase().includes('dialogue')) {
+        } else if (inputSchema.controlType === 'RichText' || inputSchema.controlType === 'TextArea' || inputSchema.label.toLowerCase().includes('text') || inputSchema.label.toLowerCase().includes('lines') || inputSchema.label.toLowerCase().includes('description') || inputSchema.label.toLowerCase().includes('dialogue')) {
             // Multi-line rich text editor with Live Preview and AI dialogue bridge!
             inputElement = document.createElement('textarea');
             inputElement.placeholder = `Enter ${inputSchema.label}...`;
@@ -3594,7 +3599,7 @@ function refreshCommandFields(node) {
             row.appendChild(inputElement);
         }
 
-        if (inputSchema.controlType !== 'TextArea' && !inputSchema.label.toLowerCase().includes('text') && !inputSchema.label.toLowerCase().includes('lines') && !inputSchema.label.toLowerCase().includes('description') && !inputSchema.label.toLowerCase().includes('dialogue')) {
+        if (inputSchema.controlType !== 'RichText' && inputSchema.controlType !== 'TextArea' && !inputSchema.label.toLowerCase().includes('text') && !inputSchema.label.toLowerCase().includes('lines') && !inputSchema.label.toLowerCase().includes('description') && !inputSchema.label.toLowerCase().includes('dialogue')) {
             row.appendChild(inputElement);
         }
 
@@ -5071,6 +5076,10 @@ function getAutocompleteSuggestions(triggerChar) {
                     list.push({ token: `variables.${v.Name}:datetime`, typeName: "Datetime Raw ISO-8601", desc: `Raw value: ${v.Value || ''}` });
                 } else if (vt === "array") {
                     list.push({ token: `variables.${v.Name}`, typeName: "Array Variable", desc: "Multi-Dimensional Array variable." });
+                    // Row count tokens — resolve to the number of rows at runtime
+                    list.push({ token: `variables.${v.Name}.count`, typeName: "Array Row Count", desc: `Number of rows in array '${v.Name}'. Use in formulas: random(0, {variables.${v.Name}.count} - 1)` });
+                    list.push({ token: `variables.${v.Name}.length`, typeName: "Array Row Count (alias)", desc: `Alias for .count — number of rows in '${v.Name}'.` });
+                    list.push({ token: `variables.${v.Name}.rowcount`, typeName: "Array Row Count (alias)", desc: `Alias for .count — number of rows in '${v.Name}'.` });
                     const cols = v.Columns || v.columns;
                     if (cols) {
                         if (loopContext && loopContext.source === "Variable" && String(loopContext.arrayVar).toLowerCase() === String(v.Name).toLowerCase()) {
@@ -6269,6 +6278,8 @@ const nodeDescriptions = {
     // UI & Status Elements
     "ui.setStatusBarVisible": "Shows or hides the status bar display.",
     "ui.setHotspotActive": "Enables or disables an interactive screen hotspot.",
+    "ui.setCloseButtonVisible": "Shows or hides the close button on the active interactive screen overlay.",
+    "item.closeInteractiveScreen": "Closes the currently active item interactive screen.",
     "ui.showSplashScreen": "Triggers showing a named splash screen in-game.",
     "status.show": "Displays a status bar element.",
     "status.hide": "Hides a status bar element.",

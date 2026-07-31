@@ -164,6 +164,8 @@ namespace RagNext.Designer.Avalonia.Services
     {
         public bool Enabled { get; set; }
         public string? BackdropAssetId { get; set; }
+        public bool ShowCloseButton { get; set; } = true;
+        public string? OnCloseActionId { get; set; }
         public List<ExportScreenHotspotDto>? Hotspots { get; set; }
     }
 
@@ -183,6 +185,7 @@ namespace RagNext.Designer.Avalonia.Services
         public string? ImageAssetId { get; set; }
         public string? LinkedActionId { get; set; }
         public bool IsActive { get; set; } = true;
+        public bool EnableHoverScale { get; set; } = true;
     }
 
     public class ExportThemeSettingsDto
@@ -431,6 +434,8 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 Enabled = s.Enabled,
                 BackdropAssetId = s.BackdropAssetId,
+                ShowCloseButton = s.ShowCloseButton,
+                OnCloseActionId = s.OnCloseActionId,
                 Hotspots = s.Hotspots?.Select(h => new ExportScreenHotspotDto
                 {
                     Id = h.Id,
@@ -446,7 +451,8 @@ namespace RagNext.Designer.Avalonia.Services
                     BackgroundColor = h.BackgroundColor,
                     ImageAssetId = h.ImageAssetId,
                     LinkedActionId = h.LinkedActionId,
-                    IsActive = h.IsActive
+                    IsActive = h.IsActive,
+                    EnableHoverScale = h.EnableHoverScale
                 }).ToList()
             };
         }

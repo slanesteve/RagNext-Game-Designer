@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using RagNextPlayer.Runtime;
 using RagNextPlayer.Runtime.Models;
@@ -2195,6 +2196,12 @@ namespace RagNextPlayer.Managers
             color = Color.white;
             if (string.IsNullOrEmpty(hex)) return false;
 
+            if (string.Equals(hex, "transparent", StringComparison.OrdinalIgnoreCase) || string.Equals(hex, "none", StringComparison.OrdinalIgnoreCase))
+            {
+                color = Color.clear;
+                return true;
+            }
+
             if (hex.StartsWith("#") && hex.Length == 9)
             {
                 hex = "#" + hex.Substring(3, 6) + hex.Substring(1, 2);
@@ -3325,6 +3332,7 @@ namespace RagNextPlayer.Managers
 
         public void OnRoomEntered(RoomData room)
         {
+            _interactiveScreenClosedManually = false;
             if (room != null)
             {
                 _visitedRoomIds.Add(room.Id);
@@ -3340,7 +3348,9 @@ namespace RagNextPlayer.Managers
         {
             if (room is null) return;
 
-            bool isInteractive = room.InteractiveScreenSettings != null && room.InteractiveScreenSettings.Enabled;
+            bool isInteractive = room.InteractiveScreenSettings != null && room.InteractiveScreenSettings.Enabled && !_interactiveScreenClosedManually;
+            Debug.Log($"[UIManager] RenderRoom called for '{room.Name}' (ID: '{room.Id}'). isInteractive={isInteractive}, _interactiveScreenClosedManually={_interactiveScreenClosedManually}, activeScreenSettings={(_activeScreenSettings != null ? "Present" : "Null")}");
+
             if (_roomActionsContainer != null)
                 _roomActionsContainer.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
             if (_roomActionThumbnailWrapper != null)
@@ -3384,7 +3394,7 @@ namespace RagNextPlayer.Managers
             if (compassHud != null)
                 compassHud.style.display = isInteractive ? DisplayStyle.None : DisplayStyle.Flex;
 
-            _activeScreenSettings = room.InteractiveScreenSettings;
+            _activeScreenSettings = isInteractive ? room.InteractiveScreenSettings : null;
             _activeScreenRoom = room;
             _activeScreenObject = null;
 
@@ -3495,31 +3505,37 @@ namespace RagNextPlayer.Managers
 
             if (room.Attributes != null)
             {
+                float particleIntensity = 1.0f;
+                if (room.Attributes.TryGetValue("ParticleIntensity", out var intensityStr) && float.TryParse(intensityStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedIntensity))
+                {
+                    particleIntensity = parsedIntensity;
+                }
+
                 if (room.Attributes.TryGetValue("Weather", out var weatherVal))
                 {
-                    Debug.Log($"[UIManager] Setting Weather Overlay: '{weatherVal}'");
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", weatherVal.Equals("Embers", StringComparison.OrdinalIgnoreCase));
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", weatherVal.Equals("Rain", StringComparison.OrdinalIgnoreCase));
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", weatherVal.Equals("Snow", StringComparison.OrdinalIgnoreCase));
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", weatherVal.Equals("Sand", StringComparison.OrdinalIgnoreCase) || weatherVal.Equals("Sandstorm", StringComparison.OrdinalIgnoreCase));
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", weatherVal.Equals("Smoke", StringComparison.OrdinalIgnoreCase));
+                    Debug.Log($"[UIManager] Setting Weather Overlay: '{weatherVal}' (Intensity: {particleIntensity})");
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", weatherVal.Equals("Embers", StringComparison.OrdinalIgnoreCase), particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", weatherVal.Equals("Rain", StringComparison.OrdinalIgnoreCase), particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", weatherVal.Equals("Snow", StringComparison.OrdinalIgnoreCase), particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", weatherVal.Equals("Sand", StringComparison.OrdinalIgnoreCase) || weatherVal.Equals("Sandstorm", StringComparison.OrdinalIgnoreCase), particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", weatherVal.Equals("Smoke", StringComparison.OrdinalIgnoreCase), particleIntensity);
                 }
                 else if (room.Attributes.TryGetValue("Atmosphere", out var atmosVal))
                 {
-                    Debug.Log($"[UIManager] Setting Atmosphere Overlay: '{atmosVal}'");
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", atmosVal.Equals("Embers", StringComparison.OrdinalIgnoreCase));
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", atmosVal.Equals("Rain", StringComparison.OrdinalIgnoreCase));
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", atmosVal.Equals("Snow", StringComparison.OrdinalIgnoreCase));
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", atmosVal.Equals("Sand", StringComparison.OrdinalIgnoreCase) || atmosVal.Equals("Sandstorm", StringComparison.OrdinalIgnoreCase));
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", atmosVal.Equals("Smoke", StringComparison.OrdinalIgnoreCase));
+                    Debug.Log($"[UIManager] Setting Atmosphere Overlay: '{atmosVal}' (Intensity: {particleIntensity})");
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", atmosVal.Equals("Embers", StringComparison.OrdinalIgnoreCase), particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", atmosVal.Equals("Rain", StringComparison.OrdinalIgnoreCase), particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", atmosVal.Equals("Snow", StringComparison.OrdinalIgnoreCase), particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", atmosVal.Equals("Sand", StringComparison.OrdinalIgnoreCase) || atmosVal.Equals("Sandstorm", StringComparison.OrdinalIgnoreCase), particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", atmosVal.Equals("Smoke", StringComparison.OrdinalIgnoreCase), particleIntensity);
                 }
                 else
                 {
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", false);
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", false);
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", false);
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", false);
-                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", false);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Embers", false, particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Rain", false, particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Snow", false, particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Sand", false, particleIntensity);
+                    TransitionVFXManager.Instance.SetAmbientOverlay("Smoke", false, particleIntensity);
                 }
 
                 if (room.Attributes.TryGetValue("Shake", out var shakeVal) && float.TryParse(shakeVal, out var shakeInt))
@@ -3788,10 +3804,14 @@ namespace RagNextPlayer.Managers
         private InteractiveScreenSettingsData _activeScreenSettings;
         private RoomData _activeScreenRoom;
         private GameObjectData _activeScreenObject;
+        private string _activeBackdropPath = string.Empty;
+        private bool _interactiveScreenClosedManually = false;
 
         public void ShowItemInteractiveScreen(GameObjectData obj)
         {
             if (obj == null || obj.InteractiveScreenSettings == null || !obj.InteractiveScreenSettings.Enabled) return;
+
+            _interactiveScreenClosedManually = false;
 
             if (_roomActionsContainer != null) _roomActionsContainer.style.display = DisplayStyle.None;
             if (_roomActionThumbnailWrapper != null) _roomActionThumbnailWrapper.style.display = DisplayStyle.None;
@@ -3854,17 +3874,17 @@ namespace RagNextPlayer.Managers
             var placeholder = _root?.Q<VisualElement>("scene-placeholder");
             if (placeholder != null) placeholder.pickingMode = PickingMode.Ignore;
 
-            // Clear old hotspots and close buttons
-            var toRemove = new System.Collections.Generic.List<VisualElement>();
-            sceneImage.Query<VisualElement>(className: "screen-hotspot").ForEach(el => toRemove.Add(el));
-            foreach (var el in toRemove) el.parent?.Remove(el);
-
-            sceneImage.Query<Button>(className: "screen-close-btn").ForEach(el => el.parent?.Remove(el));
-
             if (settings == null || !settings.Enabled)
             {
+                _activeBackdropPath = string.Empty;
                 var activeOverlay = sceneImage.Q("interactive-media-overlay");
                 if (activeOverlay != null) activeOverlay.parent?.Remove(activeOverlay);
+
+                // Clear old hotspots
+                var toRemove = new System.Collections.Generic.List<VisualElement>();
+                sceneImage.Query<VisualElement>(className: "screen-hotspot").ForEach(el => toRemove.Add(el));
+                foreach (var el in toRemove) el.parent?.Remove(el);
+                sceneImage.Query<Button>(className: "screen-close-btn").ForEach(el => el.parent?.Remove(el));
 
                 sceneImage.style.aspectRatio = StyleKeyword.Null;
                 sceneImage.style.width = Length.Percent(100);
@@ -3872,6 +3892,7 @@ namespace RagNextPlayer.Managers
                 sceneImage.style.maxWidth = StyleKeyword.Null;
                 sceneImage.style.maxHeight = StyleKeyword.Null;
                 sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                sceneImage.style.backgroundImage = StyleKeyword.Null;
                 return;
             }
 
@@ -3882,34 +3903,64 @@ namespace RagNextPlayer.Managers
             sceneImage.style.maxHeight = Length.Percent(100);
             sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
 
-            // Optional custom backdrop
+            // Optional custom backdrop (only reload if path changed to prevent flashing)
+            string targetBackdropPath = string.Empty;
             if (!string.IsNullOrEmpty(settings.BackdropAssetId))
             {
                 var game = GameManager.Instance?.ActiveGame;
                 var asset = game?.MediaAssets.Find(a => 
                     string.Equals(a.Id, settings.BackdropAssetId, System.StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(a.OriginalFileName, settings.BackdropAssetId, System.StringComparison.OrdinalIgnoreCase));
-                
-                if (asset != null)
+                if (asset != null) targetBackdropPath = asset.RelativePath;
+            }
+
+            if (targetBackdropPath != _activeBackdropPath)
+            {
+                _activeBackdropPath = targetBackdropPath;
+                if (!string.IsNullOrEmpty(_activeBackdropPath))
                 {
-                    LoadAndDisplayImage(asset.RelativePath, "scene-image");
+                    LoadAndDisplayImage(_activeBackdropPath, "scene-image");
                 }
             }
 
-            // Create hotspots
+            // Remove obsolete hotspots that no longer exist in settings
+            var activeIds = new System.Collections.Generic.HashSet<string>(settings.Hotspots.Select(h => h.Id));
+            var existingElements = new System.Collections.Generic.List<VisualElement>();
+            sceneImage.Query<VisualElement>(className: "screen-hotspot").ForEach(el => existingElements.Add(el));
+            foreach (var el in existingElements)
+            {
+                if (!activeIds.Contains(el.name))
+                {
+                    el.parent?.Remove(el);
+                }
+            }
+
+            // Create or update hotspots dynamically without destroying UI elements
             foreach (var hotspot in settings.Hotspots)
             {
-                if (!hotspot.IsActive) continue;
-                var btn = new Button();
-                btn.name = hotspot.Id;
-                btn.AddToClassList("screen-hotspot");
-                
+                var btn = sceneImage.Q<Button>(hotspot.Id);
+                if (!hotspot.IsActive)
+                {
+                    if (btn != null) btn.style.display = DisplayStyle.None;
+                    continue;
+                }
+
+                if (btn == null)
+                {
+                    btn = new Button();
+                    btn.name = hotspot.Id;
+                    btn.AddToClassList("screen-hotspot");
+                    sceneImage.Add(btn);
+                }
+
+                btn.style.display = DisplayStyle.Flex;
                 btn.style.position = Position.Absolute;
                 btn.style.left = Length.Percent((float)hotspot.X);
                 btn.style.top = Length.Percent((float)hotspot.Y);
                 btn.style.width = Length.Percent((float)hotspot.Width);
                 btn.style.height = Length.Percent((float)hotspot.Height);
-                
+                btn.style.overflow = Overflow.Hidden; // Constrain all content strictly inside hotspot dimensions
+
                 // Style defaults
                 btn.style.borderLeftWidth = 0;
                 btn.style.borderRightWidth = 0;
@@ -3925,62 +3976,113 @@ namespace RagNextPlayer.Managers
 
                 if (hotspot.StyleType == "Invisible")
                 {
-                    // standard transparent button
+                    var existingScroll = btn.Q<ScrollView>("hotspot-scroll");
+                    if (existingScroll != null) existingScroll.parent?.Remove(existingScroll);
+                    var existingBgImg = btn.Q("hotspot-bg-image");
+                    if (existingBgImg != null) existingBgImg.parent?.Remove(existingBgImg);
                 }
                 else
                 {
-                    // Resolve variable templates for visuals
                     var game = GameManager.Instance?.ActiveGame;
                     string resolvedLabel = game != null ? TemplateResolver.Resolve(hotspot.LabelText, game, room, null) : hotspot.LabelText;
 
-                    var labelTextElement = new Label(resolvedLabel);
-                    labelTextElement.name = "hotspot-label";
-                    if (string.IsNullOrWhiteSpace(resolvedLabel))
+                    var scroll = btn.Q<ScrollView>("hotspot-scroll");
+                    Label labelTextElement = null;
+                    if (scroll == null)
                     {
-                        labelTextElement.style.display = DisplayStyle.None;
+                        scroll = new ScrollView(ScrollViewMode.Vertical);
+                        scroll.name = "hotspot-scroll";
+                        scroll.style.width = Length.Percent(100);
+                        scroll.style.height = Length.Percent(100);
+                        scroll.pickingMode = PickingMode.Ignore;
+                        scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+                        scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+
+                        // Dynamically hide scrollbar when text fits; auto-scroll to bottom when it overflows
+                        scroll.contentContainer.RegisterCallback<GeometryChangedEvent>(evt => {
+                            if (scroll.contentContainer.layout.height > scroll.layout.height + 2f)
+                            {
+                                scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+                                scroll.scrollOffset = new Vector2(0, scroll.contentContainer.layout.height);
+                            }
+                            else
+                            {
+                                scroll.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+                            }
+                        });
+
+                        labelTextElement = new Label();
+                        labelTextElement.name = "hotspot-label";
+                        labelTextElement.style.whiteSpace = WhiteSpace.Normal;
+                        labelTextElement.style.unityTextAlign = TextAnchor.MiddleCenter;
+                        labelTextElement.style.unityFontStyleAndWeight = FontStyle.Bold; // Enhanced readability
+                        labelTextElement.style.marginTop = 0;
+                        labelTextElement.style.marginBottom = 0;
+                        labelTextElement.style.paddingTop = 0;
+                        labelTextElement.style.paddingBottom = 0;
+                        labelTextElement.style.paddingLeft = 2;
+                        labelTextElement.style.paddingRight = 2;
+                        labelTextElement.pickingMode = PickingMode.Ignore;
+
+                        scroll.Add(labelTextElement);
+                        btn.Add(scroll);
                     }
-                    labelTextElement.style.unityTextAlign = TextAnchor.MiddleCenter;
-                    labelTextElement.style.whiteSpace = WhiteSpace.Normal;
-                    labelTextElement.pickingMode = PickingMode.Ignore;
-
-                    // Add padding and rounded corners to the text badge
-                    labelTextElement.style.paddingLeft = 8;
-                    labelTextElement.style.paddingRight = 8;
-                    labelTextElement.style.paddingTop = 4;
-                    labelTextElement.style.paddingBottom = 4;
-                    labelTextElement.style.borderTopLeftRadius = 4;
-                    labelTextElement.style.borderTopRightRadius = 4;
-                    labelTextElement.style.borderBottomLeftRadius = 4;
-                    labelTextElement.style.borderBottomRightRadius = 4;
-
-                    string resolvedBg = game != null ? TemplateResolver.Resolve(hotspot.BackgroundColor, game, room, null) : hotspot.BackgroundColor;
-                    if (TryParseHtmlColor(resolvedBg, out var bgColor))
+                    else
                     {
-                        resolvedBgColor = bgColor;
-                        if (hotspot.StyleType == "ImageButton")
+                        labelTextElement = scroll.Q<Label>("hotspot-label");
+                    }
+
+                    if (labelTextElement != null)
+                    {
+                        labelTextElement.text = resolvedLabel;
+                        labelTextElement.style.display = string.IsNullOrWhiteSpace(resolvedLabel) ? DisplayStyle.None : DisplayStyle.Flex;
+
+                        // Auto-scroll to bottom when text is updated and overflows
+                        scroll.schedule.Execute(() => {
+                            if (scroll.contentContainer.layout.height > scroll.layout.height + 2f)
+                            {
+                                scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+                                scroll.scrollOffset = new Vector2(0, scroll.contentContainer.layout.height);
+                            }
+                            else
+                            {
+                                scroll.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+                            }
+                        }).ExecuteLater(30);
+
+                        string resolvedBg = game != null ? TemplateResolver.Resolve(hotspot.BackgroundColor, game, room, null) : hotspot.BackgroundColor;
+                        if (!string.IsNullOrEmpty(resolvedBg) && TryParseHtmlColor(resolvedBg, out var bgColor))
                         {
-                            btn.style.backgroundColor = Color.clear;
+                            resolvedBgColor = bgColor;
+                            btn.style.backgroundColor = hotspot.StyleType == "ImageButton" ? Color.clear : bgColor;
+                            labelTextElement.style.backgroundColor = bgColor;
                         }
                         else
                         {
-                            btn.style.backgroundColor = bgColor;
+                            resolvedBgColor = Color.clear;
+                            btn.style.backgroundColor = Color.clear;
+                            labelTextElement.style.backgroundColor = Color.clear;
                         }
-                        labelTextElement.style.backgroundColor = bgColor;
+
+                        string resolvedColor = game != null ? TemplateResolver.Resolve(hotspot.FontColor, game, room, null) : hotspot.FontColor;
+                        if (TryParseHtmlColor(resolvedColor, out var textColor))
+                        {
+                            labelTextElement.style.color = textColor;
+                        }
+
+                        float targetFontSize = hotspot.FontSize > 0 ? (float)hotspot.FontSize : 14f;
+                        labelTextElement.style.fontSize = new StyleLength(targetFontSize);
+                        labelTextElement.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+                        // Subtle shadow for crisp legibility against dark or parchment backgrounds
+                        labelTextElement.style.textShadow = new TextShadow {
+                            offset = new Vector2(1f, 1f),
+                            blurRadius = 2f,
+                            color = new Color(0f, 0f, 0f, 0.7f)
+                        };
                     }
 
-                    string resolvedColor = game != null ? TemplateResolver.Resolve(hotspot.FontColor, game, room, null) : hotspot.FontColor;
-                    if (TryParseHtmlColor(resolvedColor, out var textColor))
-                    {
-                        labelTextElement.style.color = textColor;
-                    }
-
-                    UnityEngine.Debug.Log($"[UIManager] Hotspot '{hotspot.Id}' ({resolvedLabel}) FontSize: {hotspot.FontSize}");
-                    var fs = new StyleLength((float)hotspot.FontSize);
-                    labelTextElement.style.fontSize = fs;
-                    btn.style.fontSize = fs;
-                    btn.Add(labelTextElement);
-                    labelTextElement.BringToFront();
-                    if (hotspot.StyleType == "ImageButton")
+                    if (hotspot.StyleType == "ImageButton" || resolvedBgColor.a <= 0.01f)
                     {
                         btn.style.borderLeftWidth = 0;
                         btn.style.borderRightWidth = 0;
@@ -4004,6 +4106,7 @@ namespace RagNextPlayer.Managers
                     }
 
                     string resolvedImage = game != null ? TemplateResolver.Resolve(hotspot.ImageAssetId, game, room, null) : hotspot.ImageAssetId;
+                    var bgImgElement = btn.Q("hotspot-bg-image");
                     if (!string.IsNullOrEmpty(resolvedImage))
                     {
                         var asset = game?.MediaAssets.Find(a => 
@@ -4012,148 +4115,196 @@ namespace RagNextPlayer.Managers
                         
                         if (asset != null)
                         {
-                            var bgImgElement = new VisualElement();
-                            bgImgElement.name = "hotspot-bg-image";
-                            bgImgElement.style.position = Position.Absolute;
-                            bgImgElement.style.left = 0;
-                            bgImgElement.style.right = 0;
-                            bgImgElement.style.top = 0;
-                            bgImgElement.style.bottom = 0;
-                            bgImgElement.pickingMode = PickingMode.Ignore;
-                            btn.Add(bgImgElement);
-                            bgImgElement.SendToBack();
-
+                            if (bgImgElement == null)
+                            {
+                                bgImgElement = new VisualElement();
+                                bgImgElement.name = "hotspot-bg-image";
+                                bgImgElement.style.position = Position.Absolute;
+                                bgImgElement.style.left = 0;
+                                bgImgElement.style.right = 0;
+                                bgImgElement.style.top = 0;
+                                bgImgElement.style.bottom = 0;
+                                bgImgElement.pickingMode = PickingMode.Ignore;
+                                btn.Add(bgImgElement);
+                                bgImgElement.SendToBack();
+                            }
                             LoadAndDisplayImageForElement(asset.RelativePath, bgImgElement);
                         }
                     }
+                    else if (bgImgElement != null)
+                    {
+                        bgImgElement.parent?.Remove(bgImgElement);
+                    }
                 }
 
-                // Hover / pointer-enter micro-animations and highlight visuals
-                btn.RegisterCallback<PointerOverEvent>(evt => {
-                    btn.style.scale = new Scale(new UnityEngine.Vector3(1.03f, 1.03f, 1.03f));
-                    if (hotspot.StyleType == "Invisible")
-                    {
-                        btn.style.borderLeftWidth = 1;
-                        btn.style.borderRightWidth = 1;
-                        btn.style.borderTopWidth = 1;
-                        btn.style.borderBottomWidth = 1;
-                        btn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.45f);
-                        btn.style.borderRightColor = new Color(1f, 1f, 1f, 0.45f);
-                        btn.style.borderTopColor = new Color(1f, 1f, 1f, 0.45f);
-                        btn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.45f);
-                        btn.style.borderTopLeftRadius = 4;
-                        btn.style.borderTopRightRadius = 4;
-                        btn.style.borderBottomLeftRadius = 4;
-                        btn.style.borderBottomRightRadius = 4;
-                    }
-                    else if (hotspot.StyleType == "ImageButton")
-                    {
-                        btn.style.backgroundColor = Color.clear;
-                    }
-                    else
-                    {
-                        btn.style.backgroundColor = new Color(resolvedBgColor.r * 1.18f, resolvedBgColor.g * 1.18f, resolvedBgColor.b * 1.18f, resolvedBgColor.a);
-                    }
-                });
+                // Hover Grow Effect
+                if (hotspot.EnableHoverScale)
+                {
+                    btn.style.transitionProperty = new List<StylePropertyName> { new StylePropertyName("scale") };
+                    btn.style.transitionDuration = new List<TimeValue> { new TimeValue(0.12f, TimeUnit.Second) };
+                    btn.style.transformOrigin = new TransformOrigin(Length.Percent(50), Length.Percent(50));
 
-                btn.RegisterCallback<PointerOutEvent>(evt => {
-                    btn.style.scale = StyleKeyword.Null;
-                    if (hotspot.StyleType == "Invisible" || hotspot.StyleType == "ImageButton")
-                    {
-                        btn.style.backgroundColor = Color.clear;
-                        if (hotspot.StyleType == "Invisible")
-                        {
-                            btn.style.borderLeftWidth = 0;
-                            btn.style.borderRightWidth = 0;
-                            btn.style.borderTopWidth = 0;
-                            btn.style.borderBottomWidth = 0;
-                        }
-                    }
-                    else
-                    {
-                        btn.style.backgroundColor = resolvedBgColor;
-                    }
-                });
+                    btn.RegisterCallback<PointerOverEvent>(evt => {
+                        btn.style.scale = new StyleScale(new Scale(new Vector2(1.08f, 1.08f)));
+                    });
+                    btn.RegisterCallback<PointerOutEvent>(evt => {
+                        btn.style.scale = new StyleScale(new Scale(new Vector2(1.00f, 1.00f)));
+                    });
+                }
+                else
+                {
+                    btn.style.scale = new StyleScale(new Scale(new Vector2(1.00f, 1.00f)));
+                }
 
-                btn.clicked += () => {
+                // Click event action trigger
+                btn.clickable = new Clickable(() => {
                     if (!string.IsNullOrEmpty(hotspot.LinkedActionId) && InteractionController.Instance != null)
                     {
                         InteractionController.Instance.ExecuteActionById(hotspot.LinkedActionId, null, room, true);
-                        // Refresh screen overlay state dynamically after running the action
-                        RenderInteractiveScreen(settings, room);
+                        if (_activeScreenSettings != null && !_interactiveScreenClosedManually)
+                        {
+                            RenderInteractiveScreen(_activeScreenSettings, room);
+                        }
                     }
-                };
-
-                sceneImage.Add(btn);
+                });
             }
 
-
-
-            // Render close button if this screen belongs to an object/item
-            if (_activeScreenObject != null)
+            // Render or hide close button based on settings
+            var existingCloseBtn = sceneImage.Q<Button>("screen-close-btn");
+            if (_activeScreenObject != null && settings != null && settings.ShowCloseButton)
             {
-                var closeBtn = new Button();
-                closeBtn.text = "✕";
-                closeBtn.AddToClassList("screen-close-btn");
-                closeBtn.style.position = Position.Absolute;
-                closeBtn.style.top = 10;
-                closeBtn.style.right = 10;
-                closeBtn.style.width = 36;
-                closeBtn.style.height = 36;
-                closeBtn.style.fontSize = 20;
-                closeBtn.style.unityFontDefinition = StyleKeyword.Null; // default standard font
-                closeBtn.style.unityFontStyleAndWeight = FontStyle.Bold;
-                closeBtn.style.color = Color.white;
-                closeBtn.style.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 0.85f);
-                closeBtn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.15f);
-                closeBtn.style.borderRightColor = new Color(1f, 1f, 1f, 0.15f);
-                closeBtn.style.borderTopColor = new Color(1f, 1f, 1f, 0.15f);
-                closeBtn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.15f);
-                closeBtn.style.borderLeftWidth = 1;
-                closeBtn.style.borderRightWidth = 1;
-                closeBtn.style.borderTopWidth = 1;
-                closeBtn.style.borderBottomWidth = 1;
-                closeBtn.style.borderTopLeftRadius = 18;
-                closeBtn.style.borderTopRightRadius = 18;
-                closeBtn.style.borderBottomLeftRadius = 18;
-                closeBtn.style.borderBottomRightRadius = 18;
-
-                closeBtn.RegisterCallback<PointerOverEvent>(evt => {
-                    closeBtn.style.backgroundColor = new Color(0.9f, 0.2f, 0.2f, 0.95f);
-                });
-                closeBtn.RegisterCallback<PointerOutEvent>(evt => {
+                if (existingCloseBtn == null)
+                {
+                    var closeBtn = new Button();
+                    closeBtn.text = "✕";
+                    closeBtn.name = "screen-close-btn";
+                    closeBtn.AddToClassList("screen-close-btn");
+                    closeBtn.style.position = Position.Absolute;
+                    closeBtn.style.top = 10;
+                    closeBtn.style.right = 10;
+                    closeBtn.style.width = 36;
+                    closeBtn.style.height = 36;
+                    closeBtn.style.fontSize = 20;
+                    closeBtn.style.unityFontDefinition = StyleKeyword.Null;
+                    closeBtn.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    closeBtn.style.color = Color.white;
                     closeBtn.style.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 0.85f);
-                });
+                    closeBtn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.15f);
+                    closeBtn.style.borderRightColor = new Color(1f, 1f, 1f, 0.15f);
+                    closeBtn.style.borderTopColor = new Color(1f, 1f, 1f, 0.15f);
+                    closeBtn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.15f);
+                    closeBtn.style.borderLeftWidth = 1;
+                    closeBtn.style.borderRightWidth = 1;
+                    closeBtn.style.borderTopWidth = 1;
+                    closeBtn.style.borderBottomWidth = 1;
+                    closeBtn.style.borderTopLeftRadius = 18;
+                    closeBtn.style.borderTopRightRadius = 18;
+                    closeBtn.style.borderBottomLeftRadius = 18;
+                    closeBtn.style.borderBottomRightRadius = 18;
 
-                closeBtn.clicked += () => {
-                    _activeScreenObject = null;
-                    var activeGame = GameManager.Instance?.ActiveGame;
-                    if (activeGame != null)
-                    {
-                        var variable = activeGame.Variables.Find(v => string.Equals(v.Name, "player.activeInteractiveScreenObjectId", System.StringComparison.OrdinalIgnoreCase));
-                        if (variable != null)
+                    closeBtn.RegisterCallback<PointerOverEvent>(evt => {
+                        closeBtn.style.backgroundColor = new Color(0.9f, 0.2f, 0.2f, 0.95f);
+                    });
+                    closeBtn.RegisterCallback<PointerOutEvent>(evt => {
+                        closeBtn.style.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 0.85f);
+                    });
+
+                    closeBtn.clicked += () => {
+                        if (settings != null && !string.IsNullOrEmpty(settings.OnCloseActionId) && InteractionController.Instance != null)
                         {
-                            variable.Value = null;
+                            InteractionController.Instance.ExecuteActionById(settings.OnCloseActionId, null, room, true);
                         }
                         else
                         {
-                            activeGame.Variables.Add(new GameVariableData { Name = "player.activeInteractiveScreenObjectId", Value = null });
+                            CloseItemInteractiveScreen();
                         }
-                    }
-                    var curRoom = GameManager.Instance?.CurrentRoom;
-                    if (curRoom != null)
-                    {
-                        RenderRoom(curRoom);
-                    }
-                };
+                    };
 
-                sceneImage.Add(closeBtn);
+                    sceneImage.Add(closeBtn);
+                }
+                else
+                {
+                    existingCloseBtn.style.display = DisplayStyle.Flex;
+                }
+            }
+            else if (existingCloseBtn != null)
+            {
+                existingCloseBtn.style.display = DisplayStyle.None;
             }
 
             var mediaOverlay = sceneImage.Q("interactive-media-overlay");
             if (mediaOverlay != null)
             {
                 mediaOverlay.BringToFront();
+            }
+        }
+
+        public void CloseItemInteractiveScreen()
+        {
+            Debug.Log($"[UIManager] CloseItemInteractiveScreen called. Setting _interactiveScreenClosedManually=true, clearing active screen settings.");
+            _interactiveScreenClosedManually = true;
+            _activeScreenObject = null;
+            _activeScreenSettings = null;
+            _activeBackdropPath = string.Empty;
+
+            if (_promptInputMenu != null) _promptInputMenu.style.display = DisplayStyle.None;
+            if (_promptModalBackdrop != null) _promptModalBackdrop.style.display = DisplayStyle.None;
+
+            var sceneImage = _root?.Q<VisualElement>("scene-image");
+            if (sceneImage != null)
+            {
+                sceneImage.style.opacity = 1f;
+                sceneImage.style.aspectRatio = StyleKeyword.Null;
+                sceneImage.style.backgroundImage = StyleKeyword.Null;
+                var activeOverlay = sceneImage.Q("interactive-media-overlay");
+                if (activeOverlay != null) activeOverlay.parent?.Remove(activeOverlay);
+
+                var toRemove = new System.Collections.Generic.List<VisualElement>();
+                sceneImage.Query<VisualElement>(className: "screen-hotspot").ForEach(el => toRemove.Add(el));
+                foreach (var el in toRemove) el.parent?.Remove(el);
+                sceneImage.Query<Button>(className: "screen-close-btn").ForEach(el => el.parent?.Remove(el));
+            }
+
+            var activeGame = GameManager.Instance?.ActiveGame;
+            if (activeGame != null)
+            {
+                var variable = activeGame.Variables.Find(v => string.Equals(v.Name, "player.activeInteractiveScreenObjectId", System.StringComparison.OrdinalIgnoreCase));
+                if (variable != null)
+                {
+                    variable.Value = null;
+                }
+                else
+                {
+                    activeGame.Variables.Add(new GameVariableData { Name = "player.activeInteractiveScreenObjectId", Value = null });
+                }
+            }
+
+            var curRoom = GameManager.Instance?.CurrentRoom;
+            if (curRoom != null)
+            {
+                RenderRoom(curRoom);
+            }
+            else
+            {
+                if (_roomActionsContainer != null) _roomActionsContainer.style.display = DisplayStyle.Flex;
+                if (_rightSidebarContainer != null) _rightSidebarContainer.style.display = DisplayStyle.Flex;
+                var narrativePanel = _root?.Q<VisualElement>("narrative-panel");
+                if (narrativePanel != null) narrativePanel.style.display = DisplayStyle.Flex;
+                var floatingProfiles = _root?.Q<VisualElement>("floating-profiles-container");
+                if (floatingProfiles != null) floatingProfiles.style.display = DisplayStyle.Flex;
+                var compassContainer = _root?.Q<VisualElement>("compass-container");
+                if (compassContainer != null) compassContainer.style.display = DisplayStyle.Flex;
+                var compassHud = _root?.Q<VisualElement>("compass-hud-container");
+                if (compassHud != null) compassHud.style.display = DisplayStyle.Flex;
+            }
+        }
+
+        public void SetCloseButtonVisible(bool visible)
+        {
+            if (_activeScreenSettings != null)
+            {
+                _activeScreenSettings.ShowCloseButton = visible;
+                RefreshActiveInteractiveScreen();
             }
         }
 
@@ -5635,17 +5786,13 @@ namespace RagNextPlayer.Managers
             using var req = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(formattedUrl);
 
             var elem = _root?.Q<VisualElement>(elementName);
-            if (elem is not null && elementName == "scene-image")
-            {
-                // Set initial placeholder/loading style (opacity 0) to avoid layout flashing
-                elem.style.opacity = 0f;
-            }
 
             yield return req.SendWebRequest();
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
                 if (_latestElementUrls.TryGetValue(elementName, out var latestUrl) && latestUrl != url)
                 {
+                    if (elem != null && elementName == "scene-image") elem.style.opacity = 1f;
                     yield break;
                 }
 
@@ -5658,7 +5805,6 @@ namespace RagNextPlayer.Managers
                     {
                         if (tex != null)
                         {
-                            float aspect = (float)tex.width / tex.height;
                             if (_activeScreenSettings != null && _activeScreenSettings.Enabled)
                             {
                                 elem.style.aspectRatio = 16f / 9f;
@@ -5674,15 +5820,7 @@ namespace RagNextPlayer.Managers
                             _scenePlaceholder.style.display = DisplayStyle.None;
                         }
 
-                        // Animate opacity back up to 1 over 0.25 seconds for a clean fade-in transition
-                        float elapsed = 0f;
-                        while (elapsed < 0.25f && elem != null)
-                        {
-                            elapsed += Time.deltaTime;
-                            elem.style.opacity = Mathf.Lerp(0f, 1f, elapsed / 0.25f);
-                            yield return null;
-                        }
-                        if (elem != null) elem.style.opacity = 1f;
+                        elem.style.opacity = 1f;
                     }
                     Debug.Log($"[UIManager] Successfully applied texture to '{elementName}'");
                 }
@@ -6599,23 +6737,18 @@ namespace RagNextPlayer.Managers
                 _promptSubmitBtn.style.display = DisplayStyle.None;
 
             var btn = new Button(() => {
+                Debug.Log($"[UIManager] Continue prompt button clicked (text='{buttonText}'). Calling ActionExecutor.ResumeSuspended().");
                 ActionExecutor.ResumeSuspended();
 
                 if (_promptInputMenu is null) return;
 
-                // If a new prompt or dialogue is active, do not start the close tween.
+                // If a new prompt or dialogue is active, do not hide menu.
                 var promptActive = GameManager.Instance?.ActiveGame?.Variables?.Find(v => string.Equals(v.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase))?.Value == "true";
-                if (promptActive) return;
-
-                _promptMenuCloseTween = PrimeTween.Tween.Custom(_promptInputMenu.transform.scale.x, 0.0f, 0.1f, val => {
-                    _promptInputMenu.transform.scale = new Vector3(val, val, 1f);
-                }).OnComplete(() => {
-                    if (GameManager.Instance?.ActiveGame?.Variables?.Find(v => string.Equals(v.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase))?.Value != "true")
-                    {
-                        _promptInputMenu.style.display = DisplayStyle.None;
-                        if (_promptModalBackdrop is not null) _promptModalBackdrop.style.display = DisplayStyle.None;
-                    }
-                });
+                if (!promptActive)
+                {
+                    _promptInputMenu.style.display = DisplayStyle.None;
+                    if (_promptModalBackdrop is not null) _promptModalBackdrop.style.display = DisplayStyle.None;
+                }
             });
 
             btn.text = string.IsNullOrEmpty(buttonText) ? "Continue" : buttonText;
@@ -6998,6 +7131,7 @@ namespace RagNextPlayer.Managers
         {
             if (data is GameObjectData god) return god.Id;
             if (data is (GameObjectData godTuple, bool _)) return godTuple.Id;
+            if (data is ActionData act) return act.Id;
             return null;
         }
 

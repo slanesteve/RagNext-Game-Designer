@@ -490,7 +490,7 @@
                                             <!-- Name -->
                                             <TextBlock Text="Name" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBox x:Name="RoomNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
+                                                <TextBox x:Name="RoomNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                                 <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                             </Grid>
 
@@ -1006,6 +1006,12 @@
                                                         </ComboBox>
                                                     </Grid>
 
+                                                    <!-- Particle Intensity -->
+                                                    <Grid ColumnDefinitions="*,2*">
+                                                        <TextBlock Grid.Column="0" Text="Particle Intensity:" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextNormal}"/>
+                                                        <NumericUpDown Grid.Column="1" Value="{Binding AmbientParticleIntensity, Mode=TwoWay}" Minimum="0.1" Maximum="5.0" Increment="0.1" FormatString="0.0" Height="32" HorizontalAlignment="Stretch" Background="{DynamicResource InputBg}"/>
+                                                    </Grid>
+
                                                     <!-- Camera Shake Selector -->
                                                     <Grid ColumnDefinitions="*,2*">
                                                         <TextBlock Grid.Column="0" Text="Screen Shake:" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextNormal}"/>
@@ -1144,6 +1150,16 @@
                                             <ScrollViewer Grid.Column="0" Margin="0,0,8,0">
                                                 <StackPanel Spacing="16">
                                                     <CheckBox IsChecked="{Binding InteractiveScreenSettings.Enabled}" Content="Enable Interactive Mode" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
+                                                    <CheckBox IsChecked="{Binding InteractiveScreenSettings.ShowCloseButton}" Content="Show Close Button (Top Right '✕')" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
+
+                                                    <TextBlock Text="On Close Linked Action (Optional Trigger):" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
+                                                    <ComboBox SelectedValue="{Binding InteractiveScreenSettings.OnCloseActionId, Mode=TwoWay}" SelectedValueBinding="{Binding Id}" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.Functions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="models:GlobalFunction">
+                                                                <TextBlock Text="{Binding Name}"/>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
                                                     
                                                     <TextBlock Text="Backdrop Asset ID / Path:" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                                                     <ComboBox Text="{Binding InteractiveScreenSettings.BackdropAssetId, Mode=TwoWay}" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" HorizontalAlignment="Stretch" IsEditable="True" Background="{DynamicResource CardBg}">
@@ -1159,7 +1175,7 @@
                                                         <Button Grid.Column="1" Content="➕ Add" Click="OnAddHotspotClicked" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="11" Padding="8,4"/>
                                                     </Grid>
                                                     
-                                                    <ListBox ItemsSource="{Binding InteractiveScreenSettings.Hotspots}" x:Name="RoomHotspotsList" Height="180" SelectedIndex="0" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                                    <ListBox ItemsSource="{Binding InteractiveScreenSettings.Hotspots}" x:Name="RoomHotspotsList" Height="180" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                                         <ListBox.ItemTemplate>
                                                             <DataTemplate x:DataType="models:ScreenHotspot">
                                                                 <Grid ColumnDefinitions="*,Auto" Height="36">
@@ -1177,6 +1193,7 @@
                                                         <TextBlock Text="Button Name (Designer Only):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                         <TextBox Text="{Binding Name, Mode=TwoWay}" Watermark="Button Name" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                         <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}" Content="Initially Active" FontSize="11"/>
+                                                        <CheckBox IsChecked="{Binding EnableHoverScale, Mode=TwoWay}" Content="Enable Hover Grow Effect" FontSize="11"/>
                                                         <TextBlock Text="Linked Action:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                         <ComboBox SelectedItem="{Binding LinkedActionId, Mode=TwoWay, Converter={x:Static views:ActionToIdStringConverter.Instance}}" ItemsSource="{Binding $parent[TabControl].DataContext.Actions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
                                                             <ComboBox.ItemTemplate>
@@ -1254,7 +1271,7 @@
                                             <StackPanel Grid.Column="1" Spacing="10" Margin="16,0,0,0">
                                                 <TextBlock Text="Live Screen Coordinates Preview" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2"/>
                                                 <Border Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True" Height="450">
-                                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <Canvas Width="100" Height="56.25" Background="#14141F">
                                                             <!-- Backdrop Image in Preview -->
                                                             <Image Source="{Binding InteractiveScreenSettings.BackdropAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Width="100" Height="56.25" Stretch="Uniform"/>
@@ -1274,11 +1291,11 @@
                                                                  </ItemsControl.Styles>
                                                                  <ItemsControl.ItemTemplate>
                                                                      <DataTemplate x:DataType="models:ScreenHotspot">
-                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding, Converter={x:Static views:HotspotOuterBackgroundConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
+                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding, Converter={x:Static views:HotspotOuterBackgroundConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" ClipToBounds="True" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
                                                                              <Grid>
                                                                                  <!-- Button background icon/image -->
-                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="Uniform"/>
-                                                                                 <Border Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Padding="1,0.5" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding DisplayName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"><TextBlock Text="{Binding DisplayName}" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border>
+                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="UniformToFill"/>
+                                                                                 <Border Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Padding="1,0.5" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding DisplayName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"><TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border>
                                                                              </Grid>
                                                                          </Border>
                                                                      </DataTemplate>
@@ -1353,7 +1370,7 @@
                                 
                                 <TextBlock Text="Name:" Foreground="{DynamicResource TextMuted}"/>
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBox x:Name="CharacterNameTextBox" Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
+                                    <TextBox x:Name="CharacterNameTextBox" Grid.Column="0" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                     <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                 </Grid>
                                 
@@ -1625,7 +1642,7 @@
                                             <!-- Name -->
                                             <TextBlock Text="Name" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBox x:Name="ObjectNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
+                                                <TextBox x:Name="ObjectNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                                 <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                                             </Grid>
                                             
@@ -1848,6 +1865,16 @@
                                             <ScrollViewer Grid.Column="0" Margin="0,0,8,0">
                                                 <StackPanel Spacing="16">
                                                     <CheckBox IsChecked="{Binding InteractiveScreenSettings.Enabled}" Content="Enable Interactive Mode" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
+                                                    <CheckBox IsChecked="{Binding InteractiveScreenSettings.ShowCloseButton}" Content="Show Close Button (Top Right '✕')" Foreground="{DynamicResource TextNormal}" FontSize="12"/>
+
+                                                    <TextBlock Text="On Close Linked Action (Optional Trigger):" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
+                                                    <ComboBox SelectedValue="{Binding InteractiveScreenSettings.OnCloseActionId, Mode=TwoWay}" SelectedValueBinding="{Binding Id}" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.Functions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="models:GlobalFunction">
+                                                                <TextBlock Text="{Binding Name}"/>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
                                                     
                                                     <TextBlock Text="Backdrop Asset ID / Path:" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                                                     <ComboBox Text="{Binding InteractiveScreenSettings.BackdropAssetId, Mode=TwoWay}" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentGame.MediaAssets}" HorizontalAlignment="Stretch" IsEditable="True" Background="{DynamicResource CardBg}">
@@ -1863,7 +1890,7 @@
                                                         <Button Grid.Column="1" Content="➕ Add" Click="OnAddObjectHotspotClicked" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="11" Padding="8,4"/>
                                                     </Grid>
                                                     
-                                                    <ListBox ItemsSource="{Binding InteractiveScreenSettings.Hotspots}" x:Name="ObjectHotspotsList" Height="180" SelectedIndex="0" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                                    <ListBox ItemsSource="{Binding InteractiveScreenSettings.Hotspots}" x:Name="ObjectHotspotsList" Height="180" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                                         <ListBox.ItemTemplate>
                                                             <DataTemplate x:DataType="models:ScreenHotspot">
                                                                 <Grid ColumnDefinitions="*,Auto" Height="36">
@@ -1881,6 +1908,7 @@
                                                         <TextBlock Text="Button Name (Designer Only):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                         <TextBox Text="{Binding Name, Mode=TwoWay}" Watermark="Button Name" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                         <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}" Content="Initially Active" FontSize="11"/>
+                                                        <CheckBox IsChecked="{Binding EnableHoverScale, Mode=TwoWay}" Content="Enable Hover Grow Effect" FontSize="11"/>
                                                         <TextBlock Text="Linked Action:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
                                                         <ComboBox SelectedItem="{Binding LinkedActionId, Mode=TwoWay, Converter={x:Static views:ActionToIdStringConverter.Instance}}" ItemsSource="{Binding $parent[TabControl].DataContext.Actions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
                                                             <ComboBox.ItemTemplate>
@@ -1958,7 +1986,7 @@
                                             <StackPanel Grid.Column="1" Spacing="10" Margin="16,0,0,0">
                                                 <TextBlock Text="Live Screen Coordinates Preview" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2"/>
                                                 <Border Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True" Height="450">
-                                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <Canvas Width="100" Height="56.25" Background="#14141F">
                                                             <!-- Backdrop Image in Preview -->
                                                             <Image Source="{Binding InteractiveScreenSettings.BackdropAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Width="100" Height="56.25" Stretch="Uniform"/>
@@ -1978,11 +2006,11 @@
                                                                  </ItemsControl.Styles>
                                                                  <ItemsControl.ItemTemplate>
                                                                      <DataTemplate x:DataType="models:ScreenHotspot">
-                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding, Converter={x:Static views:HotspotOuterBackgroundConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
+                                                                         <Border Width="{Binding Width}" Height="{Binding Height, Converter={x:Static views:YScaleConverter.Instance}}" BorderBrush="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" BorderThickness="0.6" Background="{Binding, Converter={x:Static views:HotspotOuterBackgroundConverter.Instance}}" CornerRadius="0.5" Cursor="Hand" ClipToBounds="True" PointerPressed="OnHotspotPointerPressed" PointerMoved="OnHotspotPointerMoved" PointerReleased="OnHotspotPointerReleased">
                                                                              <Grid>
                                                                                  <!-- Button background icon/image -->
-                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="Uniform"/>
-                                                                                 <Border Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Padding="1,0.5" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding DisplayName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"><TextBlock Text="{Binding DisplayName}" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border>
+                                                                                 <Image Source="{Binding ImageAssetId, Converter={x:Static views:AssetIdToBitmapConverter.Instance}}" Stretch="UniformToFill"/>
+                                                                                 <Border Background="{Binding BackgroundColor, Converter={x:Static views:HexToBrushConverter.Instance}}" CornerRadius="0.5" Padding="1,0.5" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding DisplayName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"><TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" FontSize="{Binding FontSize, Converter={x:Static views:HotspotFontSizeScaleConverter.Instance}}" Foreground="{Binding FontColor, Converter={x:Static views:HexToBrushConverter.Instance}}" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border>
                                                                              </Grid>
                                                                          </Border>
                                                                      </DataTemplate>
@@ -2066,7 +2094,7 @@
                                 </Border>
 
                                 <TextBlock Text="Name:" Foreground="{DynamicResource TextMuted}"/>
-                                <TextBox x:Name="VariableNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"
+                                <TextBox x:Name="VariableNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"
                                          IsReadOnly="{Binding IsSystemVariable}"/>
                                 
                                 <TextBlock Text="Type Hint:" Foreground="{DynamicResource TextMuted}"/>
@@ -2280,7 +2308,7 @@
                             
                             <TextBlock Text="Name" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                             <Grid ColumnDefinitions="*,Auto">
-                                <TextBox x:Name="TimerNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
+                                <TextBox x:Name="TimerNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}" Padding="8,6"/>
                                 <Button Grid.Column="1" Content="✨" Click="OnCoAuthorNameClicked" Margin="8,0,0,0" Width="36" Height="34" Background="#8E2DE2" Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             </Grid>
                             
@@ -2357,7 +2385,7 @@
                             <TextBlock Text="Edit Function Routine" FontSize="18" FontWeight="Bold" Foreground="#8E2DE2"/>
                             
                             <TextBlock Text="Function Name:" Foreground="{DynamicResource TextMuted}"/>
-                            <TextBox x:Name="FunctionNameTextBox" Text="{Binding Name, Mode=TwoWay}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
+                            <TextBox x:Name="FunctionNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource BorderBrush}"/>
 
                             <TextBlock Text="Trigger Events:" Foreground="{DynamicResource TextMuted}"/>
                             <Border Background="{DynamicResource InputBg}" CornerRadius="4" Padding="12">

@@ -64,5 +64,8 @@ namespace RagsCore.Models
 
         private bool _isActive = true;
         public bool IsActive { get => _isActive; set => SetProperty(ref _isActive, value); }
+
+        private bool _enableHoverScale = true;
+        public bool EnableHoverScale { get => _enableHoverScale; set => SetProperty(ref _enableHoverScale, value); }
     }
 }

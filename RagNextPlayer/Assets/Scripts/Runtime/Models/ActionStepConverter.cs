@@ -90,6 +90,8 @@ namespace RagNextPlayer.Runtime.Models
                 "room.addObject"         => typeof(AddObjectToRoomCommandData),
                 "room.removeObject"      => typeof(RemoveObjectFromRoomCommandData),
                 "item.showInteractiveScreen" => typeof(ShowInteractiveScreenCommandData),
+                "item.closeInteractiveScreen" => typeof(CloseInteractiveScreenCommandData),
+                "ui.setCloseButtonVisible" => typeof(SetCloseButtonVisibleCommandData),
                 "room.setExit"           => typeof(SetRoomExitCommandData),
                 "room.disableExit"       => typeof(DisableRoomExitCommandData),
                 "room.lockExit"          => typeof(LockRoomExitCommandData),

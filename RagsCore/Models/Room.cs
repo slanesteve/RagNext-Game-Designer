@@ -41,6 +41,20 @@ namespace RagsCore.Models
             }
         }
 
+        public double AmbientParticleIntensity
+        {
+            get
+            {
+                var val = CustomAttribute.GetAttribute("ParticleIntensity", Attributes);
+                return double.TryParse(val, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var d) ? d : 1.0;
+            }
+            set
+            {
+                CustomAttribute.SetAttribute("ParticleIntensity", value.ToString("F1", System.Globalization.CultureInfo.InvariantCulture), Attributes);
+                OnPropertyChanged(nameof(AmbientParticleIntensity));
+            }
+        }
+
         public string ScreenEffect
         {
             get

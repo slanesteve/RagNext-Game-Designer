@@ -1,6 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using RagNext.Designer.Avalonia.Services;
+using RagNext.Models;
 using RagsCore.Models;
 using RagsCore.Services;
 
@@ -31,7 +33,31 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Rooms is not null)
                 {
                     App.CurrentGame.Rooms.Add(newRoom);
-                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                    if (MainWindowViewModel.Instance != null)
+                    {
+                        var targetNode = MainWindowViewModel.Instance.SelectedRoomTreeNode;
+                        EntityFolder? targetFolder = targetNode?.IsFolder == true 
+                            ? targetNode.FolderModel 
+                            : targetNode?.ParentNode?.FolderModel;
+                        if (targetFolder != null)
+                        {
+                            EntityTreeHelper.MoveEntityToFolder(MainWindowViewModel.Instance.EntityTreeDoc.Rooms, newRoom.Id, targetFolder);
+                            await MainWindowViewModel.Instance.SaveEntityTreeAsync();
+                        }
+                        MainWindowViewModel.Instance.RebuildEntityTrees();
+                        var newNode = MainWindowViewModel.Instance.FindNodeByEntityId(MainWindowViewModel.Instance.RoomTreeRoots, newRoom.Id);
+                        if (newNode != null)
+                        {
+                            MainWindowViewModel.Instance.ExpandParents(newNode);
+                            MainWindowViewModel.Instance.SelectedRoomTreeNode = newNode;
+                        }
+                        else
+                        {
+                            MainWindowViewModel.Instance.SelectedRoom = newRoom;
+                        }
+                        await MainWindowViewModel.Instance.SaveGameAsync();
+                    }
+                    OnPropertyChanged(nameof(Rooms));
                 }
                 else
                 {
@@ -45,7 +71,17 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 if (App.CurrentGame?.Rooms is not null)
                 {
                     App.CurrentGame.Rooms.Remove(room);
-                    if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                    if (MainWindowViewModel.Instance != null)
+                    {
+                        EntityTreeHelper.MoveEntityToFolder(MainWindowViewModel.Instance.EntityTreeDoc.Rooms, room.Id, null);
+                        MainWindowViewModel.Instance.RebuildEntityTrees();
+                        if (MainWindowViewModel.Instance.SelectedRoom == room)
+                        {
+                            MainWindowViewModel.Instance.SelectedRoom = App.CurrentGame.Rooms.Count > 0 ? App.CurrentGame.Rooms[0] : null;
+                        }
+                        await MainWindowViewModel.Instance.SaveEntityTreeAsync();
+                        await MainWindowViewModel.Instance.SaveGameAsync();
+                    }
                     OnPropertyChanged(nameof(Rooms));
                 }
             });
@@ -69,7 +105,11 @@ namespace RagNext.Designer.Avalonia.ViewModels
                     int oldIndex = App.CurrentGame.Rooms.IndexOf(sorted[i]);
                     if (oldIndex != i) App.CurrentGame.Rooms.Move(oldIndex, i);
                 }
-                if (MainWindowViewModel.Instance != null) await MainWindowViewModel.Instance.SaveGameAsync();
+                if (MainWindowViewModel.Instance != null)
+                {
+                    MainWindowViewModel.Instance.RebuildEntityTrees();
+                    await MainWindowViewModel.Instance.SaveGameAsync();
+                }
                 OnPropertyChanged(nameof(Rooms));
             });
         }

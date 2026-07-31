@@ -52,6 +52,14 @@ namespace RagNextPlayer.Managers
             }
         }
 
+        private void OnApplicationQuit()
+        {
+            Debug.Log("[GameManager] OnApplicationQuit - Terminating standalone process.");
+#if !UNITY_EDITOR
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+#endif
+        }
+
         private void Update()
         {
             if (ActiveGame == null) return;

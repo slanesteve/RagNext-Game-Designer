@@ -230,6 +230,29 @@
                     </div>
                 </div>
                 <div class="help-section" style="margin-top: 16px;">
+                    <h4 style="margin-bottom: 8px;">📋 Array Variables</h4>
+                    <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
+                        Array variables hold multiple rows of data. Use these tokens to read cells or count rows.
+                    </p>
+                    <div class="token-item">
+                        <span class="token-badge">{variables.MyArray.count}</span>
+                        <span class="token-desc">Number of rows in the array. Aliases: <code>.length</code> &amp; <code>.rowcount</code></span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">{variables.MyArray.0.ColumnName}</span>
+                        <span class="token-desc">Value of 'ColumnName' at row 0 (row-first format).</span>
+                    </div>
+                    <div class="token-item">
+                        <span class="token-badge">{variables.MyArray.ColumnName.0}</span>
+                        <span class="token-desc">Value of 'ColumnName' at row 0 (col-first format).</span>
+                    </div>
+                    <h5 style="margin-top: 10px; margin-bottom: 6px; font-size: 11px; color: #a855f7;">Random Row Pick Pattern</h5>
+                    <div class="token-item">
+                        <span class="token-badge">random(0, {variables.MyArray.count} - 1)</span>
+                        <span class="token-desc">Pick a random valid row index. Use in a <strong>Variable: Set</strong> command to store the index, then reference the row with <code>{variables.MyArray.{variables.randomIndex}.ColumnName}</code></span>
+                    </div>
+                </div>
+                <div class="help-section" style="margin-top: 16px;">
                     <h4 style="margin-bottom: 8px;">🧮 Formulas &amp; Math Functions</h4>
                     <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">
                         Formula fields support numbers, entity attributes, operators (<code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>^</code>), parentheses <code>()</code>, and built-in functions:

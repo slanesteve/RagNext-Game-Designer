@@ -17,7 +17,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
             new([
                 "var.equals", "player.inRoom", "room.hasObject",                 "var.set", "var.evaluate", "player.moveTo", "player.screenShake", "room.addObject", "room.removeObject",
                  "object.displayDescription", "object.moveToCharacter", "object.moveToInventory", "object.moveInsideObject",
-                 "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen"
+                 "player.swapCharacter", "ui.showSplashScreen", "item.showInteractiveScreen",
+                 "item.closeInteractiveScreen", "ui.setCloseButtonVisible"
             ]);
 
         private string? _selectedStepKey;
@@ -100,6 +101,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
             "general.waitForContinue" => new WaitForContinueCommand(),
             "general.showMap" => new ShowMapCommand(),
             "item.showInteractiveScreen" => new ShowInteractiveScreenCommand(),
+            "item.closeInteractiveScreen" => new CloseInteractiveScreenCommand(),
+            "ui.setCloseButtonVisible" => new SetCloseButtonVisibleCommand(),
             _ => throw new NotSupportedException(key)
         };
     }
