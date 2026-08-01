@@ -143,7 +143,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-scale-mode: scale-and-crop;
 }
 
 .scene-placeholder {
@@ -1019,7 +1019,7 @@
     width: 100%;
     height: 100%;
     picking-mode: ignore;
-    background-image: radial-gradient(circle, rgba(13, 14, 18, 0) 80%, rgba(13, 14, 18, 0.25) 100%);
+    display: none;
     z-index: 5;
 }
 
