@@ -1500,6 +1500,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand BrowsePublishDestinationCommand { get; }
         public ICommand ImportPackageCommand { get; }
         public ICommand ExportPackageCommand { get; }
+        public ICommand AddPromotionalLinkCommand { get; }
+        public ICommand RemovePromotionalLinkCommand { get; }
+        public ICommand OpenRagNextWebsiteCommand { get; }
 
         public ICommand StartEditingActionCommand { get; }
         public ICommand StopEditingActionCommand { get; }
@@ -2292,6 +2295,41 @@ namespace RagNext.Designer.Avalonia.ViewModels
             CloseWelcomeCommand = new Command(() => ShowWelcomeOverlay = false);
 
             PublishCommand = new Command(async () => await PublishProjectAsync());
+
+            AddPromotionalLinkCommand = new Command(() =>
+            {
+                if (CurrentGame != null)
+                {
+                    CurrentGame.PromotionalLinks.Add(new PromotionalLink
+                    {
+                        Title = "My Patreon",
+                        Platform = "Patreon",
+                        Url = "https://patreon.com/"
+                    });
+                }
+            });
+
+            RemovePromotionalLinkCommand = new Command<PromotionalLink>(link =>
+            {
+                if (CurrentGame != null && link != null)
+                {
+                    CurrentGame.PromotionalLinks.Remove(link);
+                }
+            });
+
+            OpenRagNextWebsiteCommand = new Command<string>(url =>
+            {
+                string target = string.IsNullOrWhiteSpace(url) ? "https://ragnext.com" : url;
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = target,
+                        UseShellExecute = true
+                    });
+                }
+                catch { }
+            });
 
             SelectPlatformCommand = new Command<string>(platform =>
             {

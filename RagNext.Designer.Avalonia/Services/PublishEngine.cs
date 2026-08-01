@@ -473,14 +473,17 @@ namespace RagNext.Designer.Avalonia.Services
                     }
                     if (!string.IsNullOrWhiteSpace(game.DiscordUrl))
                     {
-                        html = html.Replace("id=\"ragnext-discord-link\" href=\"#\" target=\"_blank\" style=\"color: #5865F2; text-decoration: none; font-weight: bold; margin-right: 10px; display: none;\"",
-                                            $"id=\"ragnext-discord-link\" href=\"{game.DiscordUrl}\" target=\"_blank\" style=\"color: #5865F2; text-decoration: none; font-weight: bold; margin-right: 10px; display: inline-block;\"");
+                        html = html.Replace("id=\"ragnext-discord-link\" href=\"#\" target=\"_blank\" style=\"color: #5865F2; text-decoration: none; font-weight: bold; margin-right: 8px; display: none;\"",
+                                            $"id=\"ragnext-discord-link\" href=\"{game.DiscordUrl}\" target=\"_blank\" style=\"color: #5865F2; text-decoration: none; font-weight: bold; margin-right: 8px; display: inline-block;\"");
                     }
                     if (!string.IsNullOrWhiteSpace(game.WebsiteUrl))
                     {
                         html = html.Replace("id=\"ragnext-website-link\" href=\"#\" target=\"_blank\" style=\"color: #38bdf8; text-decoration: none; font-weight: bold; display: none;\"",
                                             $"id=\"ragnext-website-link\" href=\"{game.WebsiteUrl}\" target=\"_blank\" style=\"color: #38bdf8; text-decoration: none; font-weight: bold; display: inline-block;\"");
                     }
+
+                    string customPromoHtml = GenerateCustomPromoLinksHtml(game);
+                    html = html.Replace("<!-- RAGNEXT_CUSTOM_PROMO_LINKS -->", customPromoHtml);
                 }
 
                 await File.WriteAllTextAsync(indexPath, html);
@@ -894,6 +897,81 @@ namespace RagNext.Designer.Avalonia.Services
             }
 
             return false;
+        }
+
+        private static string GenerateCustomPromoLinksHtml(Game game)
+        {
+            if (game.PromotionalLinks == null || game.PromotionalLinks.Count == 0)
+                return string.Empty;
+
+            var sb = new System.Text.StringBuilder();
+            foreach (var link in game.PromotionalLinks)
+            {
+                if (string.IsNullOrWhiteSpace(link.Url)) continue;
+
+                string title = string.IsNullOrWhiteSpace(link.Title) ? link.Platform : link.Title;
+                string icon = "🔗";
+                string color = "#a855f7";
+                string bg = "rgba(168,85,247,0.15)";
+                string border = "rgba(168,85,247,0.3)";
+
+                switch (link.Platform?.ToLowerInvariant())
+                {
+                    case "patreon":
+                        icon = "🧡";
+                        color = "#FF424D";
+                        bg = "rgba(255,66,77,0.15)";
+                        border = "rgba(255,66,77,0.3)";
+                        break;
+                    case "ko-fi":
+                    case "kofi":
+                        icon = "☕";
+                        color = "#FF5E5B";
+                        bg = "rgba(255,94,91,0.15)";
+                        border = "rgba(255,94,91,0.3)";
+                        break;
+                    case "kickstarter":
+                        icon = "💚";
+                        color = "#05CE78";
+                        bg = "rgba(5,206,120,0.15)";
+                        border = "rgba(5,206,120,0.3)";
+                        break;
+                    case "discord":
+                        icon = "💬";
+                        color = "#5865F2";
+                        bg = "rgba(88,101,242,0.15)";
+                        border = "rgba(88,101,242,0.3)";
+                        break;
+                    case "steam":
+                        icon = "🎮";
+                        color = "#c084fc";
+                        bg = "rgba(192,132,252,0.15)";
+                        border = "rgba(192,132,252,0.3)";
+                        break;
+                    case "youtube":
+                        icon = "📺";
+                        color = "#FF0000";
+                        bg = "rgba(255,0,0,0.15)";
+                        border = "rgba(255,0,0,0.3)";
+                        break;
+                    case "twitch":
+                        icon = "👾";
+                        color = "#9146FF";
+                        bg = "rgba(145,70,255,0.15)";
+                        border = "rgba(145,70,255,0.3)";
+                        break;
+                    case "website":
+                        icon = "🌐";
+                        color = "#38bdf8";
+                        bg = "rgba(56,189,248,0.15)";
+                        border = "rgba(56,189,248,0.3)";
+                        break;
+                }
+
+                sb.Append($"<a href=\"{link.Url}\" target=\"_blank\" style=\"color: {color}; text-decoration: none; font-weight: bold; margin-right: 8px; display: inline-flex; align-items: center; gap: 4px; background: {bg}; padding: 2px 8px; border-radius: 4px; border: 1px solid {border};\">{icon} {title}</a>");
+            }
+
+            return sb.ToString();
         }
     }
 

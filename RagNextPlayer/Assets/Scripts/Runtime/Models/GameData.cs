@@ -27,9 +27,21 @@ namespace RagNextPlayer.Runtime.Models
         public string ActivePlayerCharacterId { get; set; } = string.Empty;
         public List<StatusBarElementData> StatusBarElements { get; set; } = new List<StatusBarElementData>();
         public List<string>               WearSlots           { get; set; } = new List<string>();
+        public List<PromotionalLinkData>  PromotionalLinks    { get; set; } = new List<PromotionalLinkData>();
+        public bool                       ShowEngineCredits   { get; set; } = true;
+        public string                     SteamUrl            { get; set; } = string.Empty;
+        public string                     DiscordUrl          { get; set; } = string.Empty;
+        public string                     WebsiteUrl          { get; set; } = string.Empty;
 
         [JsonIgnore]
         public List<RuntimeCustomChoice> CustomChoices { get; } = new List<RuntimeCustomChoice>();
+    }
+
+    public class PromotionalLinkData
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+        public string Platform { get; set; } = "Patreon";
     }
 
     public class ThemeSettingsData

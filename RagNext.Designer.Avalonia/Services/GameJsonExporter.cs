@@ -28,6 +28,18 @@ namespace RagNext.Designer.Avalonia.Services
         public ExportThemeSettingsDto? Theme { get; set; }
         public List<ExportStatusBarElementDto>? StatusBarElements { get; set; }
         public List<string>? WearSlots { get; set; }
+        public List<ExportPromotionalLinkDto>? PromotionalLinks { get; set; }
+        public bool ShowEngineCredits { get; set; } = true;
+        public string? SteamUrl { get; set; }
+        public string? DiscordUrl { get; set; }
+        public string? WebsiteUrl { get; set; }
+    }
+
+    public class ExportPromotionalLinkDto
+    {
+        public string? Title { get; set; }
+        public string? Url { get; set; }
+        public string? Platform { get; set; }
     }
 
     public class ExportStatusBarElementDto
@@ -366,7 +378,17 @@ namespace RagNext.Designer.Avalonia.Services
                 TextColor = s.TextColor,
                 MediaAssetId = s.MediaAssetId?.ToString(),
                 IsVisible = s.IsVisible
-            }).ToList()
+            }).ToList(),
+            PromotionalLinks = game.PromotionalLinks?.Select(p => new ExportPromotionalLinkDto
+            {
+                Title = p.Title,
+                Url = p.Url,
+                Platform = p.Platform
+            }).ToList(),
+            ShowEngineCredits = game.ShowEngineCredits,
+            SteamUrl = game.SteamUrl,
+            DiscordUrl = game.DiscordUrl,
+            WebsiteUrl = game.WebsiteUrl
         };
 
         private static string NormalizeNewlines(string? val)

@@ -51,6 +51,8 @@ namespace RagsCore.Models
         private bool _showEngineCredits = true;
         public bool ShowEngineCredits { get => _showEngineCredits; set => SetProperty(ref _showEngineCredits, value); }
 
+        public ObservableCollection<PromotionalLink> PromotionalLinks { get; set; } = new();
+
         public Player Player { get; set; } = new();
 
         // Make collections settable so System.Text.Json can assign them during deserialization.

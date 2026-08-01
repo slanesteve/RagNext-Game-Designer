@@ -2137,6 +2137,8 @@ namespace RagNextPlayer.Managers
             if (_gameInfoLabel is not null)
                 _gameInfoLabel.text = $"by {game.Author}  ·  v{game.Version}";
 
+            PopulateSettingsPromotionalLinks(game);
+
             // Apply customized viewport border
             var rootEl = _root?.Q<VisualElement>("root");
             if (rootEl is not null && game.SplashScreen is not null)
@@ -2194,6 +2196,153 @@ namespace RagNextPlayer.Managers
 
             RefreshPlayerPanel();
             RefreshPlayerPortrait();
+        }
+
+        private void PopulateSettingsPromotionalLinks(GameData game)
+        {
+            if (_root is null || game is null) return;
+
+            var sectionEl = _root.Q<VisualElement>("menu-promo-links-section");
+            var containerEl = _root.Q<VisualElement>("menu-promo-links-container");
+            var creditBtn = _root.Q<Button>("ragnext-engine-credit-btn");
+
+            if (creditBtn != null)
+            {
+                creditBtn.clickable = new Clickable(() =>
+                {
+                    Application.OpenURL("https://ragnext.com");
+                });
+
+                if (!game.ShowEngineCredits)
+                {
+                    var footerEl = _root.Q<VisualElement>("menu-engine-credits-footer");
+                    if (footerEl != null) footerEl.style.display = DisplayStyle.None;
+                }
+            }
+
+            if (containerEl == null || sectionEl == null) return;
+
+            containerEl.Clear();
+
+            var linksToDisplay = new System.Collections.Generic.List<(string icon, string title, string url, string colorHex)>();
+
+            if (game.PromotionalLinks != null)
+            {
+                foreach (var link in game.PromotionalLinks)
+                {
+                    if (string.IsNullOrWhiteSpace(link.Url)) continue;
+
+                    string title = string.IsNullOrWhiteSpace(link.Title) ? link.Platform : link.Title;
+                    string icon = "🔗";
+                    string colorHex = "#a855f7";
+
+                    switch (link.Platform?.ToLowerInvariant())
+                    {
+                        case "patreon":
+                            icon = "🧡";
+                            colorHex = "#FF424D";
+                            break;
+                        case "ko-fi":
+                        case "kofi":
+                            icon = "☕";
+                            colorHex = "#FF5E5B";
+                            break;
+                        case "kickstarter":
+                            icon = "💚";
+                            colorHex = "#05CE78";
+                            break;
+                        case "discord":
+                            icon = "💬";
+                            colorHex = "#5865F2";
+                            break;
+                        case "steam":
+                            icon = "🎮";
+                            colorHex = "#c084fc";
+                            break;
+                        case "youtube":
+                            icon = "📺";
+                            colorHex = "#FF0000";
+                            break;
+                        case "twitch":
+                            icon = "👾";
+                            colorHex = "#9146FF";
+                            break;
+                        case "website":
+                            icon = "🌐";
+                            colorHex = "#38bdf8";
+                            break;
+                    }
+
+                    linksToDisplay.Add((icon, title, link.Url, colorHex));
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(game.SteamUrl) && !linksToDisplay.Any(l => l.url == game.SteamUrl))
+            {
+                linksToDisplay.Add(("🎮", "Steam", game.SteamUrl, "#c084fc"));
+            }
+            if (!string.IsNullOrWhiteSpace(game.DiscordUrl) && !linksToDisplay.Any(l => l.url == game.DiscordUrl))
+            {
+                linksToDisplay.Add(("💬", "Discord", game.DiscordUrl, "#5865F2"));
+            }
+            if (!string.IsNullOrWhiteSpace(game.WebsiteUrl) && !linksToDisplay.Any(l => l.url == game.WebsiteUrl))
+            {
+                linksToDisplay.Add(("🌐", "Website", game.WebsiteUrl, "#38bdf8"));
+            }
+
+            if (linksToDisplay.Count == 0)
+            {
+                sectionEl.style.display = DisplayStyle.None;
+                return;
+            }
+
+            sectionEl.style.display = DisplayStyle.Flex;
+
+            foreach (var item in linksToDisplay)
+            {
+                var btn = new Button
+                {
+                    text = $"{item.icon} {item.title}"
+                };
+
+                btn.style.backgroundColor = new StyleColor(new Color(0.12f, 0.12f, 0.18f, 0.9f));
+                btn.style.borderLeftWidth = 1;
+                btn.style.borderRightWidth = 1;
+                btn.style.borderTopWidth = 1;
+                btn.style.borderBottomWidth = 1;
+
+                if (TryParseHtmlColor(item.colorHex, out var btnColor))
+                {
+                    btn.style.color = btnColor;
+                    btn.style.borderLeftColor = btnColor;
+                    btn.style.borderRightColor = btnColor;
+                    btn.style.borderTopColor = btnColor;
+                    btn.style.borderBottomColor = btnColor;
+                }
+                else
+                {
+                    btn.style.color = new StyleColor(new Color(0.75f, 0.52f, 0.98f));
+                }
+
+                btn.style.borderTopLeftRadius = 4;
+                btn.style.borderTopRightRadius = 4;
+                btn.style.borderBottomLeftRadius = 4;
+                btn.style.borderBottomRightRadius = 4;
+                btn.style.paddingLeft = 8;
+                btn.style.paddingRight = 8;
+                btn.style.paddingTop = 4;
+                btn.style.paddingBottom = 4;
+                btn.style.fontSize = 12;
+                btn.style.unityFontDefinition = StyleKeyword.Null;
+
+                string targetUrl = item.url;
+                btn.clickable = new Clickable(() =>
+                {
+                    Application.OpenURL(targetUrl);
+                });
+
+                containerEl.Add(btn);
+            }
         }
 
         private bool TryParseHtmlColor(string hex, out Color color)
@@ -3901,12 +4050,22 @@ namespace RagNextPlayer.Managers
                 return;
             }
 
-            sceneImage.style.aspectRatio = 16f / 9f;
             sceneImage.style.width = StyleKeyword.Auto;
             sceneImage.style.height = Length.Percent(100);
             sceneImage.style.maxWidth = Length.Percent(100);
             sceneImage.style.maxHeight = Length.Percent(100);
-            sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+            sceneImage.style.alignSelf = Align.Center;
+            sceneImage.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+
+            var currentTex = sceneImage.resolvedStyle.backgroundImage.texture;
+            if (currentTex != null && currentTex.height > 0)
+            {
+                sceneImage.style.aspectRatio = currentTex.width / (float)currentTex.height;
+            }
+            else
+            {
+                sceneImage.style.aspectRatio = 16f / 9f;
+            }
 
             // Optional custom backdrop (only reload if path changed to prevent flashing)
             string targetBackdropPath = string.Empty;
@@ -5808,12 +5967,14 @@ namespace RagNextPlayer.Managers
                     elem.style.backgroundImage = new StyleBackground(tex);
                     if (elementName == "scene-image")
                     {
-                        if (tex != null)
+                        if (tex != null && tex.height > 0)
                         {
+                            float aspect = tex.width / (float)tex.height;
                             if (_activeScreenSettings != null && _activeScreenSettings.Enabled)
                             {
-                                elem.style.aspectRatio = 16f / 9f;
-                                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                                elem.style.aspectRatio = aspect;
+                                elem.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+                                elem.style.alignSelf = Align.Center;
                             }
                             else
                             {

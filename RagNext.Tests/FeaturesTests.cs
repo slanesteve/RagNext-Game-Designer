@@ -109,6 +109,47 @@ namespace RagNext.Tests
         }
 
         [Fact]
+        public void PromotionalLinks_Export_ShouldIncludeCustomLinks()
+        {
+            // Arrange
+            var game = new Game();
+            game.PromotionalLinks.Add(new PromotionalLink
+            {
+                Title = "Support My Patreon",
+                Platform = "Patreon",
+                Url = "https://patreon.com/myawesomegame"
+            });
+            game.PromotionalLinks.Add(new PromotionalLink
+            {
+                Title = "Buy me a Coffee",
+                Platform = "Ko-fi",
+                Url = "https://ko-fi.com/myawesomegame"
+            });
+
+            // Act
+            var json = RagNext.Designer.Avalonia.Services.GameJsonExporter.Export(game);
+            
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var dto = System.Text.Json.JsonSerializer.Deserialize<RagNext.Designer.Avalonia.Services.ExportGameDto>(json, options);
+
+            // Assert
+            Assert.NotNull(dto);
+            Assert.NotNull(dto.PromotionalLinks);
+            Assert.Equal(2, dto.PromotionalLinks.Count);
+            
+            var patreonLink = dto.PromotionalLinks.Find(l => l.Platform == "Patreon");
+            Assert.NotNull(patreonLink);
+            Assert.Equal("Support My Patreon", patreonLink.Title);
+            Assert.Equal("https://patreon.com/myawesomegame", patreonLink.Url);
+
+            Assert.True(dto.ShowEngineCredits);
+            Assert.Equal(game.SteamUrl, dto.SteamUrl);
+        }
+
+        [Fact]
         public void ItemCanWearCondition_ShouldEvaluateCorrectly()
         {
             // Arrange
