@@ -32,7 +32,7 @@ jobs:
           - targetPlatform: StandaloneLinux64
             inputKey: buildLinux
             buildName: 'RagNextPlayer'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-linux-il2cpp-3'
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-linux-mono-3'
           - targetPlatform: WebGL
             inputKey: buildWebGL
             buildName: 'RagNextPlayer'
