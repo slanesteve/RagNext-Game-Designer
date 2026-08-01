@@ -248,7 +248,12 @@ namespace RagNextPlayer.Managers
                 VisualElement vfx = _root.Q("vfx-overlay");
                 if (vfx != null)
                 {
-                    vfx.MarkDirtyRepaint();
+                    bool vfxActive = TransitionVFXManager.Instance != null && TransitionVFXManager.Instance.IsAnyVFXActive;
+                    vfx.style.display = vfxActive ? DisplayStyle.Flex : DisplayStyle.None;
+                    if (vfxActive)
+                    {
+                        vfx.MarkDirtyRepaint();
+                    }
                 }
             }
 

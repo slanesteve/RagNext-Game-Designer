@@ -579,6 +579,24 @@ namespace RagNextPlayer.Managers
             if (_transitionSnowPS != null) _transitionSnowPS.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
+        public bool IsAnyVFXActive
+        {
+            get
+            {
+                if (_smokePS != null && _smokePS.particleCount > 0) return true;
+                if (_sandPS != null && _sandPS.particleCount > 0) return true;
+                if (_transitionEmbersPS != null && _transitionEmbersPS.particleCount > 0) return true;
+                if (_transitionRainPS != null && _transitionRainPS.particleCount > 0) return true;
+                if (_transitionSnowPS != null && _transitionSnowPS.particleCount > 0) return true;
+                if (_embersPS != null && _embersPS.particleCount > 0) return true;
+                if (_rainPS != null && _rainPS.particleCount > 0) return true;
+                if (_snowPS != null && _snowPS.particleCount > 0) return true;
+                if (_roomSmokePS != null && _roomSmokePS.particleCount > 0) return true;
+                if (_roomSandPS != null && _roomSandPS.particleCount > 0) return true;
+                return false;
+            }
+        }
+
         public void LogActiveParticles()
         {
             int smokeCount = _smokePS != null ? _smokePS.particleCount : 0;
