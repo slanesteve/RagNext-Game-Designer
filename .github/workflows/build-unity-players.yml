@@ -21,10 +21,10 @@ on:
         default: true
 
 jobs:
-  # Build all 4 Unity Player targets on Ubuntu runner using GameCI Docker containers
+  # Build all 4 Unity Player targets with 100% C++ IL2CPP code protection
   build-unity-templates:
-    name: Build ${{ matrix.targetPlatform }} (Linux Container)
-    runs-on: ubuntu-latest
+    name: Build ${{ matrix.targetPlatform }} (IL2CPP)
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -32,22 +32,26 @@ jobs:
           - targetPlatform: StandaloneLinux64
             inputKey: buildLinux
             buildName: 'RagNextPlayer'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-linux-mono-3'
+            os: ubuntu-latest
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-linux-il2cpp-3'
           - targetPlatform: WebGL
             inputKey: buildWebGL
             buildName: 'RagNextPlayer'
+            os: ubuntu-latest
             customImage: 'unityci/editor:ubuntu-6000.3.6f1-webgl-3'
           - targetPlatform: StandaloneWindows64
             inputKey: buildWindows
             buildName: 'RagNextPlayer.exe'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-mono-3'
+            os: windows-latest
+            customImage: ''
           - targetPlatform: StandaloneOSX
             inputKey: buildOSX
             buildName: 'RagNextPlayer.app'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-mac-mono-3'
+            os: macos-latest
+            customImage: ''
     steps:
       - name: Free Disk Space (Ubuntu)
-        if: ${{ inputs[matrix.inputKey] }}
+        if: ${{ matrix.os == 'ubuntu-latest' && inputs[matrix.inputKey] }}
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
