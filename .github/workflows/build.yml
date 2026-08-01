@@ -172,11 +172,23 @@ jobs:
         rm -rf Publish/Designer-Mac-Arm64
         dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-arm64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.6.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Mac-Arm64
         
-        # 3. Create macOS .app Bundle Structure for Arm64
+        # 3. Deploy WebAssets, Samples, and Templates to publish output
+        mkdir -p Publish/Designer-Mac-Arm64/WebAssets
+        cp -R RagNext.Designer.Avalonia/WebAssets/* Publish/Designer-Mac-Arm64/WebAssets/
+        if [ -d "Samples" ]; then
+          mkdir -p Publish/Designer-Mac-Arm64/Samples
+          cp -R Samples/* Publish/Designer-Mac-Arm64/Samples/
+        fi
+        if [ -d "Templates" ]; then
+          mkdir -p Publish/Designer-Mac-Arm64/Templates
+          cp -R Templates/* Publish/Designer-Mac-Arm64/Templates/
+        fi
+
+        # 4. Create macOS .app Bundle Structure for Arm64
         mkdir -p Publish/RagNext_Arm64.app/Contents/MacOS
         mkdir -p Publish/RagNext_Arm64.app/Contents/Resources
         
-        # 4. Move all published contents (including dylibs) into Contents/MacOS
+        # 5. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Arm64/* Publish/RagNext_Arm64.app/Contents/MacOS/
         
         # Move non-binary resource directories (Samples, WebAssets, Templates, Presets) to Contents/Resources for Apple bundle compliance
@@ -380,11 +392,23 @@ jobs:
         rm -rf Publish/Designer-Mac-Intel
         dotnet publish RagNext.Designer.Avalonia/RagNext.Designer.Avalonia.csproj -c Release -r osx-x64 --self-contained true -p:PublishAot=true -p:Version="1.0.0-alpha.6.${{ github.run_number }}" -p:AssemblyVersion="1.0.0.${{ github.run_number }}" -p:FileVersion="1.0.0.${{ github.run_number }}" -o Publish/Designer-Mac-Intel
         
-        # 3. Create macOS .app Bundle Structure for Intel x64
+        # 3. Deploy WebAssets, Samples, and Templates to publish output
+        mkdir -p Publish/Designer-Mac-Intel/WebAssets
+        cp -R RagNext.Designer.Avalonia/WebAssets/* Publish/Designer-Mac-Intel/WebAssets/
+        if [ -d "Samples" ]; then
+          mkdir -p Publish/Designer-Mac-Intel/Samples
+          cp -R Samples/* Publish/Designer-Mac-Intel/Samples/
+        fi
+        if [ -d "Templates" ]; then
+          mkdir -p Publish/Designer-Mac-Intel/Templates
+          cp -R Templates/* Publish/Designer-Mac-Intel/Templates/
+        fi
+
+        # 4. Create macOS .app Bundle Structure for Intel x64
         mkdir -p Publish/RagNext_Intel.app/Contents/MacOS
         mkdir -p Publish/RagNext_Intel.app/Contents/Resources
         
-        # 4. Move all published contents (including dylibs) into Contents/MacOS
+        # 5. Move all published contents (including dylibs) into Contents/MacOS
         cp -R Publish/Designer-Mac-Intel/* Publish/RagNext_Intel.app/Contents/MacOS/
         
         # Move non-binary resource directories (Samples, WebAssets, Templates, Presets) to Contents/Resources for Apple bundle compliance
