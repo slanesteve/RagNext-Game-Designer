@@ -31,20 +31,20 @@ jobs:
         include:
           - targetPlatform: StandaloneLinux64
             inputKey: buildLinux
-            buildFile: 'RagNextPlayer'
+            buildName: 'RagNextPlayer'
             customImage: 'unityci/editor:ubuntu-6000.3.6f1-linux-il2cpp-3'
           - targetPlatform: WebGL
             inputKey: buildWebGL
-            buildFile: ''
+            buildName: 'RagNextPlayer'
             customImage: 'unityci/editor:ubuntu-6000.3.6f1-webgl-3'
           - targetPlatform: StandaloneWindows64
             inputKey: buildWindows
-            buildFile: 'RagNextPlayer.exe'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-il2cpp-3'
+            buildName: 'RagNextPlayer.exe'
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-mono-3'
           - targetPlatform: StandaloneOSX
             inputKey: buildOSX
-            buildFile: 'RagNextPlayer.app'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-mac-il2cpp-3'
+            buildName: 'RagNextPlayer.app'
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-mac-mono-3'
     steps:
       - name: Free Disk Space (Ubuntu)
         if: ${{ inputs[matrix.inputKey] }}
@@ -73,8 +73,7 @@ jobs:
           projectPath: RagNextPlayer
           unityVersion: 6000.3.6f1
           targetPlatform: ${{ matrix.targetPlatform }}
-          buildName: RagNextPlayer
-          buildFile: ${{ matrix.buildFile }}
+          buildName: ${{ matrix.buildName }}
           customImage: ${{ matrix.customImage }}
 
       # Upload build output as zip artifacts
