@@ -41,12 +41,12 @@ jobs:
             customImage: 'unityci/editor:ubuntu-6000.3.6f1-webgl-3'
           - targetPlatform: StandaloneWindows64
             inputKey: buildWindows
-            buildName: 'RagNextPlayer.exe'
+            buildName: 'RagNextPlayer'
             os: windows-latest
             customImage: ''
           - targetPlatform: StandaloneOSX
             inputKey: buildOSX
-            buildName: 'RagNextPlayer.app'
+            buildName: 'RagNextPlayer'
             os: macos-latest
             customImage: ''
     steps:
@@ -149,7 +149,7 @@ jobs:
 
           # 2. Windows
           if [ -d "tmp-artifacts/StandaloneWindows64" ]; then
-            EXE_PATH=$(find tmp-artifacts/StandaloneWindows64 -name "RagNextPlayer.exe" -type f | head -n 1)
+            EXE_PATH=$(find tmp-artifacts/StandaloneWindows64 -type f \( -name "*.exe" -o -name "RagNextPlayer*" \) | head -n 1)
             if [ -n "$EXE_PATH" ]; then
               echo "Cleaning up Windows templates..."
               rm -rf Templates/Windows/*
