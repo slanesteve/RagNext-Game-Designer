@@ -83,7 +83,7 @@ jobs:
 
         # 4. Bundle rcodesign for cross-platform macOS signing on Windows
         mkdir -p Publish/Designer-Windows/Tools
-        wget -q https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-pc-windows-msvc.zip -O rcodesign.zip
+        curl -sSL "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-pc-windows-msvc.zip" -o rcodesign.zip
         unzip -q rcodesign.zip -d rcodesign_extracted
         cp rcodesign_extracted/*/rcodesign.exe Publish/Designer-Windows/Tools/rcodesign.exe
         rm -rf rcodesign.zip rcodesign_extracted
