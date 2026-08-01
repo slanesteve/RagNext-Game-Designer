@@ -58,6 +58,9 @@ jobs:
 
     - name: Build & Publish Standalone Windows x64
       run: |
+        # 0. Ensure zip utility is available on Windows runner
+        command -v zip >/dev/null 2>&1 || choco install zip -y
+
         # 1. Temporarily target net9.0 only to bypass mobile Mono restores
         sed -i 's/<TargetFrameworks>.*<\/TargetFrameworks>/<TargetFramework>net9.0<\/TargetFramework>/' RagsCore/RagsCore.csproj
         
