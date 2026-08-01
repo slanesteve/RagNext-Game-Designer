@@ -40,11 +40,11 @@ jobs:
           - targetPlatform: StandaloneWindows64
             inputKey: buildWindows
             buildFile: 'RagNextPlayer.exe'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-mono-3'
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-il2cpp-3'
           - targetPlatform: StandaloneOSX
             inputKey: buildOSX
             buildFile: 'RagNextPlayer.app'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-mac-mono-3'
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-mac-il2cpp-3'
     steps:
       - name: Free Disk Space (Ubuntu)
         if: ${{ inputs[matrix.inputKey] }}
