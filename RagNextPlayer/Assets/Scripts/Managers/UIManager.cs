@@ -3891,7 +3891,7 @@ namespace RagNextPlayer.Managers
                 sceneImage.style.height = Length.Percent(100);
                 sceneImage.style.maxWidth = StyleKeyword.Null;
                 sceneImage.style.maxHeight = StyleKeyword.Null;
-                sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                sceneImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                 sceneImage.style.backgroundImage = StyleKeyword.Null;
                 return;
             }
@@ -5812,7 +5812,7 @@ namespace RagNextPlayer.Managers
                             }
                             else
                             {
-                                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+                                elem.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                             }
                         }
                         if (_scenePlaceholder is not null)
