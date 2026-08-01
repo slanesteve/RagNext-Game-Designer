@@ -121,7 +121,28 @@ namespace RagNext.Designer.Avalonia.Services
             {
                 try
                 {
-                    System.IO.Compression.ZipFile.ExtractToDirectory(templateFile, templateDir, true);
+                    byte[] bytes = File.ReadAllBytes(templateFile);
+                    string targetZipPath = templateFile;
+                    bool isTemp = false;
+
+                    // If file is XOR encoded (magic bytes AF B4 FC FB instead of PK 03 04)
+                    if (bytes.Length >= 4 && (bytes[0] != 0x50 || bytes[1] != 0x4B))
+                    {
+                        for (int i = 0; i < bytes.Length; i++)
+                        {
+                            bytes[i] = (byte)(bytes[i] ^ 0xFF);
+                        }
+                        targetZipPath = Path.Combine(Path.GetTempPath(), $"ragnext_template_{Guid.NewGuid():N}.zip");
+                        File.WriteAllBytes(targetZipPath, bytes);
+                        isTemp = true;
+                    }
+
+                    System.IO.Compression.ZipFile.ExtractToDirectory(targetZipPath, templateDir, true);
+
+                    if (isTemp && File.Exists(targetZipPath))
+                    {
+                        try { File.Delete(targetZipPath); } catch { }
+                    }
                 }
                 catch { }
             }
@@ -158,18 +179,10 @@ namespace RagNext.Designer.Avalonia.Services
             Report("Copying macOS shell player...");
             string appBundle = Path.Combine(outputDir, $"{title}.app");
 
+            EnsureTemplateSource(templateDir, "MacOS");
+
             // Avoid nested .app directory (inception structure)
             string sourceApp = Path.Combine(templateDir, "MacOS.app");
-            if (!Directory.Exists(sourceApp))
-            {
-                string zipPath = Path.Combine(templateDir, "MacOS.template");
-                if (!File.Exists(zipPath)) zipPath = Path.Combine(templateDir, "MacOS.zip");
-                if (File.Exists(zipPath))
-                {
-                    try { System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, templateDir, true); } catch { }
-                    sourceApp = Path.Combine(templateDir, "MacOS.app");
-                }
-            }
             if (!Directory.Exists(sourceApp))
             {
                 sourceApp = Directory.GetDirectories(templateDir, "*.app").FirstOrDefault() ?? templateDir;

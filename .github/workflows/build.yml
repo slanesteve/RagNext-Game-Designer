@@ -200,23 +200,14 @@ jobs:
         done
 
         if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates" ]; then
-          if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
-            KEYCHAIN_ID=$(security find-identity -v -p codesigning build.keychain 2>/dev/null | grep "Developer ID Application" | head -n 1 | awk -F '"' '{print $2}')
-            if [ -z "$KEYCHAIN_ID" ]; then
-              KEYCHAIN_ID="${{ secrets.APPLE_TEAM_ID }}"
-            fi
-            if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-              echo "Signing embedded MacOS template player binaries for Arm64 build..."
-              find Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app -type f \( -name "*.dylib" -o -name "*.so" -o -name "*.bundle" -o -name "RagNextPlayer" \) -exec codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime {} + 2>/dev/null || true
-              codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app 2>/dev/null || true
-            fi
-          fi
-
           for tPlatform in MacOS Windows Linux WebGL; do
             if [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/$tPlatform" ]; then
               if [ "$tPlatform" = "MacOS" ] && [ -d "Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-                ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.template
-                rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app
+                # Keep MacOS template 100% unsigned (Ren'Py-style export).
+                # XOR-encode the zip container bytes so Apple notarytool treats it as raw resource data during Designer notarization.
+                ditto -c -k --keepParent Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.tmp.zip
+                python3 -c "data = open('Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.tmp.zip', 'rb').read(); open('Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.template', 'wb').write(bytes([b ^ 0xFF for b in data]))"
+                rm -rf Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Arm64.app/Contents/Resources/Templates/MacOS/MacOS.tmp.zip
               elif [ "$tPlatform" != "MacOS" ]; then
                 (cd "Publish/RagNext_Arm64.app/Contents/Resources/Templates/$tPlatform" && ditto -c -k . "$tPlatform.template" && find . -mindepth 1 ! -name "$tPlatform.template" -exec rm -rf {} +)
               fi
@@ -432,23 +423,14 @@ jobs:
         done
 
         if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates" ]; then
-          if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
-            KEYCHAIN_ID=$(security find-identity -v -p codesigning build.keychain 2>/dev/null | grep "Developer ID Application" | head -n 1 | awk -F '"' '{print $2}')
-            if [ -z "$KEYCHAIN_ID" ]; then
-              KEYCHAIN_ID="${{ secrets.APPLE_TEAM_ID }}"
-            fi
-            if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-              echo "Signing embedded MacOS template player binaries for Intel build..."
-              find Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app -type f \( -name "*.dylib" -o -name "*.so" -o -name "*.bundle" -o -name "RagNextPlayer" \) -exec codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime {} + 2>/dev/null || true
-              codesign --force --verify --verbose --sign "$KEYCHAIN_ID" --options runtime Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app 2>/dev/null || true
-            fi
-          fi
-
           for tPlatform in MacOS Windows Linux WebGL; do
             if [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/$tPlatform" ]; then
               if [ "$tPlatform" = "MacOS" ] && [ -d "Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app" ]; then
-                ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.template
-                rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app
+                # Keep MacOS template 100% unsigned (Ren'Py-style export).
+                # XOR-encode the zip container bytes so Apple notarytool treats it as raw resource data during Designer notarization.
+                ditto -c -k --keepParent Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.tmp.zip
+                python3 -c "data = open('Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.tmp.zip', 'rb').read(); open('Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.template', 'wb').write(bytes([b ^ 0xFF for b in data]))"
+                rm -rf Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.app Publish/RagNext_Intel.app/Contents/Resources/Templates/MacOS/MacOS.tmp.zip
               elif [ "$tPlatform" != "MacOS" ]; then
                 (cd "Publish/RagNext_Intel.app/Contents/Resources/Templates/$tPlatform" && ditto -c -k . "$tPlatform.template" && find . -mindepth 1 ! -name "$tPlatform.template" -exec rm -rf {} +)
               fi
