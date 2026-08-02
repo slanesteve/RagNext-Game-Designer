@@ -2106,6 +2106,72 @@ namespace RagNext.Designer.Avalonia.Views
             return resolvedEndpoint.TrimEnd('/') + "/chat/completions";
         }
 
+        public static string CleanAiText(string? input)
+        {
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+
+            var text = input;
+
+            // 1. Fix Mojibake: Common double-encoded UTF-8 byte sequences improperly read as Windows-1252 / ISO-8859-1
+            text = text
+                .Replace("â€“", "–")      // En-dash mojibake
+                .Replace("â€”", "—")      // Em-dash mojibake
+                .Replace("â€˜", "‘")      // Left single quote mojibake
+                .Replace("â€™", "’")      // Right single quote mojibake / apostrophe
+                .Replace("â€œ", "“")      // Left double quote mojibake
+                .Replace("â€\u009d", "”")  // Right double quote mojibake
+                .Replace("â€", "”")       // Right double quote / em-dash variant
+                .Replace("â€¦", "…")      // Ellipsis mojibake
+                .Replace("â€¢", "•")      // Bullet point mojibake
+                .Replace("Â ", " ")       // Non-breaking space mojibake
+                .Replace("Ã©", "é")
+                .Replace("Ã¨", "è")
+                .Replace("Ã ", "à")
+                .Replace("Ã¡", "á");
+
+            // 2. Fix raw control-char Mojibake (e.g. â followed by \x80..\x9F controls as in user's screenshot: "bedroomâ\x80\x94perhaps")
+            // UTF-8 E2 80 94 (Em-dash) decoded incorrectly becomes \u00E2\u0080\u0094
+            text = text
+                .Replace("\u00e2\u0080\u0094", " — ")
+                .Replace("\u00e2\u0080\u0093", " - ")
+                .Replace("\u00e2\u0080\u009c", "\"")
+                .Replace("\u00e2\u0080\u009d", "\"")
+                .Replace("\u00e2\u0080\u0098", "'")
+                .Replace("\u00e2\u0080\u0099", "'")
+                .Replace("\u00e2\u0080\u00a6", "...")
+                .Replace("\u00e2\u0080\u00a0", " ")
+                .Replace("\u00e2\u0080\u00a1", " ")
+                .Replace("\u00e2\u0080\u00a2", "•");
+
+            // 3. Normalize em-dashes and smart punctuation to clean, standard text representations
+            text = text
+                .Replace("—", " — ")
+                .Replace("–", " - ")
+                .Replace("“", "\"")
+                .Replace("”", "\"")
+                .Replace("‘", "'")
+                .Replace("’", "'")
+                .Replace("…", "...");
+
+            // 4. Clean up any double spaces introduced by replacements
+            while (text.Contains("  "))
+            {
+                text = text.Replace("  ", " ");
+            }
+
+            // 5. Strip leftover unprintable C0/C1 control characters (except newline, carriage return, tab)
+            var sb = new StringBuilder(text.Length);
+            foreach (char c in text)
+            {
+                if (c == '\r' || c == '\n' || c == '\t' || (!char.IsControl(c) && c != '\uFFFD'))
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString().Trim();
+        }
+
         private async Task<string> CallGeminiAsync(HttpClient client, string endpoint, string apiKey, string model, string systemPrompt, string userPrompt, double temperature)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
@@ -2209,7 +2275,7 @@ namespace RagNext.Designer.Avalonia.Views
                 var parts = geminiResponse.candidates[0].content?.parts;
                 if (parts != null && parts.Length > 0)
                 {
-                    return parts[0].text ?? string.Empty;
+                    return CleanAiText(parts[0].text ?? string.Empty);
                 }
             }
 
@@ -2254,7 +2320,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                 if (string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase))
                 {
-                    var systemPrompt = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes.";
+                    var systemPrompt = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes. Use standard ASCII quotes and hyphens/dashes, avoiding special unicode control characters or smart quotes.";
                     var finalPrompt = $"Here is the current game text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
                     content = await CallGeminiAsync(client, endpoint, apiKey, model, systemPrompt, finalPrompt, 0.7);
                 }
@@ -2271,7 +2337,7 @@ namespace RagNext.Designer.Avalonia.Views
                         model = model,
                         messages = new[]
                         {
-                            new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                            new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction and adventure game writer. Improve, expand, or rewrite the provided game text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated game text directly, with no extra conversational remarks, introductions, explanations, or quotes. Use standard ASCII quotes and hyphens/dashes, avoiding special unicode control characters or smart quotes." },
                             new AICoAuthorMessage { role = "user", content = finalPrompt }
                         },
                         temperature = 0.7
@@ -2298,6 +2364,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                 if (!string.IsNullOrEmpty(content))
                 {
+                    content = CleanAiText(content);
                     var base64Result = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
                     await CanvasWebView.InvokeScript($"if (typeof updateNodeAIResult === 'function') {{ updateNodeAIResult('{nodeId}', '{fieldName}', atob('{base64Result}')); }}");
                 }
@@ -2350,7 +2417,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                 if (string.Equals(provider, "Google Gemini", StringComparison.OrdinalIgnoreCase))
                 {
-                    var systemPrompt = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes.";
+                    var systemPrompt = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes. Use standard ASCII quotes and hyphens/dashes, avoiding special unicode control characters or smart quotes.";
                     var finalPrompt = $"Here is the current text:\n\"{currentText}\"\n\nInstructions on how to change or generate it:\n\"{prompt}\"";
                     content = await CallGeminiAsync(client, endpoint, apiKey, model, systemPrompt, finalPrompt, 0.7);
                 }
@@ -2367,7 +2434,7 @@ namespace RagNext.Designer.Avalonia.Views
                         model = model,
                         messages = new[]
                         {
-                            new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes." },
+                            new AICoAuthorMessage { role = "system", content = "You are a professional interactive fiction writer and adventure game editor assistant. Improve, expand, or rewrite the provided text based strictly on the user's instructions. Keep your response extremely brief, returning ONLY the final updated text directly, with no extra conversational remarks, introductions, explanations, or quotes. Use standard ASCII quotes and hyphens/dashes, avoiding special unicode control characters or smart quotes." },
                             new AICoAuthorMessage { role = "user", content = finalPrompt }
                         },
                         temperature = 0.7
@@ -2393,6 +2460,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                 if (!string.IsNullOrEmpty(content))
                 {
+                    content = CleanAiText(content);
                     prop.SetValue(dataObj, content);
                     if (dataObj is RagsCore.Models.BaseModel bm)
                     {
@@ -6036,7 +6104,7 @@ namespace RagNext.Designer.Avalonia.Views
 
                 if (!string.IsNullOrEmpty(content))
                 {
-                    vm.ComposeText = content;
+                    vm.ComposeText = CleanAiText(content);
                 }
             }
             catch (Exception ex)
