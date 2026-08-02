@@ -4870,7 +4870,7 @@ window.updateNodeAIResult = function(nodeId, fieldName, resultText) {
             previewBody.innerHTML = renderRichTextPreview(resultText);
         }
         node.data[fieldName || 'characterLines'] = resultText;
-        saveAndSyncCsharp(true);
+        triggerAutoSave();
     }
 };
 
@@ -5725,7 +5725,7 @@ window.acceptAiChanges = function() {
     previousGraphState = null;
 
     // Trigger auto-save
-    saveAndSyncCsharp(true);
+    triggerAutoSave();
 };
 
 window.revertAiChanges = function() {

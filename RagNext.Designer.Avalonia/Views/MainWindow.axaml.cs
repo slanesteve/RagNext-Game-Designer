@@ -1934,10 +1934,14 @@ namespace RagNext.Designer.Avalonia.Views
             }
         }
 
+        private bool _isSyncingGraph = false;
+
         private async Task SyncGraphData(string base64)
         {
+            if (_isSyncingGraph) return;
             if (DataContext is not MainWindowViewModel vm || vm.CurrentGame == null || vm.ActiveAction == null) return;
 
+            _isSyncingGraph = true;
             try
             {
                 string cleanBase64 = base64.Trim('\"', '\'');
@@ -1976,6 +1980,10 @@ namespace RagNext.Designer.Avalonia.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to auto-sync graph: {ex.Message}");
+            }
+            finally
+            {
+                _isSyncingGraph = false;
             }
         }
 
