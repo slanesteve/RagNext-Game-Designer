@@ -6884,6 +6884,14 @@ namespace RagNextPlayer.Managers
 
         public void ShowContinuePrompt(string buttonText, string title = "Input Required")
         {
+            var activeGame = GameManager.Instance?.ActiveGame;
+            if (activeGame?.Variables != null)
+            {
+                var v = activeGame.Variables.Find(x => string.Equals(x.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase));
+                if (v == null) activeGame.Variables.Add(new GameVariableData { Name = "system.prompt.active", Value = "true" });
+                else v.Value = "true";
+            }
+
             var promptTitle = _root.Q<Label>("prompt-input-title");
             if (promptTitle is not null)
             {
@@ -6910,6 +6918,12 @@ namespace RagNextPlayer.Managers
 
             var btn = new Button(() => {
                 Debug.Log($"[UIManager] Continue prompt button clicked (text='{buttonText}'). Calling ActionExecutor.ResumeSuspended().");
+                var game = GameManager.Instance?.ActiveGame;
+                if (game?.Variables != null)
+                {
+                    var v = game.Variables.Find(x => string.Equals(x.Name, "system.prompt.active", System.StringComparison.OrdinalIgnoreCase));
+                    if (v != null) v.Value = "false";
+                }
                 ActionExecutor.ResumeSuspended();
 
                 if (_promptInputMenu is null) return;

@@ -1286,6 +1286,7 @@ namespace RagNextPlayer.Runtime
                     break;
 
                 case StartDialogueCommandData c:
+                case WaitForContinueCommandData:
                     ctx.SetVariable("system.prompt.active", "true");
                     break;
 
