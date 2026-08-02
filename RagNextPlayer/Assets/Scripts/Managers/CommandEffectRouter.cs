@@ -261,7 +261,11 @@ namespace RagNextPlayer.Managers
                     break;
 
                 case WaitForContinueCommandData c:
-                    UIManager.Instance?.ShowContinuePrompt(ctx.Resolve(c.ButtonText));
+                    {
+                        string title = ctx.Resolve(c.Title);
+                        if (string.IsNullOrEmpty(title)) title = "Input Required";
+                        UIManager.Instance?.ShowContinuePrompt(ctx.Resolve(c.ButtonText), title);
+                    }
                     break;
 
                 case ShowMapCommandData c:

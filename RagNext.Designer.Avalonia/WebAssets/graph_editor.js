@@ -249,6 +249,7 @@ const propertyMappings = {
     "Store Variable": ["StoreVariableName", "storeVariableName"],
     "Prompt Name": ["PromptName", "promptName"],
     "Attribute Name": ["AttributeName", "attributeName"],
+    "Title": ["Title", "title"],
     "Map Title": ["MapTitle", "mapTitle"],
     "Map Style": ["MapStyle", "mapStyle"],
     "Custom Background": ["CustomBackground", "customBackground"],

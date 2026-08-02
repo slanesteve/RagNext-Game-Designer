@@ -313,7 +313,7 @@ namespace RagNextPlayer.Runtime.Models
     public class StopBackgroundMusicCommandData      : CommandData { }
     public class DisplayMultimediaCommandData        : CommandData { public string MediaId { get; set; } = string.Empty; }
     public class EndGameCommandData                  : CommandData { public string FinalMessage { get; set; } = string.Empty; }
-    public class WaitForContinueCommandData          : CommandData { public string ButtonText { get; set; } = "Continue"; }
+    public class WaitForContinueCommandData          : CommandData { public string Title { get; set; } = "Input Required"; public string ButtonText { get; set; } = "Continue"; }
     public class ShowMapCommandData                  : CommandData { public string MapTitle { get; set; } = "Starship Map"; public string MapStyle { get; set; } = "Clean"; public string CustomBackground { get; set; } = string.Empty; }
     public class PromptPlayerInputCommandData        : CommandData { public string PromptName { get; set; } = string.Empty; public string PromptText { get; set; } = string.Empty; public string InputType { get; set; } = "Text"; public string CustomOptions { get; set; } = string.Empty; public string StoreVariableName { get; set; } = string.Empty; }
     public class OpenContainerCommandData            : CommandData { public string ObjectId { get; set; } = string.Empty; }

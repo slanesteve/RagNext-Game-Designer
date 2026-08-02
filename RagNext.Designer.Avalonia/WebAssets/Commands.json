@@ -262,6 +262,14 @@
       "category": "General",
       "inputs": [
         {
+          "name": "Title",
+          "label": "Title",
+          "controlType": "Text",
+          "dataType": "String",
+          "default": "Input Required"
+        },
+        {
+          "name": "ButtonText",
           "label": "Button Text",
           "controlType": "Text",
           "dataType": "String"

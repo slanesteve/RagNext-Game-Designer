@@ -652,6 +652,7 @@ namespace RagsCore.Actions
 
     public sealed class WaitForContinueCommand : GameCommand
     {
+        public string Title { get; set; } = "Input Required";
         public string ButtonText { get; set; } = "Continue";
         public override string TypeName => "General: Wait for Continue";
         public override void Execute(ActionContext ctx)

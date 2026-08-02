@@ -6882,8 +6882,14 @@ namespace RagNextPlayer.Managers
             }
         }
 
-        public void ShowContinuePrompt(string buttonText)
+        public void ShowContinuePrompt(string buttonText, string title = "Input Required")
         {
+            var promptTitle = _root.Q<Label>("prompt-input-title");
+            if (promptTitle is not null)
+            {
+                promptTitle.text = string.IsNullOrEmpty(title) ? "Input Required" : title;
+            }
+
             if (_promptInputMessage is not null)
                 _promptInputMessage.text = string.Empty; // Keep modal message body clean or default to empty
 
