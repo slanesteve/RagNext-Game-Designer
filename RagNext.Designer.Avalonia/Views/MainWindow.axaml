@@ -364,16 +364,10 @@
                                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
                                                             CommandParameter="{Binding}" 
                                                             Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                                        <Button Content="✏️ Edit"
-                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
-                                                                CommandParameter="{Binding}"
-                                                                Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
-                                                        <Button Content="🗑️ Remove"
-                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                CommandParameter="{Binding}"
-                                                                Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
-                                                    </StackPanel>
+                                                    <Button Content="🗑️ Remove"
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                                 </StackPanel>
                                             </Grid>
                                         </DataTemplate>
@@ -1511,16 +1505,10 @@
                                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
                                                                     CommandParameter="{Binding}" 
                                                                     Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
-                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                                                <Button Content="✏️ Edit"
-                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
-                                                                        CommandParameter="{Binding}"
-                                                                        Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
-                                                                <Button Content="🗑️ Remove"
-                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                        CommandParameter="{Binding}"
-                                                                        Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
-                                                            </StackPanel>
+                                                            <Button Content="🗑️ Remove"
+                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </DataTemplate>
@@ -1740,16 +1728,10 @@
                                                                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
                                                                                 CommandParameter="{Binding}" 
                                                                                 Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
-                                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                                                            <Button Content="✏️ Edit"
-                                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TriggerEditAttributeCommand}"
-                                                                                    CommandParameter="{Binding}"
-                                                                                    Background="Transparent" Foreground="#A29BFE" FontSize="11"/>
-                                                                            <Button Content="🗑️ Remove"
-                                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
-                                                                                    CommandParameter="{Binding}"
-                                                                                    Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
-                                                                        </StackPanel>
+                                                                        <Button Content="🗑️ Remove"
+                                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveAttributeCommand}"
+                                                                                CommandParameter="{Binding}"
+                                                                                Background="Transparent" Foreground="#E74C3C" FontSize="11"/>
                                                                     </StackPanel>
                                                                 </Grid>
                                                             </DataTemplate>
