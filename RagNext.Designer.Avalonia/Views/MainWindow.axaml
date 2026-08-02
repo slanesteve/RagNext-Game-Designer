@@ -616,7 +616,7 @@
 
                                                         <!-- North-West Cell (0,0) -->
                                                         <Panel Grid.Row="0" Grid.Column="0">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthWestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border x:Name="NorthWestCard" Classes="exit-card">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Northwest ↖" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -635,7 +635,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="NorthWest" Classes="add-exit-btn" IsVisible="{Binding #NorthWestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="NorthWestAddBtn" Click="OnAddExitClick" Tag="NorthWest" Classes="add-exit-btn">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↖" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="NW" FontSize="9" VerticalAlignment="Center"/>
@@ -645,7 +645,7 @@
 
                                                         <!-- North Cell (0,1) -->
                                                         <Panel Grid.Row="0" Grid.Column="1">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border x:Name="NorthCard" Classes="exit-card">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="North ↑" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -664,7 +664,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="North" Classes="add-exit-btn" IsVisible="{Binding #NorthRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="NorthAddBtn" Click="OnAddExitClick" Tag="North" Classes="add-exit-btn">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↑" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="N" FontSize="9" VerticalAlignment="Center"/>
@@ -674,7 +674,7 @@
 
                                                         <!-- North-East Cell (0,2) -->
                                                         <Panel Grid.Row="0" Grid.Column="2">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthEastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border x:Name="NorthEastCard" Classes="exit-card">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Northeast ↗" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -693,7 +693,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="NorthEast" Classes="add-exit-btn" IsVisible="{Binding #NorthEastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="NorthEastAddBtn" Click="OnAddExitClick" Tag="NorthEast" Classes="add-exit-btn">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↗" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="NE" FontSize="9" VerticalAlignment="Center"/>
@@ -703,7 +703,7 @@
 
                                                         <!-- West Cell (1,0) -->
                                                         <Panel Grid.Row="1" Grid.Column="0">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #WestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border x:Name="WestCard" Classes="exit-card">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="West ←" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -722,7 +722,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="West" Classes="add-exit-btn" IsVisible="{Binding #WestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="WestAddBtn" Click="OnAddExitClick" Tag="West" Classes="add-exit-btn">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="←" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="W" FontSize="9" VerticalAlignment="Center"/>
@@ -740,7 +740,7 @@
 
                                                         <!-- East Cell (1,2) -->
                                                         <Panel Grid.Row="1" Grid.Column="2">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #EastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border x:Name="EastCard" Classes="exit-card">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="East →" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -759,7 +759,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="East" Classes="add-exit-btn" IsVisible="{Binding #EastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="EastAddBtn" Click="OnAddExitClick" Tag="East" Classes="add-exit-btn">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="→" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="E" FontSize="9" VerticalAlignment="Center"/>
@@ -769,7 +769,7 @@
 
                                                         <!-- South-West Cell (2,0) -->
                                                         <Panel Grid.Row="2" Grid.Column="0">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthWestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border x:Name="SouthWestCard" Classes="exit-card">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Southwest ↙" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -788,7 +788,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="SouthWest" Classes="add-exit-btn" IsVisible="{Binding #SouthWestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="SouthWestAddBtn" Click="OnAddExitClick" Tag="SouthWest" Classes="add-exit-btn">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↙" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="SW" FontSize="9" VerticalAlignment="Center"/>
@@ -798,7 +798,7 @@
 
                                                         <!-- South Cell (2,1) -->
                                                         <Panel Grid.Row="2" Grid.Column="1">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border x:Name="SouthCard" Classes="exit-card">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="South ↓" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -817,7 +817,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="South" Classes="add-exit-btn" IsVisible="{Binding #SouthRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="SouthAddBtn" Click="OnAddExitClick" Tag="South" Classes="add-exit-btn">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↓" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="S" FontSize="9" VerticalAlignment="Center"/>
@@ -827,7 +827,7 @@
 
                                                         <!-- South-East Cell (2,2) -->
                                                         <Panel Grid.Row="2" Grid.Column="2">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthEastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border x:Name="SouthEastCard" Classes="exit-card">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Southeast ↘" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -846,7 +846,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="SouthEast" Classes="add-exit-btn" IsVisible="{Binding #SouthEastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="SouthEastAddBtn" Click="OnAddExitClick" Tag="SouthEast" Classes="add-exit-btn">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↘" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="SE" FontSize="9" VerticalAlignment="Center"/>
@@ -861,7 +861,7 @@
 
                                                         <!-- Up -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #UpRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                            <Border x:Name="UpCard" Classes="exit-card" Width="136" Height="90" Margin="0">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Up ▲" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -880,7 +880,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #UpRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="UpAddBtn" Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="136" Height="28">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="▲" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Up" FontSize="9" VerticalAlignment="Center"/>
@@ -890,7 +890,7 @@
 
                                                         <!-- Down -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #DownRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                            <Border x:Name="DownCard" Classes="exit-card" Width="136" Height="90" Margin="0">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Down ▼" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -909,7 +909,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #DownRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="DownAddBtn" Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="136" Height="28">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="▼" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Down" FontSize="9" VerticalAlignment="Center"/>
@@ -919,7 +919,7 @@
 
                                                         <!-- In -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #InRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                            <Border x:Name="InCard" Classes="exit-card" Width="136" Height="90" Margin="0">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="In ↵" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -938,7 +938,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #InRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="InAddBtn" Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="136" Height="28">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↵" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="In" FontSize="9" VerticalAlignment="Center"/>
@@ -948,7 +948,7 @@
 
                                                         <!-- Out -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #OutRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                            <Border x:Name="OutCard" Classes="exit-card" Width="136" Height="90" Margin="0">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Out ↳" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -967,7 +967,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #OutRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button x:Name="OutAddBtn" Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="136" Height="28">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↳" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Out" FontSize="9" VerticalAlignment="Center"/>

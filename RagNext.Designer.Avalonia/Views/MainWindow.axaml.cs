@@ -2540,7 +2540,7 @@ namespace RagNext.Designer.Avalonia.Views
                 ["Out"]   = "In",
             };
 
-        private record ExitControl(ComboBox RealPicker, CheckBox OneWay, CheckBox Locked, string Direction);
+        private record ExitControl(Border Card, Button AddBtn, ComboBox RealPicker, CheckBox OneWay, CheckBox Locked, string Direction);
         private System.Collections.Generic.List<ExitControl>? _exitControls;
         private bool _suppressExitEvents;
         private bool _isClearingExit;
@@ -2675,18 +2675,18 @@ namespace RagNext.Designer.Avalonia.Views
 
             _exitControls ??= new System.Collections.Generic.List<ExitControl>
             {
-                new(NorthRealPicker, NorthOneWay, NorthLocked, "North"),
-                new(SouthRealPicker, SouthOneWay, SouthLocked, "South"),
-                new(EastRealPicker,  EastOneWay,  EastLocked,  "East"),
-                new(WestRealPicker,  WestOneWay,  WestLocked,  "West"),
-                new(NorthWestRealPicker, NorthWestOneWay, NorthWestLocked, "NorthWest"),
-                new(NorthEastRealPicker, NorthEastOneWay, NorthEastLocked, "NorthEast"),
-                new(SouthWestRealPicker, SouthWestOneWay, SouthWestLocked, "SouthWest"),
-                new(SouthEastRealPicker, SouthEastOneWay, SouthEastLocked, "SouthEast"),
-                new(UpRealPicker,    UpOneWay,    UpLocked,    "Up"),
-                new(DownRealPicker,  DownOneWay,  DownLocked,  "Down"),
-                new(InRealPicker,    InOneWay,    InLocked,    "In"),
-                new(OutRealPicker,   OutOneWay,   OutLocked,   "Out"),
+                new(NorthCard, NorthAddBtn, NorthRealPicker, NorthOneWay, NorthLocked, "North"),
+                new(SouthCard, SouthAddBtn, SouthRealPicker, SouthOneWay, SouthLocked, "South"),
+                new(EastCard,  EastAddBtn,  EastRealPicker,  EastOneWay,  EastLocked,  "East"),
+                new(WestCard,  WestAddBtn,  WestRealPicker,  WestOneWay,  WestLocked,  "West"),
+                new(NorthWestCard, NorthWestAddBtn, NorthWestRealPicker, NorthWestOneWay, NorthWestLocked, "NorthWest"),
+                new(NorthEastCard, NorthEastAddBtn, NorthEastRealPicker, NorthEastOneWay, NorthEastLocked, "NorthEast"),
+                new(SouthWestCard, SouthWestAddBtn, SouthWestRealPicker, SouthWestOneWay, SouthWestLocked, "SouthWest"),
+                new(SouthEastCard, SouthEastAddBtn, SouthEastRealPicker, SouthEastOneWay, SouthEastLocked, "SouthEast"),
+                new(UpCard,    UpAddBtn,    UpRealPicker,    UpOneWay,    UpLocked,    "Up"),
+                new(DownCard,  DownAddBtn,  DownRealPicker,  DownOneWay,  DownLocked,  "Down"),
+                new(InCard,    InAddBtn,    InRealPicker,    InOneWay,    InLocked,    "In"),
+                new(OutCard,   OutAddBtn,   OutRealPicker,   OutOneWay,   OutLocked,   "Out"),
             };
 
             _suppressExitEvents = true;
@@ -2704,6 +2704,8 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         var destRoom = allRooms.FirstOrDefault(r => r.Id == destId);
                         ec.RealPicker.SelectedItem = destRoom;
+                        ec.Card.IsVisible = true;
+                        ec.AddBtn.IsVisible = false;
 
                         if (_opposites.TryGetValue(ec.Direction, out var opposite))
                         {
@@ -2722,6 +2724,8 @@ namespace RagNext.Designer.Avalonia.Views
                     else
                     {
                         ec.RealPicker.SelectedItem = null;
+                        ec.Card.IsVisible = false;
+                        ec.AddBtn.IsVisible = true;
                         ec.OneWay.IsChecked    = false;
                         ec.Locked.IsChecked    = false;
                     }
@@ -2808,6 +2812,8 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     room.Exits.Remove(ec.Direction);
                     room.LockedExits.Remove(ec.Direction);
+                    ec.Card.IsVisible = false;
+                    ec.AddBtn.IsVisible = true;
                     ec.OneWay.IsChecked = false;
                     ec.Locked.IsChecked = false;
 
@@ -2826,6 +2832,8 @@ namespace RagNext.Designer.Avalonia.Views
                 else
                 {
                     room.Exits[ec.Direction] = destRoom.Id;
+                    ec.Card.IsVisible = true;
+                    ec.AddBtn.IsVisible = false;
 
                     if (destRoom.Id != room.Id)
                     {
