@@ -2171,7 +2171,6 @@ namespace RagNextPlayer.Runtime
 
                 // Routed directly via sink during ExecuteNext
                 case ShowSplashScreenCommandData:
-                case WaitForContinueCommandData:
                 case ShowMapCommandData:
                     break;
 
