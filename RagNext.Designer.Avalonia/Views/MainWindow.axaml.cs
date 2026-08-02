@@ -2761,21 +2761,29 @@ namespace RagNext.Designer.Avalonia.Views
         {
             if (sender is not Button btn) return;
             var direction = btn.Tag as string;
-            if (string.IsNullOrEmpty(direction)) return;
+            if (string.IsNullOrEmpty(direction) || App.CurrentGame is not { } game) return;
 
-            var ec = _exitControls?.FirstOrDefault(x => string.Equals(x.Direction, direction, StringComparison.OrdinalIgnoreCase));
-            if (ec != null)
+            if (CurrentSelectedRoom is Room room)
             {
-                _isClearingExit = true;
-                try
+                room.Exits.Remove(direction);
+                room.LockedExits.Remove(direction);
+
+                if (_opposites.TryGetValue(direction, out var opp))
                 {
-                    ec.RealPicker.SelectedItem = null;
-                    ec.Picker.SelectedItem = null;
+                    foreach (var r in game.Rooms)
+                    {
+                        if (r.Exits.TryGetValue(opp, out var backId) && backId == room.Id)
+                        {
+                            r.Exits.Remove(opp);
+                            r.LockedExits.Remove(opp);
+                        }
+                    }
                 }
-                finally
-                {
-                    _isClearingExit = false;
-                }
+
+                LoadExits(room);
+
+                var vm = DataContext as ViewModels.MainWindowViewModel;
+                if (vm != null) _ = vm.SaveGameAsync();
             }
         }
 
