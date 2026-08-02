@@ -2540,7 +2540,7 @@ namespace RagNext.Designer.Avalonia.Views
                 ["Out"]   = "In",
             };
 
-        private record ExitControl(ComboBox Picker, ComboBox RealPicker, CheckBox OneWay, CheckBox Locked, string Direction);
+        private record ExitControl(ComboBox RealPicker, CheckBox OneWay, CheckBox Locked, string Direction);
         private System.Collections.Generic.List<ExitControl>? _exitControls;
         private bool _suppressExitEvents;
         private bool _isClearingExit;
@@ -2675,18 +2675,18 @@ namespace RagNext.Designer.Avalonia.Views
 
             _exitControls ??= new System.Collections.Generic.List<ExitControl>
             {
-                new(NorthPicker, NorthRealPicker, NorthOneWay, NorthLocked, "North"),
-                new(SouthPicker, SouthRealPicker, SouthOneWay, SouthLocked, "South"),
-                new(EastPicker,  EastRealPicker,  EastOneWay,  EastLocked,  "East"),
-                new(WestPicker,  WestRealPicker,  WestOneWay,  WestLocked,  "West"),
-                new(NorthWestPicker, NorthWestRealPicker, NorthWestOneWay, NorthWestLocked, "NorthWest"),
-                new(NorthEastPicker, NorthEastRealPicker, NorthEastOneWay, NorthEastLocked, "NorthEast"),
-                new(SouthWestPicker, SouthWestRealPicker, SouthWestOneWay, SouthWestLocked, "SouthWest"),
-                new(SouthEastPicker, SouthEastRealPicker, SouthEastOneWay, SouthEastLocked, "SouthEast"),
-                new(UpPicker,    UpRealPicker,    UpOneWay,    UpLocked,    "Up"),
-                new(DownPicker,  DownRealPicker,  DownOneWay,  DownLocked,  "Down"),
-                new(InPicker,    InRealPicker,    InOneWay,    InLocked,    "In"),
-                new(OutPicker,   OutRealPicker,   OutOneWay,   OutLocked,   "Out"),
+                new(NorthRealPicker, NorthOneWay, NorthLocked, "North"),
+                new(SouthRealPicker, SouthOneWay, SouthLocked, "South"),
+                new(EastRealPicker,  EastOneWay,  EastLocked,  "East"),
+                new(WestRealPicker,  WestOneWay,  WestLocked,  "West"),
+                new(NorthWestRealPicker, NorthWestOneWay, NorthWestLocked, "NorthWest"),
+                new(NorthEastRealPicker, NorthEastOneWay, NorthEastLocked, "NorthEast"),
+                new(SouthWestRealPicker, SouthWestOneWay, SouthWestLocked, "SouthWest"),
+                new(SouthEastRealPicker, SouthEastOneWay, SouthEastLocked, "SouthEast"),
+                new(UpRealPicker,    UpOneWay,    UpLocked,    "Up"),
+                new(DownRealPicker,  DownOneWay,  DownLocked,  "Down"),
+                new(InRealPicker,    InOneWay,    InLocked,    "In"),
+                new(OutRealPicker,   OutOneWay,   OutLocked,   "Out"),
             };
 
             _suppressExitEvents = true;
@@ -2704,7 +2704,6 @@ namespace RagNext.Designer.Avalonia.Views
                     {
                         var destRoom = allRooms.FirstOrDefault(r => r.Id == destId);
                         ec.RealPicker.SelectedItem = destRoom;
-                        ec.Picker.SelectedItem = destRoom; // Keep the hidden picker in sync
 
                         if (_opposites.TryGetValue(ec.Direction, out var opposite))
                         {
@@ -2723,7 +2722,6 @@ namespace RagNext.Designer.Avalonia.Views
                     else
                     {
                         ec.RealPicker.SelectedItem = null;
-                        ec.Picker.SelectedItem = null;
                         ec.OneWay.IsChecked    = false;
                         ec.Locked.IsChecked    = false;
                     }
@@ -2810,7 +2808,6 @@ namespace RagNext.Designer.Avalonia.Views
                 {
                     room.Exits.Remove(ec.Direction);
                     room.LockedExits.Remove(ec.Direction);
-                    ec.Picker.SelectedItem = null;
                     ec.OneWay.IsChecked = false;
                     ec.Locked.IsChecked = false;
 
@@ -2829,7 +2826,6 @@ namespace RagNext.Designer.Avalonia.Views
                 else
                 {
                     room.Exits[ec.Direction] = destRoom.Id;
-                    ec.Picker.SelectedItem = destRoom; // Sync the hidden picker
 
                     if (destRoom.Id != room.Id)
                     {

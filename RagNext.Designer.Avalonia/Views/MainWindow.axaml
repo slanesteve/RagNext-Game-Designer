@@ -616,13 +616,12 @@
 
                                                         <!-- North-West Cell (0,0) -->
                                                         <Panel Grid.Row="0" Grid.Column="0">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthWestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthWestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Northwest ↖" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="NorthWest" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="NorthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #NorthWestRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="NorthWestRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -636,7 +635,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="NorthWest" Classes="add-exit-btn" IsVisible="{Binding #NorthWestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="NorthWest" Classes="add-exit-btn" IsVisible="{Binding #NorthWestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↖" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="NW" FontSize="9" VerticalAlignment="Center"/>
@@ -646,13 +645,12 @@
 
                                                         <!-- North Cell (0,1) -->
                                                         <Panel Grid.Row="0" Grid.Column="1">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="North ↑" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="North" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="NorthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #NorthRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="NorthRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -666,7 +664,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="North" Classes="add-exit-btn" IsVisible="{Binding #NorthPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="North" Classes="add-exit-btn" IsVisible="{Binding #NorthRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↑" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="N" FontSize="9" VerticalAlignment="Center"/>
@@ -676,13 +674,12 @@
 
                                                         <!-- North-East Cell (0,2) -->
                                                         <Panel Grid.Row="0" Grid.Column="2">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthEastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #NorthEastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Northeast ↗" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="NorthEast" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="NorthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #NorthEastRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="NorthEastRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -696,7 +693,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="NorthEast" Classes="add-exit-btn" IsVisible="{Binding #NorthEastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="NorthEast" Classes="add-exit-btn" IsVisible="{Binding #NorthEastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↗" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="NE" FontSize="9" VerticalAlignment="Center"/>
@@ -706,13 +703,12 @@
 
                                                         <!-- West Cell (1,0) -->
                                                         <Panel Grid.Row="1" Grid.Column="0">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #WestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #WestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="West ←" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="West" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="WestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #WestRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="WestRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -726,7 +722,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="West" Classes="add-exit-btn" IsVisible="{Binding #WestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="West" Classes="add-exit-btn" IsVisible="{Binding #WestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="←" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="W" FontSize="9" VerticalAlignment="Center"/>
@@ -744,13 +740,12 @@
 
                                                         <!-- East Cell (1,2) -->
                                                         <Panel Grid.Row="1" Grid.Column="2">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #EastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #EastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="East →" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="East" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="EastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #EastRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="EastRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -764,7 +759,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="East" Classes="add-exit-btn" IsVisible="{Binding #EastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="East" Classes="add-exit-btn" IsVisible="{Binding #EastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="→" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="E" FontSize="9" VerticalAlignment="Center"/>
@@ -774,13 +769,12 @@
 
                                                         <!-- South-West Cell (2,0) -->
                                                         <Panel Grid.Row="2" Grid.Column="0">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthWestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthWestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Southwest ↙" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="SouthWest" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="SouthWestPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #SouthWestRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="SouthWestRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -794,7 +788,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="SouthWest" Classes="add-exit-btn" IsVisible="{Binding #SouthWestPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="SouthWest" Classes="add-exit-btn" IsVisible="{Binding #SouthWestRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↙" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="SW" FontSize="9" VerticalAlignment="Center"/>
@@ -804,13 +798,12 @@
 
                                                         <!-- South Cell (2,1) -->
                                                         <Panel Grid.Row="2" Grid.Column="1">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="South ↓" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="South" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="SouthPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #SouthRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="SouthRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -824,7 +817,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="South" Classes="add-exit-btn" IsVisible="{Binding #SouthPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="South" Classes="add-exit-btn" IsVisible="{Binding #SouthRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↓" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="S" FontSize="9" VerticalAlignment="Center"/>
@@ -834,13 +827,12 @@
 
                                                         <!-- South-East Cell (2,2) -->
                                                         <Panel Grid.Row="2" Grid.Column="2">
-                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthEastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #SouthEastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Southeast ↘" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="SouthEast" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="SouthEastPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #SouthEastRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="SouthEastRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="26" FontSize="10">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -854,7 +846,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="SouthEast" Classes="add-exit-btn" IsVisible="{Binding #SouthEastPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="SouthEast" Classes="add-exit-btn" IsVisible="{Binding #SouthEastRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↘" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="SE" FontSize="9" VerticalAlignment="Center"/>
@@ -869,13 +861,12 @@
 
                                                         <!-- Up -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #UpPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #UpRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Up ▲" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Up" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="UpPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #UpRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="UpRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="24" FontSize="9">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -889,7 +880,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #UpPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #UpRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="▲" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Up" FontSize="9" VerticalAlignment="Center"/>
@@ -899,13 +890,12 @@
 
                                                         <!-- Down -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #DownPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #DownRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Down ▼" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Down" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="DownPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #DownRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="DownRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="24" FontSize="9">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -919,7 +909,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #DownPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #DownRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="▼" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Down" FontSize="9" VerticalAlignment="Center"/>
@@ -929,13 +919,12 @@
 
                                                         <!-- In -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #InPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #InRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="In ↵" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="In" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="InPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #InRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="InRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="24" FontSize="9">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -949,7 +938,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #InPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #InRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↵" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="In" FontSize="9" VerticalAlignment="Center"/>
@@ -959,13 +948,12 @@
 
                                                         <!-- Out -->
                                                         <Panel>
-                                                            <Border Classes="exit-card" IsVisible="{Binding #OutPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
+                                                            <Border Classes="exit-card" IsVisible="{Binding #OutRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Width="136" Height="90" Margin="0">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Out ↳" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
                                                                         <Button Grid.Column="1" Content="✕" Click="OnClearExitClick" Tag="Out" Classes="delete-exit-btn"/>
                                                                     </Grid>
-                                                                    <ComboBox x:Name="OutPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" SelectedItem="{Binding #OutRealPicker.SelectedItem, Mode=TwoWay}" Height="0" Width="0" IsVisible="False"/>
                                                                     <ComboBox x:Name="OutRealPicker" ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Rooms.Rooms}" HorizontalAlignment="Stretch" Height="24" FontSize="9">
                                                                         <ComboBox.ItemTemplate>
                                                                             <DataTemplate x:DataType="models:Room">
@@ -979,7 +967,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #OutPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
+                                                            <Button Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="136" Height="28" IsVisible="{Binding #OutRealPicker.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↳" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Out" FontSize="9" VerticalAlignment="Center"/>
