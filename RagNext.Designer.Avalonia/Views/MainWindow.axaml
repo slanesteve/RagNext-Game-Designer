@@ -435,7 +435,7 @@
                             </Grid>
                             
                             <!-- TreeView for Rooms with Folder Support -->
-                            <TreeView Grid.Row="1" ItemsSource="{Binding RoomTreeRoots}" SelectedItem="{Binding SelectedRoomTreeNode, Mode=TwoWay}" x:Name="RoomsTreeView" Background="Transparent">
+                            <TreeView Grid.Row="1" ItemsSource="{Binding RoomTreeRoots}" SelectedItem="{Binding SelectedRoomTreeNode, Mode=TwoWay}" x:Name="RoomsTreeView" SelectionChanged="OnRoomsSelectionChanged" Background="Transparent">
                                 <TreeView.ContextMenu>
                                     <ContextMenu DataContext="{Binding $parent[Window].DataContext}">
                                         <MenuItem Header="➕ Add Room" Command="{Binding AddRoomCommand}"/>
@@ -616,7 +616,7 @@
 
                                                         <!-- North-West Cell (0,0) -->
                                                         <Panel Grid.Row="0" Grid.Column="0">
-                                                            <Border x:Name="NorthWestCard" Classes="exit-card">
+                                                            <Border x:Name="NorthWestCard" Classes="exit-card" IsVisible="False">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Northwest ↖" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -635,7 +635,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="NorthWestAddBtn" Click="OnAddExitClick" Tag="NorthWest" Classes="add-exit-btn">
+                                                            <Button x:Name="NorthWestAddBtn" Click="OnAddExitClick" Tag="NorthWest" Classes="add-exit-btn" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↖" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="NW" FontSize="9" VerticalAlignment="Center"/>
@@ -645,7 +645,7 @@
 
                                                         <!-- North Cell (0,1) -->
                                                         <Panel Grid.Row="0" Grid.Column="1">
-                                                            <Border x:Name="NorthCard" Classes="exit-card">
+                                                            <Border x:Name="NorthCard" Classes="exit-card" IsVisible="False">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="North ↑" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -664,7 +664,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="NorthAddBtn" Click="OnAddExitClick" Tag="North" Classes="add-exit-btn">
+                                                            <Button x:Name="NorthAddBtn" Click="OnAddExitClick" Tag="North" Classes="add-exit-btn" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↑" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="N" FontSize="9" VerticalAlignment="Center"/>
@@ -674,7 +674,7 @@
 
                                                         <!-- North-East Cell (0,2) -->
                                                         <Panel Grid.Row="0" Grid.Column="2">
-                                                            <Border x:Name="NorthEastCard" Classes="exit-card">
+                                                            <Border x:Name="NorthEastCard" Classes="exit-card" IsVisible="False">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Northeast ↗" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -693,7 +693,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="NorthEastAddBtn" Click="OnAddExitClick" Tag="NorthEast" Classes="add-exit-btn">
+                                                            <Button x:Name="NorthEastAddBtn" Click="OnAddExitClick" Tag="NorthEast" Classes="add-exit-btn" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↗" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="NE" FontSize="9" VerticalAlignment="Center"/>
@@ -703,7 +703,7 @@
 
                                                         <!-- West Cell (1,0) -->
                                                         <Panel Grid.Row="1" Grid.Column="0">
-                                                            <Border x:Name="WestCard" Classes="exit-card">
+                                                            <Border x:Name="WestCard" Classes="exit-card" IsVisible="False">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="West ←" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -722,7 +722,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="WestAddBtn" Click="OnAddExitClick" Tag="West" Classes="add-exit-btn">
+                                                            <Button x:Name="WestAddBtn" Click="OnAddExitClick" Tag="West" Classes="add-exit-btn" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="←" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="W" FontSize="9" VerticalAlignment="Center"/>
@@ -740,7 +740,7 @@
 
                                                         <!-- East Cell (1,2) -->
                                                         <Panel Grid.Row="1" Grid.Column="2">
-                                                            <Border x:Name="EastCard" Classes="exit-card">
+                                                            <Border x:Name="EastCard" Classes="exit-card" IsVisible="False">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="East →" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -759,7 +759,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="EastAddBtn" Click="OnAddExitClick" Tag="East" Classes="add-exit-btn">
+                                                            <Button x:Name="EastAddBtn" Click="OnAddExitClick" Tag="East" Classes="add-exit-btn" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="→" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="E" FontSize="9" VerticalAlignment="Center"/>
@@ -769,7 +769,7 @@
 
                                                         <!-- South-West Cell (2,0) -->
                                                         <Panel Grid.Row="2" Grid.Column="0">
-                                                            <Border x:Name="SouthWestCard" Classes="exit-card">
+                                                            <Border x:Name="SouthWestCard" Classes="exit-card" IsVisible="False">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Southwest ↙" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -788,7 +788,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="SouthWestAddBtn" Click="OnAddExitClick" Tag="SouthWest" Classes="add-exit-btn">
+                                                            <Button x:Name="SouthWestAddBtn" Click="OnAddExitClick" Tag="SouthWest" Classes="add-exit-btn" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↙" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="SW" FontSize="9" VerticalAlignment="Center"/>
@@ -798,7 +798,7 @@
 
                                                         <!-- South Cell (2,1) -->
                                                         <Panel Grid.Row="2" Grid.Column="1">
-                                                            <Border x:Name="SouthCard" Classes="exit-card">
+                                                            <Border x:Name="SouthCard" Classes="exit-card" IsVisible="False">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="South ↓" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -817,7 +817,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="SouthAddBtn" Click="OnAddExitClick" Tag="South" Classes="add-exit-btn">
+                                                            <Button x:Name="SouthAddBtn" Click="OnAddExitClick" Tag="South" Classes="add-exit-btn" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↓" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="S" FontSize="9" VerticalAlignment="Center"/>
@@ -827,7 +827,7 @@
 
                                                         <!-- South-East Cell (2,2) -->
                                                         <Panel Grid.Row="2" Grid.Column="2">
-                                                            <Border x:Name="SouthEastCard" Classes="exit-card">
+                                                            <Border x:Name="SouthEastCard" Classes="exit-card" IsVisible="False">
                                                                 <StackPanel Spacing="4">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Southeast ↘" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -846,7 +846,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="SouthEastAddBtn" Click="OnAddExitClick" Tag="SouthEast" Classes="add-exit-btn">
+                                                            <Button x:Name="SouthEastAddBtn" Click="OnAddExitClick" Tag="SouthEast" Classes="add-exit-btn" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↘" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="SE" FontSize="9" VerticalAlignment="Center"/>
@@ -861,7 +861,7 @@
 
                                                         <!-- Up -->
                                                         <Panel>
-                                                            <Border x:Name="UpCard" Classes="exit-card" Width="136" Height="90" Margin="0">
+                                                            <Border x:Name="UpCard" Classes="exit-card" Width="136" Height="90" Margin="0" IsVisible="False">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Up ▲" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -880,7 +880,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="UpAddBtn" Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="136" Height="28">
+                                                            <Button x:Name="UpAddBtn" Click="OnAddExitClick" Tag="Up" Classes="add-exit-btn" Width="136" Height="28" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="▲" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Up" FontSize="9" VerticalAlignment="Center"/>
@@ -890,7 +890,7 @@
 
                                                         <!-- Down -->
                                                         <Panel>
-                                                            <Border x:Name="DownCard" Classes="exit-card" Width="136" Height="90" Margin="0">
+                                                            <Border x:Name="DownCard" Classes="exit-card" Width="136" Height="90" Margin="0" IsVisible="False">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Down ▼" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -909,7 +909,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="DownAddBtn" Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="136" Height="28">
+                                                            <Button x:Name="DownAddBtn" Click="OnAddExitClick" Tag="Down" Classes="add-exit-btn" Width="136" Height="28" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="▼" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Down" FontSize="9" VerticalAlignment="Center"/>
@@ -919,7 +919,7 @@
 
                                                         <!-- In -->
                                                         <Panel>
-                                                            <Border x:Name="InCard" Classes="exit-card" Width="136" Height="90" Margin="0">
+                                                            <Border x:Name="InCard" Classes="exit-card" Width="136" Height="90" Margin="0" IsVisible="False">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="In ↵" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -938,7 +938,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="InAddBtn" Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="136" Height="28">
+                                                            <Button x:Name="InAddBtn" Click="OnAddExitClick" Tag="In" Classes="add-exit-btn" Width="136" Height="28" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↵" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="In" FontSize="9" VerticalAlignment="Center"/>
@@ -948,7 +948,7 @@
 
                                                         <!-- Out -->
                                                         <Panel>
-                                                            <Border x:Name="OutCard" Classes="exit-card" Width="136" Height="90" Margin="0">
+                                                            <Border x:Name="OutCard" Classes="exit-card" Width="136" Height="90" Margin="0" IsVisible="False">
                                                                 <StackPanel Spacing="3">
                                                                     <Grid ColumnDefinitions="*,Auto">
                                                                         <TextBlock Grid.Column="0" Text="Out ↳" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
@@ -967,7 +967,7 @@
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Button x:Name="OutAddBtn" Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="136" Height="28">
+                                                            <Button x:Name="OutAddBtn" Click="OnAddExitClick" Tag="Out" Classes="add-exit-btn" Width="136" Height="28" IsVisible="True">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock Text="↳" FontSize="11" FontWeight="Bold"/>
                                                                     <TextBlock Text="Out" FontSize="9" VerticalAlignment="Center"/>

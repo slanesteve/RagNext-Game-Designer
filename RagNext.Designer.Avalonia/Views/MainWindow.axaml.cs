@@ -2547,8 +2547,26 @@ namespace RagNext.Designer.Avalonia.Views
 
         private void OnRoomsSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            var roomsList = sender as ListBox;
-            if (roomsList?.SelectedItem is Room room)
+            Room? room = null;
+            if (sender is TreeView tv && tv.SelectedItem is EntityTreeNodeViewModel treeNode)
+            {
+                room = treeNode.Entity as Room;
+            }
+            else if (sender is ListBox roomsList)
+            {
+                room = roomsList.SelectedItem as Room;
+            }
+            else if (e.AddedItems.Count > 0)
+            {
+                if (e.AddedItems[0] is EntityTreeNodeViewModel node)
+                    room = node.Entity as Room;
+                else if (e.AddedItems[0] is Room r)
+                    room = r;
+            }
+
+            room ??= CurrentSelectedRoom;
+
+            if (room != null)
             {
                 LoadExits(room);
                 RefreshRoomObjectCheckBoxes(room);
