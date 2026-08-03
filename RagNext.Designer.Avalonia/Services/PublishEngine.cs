@@ -189,18 +189,49 @@ namespace RagNext.Designer.Avalonia.Services
             }
             CopyDirectory(sourceApp, appBundle);
 
+            // Remove any .template packaging files copied to the bundle root.
+            // These are XOR-encoded ZIP archives used by EnsureTemplateSource — not real game files.
+            try
+            {
+                foreach (var tf in Directory.GetFiles(appBundle, "*.template", SearchOption.TopDirectoryOnly))
+                    File.Delete(tf);
+            }
+            catch { }
+
             // Remove any leftover _CodeSignature directories from template copy
             try
             {
                 foreach (var sigDir in Directory.GetDirectories(appBundle, "_CodeSignature", SearchOption.AllDirectories))
-                {
                     Directory.Delete(sigDir, true);
-                }
             }
             catch { }
 
-            string macOsDir = Path.Combine(appBundle, "Contents", "MacOS");
-            string plistPath = Path.Combine(appBundle, "Contents", "Info.plist");
+            string contentsDir = Path.Combine(appBundle, "Contents");
+            string macOsDir    = Path.Combine(contentsDir, "MacOS");
+            string plistPath   = Path.Combine(contentsDir, "Info.plist");
+
+            // Unity signing workaround: Contents/MacOS directory may have been renamed to MacOS.template
+            if (!Directory.Exists(macOsDir))
+            {
+                string macOsTemplateDir = Path.Combine(contentsDir, "MacOS.template");
+                if (Directory.Exists(macOsTemplateDir))
+                {
+                    Report("Restoring Contents/MacOS directory (was renamed .template for signing)...");
+                    Directory.Move(macOsTemplateDir, macOsDir);
+                }
+            }
+
+            // Unity signing workaround: the binary itself may have been renamed to RagNextPlayer.template
+            if (Directory.Exists(macOsDir))
+            {
+                string templateBinary = Path.Combine(macOsDir, "RagNextPlayer.template");
+                string normalBinary   = Path.Combine(macOsDir, "RagNextPlayer");
+                if (File.Exists(templateBinary) && !File.Exists(normalBinary))
+                {
+                    Report("Restoring RagNextPlayer binary (was renamed .template for signing)...");
+                    File.Move(templateBinary, normalBinary);
+                }
+            }
 
             if (OperatingSystem.IsMacOS())
             {
