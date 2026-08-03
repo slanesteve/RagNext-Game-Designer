@@ -119,32 +119,56 @@ namespace RagNext.Designer.Avalonia.Services
             }
             if (File.Exists(templateFile))
             {
+                // Decode XOR-encoded archive if needed (magic bytes won't be PK = 0x50 0x4B)
+                byte[] bytes = File.ReadAllBytes(templateFile);
+                string targetZipPath = templateFile;
+                bool isTemp = false;
+
                 try
                 {
-                    byte[] bytes = File.ReadAllBytes(templateFile);
-                    string targetZipPath = templateFile;
-                    bool isTemp = false;
-
-                    // If file is XOR encoded (magic bytes AF B4 FC FB instead of PK 03 04)
                     if (bytes.Length >= 4 && (bytes[0] != 0x50 || bytes[1] != 0x4B))
                     {
                         for (int i = 0; i < bytes.Length; i++)
-                        {
                             bytes[i] = (byte)(bytes[i] ^ 0xFF);
-                        }
                         targetZipPath = Path.Combine(Path.GetTempPath(), $"ragnext_template_{Guid.NewGuid():N}.zip");
                         File.WriteAllBytes(targetZipPath, bytes);
                         isTemp = true;
                     }
 
-                    System.IO.Compression.ZipFile.ExtractToDirectory(targetZipPath, templateDir, true);
-
-                    if (isTemp && File.Exists(targetZipPath))
+                    if (OperatingSystem.IsMacOS())
                     {
-                        try { File.Delete(targetZipPath); } catch { }
+                        // ditto-created zips contain symlinks and extended attributes.
+                        // .NET's ZipFile cannot extract symlinks and will throw, silently skipping
+                        // the entire archive. Use ditto -x -k instead, which handles all of this correctly.
+                        var psi = new ProcessStartInfo("ditto",
+                            $"-x -k \"{targetZipPath}\" \"{templateDir}\"")
+                        {
+                            RedirectStandardOutput = true,
+                            RedirectStandardError  = true,
+                            UseShellExecute        = false,
+                            CreateNoWindow         = true,
+                        };
+                        using var proc = Process.Start(psi);
+                        proc?.WaitForExit();
+                        string err = proc?.StandardError.ReadToEnd() ?? string.Empty;
+                        if (!string.IsNullOrWhiteSpace(err))
+                            Report($"Warning (ditto extract): {err.Trim()}");
+                    }
+                    else
+                    {
+                        // Windows / Linux: plain zip format (no symlinks), ZipFile works fine.
+                        System.IO.Compression.ZipFile.ExtractToDirectory(targetZipPath, templateDir, true);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Report($"Warning: could not extract template archive '{Path.GetFileName(templateFile)}': {ex.Message}");
+                }
+                finally
+                {
+                    if (isTemp && File.Exists(targetZipPath))
+                        try { File.Delete(targetZipPath); } catch { }
+                }
             }
             return templateDir;
         }
