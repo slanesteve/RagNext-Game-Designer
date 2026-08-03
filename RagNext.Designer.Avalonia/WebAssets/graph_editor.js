@@ -232,7 +232,7 @@ const propertyMappings = {
     "Portrait Media": ["PortraitId", "portraitId", "PortraitMedia", "portraitMedia", "MediaId"],
     "Object": ["ObjectId", "objectId", "Object"],
     "Item": ["ItemId", "itemId", "Item", "ObjectId", "objectId"],
-    "Container Object": ["ContainerObjectId", "containerObjectId", "ContainerObject", "containerObject"],
+    "Container Object": ["ContainerObjectId", "containerObjectId", "ContainerObject", "containerObject", "ObjectId", "objectId"],
     "Choice Text": ["ChoiceText", "choiceText", "Text", "text"],
     "Target Variable": ["VariableName", "variableName", "Name", "name", "TargetVariable", "targetVariable"],
     "Variable": ["Name", "name", "VariableName", "variableName", "Variable", "variable"],
@@ -4339,6 +4339,8 @@ function buildNodeJsonWithoutNextRaw(node) {
                     }
                 } else if (inp.label === 'Container Object' && node.data.commandType === 'object.moveInsideObject') {
                     primaryCsharpProp = 'ContainerObjectId';
+                } else if (inp.label === 'Container Object' && (node.data.commandType === 'general.openContainer' || node.data.commandType === 'general.closeContainer')) {
+                    primaryCsharpProp = 'ObjectId';
                 }
                 
                 commandJson[primaryCsharpProp] = val;
