@@ -232,7 +232,7 @@ const propertyMappings = {
     "Portrait Media": ["PortraitId", "portraitId", "PortraitMedia", "portraitMedia", "MediaId"],
     "Object": ["ObjectId", "objectId", "Object"],
     "Item": ["ItemId", "itemId", "Item", "ObjectId", "objectId"],
-    "Container Object": ["ObjectId", "objectId", "ContainerObjectId", "containerObjectId", "ContainerObject", "containerObject"],
+    "Container Object": ["ContainerObjectId", "containerObjectId", "ContainerObject", "containerObject"],
     "Choice Text": ["ChoiceText", "choiceText", "Text", "text"],
     "Target Variable": ["VariableName", "variableName", "Name", "name", "TargetVariable", "targetVariable"],
     "Variable": ["Name", "name", "VariableName", "variableName", "Variable", "variable"],
