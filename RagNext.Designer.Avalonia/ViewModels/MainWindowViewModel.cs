@@ -3631,7 +3631,8 @@ namespace RagNext.Designer.Avalonia.ViewModels
                 {
                     if (entry.FullName.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase) ||
                         entry.FullName.StartsWith("Assets\\", StringComparison.OrdinalIgnoreCase) ||
-                        entry.FullName.Equals("media_tree.json", StringComparison.OrdinalIgnoreCase))
+                        entry.FullName.Equals("media_tree.json", StringComparison.OrdinalIgnoreCase) ||
+                        entry.FullName.Equals("entity_tree.json", StringComparison.OrdinalIgnoreCase))
                     {
                         var relativePath = entry.FullName.Replace('\\', '/');
                         var targetPath = Path.Combine(root, relativePath);
@@ -3696,6 +3697,12 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
                 var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RagNext", CurrentGame.Id.ToString("N"));
                 
+                var entityTreePath = Path.Combine(root, "entity_tree.json");
+                if (File.Exists(entityTreePath))
+                {
+                    zip.CreateEntryFromFile(entityTreePath, "entity_tree.json", CompressionLevel.Optimal);
+                }
+
                 var mediaTreePath = Path.Combine(root, "media_tree.json");
                 if (File.Exists(mediaTreePath))
                 {
