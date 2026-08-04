@@ -77,12 +77,13 @@ jobs:
           path: build/${{ matrix.targetPlatform }}
           if-no-files-found: error
 
-  # Build Windows StandaloneWindows64 IL2CPP target by installing Unity directly on windows-latest host.
-  # GameCI always forces Docker on Windows runners and Unity 6 crashes inside Windows containers (exit code 1).
-  # Direct host installation bypasses Docker entirely and gives full access to MSVC for IL2CPP.
+  # Build Windows StandaloneWindows64 IL2CPP on a self-hosted Windows runner.
+  # Pre-requisite: Unity 6000.3.6f1 must be installed on the runner machine via Unity Hub.
+  # Self-hosted runner avoids GitHub-hosted runner costs, Docker container failures, and
+  # the 45-min Unity install step. The Library cache also persists between runs.
   build-unity-template-windows:
-    name: Build StandaloneWindows64 IL2CPP (Direct Host Install)
-    runs-on: windows-latest
+    name: Build StandaloneWindows64 IL2CPP (Self-Hosted Windows)
+    runs-on: [self-hosted, Windows, X64]
     if: ${{ inputs.buildWindows }}
     steps:
       - name: Checkout Source Code
@@ -90,51 +91,22 @@ jobs:
         with:
           lfs: true
 
-      - name: Cache Unity Installation
-        uses: actions/cache@v4
-        id: unity-cache
-        with:
-          path: C:\Unity
-          key: unity-windows-6000.3.6f1-il2cpp-v1
-
-      - name: Download & Install Unity Editor + Windows IL2CPP Module
-        if: steps.unity-cache.outputs.cache-hit != 'true'
+      - name: Locate Unity Installation
+        id: unity
         run: |
-          $changeset = "bbb010bdb8a3"
-          $version = "6000.3.6f1"
-          $base = "https://download.unity3d.com/download_unity/$changeset"
-
-          Write-Host "=== Downloading Unity Editor ==="
-          Invoke-WebRequest "$base/Windows64EditorInstaller/UnitySetup64-$version.exe" -OutFile "$env:TEMP\UnitySetup.exe" -UseBasicParsing
-          Write-Host "=== Installing Unity Editor (silent) ==="
-          Start-Process "$env:TEMP\UnitySetup.exe" -ArgumentList "/S /D=C:\Unity" -Wait
-
-          Write-Host "=== Downloading Windows IL2CPP Support ==="
-          Invoke-WebRequest "$base/TargetSupportInstaller/UnitySetup-Windows-IL2CPP-Support-for-Editor-$version.exe" -OutFile "$env:TEMP\UnityIL2CPP.exe" -UseBasicParsing
-          Write-Host "=== Installing Windows IL2CPP Support ==="
-          Start-Process "$env:TEMP\UnityIL2CPP.exe" -ArgumentList "/S" -Wait
-
-          Write-Host "=== Verifying installation ==="
-          Get-Item "C:\Unity\Editor\Unity.exe" | Select-Object FullName, Length
-        shell: pwsh
-        timeout-minutes: 60
-
-      - name: Activate Unity License
-        run: |
-          & "C:\Unity\Editor\Unity.exe" -quit -batchmode -nographics `
-            -serial "$env:UNITY_SERIAL" `
-            -username "$env:UNITY_EMAIL" `
-            -password "$env:UNITY_PASSWORD" `
-            -logFile "$env:GITHUB_WORKSPACE\activate.log"
-          if (Test-Path "$env:GITHUB_WORKSPACE\activate.log") {
-            Get-Content "$env:GITHUB_WORKSPACE\activate.log" | Select-Object -Last 20
+          # Check Unity Hub default install path first, then fallback
+          $candidates = @(
+            "C:\Program Files\Unity\Hub\Editor\6000.3.6f1\Editor\Unity.exe",
+            "C:\Unity\Editor\Unity.exe"
+          )
+          $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $found) {
+            Write-Error "Unity 6000.3.6f1 not found on runner. Install it via Unity Hub."
+            exit 1
           }
+          Write-Host "Using Unity at: $found"
+          "UNITY_EXE=$found" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         shell: pwsh
-        env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
-        timeout-minutes: 10
 
       - name: Build Windows IL2CPP Player
         run: |
@@ -143,7 +115,11 @@ jobs:
           $log    = "$env:GITHUB_WORKSPACE\build.log"
 
           Write-Host "=== Starting Unity IL2CPP build ==="
-          & "C:\Unity\Editor\Unity.exe" `
+          Write-Host "Unity:   $env:UNITY_EXE"
+          Write-Host "Project: $env:GITHUB_WORKSPACE\RagNextPlayer"
+          Write-Host "Output:  $outExe"
+
+          & "$env:UNITY_EXE" `
             -quit -batchmode -nographics `
             -projectPath "$env:GITHUB_WORKSPACE\RagNextPlayer" `
             -buildTarget StandaloneWindows64 `
@@ -155,25 +131,16 @@ jobs:
           if (Test-Path $log) { Get-Content $log | Select-Object -Last 60 }
           exit $code
         shell: pwsh
-        timeout-minutes: 90
-
-      - name: Return Unity License
-        if: always()
-        run: |
-          & "C:\Unity\Editor\Unity.exe" -quit -batchmode -nographics -returnlicense `
-            -logFile "$env:GITHUB_WORKSPACE\return.log" 2>&1 | Out-Null
-        shell: pwsh
-        continue-on-error: true
+        env:
+          UNITY_EXE: ${{ steps.unity.outputs.UNITY_EXE }}
+        timeout-minutes: 60
 
       - name: Upload Build Logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: unity-build-logs-windows
-          path: |
-            activate.log
-            build.log
-            return.log
+          path: build.log
           if-no-files-found: ignore
 
       - name: Upload Artifact
