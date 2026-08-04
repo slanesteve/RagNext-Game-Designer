@@ -8,6 +8,7 @@ export default defineConfig({
     logo: '/logo.png',
     nav: [
       { text: 'Home', link: '/' },
+      { text: 'Steam Store', link: 'https://store.steampowered.com/app/4944750/RagNext_Studio/' },
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Contact', link: 'mailto:contact@ragnext.com' }
     ],

@@ -10,6 +10,9 @@ hero:
     alt: RagNext Studio
   actions:
     - theme: brand
+      text: View on Steam / Playtest
+      link: https://store.steampowered.com/app/4944750/RagNext_Studio/
+    - theme: alt
       text: Documentation & Guide
       link: /guide/getting-started
     - theme: alt
@@ -40,6 +43,7 @@ Our flagship software suite, **RagNext Studio**, provides creators and developer
 
 * **Legal Entity Name**: RagNext Labs LLC
 * **Primary Focus**: Software Development & Interactive Story Engine Tools
+* **Official Steam Store**: [RagNext Studio on Steam (Playtest Available)](https://store.steampowered.com/app/4944750/RagNext_Studio/)
 * **Official Contact Email**: [contact@ragnext.com](mailto:contact@ragnext.com)
 * **Official Web Domain**: [https://ragnext.com](https://ragnext.com)
 * **Community Discord**: [https://discord.gg/kYV2hJ7mF](https://discord.gg/kYV2hJ7mF)
