@@ -21,7 +21,7 @@ on:
         default: true
 
 jobs:
-  # Build Linux, WebGL, and Windows player targets on Ubuntu runner using GameCI Docker containers
+  # Build Linux and WebGL targets on Ubuntu runners using GameCI Docker containers (IL2CPP)
   build-unity-templates-linux:
     name: Build ${{ matrix.targetPlatform }} (Linux Container)
     runs-on: ubuntu-latest
@@ -37,10 +37,6 @@ jobs:
             inputKey: buildWebGL
             buildName: 'RagNextPlayer'
             customImage: 'unityci/editor:ubuntu-6000.3.6f1-webgl-3'
-          - targetPlatform: StandaloneWindows64
-            inputKey: buildWindows
-            buildName: 'RagNextPlayer'
-            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-mono-3'
     steps:
       - name: Free Disk Space (Ubuntu)
         if: ${{ inputs[matrix.inputKey] }}
@@ -81,6 +77,112 @@ jobs:
           path: build/${{ matrix.targetPlatform }}
           if-no-files-found: error
 
+  # Build Windows StandaloneWindows64 IL2CPP target by installing Unity directly on windows-latest host.
+  # GameCI always forces Docker on Windows runners and Unity 6 crashes inside Windows containers (exit code 1).
+  # Direct host installation bypasses Docker entirely and gives full access to MSVC for IL2CPP.
+  build-unity-template-windows:
+    name: Build StandaloneWindows64 IL2CPP (Direct Host Install)
+    runs-on: windows-latest
+    if: ${{ inputs.buildWindows }}
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Installation
+        uses: actions/cache@v4
+        id: unity-cache
+        with:
+          path: C:\Unity
+          key: unity-windows-6000.3.6f1-il2cpp-v1
+
+      - name: Download & Install Unity Editor + Windows IL2CPP Module
+        if: steps.unity-cache.outputs.cache-hit != 'true'
+        run: |
+          $changeset = "bbb010bdb8a3"
+          $version = "6000.3.6f1"
+          $base = "https://download.unity3d.com/download_unity/$changeset"
+
+          Write-Host "=== Downloading Unity Editor ==="
+          Invoke-WebRequest "$base/Windows64EditorInstaller/UnitySetup64-$version.exe" -OutFile "$env:TEMP\UnitySetup.exe" -UseBasicParsing
+          Write-Host "=== Installing Unity Editor (silent) ==="
+          Start-Process "$env:TEMP\UnitySetup.exe" -ArgumentList "/S /D=C:\Unity" -Wait
+
+          Write-Host "=== Downloading Windows IL2CPP Support ==="
+          Invoke-WebRequest "$base/TargetSupportInstaller/UnitySetup-Windows-IL2CPP-Support-for-Editor-$version.exe" -OutFile "$env:TEMP\UnityIL2CPP.exe" -UseBasicParsing
+          Write-Host "=== Installing Windows IL2CPP Support ==="
+          Start-Process "$env:TEMP\UnityIL2CPP.exe" -ArgumentList "/S" -Wait
+
+          Write-Host "=== Verifying installation ==="
+          Get-Item "C:\Unity\Editor\Unity.exe" | Select-Object FullName, Length
+        shell: pwsh
+        timeout-minutes: 60
+
+      - name: Activate Unity License
+        run: |
+          & "C:\Unity\Editor\Unity.exe" -quit -batchmode -nographics `
+            -serial "$env:UNITY_SERIAL" `
+            -username "$env:UNITY_EMAIL" `
+            -password "$env:UNITY_PASSWORD" `
+            -logFile "$env:GITHUB_WORKSPACE\activate.log"
+          if (Test-Path "$env:GITHUB_WORKSPACE\activate.log") {
+            Get-Content "$env:GITHUB_WORKSPACE\activate.log" | Select-Object -Last 20
+          }
+        shell: pwsh
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        timeout-minutes: 10
+
+      - name: Build Windows IL2CPP Player
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\build\StandaloneWindows64" | Out-Null
+          $outExe = "$env:GITHUB_WORKSPACE\build\StandaloneWindows64\RagNextPlayer.exe"
+          $log    = "$env:GITHUB_WORKSPACE\build.log"
+
+          Write-Host "=== Starting Unity IL2CPP build ==="
+          & "C:\Unity\Editor\Unity.exe" `
+            -quit -batchmode -nographics `
+            -projectPath "$env:GITHUB_WORKSPACE\RagNextPlayer" `
+            -buildTarget StandaloneWindows64 `
+            -buildWindows64Player $outExe `
+            -logFile $log
+
+          $code = $LASTEXITCODE
+          Write-Host "Unity exited with code: $code"
+          if (Test-Path $log) { Get-Content $log | Select-Object -Last 60 }
+          exit $code
+        shell: pwsh
+        timeout-minutes: 90
+
+      - name: Return Unity License
+        if: always()
+        run: |
+          & "C:\Unity\Editor\Unity.exe" -quit -batchmode -nographics -returnlicense `
+            -logFile "$env:GITHUB_WORKSPACE\return.log" 2>&1 | Out-Null
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Upload Build Logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-build-logs-windows
+          path: |
+            activate.log
+            build.log
+            return.log
+          if-no-files-found: ignore
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnityTemplate-StandaloneWindows64
+          path: build/StandaloneWindows64
+          if-no-files-found: error
+
   # Build macOS StandaloneOSX IL2CPP target natively on macos-latest runner (Xcode)
   build-unity-template-mac:
     name: Build StandaloneOSX (macOS IL2CPP Host)
@@ -113,7 +215,7 @@ jobs:
 
   commit-templates:
     name: Commit Built Templates to Repository
-    needs: [build-unity-templates-linux, build-unity-template-mac]
+    needs: [build-unity-templates-linux, build-unity-template-windows, build-unity-template-mac]
     if: always()
     runs-on: ubuntu-latest
     permissions:
