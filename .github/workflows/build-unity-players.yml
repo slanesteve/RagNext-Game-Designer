@@ -21,8 +21,8 @@ on:
         default: true
 
 jobs:
-  # Build Linux and WebGL player targets on Ubuntu runner using GameCI Docker containers
-  build-unity-templates-linux:
+  # Build all 4 Unity Player targets on cheap Ubuntu runners using GameCI Docker containers
+  build-unity-templates:
     name: Build ${{ matrix.targetPlatform }} (Linux Container)
     runs-on: ubuntu-latest
     strategy:
@@ -37,6 +37,14 @@ jobs:
             inputKey: buildWebGL
             buildName: 'RagNextPlayer'
             customImage: 'unityci/editor:ubuntu-6000.3.6f1-webgl-3'
+          - targetPlatform: StandaloneWindows64
+            inputKey: buildWindows
+            buildName: 'RagNextPlayer'
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-windows-mono-3'
+          - targetPlatform: StandaloneOSX
+            inputKey: buildOSX
+            buildName: 'RagNextPlayer'
+            customImage: 'unityci/editor:ubuntu-6000.3.6f1-mac-mono-3'
     steps:
       - name: Free Disk Space (Ubuntu)
         if: ${{ inputs[matrix.inputKey] }}
@@ -77,69 +85,9 @@ jobs:
           path: build/${{ matrix.targetPlatform }}
           if-no-files-found: error
 
-  # Build Windows StandaloneWindows64 target on windows-latest runner (has native MSVC C++ tools for Windows IL2CPP compilation)
-  build-unity-template-windows:
-    name: Build StandaloneWindows64 (Windows Runner)
-    runs-on: windows-latest
-    if: ${{ inputs.buildWindows }}
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Build Unity Windows Player
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          projectPath: RagNextPlayer
-          unityVersion: 6000.3.6f1
-          targetPlatform: StandaloneWindows64
-          buildName: RagNextPlayer
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: UnityTemplate-StandaloneWindows64
-          path: build/StandaloneWindows64
-          if-no-files-found: error
-
-  # Build macOS StandaloneOSX target on macos-latest runner (has native Xcode for macOS IL2CPP compilation)
-  build-unity-template-mac:
-    name: Build StandaloneOSX (macOS Runner)
-    runs-on: macos-latest
-    if: ${{ inputs.buildOSX }}
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Build Unity macOS Player
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          projectPath: RagNextPlayer
-          unityVersion: 6000.3.6f1
-          targetPlatform: StandaloneOSX
-          buildName: RagNextPlayer
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: UnityTemplate-StandaloneOSX
-          path: build/StandaloneOSX
-          if-no-files-found: error
-
   commit-templates:
     name: Commit Built Templates to Repository
-    needs: [build-unity-templates-linux, build-unity-template-windows, build-unity-template-mac]
+    needs: [build-unity-templates]
     if: always()
     runs-on: ubuntu-latest
     permissions:
