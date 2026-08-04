@@ -119,6 +119,23 @@ namespace RagNext.Designer.Avalonia.Services
             }
             if (File.Exists(templateFile))
             {
+                string cacheDir = Path.Combine(AppDataDirectory, "Cache", "Templates", templateName);
+
+                // Check if cache already contains extracted template
+                bool isMacApp = templateName == "MacOS" && Directory.Exists(Path.Combine(cacheDir, "MacOS.app"));
+                bool isExePlayer = templateName != "MacOS" && Directory.Exists(cacheDir) && Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories).Any(f => !f.EndsWith(".template"));
+
+                if (isMacApp || isExePlayer)
+                {
+                    return cacheDir;
+                }
+
+                if (Directory.Exists(cacheDir))
+                {
+                    try { Directory.Delete(cacheDir, true); } catch { }
+                }
+                Directory.CreateDirectory(cacheDir);
+
                 // Decode XOR-encoded archive if needed (magic bytes won't be PK = 0x50 0x4B)
                 byte[] bytes = File.ReadAllBytes(templateFile);
                 string targetZipPath = templateFile;
@@ -141,7 +158,7 @@ namespace RagNext.Designer.Avalonia.Services
                         // .NET's ZipFile cannot extract symlinks and will throw, silently skipping
                         // the entire archive. Use ditto -x -k instead, which handles all of this correctly.
                         var psi = new ProcessStartInfo("ditto",
-                            $"-x -k \"{targetZipPath}\" \"{templateDir}\"")
+                            $"-x -k \"{targetZipPath}\" \"{cacheDir}\"")
                         {
                             RedirectStandardOutput = true,
                             RedirectStandardError  = true,
@@ -157,8 +174,10 @@ namespace RagNext.Designer.Avalonia.Services
                     else
                     {
                         // Windows / Linux: plain zip format (no symlinks), ZipFile works fine.
-                        System.IO.Compression.ZipFile.ExtractToDirectory(targetZipPath, templateDir, true);
+                        System.IO.Compression.ZipFile.ExtractToDirectory(targetZipPath, cacheDir, true);
                     }
+
+                    return cacheDir;
                 }
                 catch (Exception ex)
                 {
@@ -203,13 +222,13 @@ namespace RagNext.Designer.Avalonia.Services
             Report("Copying macOS shell player...");
             string appBundle = Path.Combine(outputDir, $"{title}.app");
 
-            EnsureTemplateSource(templateDir, "MacOS");
+            string sourceDir = EnsureTemplateSource(templateDir, "MacOS");
 
             // Avoid nested .app directory (inception structure)
-            string sourceApp = Path.Combine(templateDir, "MacOS.app");
+            string sourceApp = Path.Combine(sourceDir, "MacOS.app");
             if (!Directory.Exists(sourceApp))
             {
-                sourceApp = Directory.GetDirectories(templateDir, "*.app").FirstOrDefault() ?? templateDir;
+                sourceApp = Directory.GetDirectories(sourceDir, "*.app").FirstOrDefault() ?? sourceDir;
             }
             CopyDirectory(sourceApp, appBundle);
 
