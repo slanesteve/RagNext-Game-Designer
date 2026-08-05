@@ -4840,7 +4840,7 @@ namespace RagNext.Designer.Avalonia.Views
                 }
                 else if (trigger == '[')
                 {
-                    var directions = new[] { "North", "South", "East", "West", "Up", "Down", "In", "Out" };
+                    var directions = new[] { "North", "South", "East", "West", "NorthWest", "NorthEast", "SouthWest", "SouthEast", "Up", "Down", "In", "Out" };
                     foreach (var dir in directions)
                     {
                         list.Add(new AutocompleteItem { Token = dir, DisplayToken = $"[{dir}]", TypeName = "Exit Direction", Description = "Clickable exit shortcut in player navigation." });

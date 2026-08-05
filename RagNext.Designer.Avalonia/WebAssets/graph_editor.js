@@ -2993,6 +2993,10 @@ function refreshCommandFields(node) {
                     { Id: "South", Name: "South" },
                     { Id: "East", Name: "East" },
                     { Id: "West", Name: "West" },
+                    { Id: "NorthWest", Name: "NorthWest" },
+                    { Id: "NorthEast", Name: "NorthEast" },
+                    { Id: "SouthWest", Name: "SouthWest" },
+                    { Id: "SouthEast", Name: "SouthEast" },
                     { Id: "Up", Name: "Up" },
                     { Id: "Down", Name: "Down" },
                     { Id: "In", Name: "In" },
@@ -5152,7 +5156,7 @@ function getAutocompleteSuggestions(triggerChar) {
         }
     } else if (triggerChar === '[') {
         // Inline linking entity suggestions
-        const directions = ["North", "South", "East", "West", "Up", "Down", "In", "Out"];
+        const directions = ["North", "South", "East", "West", "NorthWest", "NorthEast", "SouthWest", "SouthEast", "Up", "Down", "In", "Out"];
         directions.forEach(dir => {
             list.push({ token: dir, typeName: "Exit Direction", desc: "Clickable exit shortcut in player navigation." });
         });
