@@ -3502,6 +3502,11 @@ namespace RagNextPlayer.Managers
         {
             if (room is null) return;
 
+            if (_activeScreenRoom != room)
+            {
+                _interactiveScreenStack.Clear();
+            }
+
             bool isInteractive = room.InteractiveScreenSettings != null && room.InteractiveScreenSettings.Enabled && !_interactiveScreenClosedManually;
             Debug.Log($"[UIManager] RenderRoom called for '{room.Name}' (ID: '{room.Id}'). isInteractive={isInteractive}, _interactiveScreenClosedManually={_interactiveScreenClosedManually}, activeScreenSettings={(_activeScreenSettings != null ? "Present" : "Null")}");
 
@@ -3931,7 +3936,7 @@ namespace RagNextPlayer.Managers
             {
                 foreach (var act in room.Actions)
                 {
-                    if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
+                    if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)) && !string.Equals(act.ActionType, "InteractiveScreen", System.StringComparison.OrdinalIgnoreCase))
                     {
                         requiredRoomActions.Add(act);
                     }
@@ -3955,6 +3960,15 @@ namespace RagNextPlayer.Managers
             RefreshActiveInteractiveScreen();
         }
 
+        public class InteractiveScreenContext
+        {
+            public InteractiveScreenSettingsData Settings { get; set; }
+            public RoomData Room { get; set; }
+            public GameObjectData Object { get; set; }
+            public string BackdropPath { get; set; } = string.Empty;
+        }
+
+        private readonly System.Collections.Generic.Stack<InteractiveScreenContext> _interactiveScreenStack = new System.Collections.Generic.Stack<InteractiveScreenContext>();
         private InteractiveScreenSettingsData _activeScreenSettings;
         private RoomData _activeScreenRoom;
         private GameObjectData _activeScreenObject;
@@ -3983,16 +3997,46 @@ namespace RagNextPlayer.Managers
             var compassHud = _root?.Q<VisualElement>("compass-hud-container");
             if (compassHud != null) compassHud.style.display = DisplayStyle.None;
 
-            _activeScreenSettings = obj.InteractiveScreenSettings;
-            _activeScreenRoom = GameManager.Instance?.CurrentRoom;
-            _activeScreenObject = obj;
+            var ctx = new InteractiveScreenContext
+            {
+                Settings = obj.InteractiveScreenSettings,
+                Room = GameManager.Instance?.CurrentRoom,
+                Object = obj
+            };
+            _interactiveScreenStack.Push(ctx);
+
+            _activeScreenSettings = ctx.Settings;
+            _activeScreenRoom = ctx.Room;
+            _activeScreenObject = ctx.Object;
+
+            var activeGame = GameManager.Instance?.ActiveGame;
+            if (activeGame != null)
+            {
+                var variable = activeGame.Variables.Find(v => string.Equals(v.Name, "player.activeInteractiveScreenObjectId", System.StringComparison.OrdinalIgnoreCase));
+                if (variable != null)
+                {
+                    variable.Value = obj.Id;
+                }
+                else
+                {
+                    activeGame.Variables.Add(new GameVariableData { Name = "player.activeInteractiveScreenObjectId", Value = obj.Id });
+                }
+            }
 
             RenderInteractiveScreen(_activeScreenSettings, _activeScreenRoom);
         }
 
         public void RefreshActiveInteractiveScreen()
         {
-            if (_activeScreenSettings != null && _activeScreenSettings.Enabled)
+            if (_interactiveScreenStack.Count > 0)
+            {
+                var topCtx = _interactiveScreenStack.Peek();
+                if (topCtx.Settings != null && topCtx.Settings.Enabled)
+                {
+                    RenderInteractiveScreen(topCtx.Settings, topCtx.Room);
+                }
+            }
+            else if (_activeScreenSettings != null && _activeScreenSettings.Enabled)
             {
                 RenderInteractiveScreen(_activeScreenSettings, _activeScreenRoom);
             }
@@ -4322,7 +4366,15 @@ namespace RagNextPlayer.Managers
 
                 // Click event action trigger
                 btn.clickable = new Clickable(() => {
-                    if (!string.IsNullOrEmpty(hotspot.LinkedActionId) && InteractionController.Instance != null)
+                    if (hotspot.Nodes != null && hotspot.Nodes.Count > 0 && InteractionController.Instance != null)
+                    {
+                        InteractionController.Instance.ExecuteHotspotNodes(hotspot.Nodes, _activeScreenObject, room);
+                        if (_activeScreenSettings != null && !_interactiveScreenClosedManually)
+                        {
+                            RenderInteractiveScreen(_activeScreenSettings, room);
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(hotspot.LinkedActionId) && InteractionController.Instance != null)
                     {
                         InteractionController.Instance.ExecuteActionById(hotspot.LinkedActionId, null, room, true);
                         if (_activeScreenSettings != null && !_interactiveScreenClosedManually)
@@ -4405,11 +4457,17 @@ namespace RagNextPlayer.Managers
 
         public void CloseItemInteractiveScreen()
         {
-            Debug.Log($"[UIManager] CloseItemInteractiveScreen called. Setting _interactiveScreenClosedManually=true, clearing active screen settings.");
-            _interactiveScreenClosedManually = true;
-            _activeScreenObject = null;
-            _activeScreenSettings = null;
-            _activeBackdropPath = string.Empty;
+            Debug.Log($"[UIManager] CloseItemInteractiveScreen called. Stack count before pop: {_interactiveScreenStack.Count}");
+
+            InteractiveScreenContext popped = null;
+            if (_interactiveScreenStack.Count > 0)
+            {
+                popped = _interactiveScreenStack.Pop();
+                if (!string.IsNullOrEmpty(popped.Settings?.OnCloseActionId) && InteractionController.Instance != null)
+                {
+                    InteractionController.Instance.ExecuteActionById(popped.Settings.OnCloseActionId, popped.Object, popped.Room, true);
+                }
+            }
 
             if (_promptInputMenu != null) _promptInputMenu.style.display = DisplayStyle.None;
             if (_promptModalBackdrop != null) _promptModalBackdrop.style.display = DisplayStyle.None;
@@ -4429,37 +4487,66 @@ namespace RagNextPlayer.Managers
                 sceneImage.Query<Button>(className: "screen-close-btn").ForEach(el => el.parent?.Remove(el));
             }
 
-            var activeGame = GameManager.Instance?.ActiveGame;
-            if (activeGame != null)
+            if (_interactiveScreenStack.Count > 0)
             {
-                var variable = activeGame.Variables.Find(v => string.Equals(v.Name, "player.activeInteractiveScreenObjectId", System.StringComparison.OrdinalIgnoreCase));
-                if (variable != null)
-                {
-                    variable.Value = null;
-                }
-                else
-                {
-                    activeGame.Variables.Add(new GameVariableData { Name = "player.activeInteractiveScreenObjectId", Value = null });
-                }
-            }
+                // Restore previous interactive screen on stack
+                var topCtx = _interactiveScreenStack.Peek();
+                _activeScreenSettings = topCtx.Settings;
+                _activeScreenRoom = topCtx.Room;
+                _activeScreenObject = topCtx.Object;
 
-            var curRoom = GameManager.Instance?.CurrentRoom;
-            if (curRoom != null)
-            {
-                RenderRoom(curRoom);
+                var activeGame = GameManager.Instance?.ActiveGame;
+                if (activeGame != null)
+                {
+                    var variable = activeGame.Variables.Find(v => string.Equals(v.Name, "player.activeInteractiveScreenObjectId", System.StringComparison.OrdinalIgnoreCase));
+                    if (variable != null)
+                    {
+                        variable.Value = topCtx.Object?.Id;
+                    }
+                }
+
+                RenderInteractiveScreen(_activeScreenSettings, _activeScreenRoom);
             }
             else
             {
-                if (_roomActionsContainer != null) _roomActionsContainer.style.display = DisplayStyle.Flex;
-                if (_rightSidebarContainer != null) _rightSidebarContainer.style.display = DisplayStyle.Flex;
-                var narrativePanel = _root?.Q<VisualElement>("narrative-panel");
-                if (narrativePanel != null) narrativePanel.style.display = DisplayStyle.Flex;
-                var floatingProfiles = _root?.Q<VisualElement>("floating-profiles-container");
-                if (floatingProfiles != null) floatingProfiles.style.display = DisplayStyle.Flex;
-                var compassContainer = _root?.Q<VisualElement>("compass-container");
-                if (compassContainer != null) compassContainer.style.display = DisplayStyle.Flex;
-                var compassHud = _root?.Q<VisualElement>("compass-hud-container");
-                if (compassHud != null) compassHud.style.display = DisplayStyle.Flex;
+                // Stack is empty -> Clear screen state and return to room view
+                _interactiveScreenClosedManually = true;
+                _activeScreenObject = null;
+                _activeScreenSettings = null;
+                _activeBackdropPath = string.Empty;
+
+                var activeGame = GameManager.Instance?.ActiveGame;
+                if (activeGame != null)
+                {
+                    var variable = activeGame.Variables.Find(v => string.Equals(v.Name, "player.activeInteractiveScreenObjectId", System.StringComparison.OrdinalIgnoreCase));
+                    if (variable != null)
+                    {
+                        variable.Value = null;
+                    }
+                    else
+                    {
+                        activeGame.Variables.Add(new GameVariableData { Name = "player.activeInteractiveScreenObjectId", Value = null });
+                    }
+                }
+
+                var curRoom = GameManager.Instance?.CurrentRoom;
+                if (curRoom != null)
+                {
+                    RenderRoom(curRoom);
+                }
+                else
+                {
+                    if (_roomActionsContainer != null) _roomActionsContainer.style.display = DisplayStyle.Flex;
+                    if (_rightSidebarContainer != null) _rightSidebarContainer.style.display = DisplayStyle.Flex;
+                    var narrativePanel = _root?.Q<VisualElement>("narrative-panel");
+                    if (narrativePanel != null) narrativePanel.style.display = DisplayStyle.Flex;
+                    var floatingProfiles = _root?.Q<VisualElement>("floating-profiles-container");
+                    if (floatingProfiles != null) floatingProfiles.style.display = DisplayStyle.Flex;
+                    var compassContainer = _root?.Q<VisualElement>("compass-container");
+                    if (compassContainer != null) compassContainer.style.display = DisplayStyle.Flex;
+                    var compassHud = _root?.Q<VisualElement>("compass-hud-container");
+                    if (compassHud != null) compassHud.style.display = DisplayStyle.Flex;
+                }
             }
         }
 
@@ -5433,7 +5520,7 @@ namespace RagNextPlayer.Managers
                 {
                     foreach (var act in entity.Actions)
                     {
-                        if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)))
+                        if (act.InitallyActive && (string.IsNullOrEmpty(act.Trigger) || string.Equals(act.Trigger, "UserClicked", System.StringComparison.OrdinalIgnoreCase)) && !string.Equals(act.ActionType, "InteractiveScreen", System.StringComparison.OrdinalIgnoreCase))
                         {
                             activeActions.Add(act);
                         }

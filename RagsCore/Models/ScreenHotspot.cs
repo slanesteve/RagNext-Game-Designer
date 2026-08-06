@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 
 namespace RagsCore.Models
 {
@@ -67,5 +68,20 @@ namespace RagsCore.Models
 
         private bool _enableHoverScale = true;
         public bool EnableHoverScale { get => _enableHoverScale; set => SetProperty(ref _enableHoverScale, value); }
+
+        private ObservableCollection<RagsCore.Actions.ActionStep> _nodes = new();
+        public ObservableCollection<RagsCore.Actions.ActionStep> Nodes { get => _nodes; set => SetProperty(ref _nodes, value); }
+
+        public ObservableCollection<RagsCore.Actions.ActionStep>? Steps
+        {
+            get => Nodes;
+            set
+            {
+                if (value != null)
+                {
+                    Nodes = value;
+                }
+            }
+        }
     }
 }

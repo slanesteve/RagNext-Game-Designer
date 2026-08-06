@@ -127,6 +127,8 @@ namespace RagNextPlayer.Runtime.Models
         public string LinkedActionId { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
         public bool EnableHoverScale { get; set; } = true;
+        [JsonConverter(typeof(ActionStepListConverter))]
+        public List<ActionStepData> Nodes { get; set; } = new List<ActionStepData>();
     }
 
     // ── Player ────────────────────────────────────────────────────────────────
@@ -195,6 +197,7 @@ namespace RagNextPlayer.Runtime.Models
         public string Name           { get; set; } = string.Empty;
         public bool   InitallyActive { get; set; } = true;
         public string Trigger        { get; set; } = "UserClicked";
+        public string ActionType     { get; set; } = "StandardVerb";
         private string _directionFilter = "All";
         public string DirectionFilter
         {

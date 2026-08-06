@@ -830,6 +830,53 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
         public ICommand ToggleAssetsSidebarCommand { get; }
 
+        private bool _isSidebarCollapsed = false;
+        public bool IsSidebarCollapsed
+        {
+            get => _isSidebarCollapsed;
+            set
+            {
+                if (SetProperty(ref _isSidebarCollapsed, value))
+                {
+                    OnPropertyChanged(nameof(ShowDesignerSidebar));
+                }
+            }
+        }
+
+        private bool _isTreePanelCollapsed = false;
+        public bool IsTreePanelCollapsed
+        {
+            get => _isTreePanelCollapsed;
+            set
+            {
+                if (SetProperty(ref _isTreePanelCollapsed, value))
+                {
+                    OnPropertyChanged(nameof(ShowEntityTreePanel));
+                }
+            }
+        }
+
+        private bool _isFocusCanvasMode = false;
+        public bool IsFocusCanvasMode
+        {
+            get => _isFocusCanvasMode;
+            set
+            {
+                if (SetProperty(ref _isFocusCanvasMode, value))
+                {
+                    OnPropertyChanged(nameof(ShowDesignerSidebar));
+                    OnPropertyChanged(nameof(ShowEntityTreePanel));
+                }
+            }
+        }
+
+        public bool ShowDesignerSidebar => !_isFocusCanvasMode && !_isSidebarCollapsed;
+        public bool ShowEntityTreePanel => !_isFocusCanvasMode && !_isTreePanelCollapsed;
+
+        public ICommand ToggleSidebarCommand { get; }
+        public ICommand ToggleTreePanelCommand { get; }
+        public ICommand ToggleFocusCanvasCommand { get; }
+
         private bool _showSplashOverlay = true;
         public bool ShowSplashOverlay
         {
@@ -1505,12 +1552,15 @@ namespace RagNext.Designer.Avalonia.ViewModels
         public ICommand OpenRagNextWebsiteCommand { get; }
 
         public ICommand StartEditingActionCommand { get; }
+        public ICommand StartEditingHotspotActionCommand { get; }
         public ICommand StopEditingActionCommand { get; }
         public ICommand AddActionCommand { get; }
         public ICommand DeleteActionCommand { get; }
         public ICommand CopyActionCommand { get; }
         public ICommand PasteActionCommand { get; }
         public bool CanPasteAction => RagNext.Designer.Avalonia.Services.ActionClipboardService.CanPaste;
+
+        public ObservableCollection<string> ActionTypes { get; } = new ObservableCollection<string> { "StandardVerb", "InteractiveScreen" };
 
         private static readonly ActionTrigger[] _allTriggers = (ActionTrigger[])Enum.GetValues(typeof(ActionTrigger));
         public ActionTrigger[] AllTriggers => _allTriggers;
@@ -1843,6 +1893,9 @@ namespace RagNext.Designer.Avalonia.ViewModels
 
             NavigateCommand = new Command<string>(view => ActiveView = view ?? "Dashboard");
             ToggleAssetsSidebarCommand = new Command(() => IsAssetsSidebarOpen = !IsAssetsSidebarOpen);
+            ToggleSidebarCommand = new Command(() => { IsSidebarCollapsed = !IsSidebarCollapsed; });
+            ToggleTreePanelCommand = new Command(() => { IsTreePanelCollapsed = !IsTreePanelCollapsed; });
+            ToggleFocusCanvasCommand = new Command(() => { IsFocusCanvasMode = !IsFocusCanvasMode; });
 
             SaveThemePresetCommand = new Command(() => SaveThemePreset());
             DeleteThemePresetCommand = new Command(() => DeleteThemePreset());
@@ -2343,6 +2396,35 @@ namespace RagNext.Designer.Avalonia.ViewModels
             {
                 if (action == null) return;
                 ActiveAction = action;
+                IsVisualEditing = true;
+            });
+
+            StartEditingHotspotActionCommand = new Command<RagsCore.Models.ScreenHotspot>(hotspot =>
+            {
+                if (hotspot == null) return;
+                if (hotspot.Nodes == null) hotspot.Nodes = new ObservableCollection<RagsCore.Actions.ActionStep>();
+
+                // If hotspot has a LinkedActionId but no inline Nodes, migrate the linked action's nodes into hotspot.Nodes
+                if (hotspot.Nodes.Count == 0 && !string.IsNullOrEmpty(hotspot.LinkedActionId) && CurrentGame != null)
+                {
+                    var allActions = SelectedRoom?.Actions ?? SelectedObject?.Actions ?? new ObservableCollection<RagsCore.Models.Action>();
+                    var linked = allActions.FirstOrDefault(a => string.Equals(a.Id.ToString(), hotspot.LinkedActionId, StringComparison.OrdinalIgnoreCase));
+                    if (linked != null && linked.Nodes != null && linked.Nodes.Count > 0)
+                    {
+                        foreach (var node in linked.Nodes)
+                        {
+                            hotspot.Nodes.Add(node);
+                        }
+                    }
+                }
+
+                var wrapAction = new RagsCore.Models.Action
+                {
+                    Name = $"Hotspot: {hotspot.DisplayName}",
+                    Nodes = hotspot.Nodes,
+                    ActionType = "InteractiveScreen"
+                };
+                ActiveAction = wrapAction;
                 IsVisualEditing = true;
             });
 

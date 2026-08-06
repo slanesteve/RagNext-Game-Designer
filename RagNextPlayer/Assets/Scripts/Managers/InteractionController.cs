@@ -298,6 +298,23 @@ namespace RagNextPlayer.Managers
                     return;
                 }
             }
+        }
+
+        public void ExecuteHotspotNodes(System.Collections.Generic.List<ActionStepData> nodes, GameObjectData entity = null, RoomData room = null)
+        {
+            if (nodes == null || nodes.Count == 0) return;
+            var game = GameManager.Instance?.ActiveGame;
+            if (game == null) return;
+            var curRoom = room ?? GameManager.Instance?.CurrentRoom;
+            var ctx = new GameExecutionContext(game, curRoom, entity, curRoom);
+            var sink = GetComponent<CommandEffectRouter>();
+            var tempAction = new ActionData { Name = "HotspotAction", Nodes = nodes, InitallyActive = true };
+            ActionExecutor.Execute(tempAction, ctx, sink, true, true);
+            UIManager.Instance?.RefreshEntityLists();
+        }
+
+        private void ExecuteGlobalActions(string actionId, bool forceExecute = false)
+        {
             var game = GameManager.Instance?.ActiveGame;
             if (game != null)
             {

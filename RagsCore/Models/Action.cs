@@ -76,6 +76,10 @@ namespace RagsCore.Models
             Trigger == ActionTrigger.OnCharacterEnter || 
             Trigger == ActionTrigger.OnCharacterExit;
 
+        private string _actionType = "StandardVerb";
+        /// <summary>Gets or sets the action classification: "StandardVerb" vs "InteractiveScreen".</summary>
+        public string ActionType { get => _actionType; set => SetProperty(ref _actionType, value); }
+
         private string _type = "string";
         /// <summary>Friendly type name, e.g. "int", "bool", "string".</summary>
         public string Type { get => _type; set => SetProperty(ref _type, value); }

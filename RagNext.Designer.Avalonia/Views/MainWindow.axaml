@@ -30,7 +30,7 @@
         </Canvas>
 
         <!-- Main Workspace Shell -->
-        <Grid ColumnDefinitions="240,*,Auto" RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,*">
             
             <!-- Top Action Header -->
             <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Height="54" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="16,0">
@@ -51,8 +51,12 @@
                         <!-- Manual Load / Launcher Button -->
                         <Button Content="📂 Launcher" Command="{Binding ShowLauncherCommand}" FontSize="12" Background="{DynamicResource ToolbarBtnBg}" Foreground="#A29BFE" BorderBrush="{DynamicResource ToolbarBtnBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="10,0,0,0"/>
 
+                        <!-- Layout Toggles -->
+                        <Button Content="▶ Nav Rail" Command="{Binding ToggleSidebarCommand}" IsVisible="{Binding IsSidebarCollapsed}" ToolTip.Tip="Expand Navigation Sidebar" FontSize="11" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="6,0,0,0"/>
+                        <Button Content="{Binding IsFocusCanvasMode, Converter={x:Static views:FocusCanvasTextConverter.Instance}}" Command="{Binding ToggleFocusCanvasCommand}" ToolTip.Tip="Toggle Focus Canvas Mode (Maximizes workspace for Interactive Screens)" FontSize="11" Background="{DynamicResource ToolbarBtnBg}" Foreground="#8E2DE2" BorderBrush="#8E2DE2" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="6,0,0,0"/>
+
                         <!-- Help Menu -->
-                        <Menu Background="Transparent" VerticalAlignment="Center" Margin="10,0,0,0">
+                        <Menu Background="Transparent" VerticalAlignment="Center" Margin="6,0,0,0">
                             <MenuItem Header="Help" Foreground="{DynamicResource TextNormal}">
                                 <MenuItem Header="View Documentation" Click="OnInstructionsClicked"/>
                                 <MenuItem Header="Report an Issue" Click="OnReportIssueClicked"/>
@@ -93,12 +97,15 @@
             </Border>
 
             <!-- Left Sidebar Navigation -->
-            <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="12,16">
+            <Border Grid.Row="1" Grid.Column="0" Width="240" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="12,16" IsVisible="{Binding ShowDesignerSidebar}">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid RowDefinitions="*">
             <!-- Nav Tabs -->
             <StackPanel Grid.Row="0" Spacing="6" IsEnabled="{Binding HasGame}">
-            <TextBlock Text="DESIGNER" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="8,0,0,8" LetterSpacing="1"/>
+            <Grid ColumnDefinitions="*,Auto" Margin="8,0,0,8">
+                <TextBlock Grid.Column="0" Text="DESIGNER" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" LetterSpacing="1"/>
+                <Button Grid.Column="1" Content="◀ Hide" Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="Collapse Navigation Sidebar" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="10" Padding="4,2"/>
+            </Grid>
             
             <Button Classes="nav" Content="🏠 Project Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Dashboard, Converter={x:Static ObjectConverters.Equal}}"/>
             <Button Classes="nav" Content="👤 Player &amp; Start Config" Command="{Binding NavigateCommand}" CommandParameter="Player" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{Binding ActiveView, ConverterParameter=Player, Converter={x:Static ObjectConverters.Equal}}"/>
@@ -419,13 +426,14 @@
                 </ScrollViewer>
 
                 <!-- 2. Rooms Editor -->
-                <Grid IsVisible="{Binding ActiveView, ConverterParameter=Rooms, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
+                <Grid IsVisible="{Binding ActiveView, ConverterParameter=Rooms, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="Auto,*">
                     <!-- Left Rooms List -->
-                    <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
+                    <Border Grid.Column="0" Width="300" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0" IsVisible="{Binding ShowEntityTreePanel}">
                         <Grid RowDefinitions="Auto,*,Auto">
-                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
                                 <TextBlock Grid.Column="0" Text="Rooms in World" FontWeight="Bold" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Rooms.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
+                                <Button Grid.Column="2" Content="◀ Hide" Command="{Binding ToggleTreePanelCommand}" ToolTip.Tip="Collapse Rooms List" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="10" Padding="4,2"/>
                             </Grid>
                             
                             <!-- TreeView for Rooms with Folder Support -->
@@ -1127,7 +1135,14 @@
 
                                 <TabItem Header="Interactive Screen">
                                     <Border DragDrop.AllowDrop="True" DragDrop.Drop="OnInteractiveScreenDrop">
-                                        <Grid ColumnDefinitions="325,*" Margin="0,10,0,0">
+                                        <Grid RowDefinitions="Auto,*">
+                                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,4,0,8">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                    <Button Content="📁 Rooms List" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleTreePanelCommand}" IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsTreePanelCollapsed}" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="11" Padding="6,3"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="1" Content="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsFocusCanvasMode, Converter={x:Static views:FocusCanvasTextConverter.Instance}}" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleFocusCanvasCommand}" Background="{DynamicResource ToolbarBtnBg}" Foreground="#8E2DE2" BorderBrush="#8E2DE2" BorderThickness="1" FontSize="11" Padding="8,4" CornerRadius="4"/>
+                                            </Grid>
+                                            <Grid Grid.Row="1" ColumnDefinitions="380,6,*" Margin="0,4,0,0">
                                             <!-- Column 0: Global Settings & List -->
                                             <ScrollViewer Grid.Column="0" Margin="0,0,8,0">
                                                 <StackPanel Spacing="16">
@@ -1176,14 +1191,8 @@
                                                         <TextBox Text="{Binding Name, Mode=TwoWay}" Watermark="Button Name" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                         <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}" Content="Initially Active" FontSize="11"/>
                                                         <CheckBox IsChecked="{Binding EnableHoverScale, Mode=TwoWay}" Content="Enable Hover Grow Effect" FontSize="11"/>
-                                                        <TextBlock Text="Linked Action:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                        <ComboBox SelectedItem="{Binding LinkedActionId, Mode=TwoWay, Converter={x:Static views:ActionToIdStringConverter.Instance}}" ItemsSource="{Binding $parent[TabControl].DataContext.Actions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
-                                                            <ComboBox.ItemTemplate>
-                                                                <DataTemplate x:DataType="models:Action">
-                                                                    <TextBlock Text="{Binding Name}"/>
-                                                                </DataTemplate>
-                                                            </ComboBox.ItemTemplate>
-                                                        </ComboBox>
+                                                        <TextBlock Text="Hotspot Action Logic:" FontSize="10" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
+                                                        <Button Content="🎨 Edit Hotspot Action Steps" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingHotspotActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" CornerRadius="4"/>
 
                                                         <!-- Position grid -->
                                                         <TextBlock Text="Coordinates &amp; Dimensions (%):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
@@ -1249,8 +1258,10 @@
                                              </StackPanel>
                                          </ScrollViewer>
                                             
-                                            <!-- Column 1: Interactive Screen Canvas Coordinates Preview -->
-                                            <StackPanel Grid.Column="1" Spacing="10" Margin="16,0,0,0">
+                                            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrush}" ResizeDirection="Columns"/>
+                                            
+                                            <!-- Column 2: Interactive Screen Canvas Coordinates Preview -->
+                                            <StackPanel Grid.Column="2" Spacing="10" Margin="12,0,0,0">
                                                 <TextBlock Text="Live Screen Coordinates Preview" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2"/>
                                                 <Border Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True" Height="450">
                                                     <Viewbox Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -1287,6 +1298,7 @@
                                                     </Viewbox>
                                                 </Border>
                                             </StackPanel>
+                                        </Grid>
                                         </Grid>
                                     </Border>
                                 </TabItem>
@@ -1557,12 +1569,13 @@
                 </Grid>
 
                 <!-- 4. Game Objects & Items -->
-                <Grid IsVisible="{Binding ActiveView, ConverterParameter=Objects, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="300,*">
-                    <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0">
+                <Grid IsVisible="{Binding ActiveView, ConverterParameter=Objects, Converter={x:Static ObjectConverters.Equal}}" ColumnDefinitions="Auto,*">
+                    <Border Grid.Column="0" Width="300" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12" Margin="0,0,12,0" IsVisible="{Binding ShowEntityTreePanel}">
                         <Grid RowDefinitions="Auto,*,Auto">
-                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
                                 <TextBlock Grid.Column="0" Text="Objects &amp; Items" FontWeight="Bold" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Content="Sort A-Z ⇅" Command="{Binding Objects.SortCommand}" Background="Transparent" Foreground="#8E2DE2" FontSize="11" Padding="4,2"/>
+                                <Button Grid.Column="2" Content="◀ Hide" Command="{Binding ToggleTreePanelCommand}" ToolTip.Tip="Collapse Objects List" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="10" Padding="4,2"/>
                             </Grid>
                             
                             <TreeView Grid.Row="1" ItemsSource="{Binding ObjectTreeRoots}" SelectedItem="{Binding SelectedObjectTreeNode, Mode=TwoWay}" x:Name="ObjectsTreeView" Background="Transparent">
@@ -1830,7 +1843,14 @@
 
                                 <TabItem Header="Interactive Screen">
                                     <Border DragDrop.AllowDrop="True" DragDrop.Drop="OnInteractiveScreenDrop">
-                                        <Grid ColumnDefinitions="325,*" Margin="0,10,0,0">
+                                        <Grid RowDefinitions="Auto,*">
+                                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,4,0,8">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                    <Button Content="📁 Objects List" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleTreePanelCommand}" IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsTreePanelCollapsed}" Background="{DynamicResource ToolbarBtnBg}" Foreground="{DynamicResource TextNormal}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="11" Padding="6,3"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="1" Content="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsFocusCanvasMode, Converter={x:Static views:FocusCanvasTextConverter.Instance}}" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleFocusCanvasCommand}" Background="{DynamicResource ToolbarBtnBg}" Foreground="#8E2DE2" BorderBrush="#8E2DE2" BorderThickness="1" FontSize="11" Padding="8,4" CornerRadius="4"/>
+                                            </Grid>
+                                            <Grid Grid.Row="1" ColumnDefinitions="380,6,*" Margin="0,4,0,0">
                                             <!-- Column 0: Global Settings & List -->
                                             <ScrollViewer Grid.Column="0" Margin="0,0,8,0">
                                                 <StackPanel Spacing="16">
@@ -1879,14 +1899,8 @@
                                                         <TextBox Text="{Binding Name, Mode=TwoWay}" Watermark="Button Name" FontSize="11" Background="{DynamicResource CardBg}"/>
                                                         <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}" Content="Initially Active" FontSize="11"/>
                                                         <CheckBox IsChecked="{Binding EnableHoverScale, Mode=TwoWay}" Content="Enable Hover Grow Effect" FontSize="11"/>
-                                                        <TextBlock Text="Linked Action:" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                                                        <ComboBox SelectedItem="{Binding LinkedActionId, Mode=TwoWay, Converter={x:Static views:ActionToIdStringConverter.Instance}}" ItemsSource="{Binding $parent[TabControl].DataContext.Actions}" HorizontalAlignment="Stretch" Background="{DynamicResource CardBg}">
-                                                            <ComboBox.ItemTemplate>
-                                                                <DataTemplate x:DataType="models:Action">
-                                                                    <TextBlock Text="{Binding Name}"/>
-                                                                </DataTemplate>
-                                                            </ComboBox.ItemTemplate>
-                                                        </ComboBox>
+                                                        <TextBlock Text="Hotspot Action Logic:" FontSize="10" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
+                                                        <Button Content="🎨 Edit Hotspot Action Steps" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditingHotspotActionCommand}" CommandParameter="{Binding}" Background="#8E2DE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" CornerRadius="4"/>
 
                                                         <!-- Position grid -->
                                                         <TextBlock Text="Coordinates &amp; Dimensions (%):" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
@@ -1952,8 +1966,10 @@
                                              </StackPanel>
                                          </ScrollViewer>
                                             
-                                            <!-- Column 1: Interactive Screen Canvas Coordinates Preview -->
-                                            <StackPanel Grid.Column="1" Spacing="10" Margin="16,0,0,0">
+                                            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrush}" ResizeDirection="Columns"/>
+                                            
+                                            <!-- Column 2: Interactive Screen Canvas Coordinates Preview -->
+                                            <StackPanel Grid.Column="2" Spacing="10" Margin="12,0,0,0">
                                                 <TextBlock Text="Live Screen Coordinates Preview" FontSize="14" FontWeight="Bold" Foreground="#8E2DE2"/>
                                                 <Border Background="Black" BorderBrush="#3A3A4C" BorderThickness="2" CornerRadius="4" ClipToBounds="True" Height="450">
                                                     <Viewbox Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -1990,6 +2006,7 @@
                                                     </Viewbox>
                                                 </Border>
                                             </StackPanel>
+                                        </Grid>
                                         </Grid>
                                     </Border>
                                 </TabItem>

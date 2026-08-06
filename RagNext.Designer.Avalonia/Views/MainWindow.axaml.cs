@@ -1160,6 +1160,17 @@ namespace RagNext.Designer.Avalonia.Views
             _draggedHotspot = border?.DataContext as ScreenHotspot;
             if (_draggedHotspot == null || border == null) return;
 
+            var roomList = this.FindControl<ListBox>("RoomHotspotsList");
+            if (roomList != null && roomList.ItemsSource != null && roomList.ItemsSource.Cast<ScreenHotspot>().Contains(_draggedHotspot))
+            {
+                roomList.SelectedItem = _draggedHotspot;
+            }
+            var objList = this.FindControl<ListBox>("ObjectHotspotsList");
+            if (objList != null && objList.ItemsSource != null && objList.ItemsSource.Cast<ScreenHotspot>().Contains(_draggedHotspot))
+            {
+                objList.SelectedItem = _draggedHotspot;
+            }
+
             var parent = border.Parent?.Parent as Visual;
             if (parent == null) return;
 
@@ -6728,17 +6739,38 @@ namespace RagNext.Designer.Avalonia.Views
             {
                 return new global::Avalonia.Media.SolidColorBrush(color);
             }
-            return global::Avalonia.Media.Brushes.White;
+            return global::Avalonia.Media.Brushes.Transparent;
         }
 
-        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class FocusCanvasTextConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly FocusCanvasTextConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
         {
-            if (value is global::Avalonia.Media.SolidColorBrush brush)
-            {
-                return brush.Color;
-            }
-            return global::Avalonia.Media.Colors.White;
+            return (value is bool b && b) ? "⤝ Exit Focus Mode" : "⤢ Focus Canvas Mode";
         }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class IsNotInteractiveScreenConverter : global::Avalonia.Data.Converters.IValueConverter
+    {
+        public static readonly IsNotInteractiveScreenConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+        {
+            if (value is string s && string.Equals(s, "InteractiveScreen", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, global::System.Globalization.CultureInfo culture) => throw new NotImplementedException();
     }
 
     public class DesignerTemplateResolverConverter : global::Avalonia.Data.Converters.IValueConverter

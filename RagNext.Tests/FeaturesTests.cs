@@ -226,7 +226,7 @@ namespace RagNext.Tests
                     BackdropAssetId = "test_backdrop.png"
                 }
             };
-            room.InteractiveScreenSettings.Hotspots.Add(new ScreenHotspot
+            var hotspotToTest = new ScreenHotspot
             {
                 Name = "Test Hotspot",
                 X = 12.5,
@@ -235,7 +235,9 @@ namespace RagNext.Tests
                 Height = 10,
                 StyleType = "TextButton",
                 LabelText = "Click Me"
-            });
+            };
+            hotspotToTest.Nodes.Add(new SetVariableCommand { Name = "Score", Value = "10" });
+            room.InteractiveScreenSettings.Hotspots.Add(hotspotToTest);
 
             var options = new System.Text.Json.JsonSerializerOptions
             {
@@ -261,6 +263,8 @@ namespace RagNext.Tests
             Assert.Equal(10, hotspot.Height);
             Assert.Equal("TextButton", hotspot.StyleType);
             Assert.Equal("Click Me", hotspot.LabelText);
+            Assert.Single(hotspot.Nodes);
+            Assert.IsType<SetVariableCommand>(hotspot.Nodes[0]);
         }
 
         [Fact]

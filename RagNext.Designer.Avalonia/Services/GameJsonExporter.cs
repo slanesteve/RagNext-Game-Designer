@@ -109,6 +109,7 @@ namespace RagNext.Designer.Avalonia.Services
         public string? Name { get; set; }
         public bool InitallyActive { get; set; }
         public string? Trigger { get; set; }
+        public string? ActionType { get; set; }
         public string? DirectionFilter { get; set; }
         public List<ActionStep>? Nodes { get; set; }
     }
@@ -198,6 +199,7 @@ namespace RagNext.Designer.Avalonia.Services
         public string? LinkedActionId { get; set; }
         public bool IsActive { get; set; } = true;
         public bool EnableHoverScale { get; set; } = true;
+        public List<ActionStep>? Nodes { get; set; }
     }
 
     public class ExportThemeSettingsDto
@@ -474,7 +476,8 @@ namespace RagNext.Designer.Avalonia.Services
                     ImageAssetId = h.ImageAssetId,
                     LinkedActionId = h.LinkedActionId,
                     IsActive = h.IsActive,
-                    EnableHoverScale = h.EnableHoverScale
+                    EnableHoverScale = h.EnableHoverScale,
+                    Nodes = h.Nodes?.ToList()
                 }).ToList()
             };
         }
@@ -485,6 +488,7 @@ namespace RagNext.Designer.Avalonia.Services
             Name = a.Name,
             InitallyActive = a.InitallyActive,
             Trigger      = a.Trigger.ToString(),
+            ActionType   = a.ActionType,
             DirectionFilter = a.DirectionFilter,
             Nodes        = a.Nodes.ToList()
         };
