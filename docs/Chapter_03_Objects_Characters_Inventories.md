@@ -1,78 +1,129 @@
 # Chapter 3: Game Objects, Characters & Inventories
 
-Game Objects and Characters represent items, props, and non-player characters (NPCs) in your game world. This chapter covers object classifications, inventory management, player equipment slots, and character interaction popovers.
+Game Objects and Characters bring your story world to life. Objects can be static scenery items, grabable inventory items, wearable equipment, or containers like chests and backpacks. Characters represent non-player characters (NPCs), companions, merchants, or enemies.
+
+In this chapter, you will learn how to create and classify items, set up player inventories, manage equipment slots, create NPCs, and configure contextual interaction popovers.
 
 ---
 
-## 3.1 Object Classifications
+## 3.1 Understanding Game Objects
 
-Every `GameObject` in RagNext belongs to one of four primary types:
+In RagNext, any physical item or prop in your world is a **`GameObject`**. An object can exist in a room, inside a player's inventory, inside a chest, or equipped on a character.
 
 ```mermaid
 flowchart TD
-    A["GameObject Types"] --> B["1. Static (Scenery)"]
-    A --> C["2. Grabable (Inventory Item)"]
-    A --> D["3. Wearable (Equipment)"]
-    A --> E["4. Container (Chest / Box)"]
+    A["GameObject Classifications"] --> B["1. Static Scenery<br/>(IsCollectible = False)"]
+    A --> C["2. Grabable Item<br/>(IsCollectible = True)"]
+    A --> D["3. Wearable Equipment<br/>(IsWearable = True)"]
+    A --> E["4. Container<br/>(IsContainer = True)"]
 
-    B --> B1["Boulders, Trees, Fixed Furniture"]
-    C --> C1["Keys, Potions, Notes"]
-    D --> D1["Helmets, Armor, Rings"]
-    E --> E1["Chests, Backpacks, Drawers"]
+    B --> B1["Monuments, Heavy Tables, Boulders"]
+    C --> C1["Keys, Scrolls, Potions, Coins"]
+    D --> D1["Helmets, Leather Armor, Magic Rings"]
+    E --> E1["Chests, Safes, Backpacks, Drawers"]
 ```
-
-| Object Type | Player Behavior | Example |
-| :--- | :--- | :--- |
-| **Static** | Fixed in room; cannot be picked up | Statues, Large Boulders, Heavy Tables |
-| **Grabable** | Can be picked up and added to Inventory | Rusty Keys, Magic Potions, Spell Scrolls |
-| **Wearable** | Can be equipped on player equipment slots | Leather Armor, Silver Ring, Helmet |
-| **Container** | Holds other objects inside its inventory | Wooden Chest, Backpack, Safe |
 
 ---
 
-## 3.2 Inventory Management & Equipment Slots
+## 3.2 Step-by-Step: Creating a Game Object
 
-### Managing Player Inventory
-- When a `Grabable` item is picked up, it moves from the current `Room.Objects` collection into `Player.Inventory`.
-- Items can be examined, dropped back into the current room, or used on other objects via action steps.
+Let's create a new item in Studio:
 
-### Wearable Equipment Slots
-Wearable items can be assigned to equipment slots:
-- `Head`, `Chest`, `MainHand`, `OffHand`, `Ring`, `Feet`.
-- Equipping an item auto-unequips any existing item in that slot and triggers custom equipment stats via action scripts.
+### Step 1: Open the Objects Workspace
+1. In the top toolbar or left navigation rail, click **🎒 Objects**.
+2. Click **➕ Add Object** at the bottom of the objects list.
+
+### Step 2: Configure Object Attributes
+Select the new object to reveal its properties in the main workspace:
+
+- **Name**: Enter an item name (e.g. `Rusty Brass Key`).
+- **Description**: Type what the player sees when inspecting the item.
+  > *Example*: *"A heavy brass key tarnished with age. The bow is shaped like an oak leaf."*
+- **Picture Asset**: (Optional) Assign an item illustration sprite or thumbnail image.
 
 ---
 
-## 3.3 Creating NPCs & Characters
+## 3.3 Object Types & Behavior Flags
 
-Characters are active entities that inhabit rooms or travel across the world.
+Toggle object behavior flags in the Object Inspector to define how players interact with the item:
 
-### Character Properties
-- **Name**: e.g. *"Elder Wizard Glendor"*.
-- **Gender & Portrait**: Character portrait image asset.
-- **Starting Room**: The room where the NPC initially spawns.
-- **Character Inventory**: Items carried by the NPC.
+### 1. Static Scenery (`IsCollectible = False`)
+Uncheck **Is Collectible**.
+- The item stays fixed in its room.
+- Players can inspect or interact with it (*"Examine Statue"*), but cannot take it into their inventory.
+
+### 2. Grabable Items (`IsCollectible = True`)
+Check **Is Collectible**.
+- Players can take the item into their inventory using the default *"Take"* verb.
+- The item moves from the current room's object list into `Player.Inventory`.
+
+### 3. Wearable Equipment (`IsWearable = True`)
+Check **Is Wearable** and specify a **Wear Slot**:
+- Available slots: `Head`, `Chest`, `MainHand`, `OffHand`, `Ring`, `Feet`.
+- When a player equips the item, RagNext Player automatically moves it to their equipment slot and updates character stats!
+
+### 4. Container Objects (`IsContainer = True`)
+Check **Is Container**.
+- Allows the object to hold other game objects inside it (e.g. a `Treasure Chest` containing a `Magic Sword` and `50 Gold`).
+- You can toggle **Is Open** or attach action steps to lock/unlock the container.
+
+---
+
+## 3.4 Creating NPCs & Characters
+
+Characters represent living entities in your game world (allies, villains, shopkeepers, or monsters).
 
 ```
 +-------------------------------------------------------------------------------+
-| Elder Wizard Glendor                                                          |
+| NPC: Captain Morgana                                                          |
 +-------------------------------------------------------------------------------+
-| [ Portrait: wizard.png ]                                                      |
-| "Welcome, traveler. Beware the dark catacombs beneath the castle..."          |
+| [ Portrait: morgana_portrait.png ]                                            |
 |                                                                               |
-| Actions: [ Talk ] [ Trade ] [ Examine ]                                       |
+| A weathered pirate captain with a tricorn hat and a sharp eyepatch.           |
+|                                                                               |
+| Location: Pirate Cove Tavern                                                  |
+| Character Inventory: [ Treasure Map Fragment ]  [ Cutlass ]                   |
+| Actions / Dialogue: [ Talk to Captain Morgana ]  [ Trade Items ]              |
 +-------------------------------------------------------------------------------+
 ```
 
+### Step-by-Step: Adding an NPC
+1. In the left navigation, click **👤 Characters**.
+2. Click **➕ Add Character**.
+3. Set **Name** (e.g. `Captain Morgana`).
+4. Set **Starting Location**: Select the room where the character appears (e.g. `Pirate Cove Tavern`).
+5. Set **Portrait Image**: Assign a character headshot image asset.
+6. Write character descriptions and add character actions (e.g. *"Talk to Captain Morgana"*).
+
 ---
 
-## 3.4 Contextual Interaction Popovers & Verbs
+## 3.5 Contextual Interaction Popovers in Player
 
-In **RagNextPlayer**, clicking an object or character in the room view opens a **Contextual Action Popover** listing all active verbs:
+In **RagNextPlayer**, when a player clicks an object or character in the room view or interactive screen, RagNext opens a **Contextual Action Popover**:
 
-- Clicking an NPC displays verbs like *"Talk"*, *"Examine"*, *"Attack"*.
-- Clicking a Container displays verbs like *"Open Container"*, *"Inspect Lock"*.
-- Executing an action runs the attached node graph sequence immediately.
+```
++------------------------------------+
+|  Rusty Brass Key                   |
++------------------------------------+
+|  [ 👁️ Examine ]                   |
+|  [ ✋ Take Item ]                  |
+|  [ 🧪 Use Key On... ]             |
++------------------------------------+
+```
+
+The popover dynamically displays only the active, enabled actions for that target, ensuring your players always have clear visual choices!
+
+---
+
+## Chapter 3 Hands-On Exercise
+
+In Studio, build the following items for your game:
+
+1. **Item 1**: `Iron Lantern` (Grabable item).
+2. **Item 2**: `Leather Armor` (Wearable item, Wear Slot = `Chest`).
+3. **Item 3**: `Oak Chest` (Container item holding `100 Gold` inside).
+4. **NPC**: `Merchant Tobias` (Character spawned in `Entrance Hall`).
+5. Save your game!
 
 ---
 

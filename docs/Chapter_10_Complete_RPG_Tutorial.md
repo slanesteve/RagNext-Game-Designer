@@ -1,67 +1,99 @@
 # Chapter 10: Complete RPG Mini-Game Tutorial
 
-This tutorial walks through building a complete, playable Mini-RPG project from scratch in **RagNext Studio**, featuring rooms, puzzles, item pickups, keypads, and a full interactive combat screen.
+In this final chapter, we will build a complete, playable Mini-RPG game from start to finish in **RagNext Studio**.
+
+This hands-on project ties together everything you have learned: creating rooms, connecting exits, placing items and containers, writing variables, building action graph puzzles, creating an interactive combat screen with hotspot buttons, and publishing your standalone game!
 
 ---
 
-## 10.1 Project Overview: "The Dungeon of Shadow"
+## 10.1 Tutorial Overview: "The Dungeon of Shadow"
 
-Our mini-game consists of 3 rooms and 1 interactive combat screen:
-1. **Dungeon Cell**: Player wakes up locked inside a cell. Must find a hidden key behind a loose brick.
-2. **Armory**: Contains a chest with a broadsword and a digital keypad door lock.
-3. **Boss Arena**: Triggers a 2D Interactive Fight Screen (`Attack`, `Defend`, `Heal`) against the Dungeon Guard.
+Our game features 3 rooms and 1 interactive combat screen:
 
----
-
-## 10.2 Step 1: Setting Up Variables
-
-1. Open **Variables** panel and create:
-   - `PlayerHP` (Integer, initial value `100`)
-   - `MonsterHP` (Integer, initial value `50`)
-   - `Gold` (Integer, initial value `0`)
-   - `HasKey` (Boolean, initial value `False`)
+```mermaid
+flowchart LR
+    A["Room 1: Dungeon Cell<br/>(Find Brass Key behind loose brick)"] -->|East Exit (Locked)| B["Room 2: Armory<br/>(Find Sword in chest)"]
+    B -->|North Exit| C["Room 3: Boss Arena<br/>(Triggers Interactive Fight Screen)"]
+    C --> D["Interactive Combat Screen<br/>(ATTACK, HEAL, FLEE Hotspots)"]
+```
 
 ---
 
-## 10.3 Step 2: Creating Rooms & Objects
+## 10.2 Step 1: Create a New Project & Variables
 
-1. Create **Dungeon Cell**:
-   - Description: *"Damp stone walls surround you. A heavy iron door to the East is locked."*
-   - Add Object: `Loose Brick` (Static).
-   - Add Action to `Loose Brick` (*"Inspect Brick"*):
-     - Condition: `HasKey == False`
-       - True: `Set Variable HasKey = True`, `Give Item 'Brass Key'`, `Print Message ("You found a Brass Key behind the brick!")`.
-
-2. Create **Armory** & Exit:
-   - Set Cell `East` exit to `Armory` with lock key `Brass Key`.
+1. Launch **RagNext Studio** and click **➕ New Game**.
+2. Title: `The Dungeon of Shadow`, Author: `Your Name`, Version: `1.0.0`.
+3. Go to **⚙️ Variables & Timers** and create four variables:
+   - `PlayerHP` (Integer, Initial Value = `100`)
+   - `MonsterHP` (Integer, Initial Value = `50`)
+   - `Gold` (Integer, Initial Value = `0`)
+   - `FoundKey` (Boolean, Initial Value = `False`)
 
 ---
 
-## 10.4 Step 3: Building the Interactive Combat Screen
+## 10.3 Step 2: Build Room 1 — Dungeon Cell
 
-1. In **Boss Arena**, open **Interactive Screen** tab.
-2. Check **Enable Interactive Mode** and set backdrop to `FightSheet.png`.
-3. Create 3 Hotspots:
-   - **ATTACK Hotspot**:
-     - Click **🎨 Edit Hotspot Action Steps**:
+1. Select the default starting room in **📁 Rooms** and name it `Dungeon Cell`.
+2. Type description:
+   > *"Damp stone walls surround you in the dark cell. Water drips from the ceiling. A heavy iron door leads East."*
+3. Go to **🎒 Objects** and click **➕ Add Object**:
+   - Name: `Loose Brick` (Uncheck *Is Collectible* — Static Scenery).
+   - Place in `Dungeon Cell`.
+4. Add Action to `Loose Brick` (*"Inspect Brick"*):
+   - Open **🎨 Visual Graph Editor**.
+   - Add Condition: `FoundKey == False`
+     - **True Branch**:
+       - `Set Variable: FoundKey = True`
+       - `Give Item: Brass Key`
+       - `Play Sound: stone_slide.wav`
+       - `Print Message: "You pull out the loose brick and discover a Brass Key!"`
+     - **False Branch**:
+       - `Print Message: "The brick cavity is empty."`
+
+---
+
+## 10.4 Step 3: Build Room 2 — Armory & Door Lock
+
+1. Click **➕ Add Room** and name it `Armory`.
+2. Description:
+   > *"Weapon racks line the stone walls. An old iron chest rests against the corner. A archway leads North."*
+3. Connect `Dungeon Cell` East exit to `Armory` (Check **Two-Way Exit**).
+4. Lock the East exit: Check **Locked** and select locking key item `Brass Key`.
+5. Create Object `Iron Chest` in `Armory` (Check **Is Container**).
+   - Put Object `Broadsword` (`IsWearable = True`, Slot = `MainHand`) inside `Iron Chest`.
+
+---
+
+## 10.5 Step 4: Build Room 3 — Boss Arena & Interactive Combat Screen
+
+1. Click **➕ Add Room** and name it `Boss Arena`. Connect `Armory` North to `Boss Arena`.
+2. Open **Interactive Screen** tab on `Boss Arena`:
+   - Check **Enable Interactive Mode**.
+   - Set Backdrop to `combat_arena.jpg`.
+
+### Adding Combat Hotspots
+1. Click **➕ Add Hotspot** $\rightarrow$ Name: `ATTACK` (`TextButton`, Label = `⚔️ ATTACK`).
+   - Click **`🎨 Edit Hotspot Action Steps`**:
      - `Modify Integer: MonsterHP -= 15`
      - `Play Sound: sword_hit.wav`
-     - `Print Message ("You slash the guard for 15 damage!")`
-     - `Condition: MonsterHP <= 0`:
-       - True: `Print Message ("You defeated the guard!")`, `Close Screen`
-   - **HEAL Hotspot**:
-     - `Modify Integer: PlayerHP += 20`
-     - `Play Sound: heal_spell.wav`
-   - **RUN Hotspot**:
-     - `Print Message ("You fled back to the Armory!")`
-     - `Close Screen`
+     - `Print Message: "You attack the Dungeon Guard for 15 damage!"`
+     - Condition: `MonsterHP <= 0`:
+       - **True**: `Modify Integer: Gold += 100`, `Print Message: "Victory! You defeated the guard and claimed 100 Gold!"`, `Close Screen`.
+2. Click **➕ Add Hotspot** $\rightarrow$ Name: `HEAL` (`TextButton`, Label = `🧪 HEAL`).
+   - Action steps: `Modify Integer: PlayerHP += 20`, `Play Sound: heal.wav`, `Print Message: "You drink a potion and recover 20 HP!"`.
+3. Click **➕ Add Hotspot** $\rightarrow$ Name: `FLEE` (`TextButton`, Label = `🏃 FLEE`).
+   - Action steps: `Print Message: "You flee back to the Armory!"`, `Close Screen`.
 
 ---
 
-## 10.5 Testing & Conclusion
+## 10.6 Step 5: Save & Publish Your Game!
 
-Click **▶ Playtest** to run through your new dungeon! Congratulations—you have mastered game creation with RagNext!
+1. Click **💾 Save Game** in the Top Toolbar.
+2. Click **🚀 Publish**.
+3. Choose your target platform (Windows, macOS, Linux, or WebGL), check **Create Compressed .ZIP File**, and click **Publish Game Now**.
+
+🎉 **Congratulations!** You have built and published a complete, interactive RPG game with RagNext!
 
 ---
 
-*RagNext Creator Manual — Completed for ragnext.com*
+*RagNext Master Manual — Completed for ragnext.com*

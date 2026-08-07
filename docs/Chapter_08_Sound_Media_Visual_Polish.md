@@ -1,43 +1,72 @@
 # Chapter 8: Sound FX, Media & Visual Polish
 
-Visual presentation and sound design transform interactive fiction into immersive experiences. This chapter covers importing media assets, audio playback, ambient sound loops, screen VFX transitions, and theme styling.
+Sound effects, background music, artwork, and visual screen transitions turn a good interactive story into an unforgettable experience.
+
+In this chapter, you will learn how to import media assets, manage dual-channel audio playback, trigger sound FX and background music, use screen shakes, and apply theme styling.
 
 ---
 
-## 8.1 Importing Media Assets
+## 8.1 Importing & Managing Media Assets
 
-RagNext supports a wide range of audio and visual file formats:
+RagNext supports industry-standard image and audio formats:
 
-- **Image Formats**: `.png`, `.jpg`, `.jpeg`, `.webp`
-- **Audio Formats**: `.wav`, `.mp3`, `.ogg`
+- **Image Assets**: `.png`, `.jpg`, `.jpeg`, `.webp` (Used for Room Backgrounds, Object Sprites, Character Portraits, and Screen Backdrops).
+- **Audio Assets**: `.wav`, `.mp3`, `.ogg` (Used for Sound Effects and Background Music).
 
-### Asset Management
-1. In RagNext Studio, click **Media Assets** in the left navigation.
-2. Click **➕ Import Assets** and select your media files.
-3. Media assets are copied into your project directory and assigned unique Asset IDs.
-
----
-
-## 8.2 Audio Playback & Music Channels
-
-RagNextPlayer features a dedicated dual-channel audio system:
-
-1. **Background Music Channel**: Loops ambient music tracks (cross-fading between room transitions).
-2. **Sound FX Channel**: Plays one-shot sound effects (sword swings, door clicks, spell casts).
-
-### Action Graph Audio Commands
-- **Play Sound**: `PlaySound("sword_slash.wav")`
-- **Play Background Music**: `PlayMusic("dungeon_theme.ogg", loop=true)`
-- **Stop Music / Fade Out**: Stops audio playback smoothly.
+### Step-by-Step: Importing Assets into Studio
+1. In the left navigation rail, click **🖼️ Media Assets**.
+2. Click **➕ Import Assets** at the top of the asset manager.
+3. A file browser opens. Select one or more image or audio files from your computer and click **Open**.
+4. Studio imports the files into your project's local media asset library and assigns them friendly Asset IDs (e.g. `sword_slash.wav`, `tavern_theme.ogg`).
 
 ---
 
-## 8.3 Screen Shake & Transition VFX
+## 8.2 Dual-Channel Audio Playback
 
-Add visual impact to combat hits or dramatic moments:
+RagNextPlayer features an internal **Dual-Channel Audio Engine**:
 
-- **Trigger Screen Shake**: Shakes the game viewport for a set duration (e.g., `0.5s`, `intensity=2`).
-- **Fade Transitions**: Cross-fades room artwork and backdrop images smoothly.
+```mermaid
+flowchart TD
+    A["RagNext Audio Engine"] --> B["1. Background Music Channel (BGM)"]
+    A --> C["2. Sound Effects Channel (SFX)"]
+
+    B --> B1["Loops background music continuously.<br/>Cross-fades smoothly between room transitions."]
+    C --> C1["Plays one-shot sound effects instantly.<br/>(Sword swings, door clicks, coin pickups)"]
+```
+
+### Triggering Audio in Action Graphs
+
+- **Play Sound Node**: Plays a one-shot SFX on the sound effects channel:
+  - Select asset: `coin_pickup.wav`
+  - Volume slider: `80%`
+- **Play Music Node**: Starts background music on the BGM channel:
+  - Select asset: `dungeon_theme.ogg`
+  - Check **Loop Continuously**: Keeps the music playing while the player explores.
+- **Stop Music Node**: Fades out and stops current background music.
+
+---
+
+## 8.3 Screen Shakes & Visual Transition Effects
+
+Visual polish adds dramatic punch to critical story moments!
+
+### Screen Shake Effect (`Trigger Screen Shake`)
+In the Action Graph, add a **Screen Shake** node during explosive actions (e.g. dragon attacks, earthquakes, wall collapses):
+- **Duration**: `0.5` seconds.
+- **Intensity**: `2.0` (Subtle rumble) to `5.0` (Heavy earthquake).
+
+---
+
+## Chapter 8 Hands-On Exercise
+
+In Studio, polish your game's atmosphere:
+
+1. Import a background music file `mystic_cave.mp3` and sound effect `chest_open.wav`.
+2. Select your starting room and set its **Background Music** to `mystic_cave.mp3`.
+3. Open the Action Graph on a `Treasure Chest` object:
+   - Add command node **Play Sound**: `chest_open.wav`.
+   - Add command node **Screen Shake**: Duration = `0.3s`, Intensity = `2.0`.
+4. Save your game!
 
 ---
 

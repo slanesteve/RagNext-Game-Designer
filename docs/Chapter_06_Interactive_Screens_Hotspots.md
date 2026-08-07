@@ -1,88 +1,160 @@
-# Chapter 6: Interactive Screens & Hotspots
+# Chapter 6: Interactive Screens, Hotspots & Nested Menus
 
-Interactive Screens allow you to create visual GUI overlays, combat engines, backpack menus, keypads, and point-and-click minigames in RagNext. This chapter covers canvas positioning, hotspot styling, self-contained inline action logic, and nested screen stack navigation.
+Interactive Screens transform RagNext from a text adventure engine into a full visual GUI engine. With Interactive Screens, you can create point-and-click graphic interfaces, custom RPG battle HUDs, interactive backpacks, digital keypad locks, and shopkeeper trading screens.
+
+In this chapter, you will learn how to enable interactive screens, position and style hotspot buttons, build self-contained inline action logic, and nest interactive screens on a navigation stack.
 
 ---
 
-## 6.1 Interactive Mode & The 16:9 Canvas
+## 6.1 Understanding Interactive Screens
 
-Interactive Screens can be configured on any **Room** or **GameObject**.
+An Interactive Screen is a visual GUI overlay that displays above a **Room** or **GameObject**.
 
 ```
 +-------------------------------------------------------------------------------+
-| Live Screen Coordinates Preview (16:9 Aspect Ratio)                           |
+| Live Screen Coordinates Preview (Fixed 16:9 Aspect Ratio)                     |
 +-------------------------------------------------------------------------------+
 |  +-------------------------------------------------------------------------+  |
-|  | [ Backdrop Artwork Image ]                                              |  |
+|  | [ Backdrop Image: combat_background.jpg ]                               |  |
 |  |                                                                         |  |
 |  |   +---------------+   +---------------+   +---------------+             |  |
 |  |   | Hotspot:      |   | Hotspot:      |   | Hotspot:      |             |  |
-|  |   | [ ATTACK ]    |   | [ MAGIC ]     |   | [ DEFEND ]    |             |  |
+|  |   | [ ATTACK ]    |   | [ ITEMS ]     |   | [ FLEE ]      |             |  |
 |  |   +---------------+   +---------------+   +---------------+             |  |
 |  |                                                                         |  |
 |  +-------------------------------------------------------------------------+  |
 +-------------------------------------------------------------------------------+
 ```
 
-### 16:9 Percentage Coordinate Space
-All hotspots use percentage coordinates (`0%` to `100%` width and height). This guarantees that your interactive screens maintain pixel-accurate button alignment regardless of display resolution or aspect ratio.
+### The 16:9 Percentage Coordinate Space
+Interactive Screen canvases use a standardized **16:9 percentage coordinate space**:
+- `X` and `Width` are measured from `0%` (left edge) to `100%` (right edge).
+- `Y` and `Height` are measured from `0%` (top edge) to `100%` (bottom edge).
+
+Because coordinates are stored as percentages, your buttons automatically scale and align perfectly on any screen size—from 4K desktop monitors to smartphones!
 
 ---
 
-## 6.2 Creating & Styling Hotspots
+## 6.2 Step-by-Step: Enabling an Interactive Screen
 
-### Drag-to-Position Sync
-- In the Studio Live Screen Coordinates Preview, click and drag any hotspot box to set its coordinates.
-- Clicking a hotspot automatically reveals its property inspector on the left panel.
+Interactive screens can be attached to any Room or GameObject.
+
+### Step 1: Select a Room or Object
+1. Select a Room or Object in Studio (e.g. `Boss Battle Arena`).
+2. Click the **Interactive Screen** tab at the top of the main workspace.
+
+### Step 2: Configure Screen Settings
+Check the settings at the top of the panel:
+- **Enable Interactive Mode**: Check to turn on the screen overlay.
+- **Show Close Button (Top Right '✕')**: Check if players should see an automatic `✕` button to exit the screen.
+- **Backdrop Asset ID**: Select your background artwork image (e.g. `battle_arena.png`).
+- **On Close Linked Action**: (Optional) Select a Global Function to run whenever this screen closes.
+
+---
+
+## 6.3 Creating & Styling Hotspot Buttons
+
+Hotspots are the clickable region buttons placed on your screen backdrop.
+
+### Adding & Positioning Hotspots
+1. Click **➕ Add Hotspot** under the Clickable Hotspots header.
+2. A new hotspot box appears on the 16:9 Live Preview canvas.
+3. **Click and Drag**: Click and drag the hotspot box anywhere on the canvas preview to position it visually.
+4. **Auto-Select Sync**: Clicking a hotspot box in the canvas preview automatically selects it in the hotspots list and opens its property inspector!
+
+```
++-------------------------------------------------------------------------------+
+| HOTSPOT PROPERTY INSPECTOR                                                    |
++-------------------------------------------------------------------------------+
+| Name: AttackButton                                                            |
+| Style Type: TextButton                                                        |
+| Label Text: ⚔️ ATTACK                                                         |
+| Font Color: #FFFFFF                                                           |
+| Background Color: #8E2DE2                                                     |
+| Enable Hover Scale Grow: [x] Enabled                                          |
++-------------------------------------------------------------------------------+
+```
 
 ### Hotspot Style Types
-1. **Invisible**: Creates a transparent clickable region over buttons drawn directly into your background artwork.
-2. **TextButton**: Renders customizable label text with background color, font color, and font size.
-3. **ImageButton**: Displays a sprite image asset over the hotspot region.
-4. **CustomBorder**: Displays custom border widths and background styling.
+Choose how your hotspot button looks:
+1. **Invisible**: Creates a transparent hit region over buttons already drawn into your backdrop image artwork.
+2. **TextButton**: Displays custom styled label text with a background color and border.
+3. **ImageButton**: Displays a sprite thumbnail image asset.
+4. **CustomBorder**: Renders a highlighted frame over interactive props.
 
-### Hover Grow Micro-Animations
-Check **Enable Hover Grow Effect** on a hotspot to enable automatic 1.08x scaling transitions when a player hovers over the button in RagNextPlayer.
-
----
-
-## 6.3 Self-Contained Inline Action Steps
-
-Hotspot click logic is self-contained directly inside the hotspot:
-
-1. Select a hotspot in the list.
-2. Click **🎨 Edit Hotspot Action Steps**.
-3. Studio opens the Visual Action Graph for that hotspot.
-4. Add commands such as `Set Variable`, `Play Sound`, `Show Dialog`, or `Show Item Interactive Screen`.
+### Micro-Animations: Hover Scale Grow Effect
+Check **Enable Hover Scale Grow Effect**. In **RagNextPlayer**, hovering over the button smoothly enlarges it by 1.08x, giving your game a sleek, modern feel!
 
 ---
 
-## 6.4 Nested Interactive Screens & Navigation Stack
+## 6.4 Authoring Inline Hotspot Action Logic
 
-RagNextPlayer features an internal **Navigation Stack** (`Stack<InteractiveScreenContext>`) that supports infinite screen nesting.
+Every hotspot has **self-contained action steps**:
 
-### How Nested Screens Work
+1. Select a hotspot in your hotspots list.
+2. Click the prominent **`🎨 Edit Hotspot Action Steps`** button.
+3. Studio opens the Visual Action Graph for that specific hotspot.
+4. Add any sequence of action steps:
+   - `Modify Integer: MonsterHP -= 15`
+   - `Play Sound: sword_slash.wav`
+   - `Print Message: "You attack the monster!"`
+   - `Show Item Interactive Screen`: Launch a sub-menu!
+
+---
+
+## 6.5 Nested Interactive Screens & Stack Navigation
+
+RagNext supports **infinite screen nesting** using an automatic Navigation Stack (`Push` and `Pop` screen mechanics).
+
+### Example: Combat Engine with Backpack Sub-Menu
 
 ```mermaid
 sequenceDiagram
     participant P as Player
     participant R as Room View
-    participant S1 as Combat Screen
-    participant S2 as Backpack Overlay
+    participant S1 as Combat Screen (Main)
+    participant S2 as Backpack Screen (Sub-Menu)
 
-    P->>R: Enters Combat Zone
+    P->>R: Enters Boss Room
     R->>S1: Push Combat Screen onto Stack
-    P->>S1: Clicks "Items" Hotspot
-    S1->>S2: Push Backpack Screen onto Stack
+    P->>S1: Clicks "ITEMS" Hotspot
+    S1->>S2: Push Backpack Screen onto Stack (Nested)
     P->>S2: Clicks "Close" (✕)
-    S2->>S1: Pop Stack -> Restore Combat Screen
-    P->>S1: Clicks "Close" (✕)
-    S1->>R: Pop Stack -> Restore Room View
+    S2->>S1: Pop Stack -> Returns smoothly to Combat Screen
+    P->>S1: Clicks "FLEE" Hotspot
+    S1->>R: Pop Stack -> Returns to Room View
 ```
 
-### On Close Triggers
-When a screen closes (via the top-right `✕` close button or a `Close Screen` action step), RagNext executes any global function assigned to **On Close Linked Action**, resuming music or unpausing turn clocks!
+### How Screen Nesting Works
+- When a hotspot action step executes `Show Item Interactive Screen`, RagNext **pushes** the new screen on top of the navigation stack.
+- Clicking the top-right `✕` close button (or executing a `Close Screen` command) **pops** the top screen off the stack, instantly restoring the underlying screen underneath!
+- You can nest screens as deeply as you want (e.g., *Main Screen* $\rightarrow$ *Inventory* $\rightarrow$ *Item Details* $\rightarrow$ *Spellbook*).
 
 ---
 
-*Continue to [Chapter 7: Advanced Game Mechanics: Timers & Global Functions](Chapter_07_Advanced_Mechanics_Timers_Functions.md)*
+## 6.6 Focus Canvas Mode (`⤢`) & Resizable Splitters
+
+Studio includes power tools for designing interactive screens:
+
+- **Focus Canvas Mode (`⤢`)**: Click the purple `⤢` button in the screen header to hide all left navigation rails, expanding your canvas preview across 95%+ of your monitor window.
+- **Resizable Panel Splitter (`GridSplitter`)**: Click and drag the vertical splitter bar between the Hotspot Inspector and Canvas Preview to adjust inspector width to any size you like.
+
+---
+
+## Chapter 6 Hands-On Exercise
+
+In Studio, build an Interactive Combat Screen:
+
+1. Enable Interactive Mode on a Room (`Combat Arena`).
+2. Set backdrop image to `arena_bg.jpg`.
+3. Add **ATTACK** Hotspot (`TextButton`, Label = `⚔️ ATTACK`, Hover Scale Enabled).
+4. Click **`🎨 Edit Hotspot Action Steps`** on **ATTACK**:
+   - `Modify Integer: MonsterHP -= 20`
+   - `Play Sound: hit.wav`
+5. Add **FLEE** Hotspot (`TextButton`, Label = `🏃 FLEE`).
+   - Action steps: `Close Screen`.
+6. Enter **Focus Canvas Mode (`⤢`)** to align your buttons visually, then save your game!
+
+---
+
+*Continue to [Chapter 7: Advanced Game Mechanics — Timers & Global Functions](Chapter_07_Advanced_Mechanics_Timers_Functions.md)*
