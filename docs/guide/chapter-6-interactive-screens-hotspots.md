@@ -26,21 +26,16 @@ An Interactive Screen is a visual GUI overlay that displays above a **Room** or 
 +-------------------------------------------------------------------------------+
 ```
 
-### The 16:9 Percentage Coordinate Space
-Interactive Screen canvases use a standardized **16:9 percentage coordinate space**:
+### How Canvas Scaling & Hotspots Work
+Interactive Screen canvases use percentage-based coordinates:
 - `X` and `Width` are measured from `0%` (left edge) to `100%` (right edge).
 - `Y` and `Height` are measured from `0%` (top edge) to `100%` (bottom edge).
 
-Because coordinates are stored as percentages, your hotspot buttons automatically scale and align perfectly on any screen size—from 4K desktop monitors to smartphones!
-
-### Backdrop Image Resolutions & Recommendations for Artists
-Do you need to export your artwork at an exact pixel size?
-- **Aspect Ratio is Key**: Hotspots are tied to the **16:9 aspect ratio container**, not fixed pixel counts. As long as your background image is created in a 16:9 aspect ratio, hotspots will stay perfectly aligned regardless of image resolution.
-- **Recommended Pixel Resolutions for Artists**: When creating or generating artwork in Photoshop, Procreate, Canva, or Midjourney, we recommend exporting at standard 16:9 resolutions:
-  - **`1920 × 1080`** (Standard Full HD — Recommended for crisp visuals and fast loading)
-  - **`2560 × 1440`** (2K QHD for high-DPI displays)
-  - **`3840 × 2160`** (4K Ultra HD for maximum detail)
-  - **`1280 × 720`** (HD for smaller file sizes)
+### Using Any Image File (No Restrictions!)
+Do you need to use a specific image size or format? **No!**
+- **Use Any Image Size or Format**: You can use any artwork file (`.png`, `.jpg`, `.jpeg`, `.webp`) regardless of its dimensions or aspect ratio.
+- **Hotspots Lock to Your Background**: RagNext fits your backdrop image to the screen canvas container, and your hotspots stay locked to the artwork relative to where you placed them.
+- **Automatic Scaling**: Whether your image is `800×600`, `1920×1080`, or custom AI-generated artwork, RagNext handles scaling automatically so your hotspots always line up perfectly!
 
 ---
 
