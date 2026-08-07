@@ -81,19 +81,22 @@ To let players travel between rooms, you link them using compass directions: **N
 
 ---
 
-## 2.4 Creating Locked Exits & Door Locks
+## 2.4 How Locked Exits Work in Gameplay
 
-Not all doors should open immediately! Creating locked exits is a great way to build puzzles and guide player progression.
+Creating locked exits is a great way to build puzzles, block dangerous areas, and guide player progression.
 
-### Locking an Exit
-1. In the room's **Exits** inspector, find the exit direction you wish to lock (e.g. **North**).
-2. Check the **Locked** checkbox next to that exit.
-3. Below the checkbox, select a **Locking Key Item** (e.g. `IronKey`), or leave it unassigned if the exit will be unlocked by a puzzle action script.
+### How Locked Exits Behave in RagNextPlayer
+In RagNextPlayer, **locked exits are hidden from the active movement menu**:
+- While an exit is **Locked** (`LockedExits = True`), it will **not** appear as a clickable direction option in the player's movement list. This keeps hidden doors, secret passages, and locked gates hidden until unlocked.
+- As a storyteller, you can describe the obstacle in your room text (e.g. *"To the North, a heavy iron door stands locked tight."*).
+- When the player unlocks the exit (by acquiring the required key item or solving a puzzle using an **Unlock Exit** action step), the direction instantly reveals itself as a valid, clickable movement option (e.g. `North: Great Hall`)!
 
-### How Door Locks Behave for Players
-- When a player attempts to go North through a locked exit without the key, RagNextPlayer displays a locked message:
-  > *"The heavy iron door to the North is locked tight."*
-- If the player picks up the `IronKey` in their inventory and attempts the exit again, the door unlocks smoothly!
+### How to Lock an Exit in Studio
+1. In your room's **Exits** inspector panel, select the destination room for your exit (e.g. **North** $\rightarrow$ `Great Hall`).
+2. Check the **Locked** checkbox next to that exit direction.
+3. (Optional) Select a **Locking Key Item** (e.g. `IronKey`).
+   - If a Key Item is assigned, picking up `IronKey` in the player's inventory automatically unlocks the exit!
+   - If no Key Item is assigned, you can unlock the exit dynamically using an **Unlock Exit** action node in your Visual Action Graph (see Chapter 5).
 
 ---
 
