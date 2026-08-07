@@ -13,8 +13,8 @@ hero:
       text: View on Steam / Playtest
       link: https://store.steampowered.com/app/4944750/RagNext_Studio/
     - theme: alt
-      text: Documentation & Guide
-      link: /guide/getting-started
+      text: 📖 Master Creator Manual
+      link: /guide/chapter-1-getting-started
     - theme: alt
       text: Contact Us
       link: mailto:contact@ragnext.com
