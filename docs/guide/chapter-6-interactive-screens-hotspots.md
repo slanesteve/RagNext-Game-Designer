@@ -31,7 +31,16 @@ Interactive Screen canvases use a standardized **16:9 percentage coordinate spac
 - `X` and `Width` are measured from `0%` (left edge) to `100%` (right edge).
 - `Y` and `Height` are measured from `0%` (top edge) to `100%` (bottom edge).
 
-Because coordinates are stored as percentages, your buttons automatically scale and align perfectly on any screen size—from 4K desktop monitors to smartphones!
+Because coordinates are stored as percentages, your hotspot buttons automatically scale and align perfectly on any screen size—from 4K desktop monitors to smartphones!
+
+### Backdrop Image Resolutions & Recommendations for Artists
+Do you need to export your artwork at an exact pixel size?
+- **Aspect Ratio is Key**: Hotspots are tied to the **16:9 aspect ratio container**, not fixed pixel counts. As long as your background image is created in a 16:9 aspect ratio, hotspots will stay perfectly aligned regardless of image resolution.
+- **Recommended Pixel Resolutions for Artists**: When creating or generating artwork in Photoshop, Procreate, Canva, or Midjourney, we recommend exporting at standard 16:9 resolutions:
+  - **`1920 × 1080`** (Standard Full HD — Recommended for crisp visuals and fast loading)
+  - **`2560 × 1440`** (2K QHD for high-DPI displays)
+  - **`3840 × 2160`** (4K Ultra HD for maximum detail)
+  - **`1280 × 720`** (HD for smaller file sizes)
 
 ---
 
