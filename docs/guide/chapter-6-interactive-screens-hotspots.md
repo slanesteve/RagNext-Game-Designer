@@ -71,7 +71,7 @@ Hotspots are the clickable region buttons placed on your screen backdrop.
 | HOTSPOT PROPERTY INSPECTOR                                                    |
 +-------------------------------------------------------------------------------+
 | Name: AttackButton                                                            |
-| Style Type: TextButton                                                        |
+| Style Type: Text Label / Button                                               |
 | Label Text: ⚔️ ATTACK                                                         |
 | Font Color: #FFFFFF                                                           |
 | Background Color: #8E2DE2                                                     |
@@ -81,8 +81,10 @@ Hotspots are the clickable region buttons placed on your screen backdrop.
 
 ### Hotspot Style Types
 Choose how your hotspot button looks:
-1. **Invisible**: Creates a transparent hit region over buttons already drawn into your backdrop image artwork.
-2. **TextButton**: Displays custom styled label text with a background color and border.
+1. **Invisible**: Creates a transparent hit region over buttons already drawn into your backdrop artwork.
+2. **Text Label / Button**: Dual-purpose text element:
+   - **As a Text Button**: Clickable button with attached action steps.
+   - **As a Passive Text Label / HUD Placeholder**: Use template tags (e.g. `{variables.PlayerHP} / {variables.MaxHP}` or `Gold: {variables.Gold}`) to render dynamic HUD displays, health meters, or status labels on your screen canvas without needing action steps!
 3. **ImageButton**: Displays a sprite thumbnail image asset.
 4. **CustomBorder**: Renders a highlighted frame over interactive props.
 
