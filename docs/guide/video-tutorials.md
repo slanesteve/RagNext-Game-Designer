@@ -57,14 +57,9 @@ In the epic conclusion, we dive into RagNext Studio's **Script Editor**. See how
 🔗 **Direct Watch Link:** [Watch Part 3 on YouTube](https://www.youtube.com/watch?v=PQrLkGkZYVA)
 
 ### 🌟 Key Highlights in Part 3
-* **Script Editor Math Expressions:** Writing custom math formulas for damage calculations:
-  ```javascript
-  // Damage Formula in RagNext Script Editor
-  Damage = Math.max(1, (Player.Strength * 2.2) + Random(1, 8) - (Enemy.Defense * 1.1));
-  EnemyHP = Math.max(0, EnemyHP - Damage);
-  ```
-* **Critical Hit Logic & Modifiers:** Rolling random percentage checks (`Random(1, 100) <= Player.CritChance`) for 2x damage multipliers and visual flash effects.
-* **Victory & Defeat Stack Resolution:** Auto-granting XP and Gold, playing victory fanfare, updating quest variables (`DefeatedBoss = true`), and seamlessly closing the interactive combat screen back to the world map.
+* **Script Editor Math Expressions:** Writing custom math formulas for dynamic damage variance and stat scaling.
+* **Critical Hit Logic & Modifiers:** Rolling random percentage checks for damage multipliers and visual flash effects.
+* **Victory & Defeat Stack Resolution:** Auto-granting XP and Gold, playing victory fanfare, updating quest variables, and seamlessly closing the interactive combat screen back to the world map.
 
 ---
 
