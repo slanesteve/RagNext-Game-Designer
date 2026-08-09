@@ -4,6 +4,14 @@ In this final chapter, we will build a complete, playable Mini-RPG game from sta
 
 This hands-on project ties together everything you have learned: creating rooms, connecting exits, placing items and containers, writing variables, building action graph puzzles, creating an interactive combat screen with hotspot buttons, and publishing your standalone game!
 
+::: tip 🎬 Watch the Video Demonstration Series
+Prefer video? Watch our 3-part masterclass showing this exact combat system built live in RagNext Studio:
+- **[Part 1: Interactive Combat Screen & Hotspots](https://www.youtube.com/watch?v=2OgSBiUkun0)**
+- **[Part 2: Inventory Integration, Skill Systems & Action Loops](https://www.youtube.com/watch?v=Wrs_zJwySUI)**
+- **[Part 3: Script Editor Formulas & Dynamic Damage](https://www.youtube.com/watch?v=PQrLkGkZYVA)**
+- **[▶️ View Complete Video Documentation Page](/guide/video-tutorials)**
+:::
+
 ---
 
 ## 10.1 Tutorial Overview: "The Dungeon of Shadow"

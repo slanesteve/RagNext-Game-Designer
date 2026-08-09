@@ -13,6 +13,9 @@ hero:
       text: View on Steam / Playtest
       link: https://store.steampowered.com/app/4944750/RagNext_Studio/
     - theme: alt
+      text: 🎬 Video Demos
+      link: /guide/video-tutorials
+    - theme: alt
       text: 📖 Master Creator Manual
       link: /guide/chapter-1-getting-started
     - theme: alt
@@ -23,15 +26,31 @@ features:
   - icon: 🧩
     title: Node-Based Graph Scripting
     details: Build complex narrative flow, conditional pathways, inventory transactions, and dialog trees visually.
+  - icon: ⚔️
+    title: Full RPG Battle Engine
+    details: Create interactive fight screens, inventory item usages, skill cooldowns, enemy AI turn loops, and script editor math formulas.
   - icon: 🤖
     title: AI-Assisted Action Compiling
     details: Generate complete functional action subgraphs directly from natural language prompts using built-in LLM integrations.
-  - icon: 📅
-    title: Rich Type-Aware Variables
-    details: Fully supports string, numeric, boolean, and comprehensive date/time operations both in the editor and player.
 ---
 
 <div style="max-width: 860px; margin: 48px auto 32px auto; padding: 32px; background: var(--vp-c-bg-soft); border: 1px solid var(--vp-c-divider); border-radius: 12px;">
+
+## 🎬 Featured Masterclass: 3-Part RPG Battle System Video Series
+
+Watch RagNext Studio in action as we construct a complete, high-intensity turn-based RPG battle engine—featuring an interactive fight screen, inventory item consumption, skill cooldowns, enemy AI turn loops, and custom script editor math formulas!
+
+::: tip Watch the Masterclass
+**[📺 View Full Video Masterclass Page & Interactive Guides](/guide/video-tutorials)**
+:::
+
+| Episode | Title & Highlights | Direct Watch Link |
+| :--- | :--- | :--- |
+| **Part 1** | **Interactive Combat Screen & Hotspots**<br/>16:9 Canvas layout, styled hotspot buttons (`ATTACK`, `DEFEND`, `SKILLS`, `FLEE`), visual action triggers, and real-time HP state tracking. | [▶️ Watch Part 1](https://www.youtube.com/watch?v=2OgSBiUkun0) |
+| **Part 2** | **Inventory, Skill Systems & Action Loops**<br/>Consumable potion items, mana/skill cooldown switches, status effects, and automated enemy turn loops. | [▶️ Watch Part 2](https://www.youtube.com/watch?v=Wrs_zJwySUI) |
+| **Part 3** | **Script Editor Formulas & Dynamic Damage**<br/>Writing custom math damage formulas, critical hit multipliers, loot distribution, and victory stack resolution. | [▶️ Watch Part 3](https://www.youtube.com/watch?v=PQrLkGkZYVA) |
+
+---
 
 ## About RagNext Labs LLC
 

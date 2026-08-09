@@ -10,6 +10,7 @@ export default defineConfig({
       { text: 'Home', link: '/' },
       { text: 'Steam Store', link: 'https://store.steampowered.com/app/4944750/RagNext_Studio/' },
       { text: 'Creator Guide', link: '/guide/chapter-1-getting-started' },
+      { text: '🎬 Video Demos', link: '/guide/video-tutorials' },
       { text: 'Contact', link: 'mailto:contact@ragnext.com' }
     ],
 
@@ -21,6 +22,7 @@ export default defineConfig({
       {
         text: '📖 Master Creator Manual',
         items: [
+          { text: '🎬 Battle System Video Demos', link: '/guide/video-tutorials' },
           { text: 'Ch 1: Getting Started & Tour', link: '/guide/chapter-1-getting-started' },
           { text: 'Ch 2: Rooms, Exits & Atmosphere', link: '/guide/chapter-2-rooms-and-exits' },
           { text: 'Ch 3: Objects, Characters & Inventories', link: '/guide/chapter-3-objects-and-characters' },
